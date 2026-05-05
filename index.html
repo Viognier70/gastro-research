@@ -712,16 +712,20 @@ function renderFeed(){
   updateFreeBar()
 }
 
-function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(renderFeed,300)}
+function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(loadArticles,400)}
 
-async function loadArticles(scenariosOnly=false){
+async function loadArticles(){
   const topic=document.getElementById('topicSel').value
   const src=document.getElementById('srcSel').value
+  const search=document.getElementById('searchInput').value.trim()
   const pane=document.getElementById('feedPane')
   pane.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
   let fields='id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,scenario,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion'
   if(role!=='all') fields+=`,scenario_${role},relevance_${role}`
   let url=`${SB_URL}/rest/v1/articles?select=${fields}&order=year.desc,fetched_at.desc&limit=80`
+  if(search){
+    url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(title.ilike.*${encodeURIComponent(search)}*,authors.ilike.*${encodeURIComponent(search)}*,journal.ilike.*${encodeURIComponent(search)}*)&order=year.desc&limit=80`
+  }
   if(topic!=='all') url+=`&topic=eq.${topic}`
   if(src!=='all') url+=`&source=eq.${src}`
   try{
