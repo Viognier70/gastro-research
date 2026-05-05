@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GastroResearch — Where Science Meets the Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #B8972A;
+  --gold-light: #F0E6C0;
+  --gold-dark: #7A6118;
+  --black: #0F0F0D;
+  --off-white: #FAF9F6;
+  --warm-gray: #E8E6E0;
+  --text-primary: #0F0F0D;
+  --text-secondary: #6B6860;
+  --text-tertiary: #A8A69E;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off-white);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* TOPBAR */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--off-white);
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 56px;
+}
+
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: .02em;
+  color: var(--text-primary);
+}
+
+.logo span { color: var(--gold); }
+
+.nav {
+  display: flex;
+  gap: 2px;
+}
+
+.nav-btn {
+  font-size: 13px;
+  font-weight: 400;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all .15s;
+}
+
+.nav-btn:hover { color: var(--text-primary); background: var(--warm-gray); }
+.nav-btn.on { background: var(--black); color: #fff; }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-btn {
+  font-size: 11px;
+  letter-spacing: .08em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.upgrade-btn {
+  font-size: 13px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity .15s;
+}
+
+.upgrade-btn:hover { opacity: .9; }
+
+/* HERO */
+.hero {
+  padding: 64px 40px 48px;
+  border-bottom: 0.5px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: end;
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold-dark);
+}
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 460px;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stat-item {
+  background: var(--off-white);
+  padding: 20px 24px;
+}
+
+.stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: .04em;
+}
+
+/* ROLE ROW */
+.role-row {
+  padding: 16px 40px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.role-label {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-right: 4px;
+}
+
+.role-chip {
+  font-size: 12px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.role-chip:hover { border-color: var(--gold); color: var(--gold-dark); }
+.role-chip.on { background: var(--gold-light); color: var(--gold-dark); border-color: var(--gold); }
+
+/* FILTER BAR */
+.filter-bar {
+  padding: 12px 40px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: #fff;
+}
+
+.filter-bar select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+  background: var(--off-white);
+  color: var(--text-secondary);
+  cursor: pointer;
+  appearance: none;
+  padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B6860'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.free-bar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.free-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.free-track {
+  width: 60px;
+  height: 2px;
+  background: var(--warm-gray);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.free-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width .3s;
+}
+
+/* MAIN LAYOUT */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  min-height: calc(100vh - 56px);
+}
+
+/* FEED */
+.feed {
+  padding: 24px 40px;
+  border-right: 0.5px solid var(--border);
+}
+
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.feed-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ARTICLE CARD */
+.article-card {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.article-card:hover { border-color: var(--gold); }
+
+.article-card.locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(250,249,246,.97) 70%);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.lock-cta {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.lock-msg {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  background: var(--off-white);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.topic-badge {
+  font-size: 10px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-weight: 500;
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+
+.source-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+  color: var(--text-tertiary);
+}
+
+.study-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+  color: var(--text-tertiary);
+}
+
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.card-insight {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.scenario-block {
+  background: var(--off-white);
+  border-left: 2px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+}
+
+.scenario-eyebrow {
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.scenario-role-label {
+  font-size: 11px;
+  color: var(--gold-dark);
+  font-weight: 500;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.scenario-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.card-limitation {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--border);
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-strong);
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all .15s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.action-btn:hover { border-color: var(--gold); color: var(--gold-dark); }
+.action-btn.primary { background: var(--black); color: #fff; border-color: var(--black); }
+.action-btn.primary:hover { background: #333; }
+
+/* SIDEBAR */
+.sidebar {
+  padding: 24px;
+}
+
+.sidebar-section {
+  margin-bottom: 28px;
+}
+
+.sidebar-title {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+/* PRO CTA */
+.pro-card {
+  background: var(--black);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.pro-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.pro-title em { color: var(--gold-light); font-style: italic; }
+
+.pro-features {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+.pro-features li {
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pro-features li::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.pro-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: opacity .15s;
+}
+
+.pro-btn:hover { opacity: .9; }
+
+/* TOPIC BREAKDOWN */
+.topic-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+.topic-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.topic-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+  text-transform: capitalize;
+}
+
+.topic-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* MODAL */
+.modal-bg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,15,13,.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-bg.open { display: flex; }
+
+.modal {
+  background: var(--off-white);
+  border-radius: 16px;
+  padding: 40px;
+  width: min(480px, 90vw);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0.5px solid var(--border-strong);
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-eyebrow {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.plan-card {
+  border: 0.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.plan-card:hover, .plan-card.selected { border-color: var(--gold); }
+.plan-card.selected { background: var(--gold-light); }
+
+.plan-name {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.plan-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--gold-dark);
+  margin-bottom: 4px;
+}
+
+.plan-desc { font-size: 11px; color: var(--text-tertiary); }
+
+.modal-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 0.5px solid var(--border-strong);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  background: #fff;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.modal-input:focus { outline: none; border-color: var(--gold); }
+
+.modal-submit {
+  width: 100%;
+  padding: 12px;
+  background: var(--black);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  margin-top: 6px;
+}
+
+/* EMPTY / LOADING */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  gap: 12px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--warm-gray);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .topbar { padding: 0 20px; }
+  .hero { grid-template-columns: 1fr; padding: 40px 20px 32px; }
+  .hero-stats { display: none; }
+  .role-row, .filter-bar { padding: 12px 20px; }
+  .main { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .feed { padding: 16px 20px; }
+  .hero-title { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">Gastro<span>Research</span></div>
+  <nav class="nav">
+    <button class="nav-btn on" onclick="setNav('feed',this)" id="nav-feed">Feed</button>
+    <button class="nav-btn" onclick="setNav('scenarios',this)" id="nav-scenarios">Scenarios</button>
+    <button class="nav-btn" onclick="setNav('archive',this)" id="nav-archive">Archive</button>
+  </nav>
+  <div class="topbar-right">
+    <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
+    <button class="upgrade-btn" onclick="openUpgrade()">Upgrade to Pro</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div>
+    <div class="hero-eyebrow" id="heroEyebrow">Research intelligence</div>
+    <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
+    <p class="hero-sub" id="heroSub">Curated research for sommeliers, chefs, and hospitality professionals — translated into vivid, practical scenarios for your craft.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num" id="totalCount">2503</div>
+      <div class="stat-label">articles</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">26</div>
+      <div class="stat-label">topic areas</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5</div>
+      <div class="stat-label">professions</div>
+    </div>
+  </div>
+</section>
+
+<div class="role-row">
+  <span class="role-label" id="roleLabel">For</span>
+  <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All professionals</button>
+  <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)">Sommelier</button>
+  <button class="role-chip" data-role="chef" onclick="setRole('chef',this)">Chef</button>
+  <button class="role-chip" data-role="creator" onclick="setRole('creator',this)">Meal creator</button>
+  <button class="role-chip" data-role="waiter" onclick="setRole('waiter',this)">Service staff</button>
+  <button class="role-chip" data-role="educator" onclick="setRole('educator',this)">Educator</button>
+</div>
+
+<div class="filter-bar">
+  <select id="topicSel" onchange="loadArticles()">
+    <option value="all">All topics</option>
+    <option value="sommellerie">Sommellerie</option>
+    <option value="gastronomy">Gastronomy</option>
+    <option value="multisensory">Multisensory</option>
+    <option value="culinary_science">Culinary science</option>
+    <option value="food_science">Food science</option>
+    <option value="flavor_science">Flavor science</option>
+    <option value="sensory_evaluation">Sensory evaluation</option>
+    <option value="food_psychology">Food psychology</option>
+    <option value="neurogastronomy">Neurogastronomy</option>
+    <option value="food_anthropology">Food anthropology</option>
+    <option value="atmospherics">Atmospherics</option>
+    <option value="hospitality">Hospitality</option>
+    <option value="servicescape">Servicescape</option>
+    <option value="experiential_dining">Experiential dining</option>
+    <option value="nutritional_science">Nutritional science</option>
+    <option value="food_behavior">Food behavior</option>
+    <option value="appetite_research">Appetite research</option>
+    <option value="food_technology">Food technology</option>
+    <option value="fermentation_science">Fermentation</option>
+    <option value="food_pairing">Food pairing</option>
+    <option value="molecular_mixology">Molecular mixology</option>
+    <option value="culinary_education">Culinary education</option>
+    <option value="sensory_training">Sensory training</option>
+    <option value="novel_foods">Novel foods</option>
+    <option value="crossmodal">Crossmodal</option>
+  </select>
+  <select id="yearSel" onchange="loadArticles()">
+    <option value="all">All years</option>
+    <option value="2020">2020–now</option>
+    <option value="2015">2015–now</option>
+    <option value="2010">2010–now</option>
+    <option value="2000">2000–now</option>
+  </select>
+  <select id="srcSel" onchange="loadArticles()">
+    <option value="all">All sources</option>
+    <option value="pubmed">PubMed</option>
+    <option value="openalex">OpenAlex</option>
+    <option value="arxiv">arXiv</option>
+  </select>
+  <div class="free-bar" id="freeBar">
+    <span class="free-text" id="freeText">5 free articles today</span>
+    <div class="free-track"><div class="free-fill" id="freeFill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="feed">
+    <div class="feed-header">
+      <span class="feed-count" id="feedCount"></span>
+    </div>
+    <div id="feedPane">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading research...</span>
+      </div>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="pro-card">
+      <div class="pro-title">Unlock <em>unlimited</em><br>research</div>
+      <ul class="pro-features">
+        <li>Unlimited articles daily</li>
+        <li>All 5 profession scenarios</li>
+        <li>Weekly research digest</li>
+        <li>Full 40-year archive</li>
+        <li>Export & share tools</li>
+      </ul>
+      <button class="pro-btn" onclick="openUpgrade()">Start free trial →</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title" id="topicsTitle">Topics</div>
+      <div id="topicList"></div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal-bg" id="upgradeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeUpgrade()">×</button>
+    <div class="modal-eyebrow">GastroResearch Pro</div>
+    <div class="modal-title" id="modalTitle">Unlock the full<br>research library</div>
+    <div class="plan-grid">
+      <div class="plan-card selected" onclick="selectPlan(this,'monthly')">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">€12<span style="font-size:14px;color:var(--text-tertiary)">/mo</span></div>
+        <div class="plan-desc">Cancel anytime</div>
+      </div>
+      <div class="plan-card" onclick="selectPlan(this,'annual')">
+        <div class="plan-name">Annual</div>
+        <div class="plan-price">€99<span style="font-size:14px;color:var(--text-tertiary)">/yr</span></div>
+        <div class="plan-desc">Save 31%</div>
+      </div>
+    </div>
+    <input class="modal-input" type="email" placeholder="your@email.com" id="upgradeEmail">
+    <button class="modal-submit" onclick="submitUpgrade()" id="modalSubmit">Start 14-day free trial</button>
+  </div>
+</div>
+
+<script>
+const SB = 'https://igmkzhdovyhbfgjomrsc.supabase.co/rest/v1'
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbWt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
+const H = { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+
+let lang = 'en'
+let role = 'all'
+let articles = []
+let freeCount = parseInt(localStorage.getItem('freeCount') || '0')
+let freeDate = localStorage.getItem('freeDate') || ''
+let isPro = localStorage.getItem('isPro') === 'true'
+const FREE_LIMIT = 5
+const today = new Date().toDateString()
+
+if (freeDate !== today) { freeCount = 0; localStorage.setItem('freeDate', today) }
+
+const T = {
+  en: {
+    eyebrow: 'Research intelligence',
+    title: 'Where <em>science</em><br>meets the table',
+    sub: 'Curated research for sommeliers, chefs, and hospitality professionals — translated into vivid, practical scenarios for your craft.',
+    forRole: 'For',
+    scenarioLabel: 'Practical scenario',
+    limitation: 'Limitation',
+    readPaper: 'Read paper',
+    copy: 'Copy link',
+    share: 'Share',
+    freeLeft: n => `${n} free article${n !== 1 ? 's' : ''} today`,
+    locked: 'Upgrade to Pro to continue reading',
+    topicsTitle: 'Topics',
+    roles: { all: 'All professionals', sommelier: 'Sommelier', chef: 'Chef', creator: 'Meal creator', waiter: 'Service staff', educator: 'Educator' }
+  },
+  sv: {
+    eyebrow: 'Forskningsintelligens',
+    title: 'Där <em>vetenskap</em><br>möter bordet',
+    sub: 'Kurerad forskning för sommellierer, kockar och hospitality-proffs — översatt till levande, praktiska scenarier för ditt hantverk.',
+    forRole: 'För',
+    scenarioLabel: 'Praktiskt scenario',
+    limitation: 'Begränsning',
+    readPaper: 'Läs artikel',
+    copy: 'Kopiera länk',
+    share: 'Dela',
+    freeLeft: n => `${n} gratis artikel${n !== 1 ? 'ar' : ''} idag`,
+    locked: 'Uppgradera till Pro för att fortsätta läsa',
+    topicsTitle: 'Ämnen',
+    roles: { all: 'Alla yrkesroller', sommelier: 'Sommelier', chef: 'Kock', creator: 'Måltidsskapare', waiter: 'Servicepersonal', educator: 'Utbildare' }
+  }
+}
+
+function t(key, ...args) {
+  const l = T[lang]
+  if (typeof l[key] === 'function') return l[key](...args)
+  return l[key] || key
+}
+
+function toggleLang() {
+  lang = lang === 'en' ? 'sv' : 'en'
+  document.getElementById('langBtn').textContent = lang === 'en' ? 'SV' : 'EN'
+  updateTexts()
+  renderFeed()
+}
+
+function updateTexts() {
+  document.getElementById('heroEyebrow').textContent = t('eyebrow')
+  document.getElementById('heroTitle').innerHTML = t('title')
+  document.getElementById('heroSub').textContent = t('sub')
+  document.getElementById('roleLabel').textContent = t('forRole')
+  document.getElementById('topicsTitle').textContent = t('topicsTitle')
+  document.querySelectorAll('.role-chip').forEach(btn => {
+    btn.textContent = t('roles')[btn.dataset.role] || btn.dataset.role
+  })
+  updateFreeBar()
+}
+
+function updateFreeBar() {
+  const remaining = Math.max(0, FREE_LIMIT - freeCount)
+  document.getElementById('freeText').textContent = t('freeLeft', remaining)
+  document.getElementById('freeFill').style.width = Math.round((freeCount / FREE_LIMIT) * 100) + '%'
+  document.getElementById('freeBar').style.display = isPro ? 'none' : 'flex'
+}
+
+function setNav(nav, btn) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'))
+  btn.classList.add('on')
+  if (nav === 'scenarios') {
+    document.getElementById('topicSel').value = 'all'
+    loadArticles(true)
+  } else if (nav === 'archive') {
+    document.getElementById('yearSel').value = '1985'
+    loadArticles()
+  } else {
+    loadArticles()
+  }
+}
+
+function setRole(r, btn) {
+  role = r
+  document.querySelectorAll('.role-chip').forEach(b => b.classList.remove('on'))
+  btn.classList.add('on')
+  renderFeed()
+}
+
+function topicBg(topic) {
+  const m = { sommellerie: '#F0E6C0', gastronomy: '#EEEDFE', multisensory: '#E1F5EE', culinary_science: '#FAEEDA', food_science: '#EAF3DE', flavor_science: '#FAECE7', sensory_evaluation: '#E6F1FB', food_psychology: '#FBEAF0', neurogastronomy: '#EEEDFE', atmospherics: '#F1EFE8', experiential_dining: '#FAEEDA', crossmodal: '#E1F5EE', novel_foods: '#FAEEDA', fermentation_science: '#EAF3DE', food_pairing: '#FAECE7' }
+  return m[topic] || '#F0E6C0'
+}
+
+function topicFg(topic) {
+  const m = { sommellerie: '#7A6118', gastronomy: '#534AB7', multisensory: '#0F6E56', culinary_science: '#854F0B', food_science: '#3B6D11', flavor_science: '#993C1D', sensory_evaluation: '#185FA5', food_psychology: '#993356', neurogastronomy: '#534AB7', atmospherics: '#444441', experiential_dining: '#854F0B', crossmodal: '#0F6E56', novel_foods: '#854F0B', fermentation_science: '#3B6D11', food_pairing: '#993C1D' }
+  return m[topic] || '#7A6118'
+}
+
+function getScenario(a) {
+  if (role !== 'all') {
+    const key = 'scenario_' + role
+    if (a[key] && a[key].length > 10) return a[key]
+  }
+  if (a.scenario && a.scenario.length > 10) return a.scenario
+  return null
+}
+
+function cardHTML(a, idx) {
+  const locked = !isPro && idx >= FREE_LIMIT
+  const scenario = getScenario(a)
+  const topicLabel = (a.topic || '').replace(/_/g, ' ')
+
+  const inner = `
+    <div class="card-top">
+      <span class="topic-badge" style="background:${topicBg(a.topic)};color:${topicFg(a.topic)}">${topicLabel}</span>
+      <span class="source-badge">${a.source_label || ''}</span>
+      ${a.study_type ? `<span class="study-badge">${a.study_type}</span>` : ''}
+    </div>
+    <div class="card-title">${a.title || ''}</div>
+    <div class="card-insight">${a.insight || ''}</div>
+    ${scenario && !locked ? `
+      <div class="scenario-block">
+        <div class="scenario-eyebrow">${t('scenarioLabel')}</div>
+        ${role !== 'all' ? `<div class="scenario-role-label">${t('roles')[role] || role}</div>` : ''}
+        <div class="scenario-text">${scenario}</div>
+      </div>` : ''}
+    ${a.limitation && !locked ? `<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>` : ''}
+    <div class="card-footer">
+      <span class="card-meta">${a.authors || ''} · ${a.year || ''}</span>
+      <div class="card-actions">
+        ${a.url && !locked ? `<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url)}')">${t('readPaper')}</button>` : ''}
+        <button class="action-btn" onclick="copyLink('${encodeURIComponent(a.url || a.title || '')}')">${t('copy')}</button>
+      </div>
+    </div>`
+
+  if (locked) {
+    return `<div class="article-card locked">
+      ${inner}
+      <div class="lock-cta">
+        <span class="lock-msg">${t('locked')}</span>
+        <button class="upgrade-btn" onclick="openUpgrade()" style="font-size:12px;padding:6px 16px">Upgrade to Pro</button>
+      </div>
+    </div>`
+  }
+  return `<div class="article-card">${inner}</div>`
+}
+
+function renderFeed() {
+  const pane = document.getElementById('feedPane')
+  if (!articles.length) {
+    pane.innerHTML = '<div class="loading-state"><span>No articles found.</span></div>'
+    return
+  }
+  const year = document.getElementById('yearSel').value
+  let filtered = articles
+  if (year !== 'all') filtered = filtered.filter(a => parseInt(a.year || '0') >= parseInt(year))
+  document.getElementById('feedCount').textContent = filtered.length + ' articles'
+  pane.innerHTML = filtered.slice(0, 30).map((a, i) => cardHTML(a, i)).join('')
+  updateFreeBar()
+}
+
+async function loadArticles(scenariosOnly = false) {
+  const topic = document.getElementById('topicSel').value
+  const src = document.getElementById('srcSel').value
+  const pane = document.getElementById('feedPane')
+  pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
+
+  let fields = 'id,title,topic,source_label,insight,limitation,study_type,year,authors,url,scenario'
+  if (role !== 'all') fields += `,scenario_${role}`
+
+  let url = `${SB}/articles?select=${fields}&order=year.desc,fetched_at.desc&limit=60`
+  if (topic !== 'all') url += `&topic=eq.${topic}`
+  if (src !== 'all') url += `&source=eq.${src}`
+  if (scenariosOnly) url += `&scenario_sommelier=not.is.null`
+
+  try {
+    const r = await fetch(url, { headers: H })
+    articles = await r.json()
+    renderFeed()
+    loadTopicCounts()
+  } catch (e) {
+    pane.innerHTML = '<div class="loading-state"><span>Connection error. Please refresh.</span></div>'
+  }
+}
+
+async function loadTopicCounts() {
+  try {
+    const r = await fetch(`${SB}/articles?select=topic&limit=2000`, { headers: H })
+    const data = await r.json()
+    const counts = {}
+    data.forEach(a => { counts[a.topic] = (counts[a.topic] || 0) + 1 })
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10)
+    document.getElementById('topicList').innerHTML = sorted.map(([topic, count]) => `
+      <div class="topic-item" onclick="filterTopic('${topic}')">
+        <div class="topic-dot" style="background:${topicFg(topic)}"></div>
+        <span class="topic-name">${topic.replace(/_/g, ' ')}</span>
+        <span class="topic-count">${count}</span>
+      </div>`).join('')
+  } catch (e) {}
+}
+
+function filterTopic(topic) {
+  document.getElementById('topicSel').value = topic
+  loadArticles()
+}
+
+function openPaper(url) {
+  const u = decodeURIComponent(url)
+  if (u && u.startsWith('http')) window.open(u, '_blank')
+}
+
+function copyLink(urlOrTitle) {
+  const u = decodeURIComponent(urlOrTitle)
+  navigator.clipboard?.writeText(u)
+}
+
+function openUpgrade() {
+  document.getElementById('upgradeModal').classList.add('open')
+}
+
+function closeUpgrade() {
+  document.getElementById('upgradeModal').classList.remove('open')
+}
+
+function selectPlan(card, plan) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'))
+  card.classList.add('selected')
+}
+
+function submitUpgrade() {
+  const email = document.getElementById('upgradeEmail').value
+  if (!email || !email.includes('@')) { alert('Please enter a valid email address.'); return }
+  document.getElementById('modalSubmit').textContent = 'Processing...'
+  setTimeout(() => {
+    isPro = true
+    localStorage.setItem('isPro', 'true')
+    closeUpgrade()
+    renderFeed()
+    document.getElementById('modalSubmit').textContent = 'Start 14-day free trial'
+  }, 1500)
+}
+
+loadArticles()
+</script>
+</body>
+</html>
