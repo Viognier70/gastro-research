@@ -6,209 +6,207 @@
 <title>Gusto Science — Research Intelligence for Culinary Professionals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root {
-  --gold: #C9A84C;
-  --gold-light: #F5EDD3;
-  --gold-dark: #8B6914;
-  --black: #0C0B09;
-  --white: #FDFCF8;
-  --warm-100: #F7F4ED;
-  --warm-200: #EDE8DC;
-  --warm-300: #D9D1BF;
-  --text-primary: #0C0B09;
-  --text-secondary: #5C5649;
-  --text-tertiary: #9C9484;
-  --border: rgba(12,11,9,0.08);
-  --border-mid: rgba(12,11,9,0.15);
-  --episteme: #1A3A5C;
-  --episteme-light: #E8EFF6;
-  --techne: #2D5016;
-  --techne-light: #EAF0E5;
-  --phronesis: #5C2D00;
-  --phronesis-light: #F5EDE3;
-  --mixed: #3D1A5C;
-  --mixed-light: #EDE8F5;
-}
+:root{--gold:#C9A84C;--gold-light:#F5EDD3;--gold-dark:#8B6914;--black:#0C0B09;--white:#FDFCF8;--warm-100:#F7F4ED;--warm-200:#EDE8DC;--text-primary:#0C0B09;--text-secondary:#5C5649;--text-tertiary:#9C9484;--border:rgba(12,11,9,0.08);--border-mid:rgba(12,11,9,0.15);--episteme:#1A3A5C;--episteme-light:#E8EFF6;--techne:#2D5016;--techne-light:#EAF0E5;--phronesis:#5C2D00;--phronesis-light:#F5EDE3;--mixed:#3D1A5C;--mixed-light:#EDE8F5}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);min-height:100vh}
 
-.topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px}
-.logo{display:flex;align-items:baseline;gap:2px}
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
+.logo{display:flex;align-items:baseline;gap:2px;flex-shrink:0}
 .logo-gusto{font-family:'Playfair Display',serif;font-size:19px;font-weight:500;color:var(--text-primary)}
 .logo-science{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;margin-left:6px}
-.nav{display:flex;gap:2px}
-.nav-btn{font-family:'Outfit',sans-serif;font-size:13px;padding:6px 16px;border-radius:20px;border:none;background:none;cursor:pointer;color:var(--text-secondary);transition:all .15s}
-.nav-btn:hover{color:var(--text-primary);background:var(--warm-100)}
-.nav-btn.on{background:var(--black);color:var(--white)}
-.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .academy-link{font-size:12px;color:var(--gold-dark);border:0.5px solid var(--gold);padding:5px 14px;border-radius:20px;cursor:pointer;background:var(--gold-light);text-decoration:none;transition:all .15s}
 .academy-link:hover{background:var(--gold);color:white}
-.lang-btn{font-size:11px;letter-spacing:.08em;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary)}
-.upgrade-btn{font-size:13px;padding:8px 20px;border-radius:20px;background:var(--gold);color:var(--white);border:none;cursor:pointer;font-weight:500;transition:opacity .15s;font-family:'Outfit',sans-serif}
+.lang-btn{font-size:11px;letter-spacing:.08em;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);font-family:'Outfit',sans-serif}
+.auth-btn{font-size:13px;padding:7px 18px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);font-family:'Outfit',sans-serif;transition:all .15s}
+.auth-btn:hover{border-color:var(--gold);color:var(--gold-dark)}
+.upgrade-btn{font-size:13px;padding:8px 18px;border-radius:20px;background:var(--gold);color:var(--white);border:none;cursor:pointer;font-weight:500;font-family:'Outfit',sans-serif;transition:opacity .15s}
 .upgrade-btn:hover{opacity:.88}
 
-.hero{padding:48px 32px 36px;border-bottom:0.5px solid var(--border);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;background:linear-gradient(135deg,var(--white) 0%,var(--warm-100) 100%)}
+/* HERO */
+.hero{padding:44px 32px 32px;border-bottom:0.5px solid var(--border);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;background:linear-gradient(135deg,var(--white) 0%,var(--warm-100) 100%)}
 .hero-eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:400;margin-bottom:12px}
-.hero-title{font-family:'Playfair Display',serif;font-size:42px;font-weight:400;line-height:1.15;margin-bottom:14px}
+.hero-title{font-family:'Playfair Display',serif;font-size:40px;font-weight:400;line-height:1.15;margin-bottom:12px}
 .hero-title em{font-style:italic;color:var(--gold-dark)}
-.hero-sub{font-size:14px;color:var(--text-secondary);line-height:1.75;font-weight:300;max-width:480px;margin-bottom:20px}
-.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:14px;overflow:hidden}
-.stat-item{background:var(--white);padding:18px 22px}
-.stat-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:400;line-height:1;margin-bottom:4px}
+.hero-sub{font-size:14px;color:var(--text-secondary);line-height:1.75;font-weight:300;max-width:460px;margin-bottom:18px}
+.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:12px;overflow:hidden}
+.stat-item{background:var(--white);padding:16px 20px}
+.stat-num{font-family:'Playfair Display',serif;font-size:30px;font-weight:400;line-height:1;margin-bottom:3px}
 .stat-label{font-size:11px;color:var(--text-tertiary);letter-spacing:.04em;font-weight:300}
 .new-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;background:var(--techne-light);color:var(--techne);padding:4px 12px;border-radius:20px}
 .new-dot{width:6px;height:6px;border-radius:50%;background:var(--techne);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-.knowledge-bar{background:var(--black);padding:16px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.knowledge-title{font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:rgba(255,255,255,.4);white-space:nowrap}
-.knowledge-types{display:flex;gap:6px;flex-wrap:wrap;flex:1}
-.k-chip{font-size:11px;padding:5px 14px;border-radius:20px;cursor:pointer;border:0.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);background:none;transition:all .15s;font-family:'Outfit',sans-serif;white-space:nowrap}
+/* SMART FILTER BAR */
+.filter-section{border-bottom:0.5px solid var(--border);background:var(--black)}
+
+.knowledge-row{padding:12px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.section-label{font-family:'Playfair Display',serif;font-size:12px;font-style:italic;color:rgba(255,255,255,.4);white-space:nowrap}
+.k-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.k-chip{font-size:11px;padding:4px 12px;border-radius:20px;cursor:pointer;border:0.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.55);background:none;transition:all .15s;font-family:'Outfit',sans-serif;white-space:nowrap}
 .k-chip:hover{border-color:var(--gold);color:var(--gold-light)}
+.k-chip.on.all{background:var(--gold);color:#fff;border-color:var(--gold)}
 .k-chip.on.episteme{background:var(--episteme);color:#fff;border-color:var(--episteme)}
 .k-chip.on.techne{background:var(--techne);color:#fff;border-color:var(--techne)}
 .k-chip.on.phronesis{background:var(--phronesis);color:#fff;border-color:var(--phronesis)}
 .k-chip.on.mixed{background:var(--mixed);color:#fff;border-color:var(--mixed)}
-.k-chip.on.all{background:var(--gold);color:#fff;border-color:var(--gold)}
-.k-info-btn{font-size:11px;color:rgba(255,255,255,.35);cursor:pointer;border:0.5px solid rgba(255,255,255,.12);padding:4px 12px;border-radius:20px;background:none;font-family:'Outfit',sans-serif;white-space:nowrap}
+.k-info-btn{font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;border:0.5px solid rgba(255,255,255,.1);padding:3px 10px;border-radius:20px;background:none;font-family:'Outfit',sans-serif;white-space:nowrap}
 
-.role-row{padding:12px 32px;border-bottom:0.5px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--warm-100)}
+.role-row{padding:10px 32px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--warm-100);border-bottom:0.5px solid var(--border)}
 .role-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-right:4px}
-.role-chip{font-size:12px;padding:5px 14px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--white);cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
+.role-chip{font-size:12px;padding:4px 13px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--white);cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
 .role-chip:hover{border-color:var(--gold);color:var(--gold-dark)}
 .role-chip.on{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
 
-.filter-bar{padding:10px 32px;border-bottom:0.5px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.filter-bar select,.search-input{font-family:'Outfit',sans-serif;font-size:12px;padding:6px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary);cursor:pointer}
-.search-input{min-width:200px;cursor:text}
+.filters-row{padding:10px 32px;border-bottom:0.5px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--white)}
+.filter-select{font-family:'Outfit',sans-serif;font-size:12px;padding:5px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary);cursor:pointer}
+.search-wrap{position:relative;flex:1;min-width:200px;max-width:320px}
+.search-input{width:100%;font-family:'Outfit',sans-serif;font-size:12px;padding:5px 10px 5px 30px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary)}
 .search-input::placeholder{color:var(--text-tertiary)}
-.free-bar{margin-left:auto;display:flex;align-items:center;gap:8px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-tertiary);pointer-events:none}
+.free-bar{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .free-text{font-size:11px;color:var(--text-tertiary)}
-.free-track{width:60px;height:2px;background:var(--warm-200);border-radius:2px;overflow:hidden}
+.free-track{width:50px;height:2px;background:var(--warm-200);border-radius:2px;overflow:hidden}
 .free-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
 
-.main{display:grid;grid-template-columns:1fr 300px;min-height:calc(100vh - 54px)}
-.feed{padding:18px 32px;border-right:0.5px solid var(--border)}
-.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.feed-count{font-size:12px;color:var(--text-tertiary)}
+/* SAVED TAB */
+.saved-tab{font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);font-family:'Outfit',sans-serif;transition:all .15s}
+.saved-tab.on{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
 
-.article-card{border:0.5px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:8px;background:var(--white);transition:border-color .15s;position:relative;overflow:hidden}
+/* MAIN */
+.main{display:grid;grid-template-columns:1fr 290px;min-height:calc(100vh - 54px)}
+.feed{padding:18px 32px;border-right:0.5px solid var(--border)}
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.feed-count{font-size:12px;color:var(--text-tertiary)}
+.sort-select{font-family:'Outfit',sans-serif;font-size:12px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary)}
+
+/* ARTICLE CARD */
+.article-card{border:0.5px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:8px;background:var(--white);transition:border-color .15s;position:relative;overflow:hidden}
 .article-card:hover{border-color:var(--gold)}
+.article-card.saved-card{border-color:var(--gold);background:var(--gold-light)}
 .article-card.locked::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,rgba(253,252,248,.97) 65%);border-radius:12px;pointer-events:none}
-.lock-cta{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px}
+.lock-cta{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px}
 .lock-msg{font-size:12px;color:var(--text-secondary);white-space:nowrap;background:var(--white);padding:4px 14px;border-radius:20px;border:0.5px solid var(--border-mid)}
 
-.card-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
-.topic-badge{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:500;background:var(--gold-light);color:var(--gold-dark)}
-.source-badge,.study-badge{font-size:10px;padding:2px 8px;border-radius:20px;border:0.5px solid var(--border-mid);color:var(--text-tertiary)}
-.knowledge-badge{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:500}
+.card-top{display:flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap}
+.topic-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;background:var(--gold-light);color:var(--gold-dark)}
+.source-badge,.study-badge{font-size:10px;padding:2px 7px;border-radius:20px;border:0.5px solid var(--border-mid);color:var(--text-tertiary)}
+.knowledge-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
 .knowledge-badge.episteme{background:var(--episteme-light);color:var(--episteme)}
 .knowledge-badge.techne{background:var(--techne-light);color:var(--techne)}
 .knowledge-badge.phronesis{background:var(--phronesis-light);color:var(--phronesis)}
 .knowledge-badge.mixed{background:var(--mixed-light);color:var(--mixed)}
-.relevance-badge{font-size:10px;padding:2px 9px;border-radius:20px;background:var(--gold-light);color:var(--gold-dark);border:0.5px solid var(--gold)}
+.relevance-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--gold-light);color:var(--gold-dark);border:0.5px solid var(--gold)}
 
-.card-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:400;line-height:1.4;margin-bottom:5px}
-.card-insight{font-size:13px;color:var(--text-secondary);line-height:1.65;margin-bottom:10px;font-weight:300}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:400;line-height:1.4;margin-bottom:5px}
+.card-insight{font-size:13px;color:var(--text-secondary);line-height:1.65;margin-bottom:8px;font-weight:300}
 
-.imrad-block{display:none;background:var(--warm-100);border-radius:8px;padding:12px 14px;margin-bottom:10px;gap:8px}
+.imrad-block{display:none;background:var(--warm-100);border-radius:8px;padding:11px 13px;margin-bottom:8px;gap:8px}
 .imrad-block.open{display:grid;grid-template-columns:1fr 1fr}
-.imrad-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);font-weight:500;margin-bottom:3px}
-.imrad-text{font-size:12px;color:var(--text-secondary);line-height:1.5;font-weight:300}
+.imrad-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);font-weight:500;margin-bottom:2px}
+.imrad-text{font-size:11px;color:var(--text-secondary);line-height:1.5;font-weight:300}
 
-.scenario-block{background:var(--warm-100);border-left:2px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px}
+.scenario-block{background:var(--warm-100);border-left:2px solid var(--gold);border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:8px}
 .scenario-eyebrow{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);font-weight:500;margin-bottom:3px}
-.scenario-role-label{font-size:11px;color:var(--gold-dark);font-weight:500;margin-bottom:6px;font-family:'Playfair Display',serif;font-style:italic}
+.scenario-role-label{font-size:11px;color:var(--gold-dark);font-weight:500;margin-bottom:5px;font-family:'Playfair Display',serif;font-style:italic}
 .scenario-text{font-size:12px;color:var(--text-secondary);line-height:1.7;font-weight:300}
 
-.card-limitation{font-size:11px;color:var(--text-tertiary);margin-bottom:8px;padding-top:8px;border-top:0.5px solid var(--border);font-weight:300}
-.card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-limitation{font-size:11px;color:var(--text-tertiary);margin-bottom:7px;padding-top:7px;border-top:0.5px solid var(--border);font-weight:300}
+.card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .card-meta{font-size:11px;color:var(--text-tertiary);font-weight:300}
-.card-actions{display:flex;gap:6px}
-.action-btn{font-size:11px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
+.card-actions{display:flex;gap:5px;flex-wrap:wrap}
+.action-btn{font-size:11px;padding:4px 11px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
 .action-btn:hover{border-color:var(--gold);color:var(--gold-dark)}
 .action-btn.primary{background:var(--black);color:var(--white);border-color:var(--black)}
-.action-btn.share{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
+.action-btn.share-btn{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
+.save-btn{font-size:11px;padding:4px 11px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-tertiary);transition:all .15s;font-family:'Outfit',sans-serif}
+.save-btn:hover{border-color:var(--gold);color:var(--gold)}
+.save-btn.saved{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
 .imrad-toggle{font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-tertiary);font-family:'Outfit',sans-serif;transition:all .15s}
-.imrad-toggle:hover{color:var(--gold-dark);border-color:var(--gold)}
+.imrad-toggle:hover,.imrad-toggle.open{color:var(--gold-dark);border-color:var(--gold)}
 
-.sidebar{padding:18px;overflow-y:auto}
-.sidebar-section{margin-bottom:22px}
-.sidebar-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px}
-
-.pro-card{background:var(--black);border-radius:12px;padding:18px;margin-bottom:14px}
-.pro-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:400;color:var(--white);margin-bottom:6px;line-height:1.3}
+/* SIDEBAR */
+.sidebar{padding:16px;overflow-y:auto}
+.sidebar-section{margin-bottom:20px}
+.sidebar-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px}
+.pro-card{background:var(--black);border-radius:12px;padding:16px;margin-bottom:14px}
+.pro-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:400;color:var(--white);margin-bottom:6px;line-height:1.3}
 .pro-title em{color:var(--gold-light);font-style:italic}
 .pro-features{list-style:none;margin-bottom:14px}
-.pro-features li{font-size:12px;color:rgba(255,255,255,.55);padding:3px 0;display:flex;align-items:center;gap:8px;font-weight:300}
+.pro-features li{font-size:11px;color:rgba(255,255,255,.5);padding:3px 0;display:flex;align-items:center;gap:7px;font-weight:300}
 .pro-features li::before{content:'';width:3px;height:3px;border-radius:50%;background:var(--gold);flex-shrink:0}
 .pro-btn{width:100%;padding:9px;background:var(--gold);color:var(--white);border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;transition:opacity .15s}
 .pro-btn:hover{opacity:.88}
-
-.admin-btn{width:100%;padding:8px;background:var(--warm-100);color:var(--text-secondary);border:0.5px solid var(--border-mid);border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:6px;transition:all .15s}
+.admin-btn{width:100%;padding:7px;background:var(--warm-100);color:var(--text-secondary);border:0.5px solid var(--border-mid);border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:5px;transition:all .15s}
 .admin-btn:hover{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
-
-.topic-item{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;border-bottom:0.5px solid var(--border)}
-.topic-item:last-child{border-bottom:none}
+.topic-item,.journal-item{display:flex;align-items:center;gap:7px;padding:4px 0;cursor:pointer;border-bottom:0.5px solid var(--border)}
+.topic-item:last-child,.journal-item:last-child{border-bottom:none}
 .topic-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.topic-name{font-size:12px;color:var(--text-secondary);flex:1;text-transform:capitalize;font-weight:300}
-.topic-count{font-size:11px;color:var(--text-tertiary)}
+.topic-name,.journal-name{font-size:11px;color:var(--text-secondary);flex:1;text-transform:capitalize;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topic-count,.journal-count{font-size:10px;color:var(--text-tertiary);flex-shrink:0}
+.topic-item:hover .topic-name,.journal-item:hover .journal-name{color:var(--gold-dark)}
 
-.journal-item{display:flex;align-items:center;justify-content:space-between;padding:4px 0;cursor:pointer;border-bottom:0.5px solid var(--border)}
-.journal-item:last-child{border-bottom:none}
-.journal-item:hover .journal-name{color:var(--gold-dark)}
-.journal-name{font-size:11px;color:var(--text-secondary);font-weight:300;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
-.journal-count{font-size:10px;color:var(--text-tertiary);margin-left:6px;flex-shrink:0}
-
+/* MODALS */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(12,11,9,.6);z-index:200;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{background:var(--white);border-radius:16px;padding:32px;width:min(560px,92vw);position:relative;max-height:90vh;overflow-y:auto}
+.modal{background:var(--white);border-radius:16px;padding:28px 32px;width:min(540px,92vw);position:relative;max-height:90vh;overflow-y:auto}
 .modal-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-size:16px;color:var(--text-secondary);display:flex;align-items:center;justify-content:center}
 .modal-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.modal-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;margin-bottom:16px;line-height:1.2}
+.modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:14px;line-height:1.2}
 
-.knowledge-card{border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.knowledge-card{border-radius:10px;padding:13px 15px;margin-bottom:8px}
 .knowledge-card.episteme{background:var(--episteme-light);border-left:3px solid var(--episteme)}
 .knowledge-card.techne{background:var(--techne-light);border-left:3px solid var(--techne)}
 .knowledge-card.phronesis{background:var(--phronesis-light);border-left:3px solid var(--phronesis)}
 .kc-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:500;margin-bottom:2px}
-.kc-title.episteme{color:var(--episteme)}
-.kc-title.techne{color:var(--techne)}
-.kc-title.phronesis{color:var(--phronesis)}
+.kc-title.episteme{color:var(--episteme)}.kc-title.techne{color:var(--techne)}.kc-title.phronesis{color:var(--phronesis)}
 .kc-greek{font-size:11px;color:var(--text-tertiary);margin-bottom:5px;font-style:italic}
-.kc-text{font-size:12px;line-height:1.6;color:var(--text-secondary);font-weight:300;margin-bottom:6px}
-.kc-example{font-size:11px;line-height:1.55;color:var(--text-tertiary);font-style:italic;border-top:0.5px solid rgba(0,0,0,.06);padding-top:6px;margin-top:4px}
+.kc-text{font-size:12px;line-height:1.6;color:var(--text-secondary);font-weight:300;margin-bottom:8px}
+.kc-roles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kc-role{background:rgba(255,255,255,.6);border-radius:6px;padding:7px 9px}
+.kc-role-title{font-size:10px;font-weight:500;color:var(--text-primary);margin-bottom:2px;letter-spacing:.04em}
+.kc-role-text{font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic;font-weight:300}
 
 .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.plan-card{border:0.5px solid var(--border-mid);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s}
+.plan-card{border:0.5px solid var(--border-mid);border-radius:10px;padding:13px;cursor:pointer;transition:border-color .15s}
 .plan-card:hover,.plan-card.selected{border-color:var(--gold)}
 .plan-card.selected{background:var(--gold-light)}
-.plan-name{font-size:13px;font-weight:500;margin-bottom:4px}
-.plan-price{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;color:var(--gold-dark);margin-bottom:2px}
+.plan-name{font-size:13px;font-weight:500;margin-bottom:3px}
+.plan-price{font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--gold-dark);margin-bottom:2px}
 .plan-desc{font-size:11px;color:var(--text-tertiary)}
-.modal-input{width:100%;padding:10px 14px;border:0.5px solid var(--border-mid);border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;background:var(--white);color:var(--text-primary);margin-bottom:8px}
+.modal-input{width:100%;padding:9px 13px;border:0.5px solid var(--border-mid);border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;background:var(--white);color:var(--text-primary);margin-bottom:8px}
 .modal-input:focus{outline:none;border-color:var(--gold)}
-.modal-submit{width:100%;padding:12px;background:var(--black);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px}
+.modal-submit{width:100%;padding:11px;background:var(--black);color:var(--white);border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px}
+.modal-link{font-size:12px;color:var(--gold-dark);cursor:pointer;text-align:center;display:block;margin-top:10px}
 
-.share-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.share-option{padding:12px;border:0.5px solid var(--border-mid);border-radius:8px;cursor:pointer;text-align:center;font-size:12px;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
+.share-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.share-option{padding:11px;border:0.5px solid var(--border-mid);border-radius:8px;cursor:pointer;text-align:center;font-size:12px;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
 .share-option:hover{border-color:var(--gold);color:var(--gold-dark);background:var(--gold-light)}
 
 .loading-state{display:flex;flex-direction:column;align-items:center;padding:60px 20px;color:var(--text-tertiary);font-size:13px;gap:12px;font-weight:300}
 .spinner{width:20px;height:20px;border:1.5px solid var(--warm-200);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+.user-menu{position:relative}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--gold-light);border:0.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--gold-dark);cursor:pointer;font-weight:500}
+.user-dropdown{display:none;position:absolute;right:0;top:36px;background:var(--white);border:0.5px solid var(--border-mid);border-radius:10px;padding:8px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.user-dropdown.open{display:block}
+.user-email{font-size:11px;color:var(--text-tertiary);padding:4px 8px 8px;border-bottom:0.5px solid var(--border);margin-bottom:4px}
+.dropdown-item{font-size:12px;color:var(--text-secondary);padding:6px 8px;border-radius:6px;cursor:pointer;display:block;font-family:'Outfit',sans-serif}
+.dropdown-item:hover{background:var(--warm-100);color:var(--text-primary)}
+
 @media(max-width:768px){
   .topbar{padding:0 16px}
-  .hero{grid-template-columns:1fr;padding:32px 16px}
+  .hero{grid-template-columns:1fr;padding:28px 16px}
   .hero-stats{display:none}
-  .knowledge-bar{padding:12px 16px}
-  .role-row,.filter-bar{padding:10px 16px}
+  .knowledge-row,.role-row,.filters-row{padding:10px 16px}
   .main{grid-template-columns:1fr}
   .sidebar{display:none}
-  .feed{padding:14px 16px}
-  .hero-title{font-size:32px}
+  .feed{padding:12px 16px}
+  .hero-title{font-size:30px}
   .imrad-block.open{grid-template-columns:1fr}
 }
 </style>
@@ -220,15 +218,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <span class="logo-gusto">Gusto</span>
     <span class="logo-science">Science</span>
   </div>
-  <nav class="nav">
-    <button class="nav-btn on" onclick="setNav('feed',this)">Feed</button>
-    <button class="nav-btn" onclick="setNav('scenarios',this)">Scenarios</button>
-    <button class="nav-btn" onclick="setNav('archive',this)">Archive</button>
-  </nav>
   <div class="topbar-right">
     <a href="https://gusto.academy" target="_blank" class="academy-link">Gusto Academy ↗</a>
     <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
-    <button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade to Pro</button>
+    <div id="authArea">
+      <button class="auth-btn" onclick="openModal('authModal')">Sign in</button>
+      <button class="upgrade-btn" onclick="openModal('upgradeModal')">Start free trial</button>
+    </div>
+    <div id="userArea" style="display:none" class="user-menu">
+      <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()">G</div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-email" id="userEmail"></div>
+        <div class="dropdown-item" onclick="showSaved()">⭐ Saved articles</div>
+        <div class="dropdown-item" onclick="openModal('upgradeModal')">↑ Upgrade to Pro</div>
+        <div class="dropdown-item" onclick="signOut()">Sign out</div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -237,7 +242,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div class="hero-eyebrow" id="heroEyebrow">Research intelligence for culinary professionals</div>
     <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
     <p class="hero-sub" id="heroSub">AI-curated research for sommeliers, chefs, and hospitality professionals — with practical scenarios, IMRaD analysis, and Aristotelian knowledge classification.</p>
-    <div class="new-badge" id="newBadge"><div class="new-dot"></div><span id="newCount">Loading...</span></div>
+    <div class="new-badge"><div class="new-dot"></div><span id="newCount">Loading...</span></div>
   </div>
   <div class="hero-stats">
     <div class="stat-item"><div class="stat-num" id="totalCount">2527</div><div class="stat-label">articles indexed</div></div>
@@ -247,16 +252,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </section>
 
-<div class="knowledge-bar">
-  <span class="knowledge-title">Knowledge type</span>
-  <div class="knowledge-types">
-    <button class="k-chip on all" data-k="all" onclick="setKnowledge('all',this)">All</button>
-    <button class="k-chip" data-k="episteme" onclick="setKnowledge('episteme',this)">Episteme — theoretical</button>
-    <button class="k-chip" data-k="techne" onclick="setKnowledge('techne',this)">Techne — craft</button>
-    <button class="k-chip" data-k="phronesis" onclick="setKnowledge('phronesis',this)">Phronesis — practical wisdom</button>
-    <button class="k-chip" data-k="mixed" onclick="setKnowledge('mixed',this)">Mixed</button>
+<div class="filter-section">
+  <div class="knowledge-row">
+    <span class="section-label">Knowledge type</span>
+    <div class="k-chips">
+      <button class="k-chip on all" data-k="all" onclick="setKnowledge('all',this)">All</button>
+      <button class="k-chip" data-k="episteme" onclick="setKnowledge('episteme',this)">Episteme — theoretical</button>
+      <button class="k-chip" data-k="techne" onclick="setKnowledge('techne',this)">Techne — craft</button>
+      <button class="k-chip" data-k="phronesis" onclick="setKnowledge('phronesis',this)">Phronesis — practical wisdom</button>
+      <button class="k-chip" data-k="mixed" onclick="setKnowledge('mixed',this)">Mixed</button>
+    </div>
+    <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is this? →</button>
   </div>
-  <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is this? →</button>
 </div>
 
 <div class="role-row">
@@ -269,8 +276,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <button class="role-chip" data-role="educator" onclick="setRole('educator',this)">Educator</button>
 </div>
 
-<div class="filter-bar">
-  <select id="topicSel" onchange="loadArticles()">
+<div class="filters-row">
+  <select class="filter-select" id="topicSel" onchange="loadArticles()">
     <option value="all">All topics</option>
     <option value="sommellerie">Sommellerie</option>
     <option value="gastronomy">Gastronomy</option>
@@ -298,7 +305,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <option value="novel_foods">Novel foods</option>
     <option value="crossmodal">Crossmodal</option>
   </select>
-  <select id="yearSel" onchange="loadArticles()">
+  <select class="filter-select" id="yearSel" onchange="loadArticles()">
     <option value="all">All years</option>
     <option value="2020">2020–now</option>
     <option value="2015">2015–now</option>
@@ -306,17 +313,21 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <option value="2000">2000–now</option>
     <option value="1985">1985–now</option>
   </select>
-  <select id="srcSel" onchange="loadArticles()">
+  <select class="filter-select" id="srcSel" onchange="loadArticles()">
     <option value="all">All sources</option>
     <option value="pubmed">PubMed</option>
     <option value="openalex">OpenAlex</option>
     <option value="arxiv">arXiv</option>
   </select>
-  <input type="text" class="search-input" id="searchInput" placeholder="Search title, author, journal..." oninput="debounceSearch()">
-  <select id="sortSel" onchange="renderFeed()">
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" class="search-input" id="searchInput" placeholder="Search title, author, journal..." oninput="debounceSearch()">
+  </div>
+  <select class="filter-select" id="sortSel" onchange="renderFeed()">
     <option value="year">Newest first</option>
     <option value="relevance">Role relevance</option>
   </select>
+  <button class="saved-tab" id="savedTab" onclick="toggleSaved()" style="display:none">⭐ Saved</button>
   <div class="free-bar" id="freeBar">
     <span class="free-text" id="freeText">5 free today</span>
     <div class="free-track"><div class="free-fill" id="freeFill" style="width:0%"></div></div>
@@ -332,24 +343,26 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 
   <aside class="sidebar">
-    <div class="pro-card">
-      <div class="pro-title">Unlock <em>unlimited</em><br>research</div>
-      <ul class="pro-features">
-        <li>Unlimited articles daily</li>
-        <li>All 5 profession scenarios</li>
-        <li>IMRaD analysis per article</li>
-        <li>Aristotelian knowledge filter</li>
-        <li>Weekly research digest</li>
-        <li>Save & share collections</li>
-        <li>Manual fetch on demand</li>
-      </ul>
-      <button class="pro-btn" onclick="openModal('upgradeModal')">Start 14-day free trial →</button>
+    <div id="proCardSection">
+      <div class="pro-card">
+        <div class="pro-title">Unlock <em>unlimited</em><br>research</div>
+        <ul class="pro-features">
+          <li>Unlimited articles daily</li>
+          <li>All 5 profession scenarios</li>
+          <li>IMRaD analysis per article</li>
+          <li>Aristotelian knowledge filter</li>
+          <li>Save & share collections</li>
+          <li>Weekly personalized digest</li>
+          <li>Manual fetch on demand</li>
+        </ul>
+        <button class="pro-btn" onclick="openModal('upgradeModal')">Start 14-day free trial →</button>
+      </div>
     </div>
 
     <div class="sidebar-section" id="adminSection" style="display:none">
       <div class="sidebar-title">Admin</div>
       <button class="admin-btn" onclick="adminFetch()">↻ Fetch new research now</button>
-      <div id="adminStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
+      <div id="adminStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:3px"></div>
     </div>
 
     <div class="sidebar-section">
@@ -370,28 +383,58 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <button class="modal-close" onclick="closeModal('knowledgeModal')">×</button>
     <div class="modal-eyebrow">Aristotelian knowledge</div>
     <div class="modal-title">Three forms of knowledge</div>
-    <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:18px;font-weight:300">Aristotle identified three forms of knowledge. Understanding which type a study represents helps you apply it appropriately in professional practice.</p>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;font-weight:300">Aristotle identified three forms of knowledge, each relevant to culinary and hospitality practice in distinct ways. Understanding which type a study represents helps you apply findings appropriately.</p>
 
     <div class="knowledge-card episteme">
-      <div class="kc-title episteme">Episteme</div>
-      <div class="kc-greek">ἐπιστήμη — theoretical, scientific knowledge</div>
-      <div class="kc-text">Universal truths and scientific principles — knowledge that can be proven, replicated, and taught. Apply with high confidence across contexts.</div>
-      <div class="kc-example">Sommelier example: Research shows retronasal olfaction accounts for ~80% of perceived flavor. You can explain with scientific authority why a guest with a cold experiences wine so differently — and use it to guide service decisions with confidence.</div>
+      <div class="kc-title episteme">Episteme — theoretical knowledge</div>
+      <div class="kc-greek">ἐπιστήμη · Universal truths, provable and teachable</div>
+      <div class="kc-text">Scientific principles you can apply with confidence across contexts. In gastronomy: flavour chemistry, sensory physiology, the neuroscience of taste.</div>
+      <div class="kc-roles">
+        <div class="kc-role"><div class="kc-role-title">Sommelier</div><div class="kc-role-text">Retronasal olfaction accounts for ~80% of perceived flavour. Explains scientifically why a guest with a cold experiences wine differently.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Chef</div><div class="kc-role-text">Maillard reactions begin at 140°C. Precise temperature control becomes a scientific decision, not just intuition.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Meal creator</div><div class="kc-role-text">Crossmodal research shows low-pitched music enhances bitter notes. You can design sound environments to shape flavour perception.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Service staff</div><div class="kc-role-text">Studies show red lighting increases appetite. Understanding environmental science helps you read how the room affects your guests.</div></div>
+      </div>
     </div>
 
     <div class="knowledge-card techne">
-      <div class="kc-title techne">Techne</div>
-      <div class="kc-greek">τέχνη — craft knowledge, skilled practice</div>
-      <div class="kc-text">Practical skill that develops through deliberate practice and repetition. Lives in the hands, the nose, the palate — not in textbooks alone.</div>
-      <div class="kc-example">Sommelier example: Studies on sensory panel training show that 3 blind tastings per week over 6 months significantly improves grape variety identification. This is craft knowledge — your nose learns by doing, not by reading about it.</div>
+      <div class="kc-title techne">Techne — craft knowledge</div>
+      <div class="kc-greek">τέχνη · Skill developed through deliberate practice</div>
+      <div class="kc-text">Knowledge that lives in the hands, the nose, the palate. Cannot be learned from textbooks alone — it requires repetition and feedback.</div>
+      <div class="kc-roles">
+        <div class="kc-role"><div class="kc-role-title">Sommelier</div><div class="kc-role-text">Sensory panel training studies show 3 blind tastings/week over 6 months significantly improves grape variety identification. Your nose learns by doing.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Chef</div><div class="kc-role-text">Research on expert chefs shows seasoning accuracy improves through tactile feedback loops — weight, texture, sound of a sizzle. Craft is embodied knowledge.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Educator</div><div class="kc-role-text">Studies on culinary apprenticeship show tacit knowledge transfers best through side-by-side practice, not demonstration alone.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Service staff</div><div class="kc-role-text">Research on hospitality training shows upselling techniques improve most through role-play rehearsal, not scripted memorisation.</div></div>
+      </div>
     </div>
 
     <div class="knowledge-card phronesis">
-      <div class="kc-title phronesis">Phronesis</div>
-      <div class="kc-greek">φρόνησις — practical wisdom, contextual judgment</div>
-      <div class="kc-text">The wisdom to act well in a specific situation — reading context, adapting to the guest, making sound judgments under uncertainty. Cannot be fully taught, only cultivated.</div>
-      <div class="kc-example">Sommelier example: Research on guest-sommelier dynamics shows that guests who feel "tested" order cheaper wine and enjoy the experience less. Phronesis is knowing when to share your expertise — and when to simply listen and serve.</div>
+      <div class="kc-title phronesis">Phronesis — practical wisdom</div>
+      <div class="kc-greek">φρόνησις · Contextual judgment, cultivated through experience</div>
+      <div class="kc-text">The wisdom to act well in a specific situation — reading context, adapting to the guest, making sound ethical judgments under uncertainty.</div>
+      <div class="kc-roles">
+        <div class="kc-role"><div class="kc-role-title">Sommelier</div><div class="kc-role-text">Research shows guests who feel "tested" order cheaper wine and enjoy less. Phronesis is knowing when to show expertise — and when to simply listen.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Chef</div><div class="kc-role-text">Studies on kitchen leadership show the best chefs adapt their communication style to each team member. Recipe mastery is techne — team wisdom is phronesis.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Meal creator</div><div class="kc-role-text">Research on experiential dining shows that surprise must be balanced with comfort. Knowing when to push boundaries — and when to reassure — is practical wisdom.</div></div>
+        <div class="kc-role"><div class="kc-role-title">Service staff</div><div class="kc-role-text">Studies on service recovery show that a sincere apology outperforms a discount. Reading what a guest actually needs in that moment is phronesis in action.</div></div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-bg" id="authModal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" onclick="closeModal('authModal')">×</button>
+    <div class="modal-eyebrow">Gusto Science</div>
+    <div class="modal-title" id="authTitle">Sign in</div>
+    <input class="modal-input" type="email" placeholder="your@email.com" id="authEmail">
+    <input class="modal-input" type="password" placeholder="Password" id="authPassword">
+    <div id="authNameField" style="display:none"><input class="modal-input" type="text" placeholder="Your name" id="authName"></div>
+    <button class="modal-submit" onclick="handleAuth()" id="authSubmit">Sign in</button>
+    <div id="authError" style="font-size:12px;color:#c0392b;text-align:center;margin-top:8px;display:none"></div>
+    <span class="modal-link" id="authToggle" onclick="toggleAuthMode()">Don't have an account? Sign up</span>
   </div>
 </div>
 
@@ -410,21 +453,21 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div class="plan-card" onclick="selectPlan(this)">
         <div class="plan-name">Annual</div>
         <div class="plan-price">€99<span style="font-size:13px;color:var(--text-tertiary)">/yr</span></div>
-        <div class="plan-desc">Save 31% — €8.25/mo</div>
+        <div class="plan-desc">Save 31%</div>
       </div>
     </div>
     <input class="modal-input" type="email" placeholder="your@email.com" id="upgradeEmail">
     <button class="modal-submit" onclick="submitUpgrade()" id="modalSubmit">Start 14-day free trial</button>
-    <p style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;font-weight:300">No credit card required for trial</p>
+    <p style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;font-weight:300">No credit card required</p>
   </div>
 </div>
 
 <!-- SHARE MODAL -->
 <div class="modal-bg" id="shareModal">
-  <div class="modal" style="max-width:400px">
+  <div class="modal" style="max-width:380px">
     <button class="modal-close" onclick="closeModal('shareModal')">×</button>
     <div class="modal-eyebrow">Share research</div>
-    <div class="modal-title" id="shareTitle" style="font-size:17px;margin-bottom:14px"></div>
+    <div class="modal-title" id="shareTitle" style="font-size:16px;margin-bottom:12px;line-height:1.3"></div>
     <div class="share-options">
       <div class="share-option" onclick="shareEmail()">✉ Email</div>
       <div class="share-option" onclick="shareLinkedIn()">in LinkedIn</div>
@@ -435,31 +478,142 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 
 <script>
-const SB='https://igmkzhdovyhbfgjomrsc.supabase.co/rest/v1'
+const SB_URL='https://igmkzhdovyhbfgjomrsc.supabase.co'
 const ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbWt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
-const H={'apikey':ANON_KEY,'Authorization':'Bearer '+ANON_KEY}
-const EDGE='https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1'
 const SERVICE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbWt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzg5MDE5MywiZXhwIjoyMDkzNDY2MTkzfQ.jsZJyRTaoSa2mb4MTN1ytoWkF96PN9lh3uNETarNZzQ'
+const EDGE='https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1'
 
-let lang='en',role='all',knowledgeFilter='all',articles=[],searchTimeout=null,currentShare={}
+const { createClient } = supabase
+const sb = createClient(SB_URL, ANON_KEY)
+const H = { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+
+let lang='en', role='all', knowledgeFilter='all', articles=[], searchTimeout=null, currentShare={}
+let currentUser=null, savedArticleIds=new Set(), showingSaved=false
 let freeCount=parseInt(localStorage.getItem('freeCount')||'0')
 let freeDate=localStorage.getItem('freeDate')||''
 let isPro=localStorage.getItem('isPro')==='true'
 let isAdmin=localStorage.getItem('isAdmin')==='true'
+let authMode='signin'
 const FREE_LIMIT=5
 const today=new Date().toDateString()
 if(freeDate!==today){freeCount=0;localStorage.setItem('freeDate',today)}
 if(isAdmin) document.getElementById('adminSection').style.display=''
 
+// AUTH
+sb.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user || null
+  updateAuthUI()
+  if(currentUser) loadSavedArticles()
+})
+
+function updateAuthUI(){
+  if(currentUser){
+    document.getElementById('authArea').style.display='none'
+    document.getElementById('userArea').style.display=''
+    const email=currentUser.email||''
+    document.getElementById('userEmail').textContent=email
+    document.getElementById('userAvatar').textContent=email[0].toUpperCase()
+    document.getElementById('savedTab').style.display=''
+  } else {
+    document.getElementById('authArea').style.display='flex'
+    document.getElementById('userArea').style.display='none'
+    document.getElementById('savedTab').style.display='none'
+    savedArticleIds=new Set()
+  }
+}
+
+function toggleAuthMode(){
+  authMode=authMode==='signin'?'signup':'signin'
+  document.getElementById('authTitle').textContent=authMode==='signin'?'Sign in':'Create account'
+  document.getElementById('authSubmit').textContent=authMode==='signin'?'Sign in':'Create account'
+  document.getElementById('authToggle').textContent=authMode==='signin'?'Don\'t have an account? Sign up':'Already have an account? Sign in'
+  document.getElementById('authNameField').style.display=authMode==='signup'?'':'none'
+  document.getElementById('authError').style.display='none'
+}
+
+async function handleAuth(){
+  const email=document.getElementById('authEmail').value
+  const password=document.getElementById('authPassword').value
+  const errEl=document.getElementById('authError')
+  errEl.style.display='none'
+  if(!email||!password){errEl.textContent='Please enter email and password.';errEl.style.display='block';return}
+  document.getElementById('authSubmit').textContent='...'
+  let error
+  if(authMode==='signin'){
+    const res=await sb.auth.signInWithPassword({email,password})
+    error=res.error
+  } else {
+    const res=await sb.auth.signUp({email,password})
+    error=res.error
+    if(!error){errEl.style.color='#2D5016';errEl.textContent='Check your email to confirm your account.';errEl.style.display='block';document.getElementById('authSubmit').textContent='Sign up';return}
+  }
+  if(error){errEl.style.color='#c0392b';errEl.textContent=error.message;errEl.style.display='block'}
+  else closeModal('authModal')
+  document.getElementById('authSubmit').textContent=authMode==='signin'?'Sign in':'Create account'
+}
+
+async function signOut(){
+  await sb.auth.signOut()
+  toggleUserMenu()
+  savedArticleIds=new Set()
+  showingSaved=false
+  document.getElementById('savedTab').classList.remove('on')
+  renderFeed()
+}
+
+function toggleUserMenu(){
+  document.getElementById('userDropdown').classList.toggle('open')
+}
+
+document.addEventListener('click',e=>{
+  const menu=document.getElementById('userDropdown')
+  if(menu.classList.contains('open')&&!e.target.closest('.user-menu'))menu.classList.remove('open')
+})
+
+// SAVED ARTICLES
+async function loadSavedArticles(){
+  if(!currentUser) return
+  const {data}=await sb.from('saved_articles').select('article_id').eq('user_id',currentUser.id)
+  savedArticleIds=new Set((data||[]).map(r=>r.article_id))
+  renderFeed()
+}
+
+async function toggleSaveArticle(articleId,btn){
+  if(!currentUser){openModal('authModal');return}
+  if(savedArticleIds.has(articleId)){
+    await sb.from('saved_articles').delete().eq('user_id',currentUser.id).eq('article_id',articleId)
+    savedArticleIds.delete(articleId)
+    btn.classList.remove('saved')
+    btn.textContent='☆ Save'
+  } else {
+    await sb.from('saved_articles').insert({user_id:currentUser.id,article_id:articleId})
+    savedArticleIds.add(articleId)
+    btn.classList.add('saved')
+    btn.textContent='★ Saved'
+  }
+}
+
+function showSaved(){
+  toggleUserMenu()
+  showingSaved=true
+  document.getElementById('savedTab').classList.add('on')
+  renderFeed()
+}
+
+function toggleSaved(){
+  showingSaved=!showingSaved
+  document.getElementById('savedTab').classList.toggle('on',showingSaved)
+  renderFeed()
+}
+
+// TRANSLATIONS
 const T={
   en:{eyebrow:'Research intelligence for culinary professionals',title:'Where <em>science</em><br>meets the table',sub:'AI-curated research for sommeliers, chefs, and hospitality professionals — with practical scenarios, IMRaD analysis, and Aristotelian knowledge classification.',forRole:'For',scenarioLabel:'Practical scenario',limitation:'Limitation',readPaper:'Read paper',share:'Share',freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}},
   sv:{eyebrow:'Forskningsintelligens för kulinariska proffs',title:'Där <em>vetenskap</em><br>möter bordet',sub:'AI-kurerad forskning för sommellierer, kockar och hospitality-proffs — med praktiska scenarier, IMRaD-analys och aristotelisk kunskapsklassificering.',forRole:'För',scenarioLabel:'Praktiskt scenario',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare'}}
 }
-
 function t(key,...args){const l=T[lang];if(typeof l[key]==='function')return l[key](...args);return l[key]||key}
 
 function toggleLang(){lang=lang==='en'?'sv':'en';document.getElementById('langBtn').textContent=lang==='en'?'SV':'EN';updateTexts();renderFeed()}
-
 function updateTexts(){
   document.getElementById('heroEyebrow').textContent=t('eyebrow')
   document.getElementById('heroTitle').innerHTML=t('title')
@@ -468,7 +622,6 @@ function updateTexts(){
   document.querySelectorAll('.role-chip').forEach(b=>{b.textContent=t('roles')[b.dataset.role]||b.dataset.role})
   updateFreeBar()
 }
-
 function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
   document.getElementById('freeText').textContent=t('freeLeft',remaining)
@@ -476,17 +629,9 @@ function updateFreeBar(){
   document.getElementById('freeBar').style.display=isPro?'none':'flex'
 }
 
-function setNav(nav,btn){
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on')
-  if(nav==='scenarios')loadArticles(true)
-  else if(nav==='archive'){document.getElementById('yearSel').value='1985';loadArticles()}
-  else loadArticles()
-}
-
 function setRole(r,btn){
   role=r
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on')
-  // Re-fetch with role-specific relevance field
   loadArticles()
 }
 
@@ -497,11 +642,7 @@ function setKnowledge(k,btn){
   renderFeed()
 }
 
-function getRelevanceScore(a){
-  if(role==='all') return 0
-  return parseInt(a['relevance_'+role]||0)
-}
-
+function getRelevanceScore(a){if(role==='all')return 0;return parseInt(a['relevance_'+role]||0)}
 function getScenario(a){
   if(role!=='all'){const s=a['scenario_'+role];if(s&&s.length>10)return s}
   if(a.scenario&&a.scenario.length>10)return a.scenario
@@ -514,8 +655,9 @@ function cardHTML(a,idx){
   const topicLabel=(a.topic||'').replace(/_/g,' ')
   const kType=a.knowledge_type
   const hasIMRaD=a.imrad_introduction&&a.imrad_introduction.length>5
-  const cardId='card-'+(a.id||idx).slice(0,8)
+  const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
+  const isSaved=savedArticleIds.has(a.id)
 
   const inner=`
     <div class="card-top">
@@ -523,57 +665,49 @@ function cardHTML(a,idx){
       <span class="source-badge">${a.source_label||''}</span>
       ${kType&&kType!=='unknown'&&kType!=='pending'?`<span class="knowledge-badge ${kType}">${kType}</span>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
-      ${role!=='all'&&relevance>0?`<span class="relevance-badge">relevance ${relevance}/10</span>`:''}
+      ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
     <div class="card-insight">${a.insight||''}</div>
-    ${hasIMRaD&&!locked?`
-      <div class="imrad-block" id="imrad-${cardId}">
-        <div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div>
-        <div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div>
-        <div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div>
-        <div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div>
-      </div>`:''}
-    ${scenario&&!locked?`
-      <div class="scenario-block">
-        <div class="scenario-eyebrow">${t('scenarioLabel')}</div>
-        ${role!=='all'?`<div class="scenario-role-label">${t('roles')[role]||role}</div>`:''}
-        <div class="scenario-text">${scenario}</div>
-      </div>`:''}
+    ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}"><div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div><div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div><div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div><div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div></div>`:''}
+    ${scenario&&!locked?`<div class="scenario-block"><div class="scenario-eyebrow">${t('scenarioLabel')}</div>${role!=='all'?`<div class="scenario-role-label">${t('roles')[role]||role}</div>`:''}<div class="scenario-text">${scenario}</div></div>`:''}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
       <div class="card-actions">
-        ${hasIMRaD&&!locked?`<button class="imrad-toggle" onclick="toggleIMRaD('${cardId}',this)">IMRaD</button>`:''}
+        ${hasIMRaD&&!locked?`<button class="imrad-toggle" id="it-${cid}" onclick="toggleIMRaD('${cid}')">IMRaD</button>`:''}
         ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">${t('readPaper')}</button>`:''}
-        <button class="action-btn share" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">${t('share')}</button>
+        <button class="action-btn share-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">${t('share')}</button>
+        <button class="save-btn${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ Saved':'☆ Save'}</button>
       </div>
     </div>`
 
-  if(locked){return`<div class="article-card locked">${inner}<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:12px;padding:6px 16px">Upgrade to Pro</button></div></div>`}
-  return`<div class="article-card">${inner}</div>`
+  if(locked){return`<div class="article-card locked">${inner}<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:12px;padding:6px 14px">Upgrade</button></div></div>`}
+  return`<div class="article-card${isSaved?' saved-card':''}">${inner}</div>`
 }
 
-function toggleIMRaD(cardId,btn){
-  const block=document.getElementById('imrad-'+cardId)
+function toggleIMRaD(cid){
+  const block=document.getElementById('im-'+cid)
+  const btn=document.getElementById('it-'+cid)
   if(!block)return
   block.classList.toggle('open')
-  btn.style.color=block.classList.contains('open')?'var(--gold-dark)':''
-  btn.style.borderColor=block.classList.contains('open')?'var(--gold)':''
+  btn.classList.toggle('open')
 }
 
 function renderFeed(){
   const pane=document.getElementById('feedPane')
-  if(!articles.length){pane.innerHTML='<div class="loading-state"><span>No articles found.</span></div>';return}
+  let source=articles
+  if(showingSaved) source=articles.filter(a=>savedArticleIds.has(a.id))
+  if(!source.length){pane.innerHTML=`<div class="loading-state"><span>${showingSaved?'No saved articles yet.':'No articles found.'}</span></div>`;return}
   const year=document.getElementById('yearSel').value
   const search=document.getElementById('searchInput').value.toLowerCase()
   const sort=document.getElementById('sortSel').value
-  let filtered=articles
+  let filtered=source
   if(year!=='all') filtered=filtered.filter(a=>parseInt(a.year||'0')>=parseInt(year))
   if(knowledgeFilter!=='all') filtered=filtered.filter(a=>a.knowledge_type===knowledgeFilter)
   if(search) filtered=filtered.filter(a=>(a.title||'').toLowerCase().includes(search)||(a.authors||'').toLowerCase().includes(search)||(a.journal||'').toLowerCase().includes(search))
   if(sort==='relevance'&&role!=='all') filtered=[...filtered].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
-  document.getElementById('feedCount').textContent=filtered.length+' articles'
+  document.getElementById('feedCount').textContent=filtered.length+' articles'+(showingSaved?' (saved)':'')
   pane.innerHTML=filtered.slice(0,30).map((a,i)=>cardHTML(a,i)).join('')
   updateFreeBar()
 }
@@ -585,64 +719,45 @@ async function loadArticles(scenariosOnly=false){
   const src=document.getElementById('srcSel').value
   const pane=document.getElementById('feedPane')
   pane.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
-
   let fields='id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,scenario,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion'
   if(role!=='all') fields+=`,scenario_${role},relevance_${role}`
-
-  let url=`${SB}/articles?select=${fields}&order=year.desc,fetched_at.desc&limit=80`
+  let url=`${SB_URL}/rest/v1/articles?select=${fields}&order=year.desc,fetched_at.desc&limit=80`
   if(topic!=='all') url+=`&topic=eq.${topic}`
   if(src!=='all') url+=`&source=eq.${src}`
-  if(scenariosOnly) url+=`&scenario_sommelier=not.is.null`
-
   try{
     const r=await fetch(url,{headers:H})
     articles=await r.json()
     renderFeed()
     loadSidebarData()
     loadNewCount()
-  }catch(e){
-    pane.innerHTML='<div class="loading-state"><span>Connection error. Please refresh.</span></div>'
-  }
+  }catch(e){pane.innerHTML='<div class="loading-state"><span>Connection error. Please refresh.</span></div>'}
 }
 
 async function loadSidebarData(){
   try{
-    const r=await fetch(`${SB}/articles?select=topic,journal&limit=3000`,{headers:H})
+    const r=await fetch(`${SB_URL}/rest/v1/articles?select=topic,journal&limit=3000`,{headers:H})
     const data=await r.json()
-    // Topics
-    const topics={}
-    data.forEach(a=>{topics[a.topic]=(topics[a.topic]||0)+1})
-    const sortedTopics=Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,10)
-    document.getElementById('topicList').innerHTML=sortedTopics.map(([topic,count])=>`
-      <div class="topic-item" onclick="filterTopic('${topic}')">
-        <div class="topic-dot"></div>
-        <span class="topic-name">${topic.replace(/_/g,' ')}</span>
-        <span class="topic-count">${count}</span>
-      </div>`).join('')
-    // Journals
-    const journals={}
-    data.forEach(a=>{if(a.journal&&a.journal.trim())journals[a.journal]=(journals[a.journal]||0)+1})
-    const sortedJournals=Object.entries(journals).sort((a,b)=>b[1]-a[1]).slice(0,15)
-    document.getElementById('journalList').innerHTML=sortedJournals.map(([journal,count])=>`
-      <div class="journal-item" onclick="filterJournal('${journal.replace(/'/g,"\\'")}')">
-        <span class="journal-name" title="${journal}">${journal}</span>
-        <span class="journal-count">${count}</span>
-      </div>`).join('')
+    const topics={},journals={}
+    data.forEach(a=>{
+      if(a.topic) topics[a.topic]=(topics[a.topic]||0)+1
+      if(a.journal&&a.journal.trim()&&a.journal.length<80) journals[a.journal]=(journals[a.journal]||0)+1
+    })
+    document.getElementById('topicList').innerHTML=Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([t,c])=>`<div class="topic-item" onclick="filterTopic('${t}')"><div class="topic-dot"></div><span class="topic-name">${t.replace(/_/g,' ')}</span><span class="topic-count">${c}</span></div>`).join('')
+    document.getElementById('journalList').innerHTML=Object.entries(journals).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([j,c])=>`<div class="journal-item" onclick="filterJournal('${j.replace(/'/g,"\\'")}')"><span class="journal-name" title="${j}">${j}</span><span class="journal-count">${c}</span></div>`).join('')
   }catch(e){}
 }
 
 async function loadNewCount(){
   try{
-    const twoWeeksAgo=new Date(Date.now()-14*24*60*60*1000).toISOString()
-    const r=await fetch(`${SB}/articles?select=id&fetched_at=gte.${twoWeeksAgo}`,{headers:H})
+    const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
+    const r=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:H})
     const data=await r.json()
     document.getElementById('newCount').textContent=`${data.length} new articles in the last 2 weeks`
   }catch(e){}
 }
 
 function filterTopic(topic){document.getElementById('topicSel').value=topic;loadArticles()}
-function filterJournal(journal){document.getElementById('searchInput').value=journal;renderFeed()}
-
+function filterJournal(j){document.getElementById('searchInput').value=j;renderFeed()}
 function openPaper(url){const u=decodeURIComponent(url);if(u&&u.startsWith('http'))window.open(u,'_blank')}
 
 function openShareFor(data){
@@ -650,35 +765,27 @@ function openShareFor(data){
   document.getElementById('shareTitle').textContent=currentShare.title||''
   openModal('shareModal')
 }
-
 function shareEmail(){const s=encodeURIComponent('Research: '+(currentShare.title||''));const b=encodeURIComponent(`${currentShare.title}\n\n${currentShare.insight||''}\n\nRead more: ${currentShare.url||'gusto.science'}`);window.open(`mailto:?subject=${s}&body=${b}`)}
-function shareLinkedIn(){window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentShare.url||'https://gusto.science')},'_blank'`)}
-function shareTwitter(){const txt=encodeURIComponent(`${currentShare.title} — via Gusto Science\n${currentShare.url||'https://gusto.science'}`);window.open(`https://twitter.com/intent/tweet?text=${txt}`,'_blank')}
+function shareLinkedIn(){window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentShare.url||'https://gusto.science')}`,'_blank')}
+function shareTwitter(){window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent((currentShare.title||'')+' — via Gusto Science\n'+(currentShare.url||'https://gusto.science'))}`,'_blank')}
 function shareCopy(){navigator.clipboard?.writeText(currentShare.url||'https://gusto.science');closeModal('shareModal')}
 
 async function adminFetch(){
   const btn=document.querySelector('.admin-btn')
   const status=document.getElementById('adminStatus')
   btn.disabled=true;btn.textContent='↻ Fetching...'
-  status.textContent='Triggering fetch...'
-  try{
-    const r=await fetch(`${EDGE}/daily-fetch`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SERVICE_KEY},body:JSON.stringify({scheduled:true})})
-    const d=await r.json()
-    status.textContent=`Done — ${d.added||0} new articles added`
-    loadArticles()
-  }catch(e){status.textContent='Fetch failed'}
+  status.textContent='Triggering...'
+  try{const r=await fetch(`${EDGE}/daily-fetch`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SERVICE_KEY},body:JSON.stringify({scheduled:true})});const d=await r.json();status.textContent=`Done — ${d.added||0} added`;loadArticles()}catch(e){status.textContent='Failed'}
   btn.disabled=false;btn.textContent='↻ Fetch new research now'
 }
 
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})})
-
 function selectPlan(card){document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected')}
-
 function submitUpgrade(){
   const email=document.getElementById('upgradeEmail').value
-  if(!email||!email.includes('@')){alert('Please enter a valid email address.');return}
+  if(!email||!email.includes('@')){alert('Please enter a valid email.');return}
   document.getElementById('modalSubmit').textContent='Processing...'
   setTimeout(()=>{isPro=true;localStorage.setItem('isPro','true');closeModal('upgradeModal');renderFeed();document.getElementById('modalSubmit').textContent='Start 14-day free trial'},1200)
 }
