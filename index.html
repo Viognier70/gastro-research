@@ -16,8 +16,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:2px;flex-shrink:0}
-.logo-gusto{font-family:'Playfair Display',serif;font-size:19px;font-weight:500;color:var(--text-primary)}
-.logo-science{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;margin-left:6px}
+.logo-gusto{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--text-primary)}
+.logo-science{font-family:'Outfit',sans-serif;font-size:13px;font-weight:400;color:var(--text-primary);letter-spacing:.02em;margin-left:1px}
 .topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .academy-link{font-size:12px;color:var(--gold-dark);border:0.5px solid var(--gold);padding:5px 14px;border-radius:20px;cursor:pointer;background:var(--gold-light);text-decoration:none;transition:all .15s}
 .academy-link:hover{background:var(--gold);color:white}
@@ -216,8 +216,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <header class="topbar">
   <div class="logo">
-    <span class="logo-gusto">Gusto</span>
-    <span class="logo-science">Science</span>
+    <span class="logo-gusto">Gusto</span><span style="color:var(--gold);margin:0 3px;font-family:'Outfit',sans-serif;font-weight:300"> </span><span class="logo-science">Science</span>
   </div>
   <div class="topbar-right">
     <a href="https://gusto.academy" target="_blank" class="academy-link">Gusto Academy ↗</a>
@@ -242,7 +241,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div>
     <div class="hero-eyebrow" id="heroEyebrow">Research intelligence for culinary professionals</div>
     <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
-    <p class="hero-sub" id="heroSub">AI-curated research for sommeliers, chefs, and hospitality professionals — with practical scenarios, IMRaD analysis, and Aristotelian knowledge classification.</p>
+    <p class="hero-sub" id="heroSub">Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates thousands of research studies into three forms of professional knowledge: <em>Episteme</em> (the science, via IMRaD), <em>Techne</em> (practical application in your profession), and <em>Phronesis</em> (the ethical and aesthetic judgment to act wisely). Select your profession to begin.</p>
     <div class="new-badge"><div class="new-dot"></div><span id="newCount">Loading...</span></div>
   </div>
   <div class="hero-stats">
@@ -253,17 +252,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </section>
 
-<div class="filter-section">
-  <div class="knowledge-row">
-    <span class="section-label" style="color:var(--gold);font-family:'Playfair Display',serif;font-style:normal;font-size:14px;letter-spacing:.08em">TRIAD</span>
-    <div class="k-chips">
-      <button class="k-chip on all" data-k="all" onclick="setKnowledge('all',this)">All</button>
-      <button class="k-chip" data-k="episteme" onclick="setKnowledge('episteme',this)">Symbolic framing — Episteme</button>
-      <button class="k-chip" data-k="techne" onclick="setKnowledge('techne',this)">Practical orchestration — Techne</button>
-      <button class="k-chip" data-k="phronesis" onclick="setKnowledge('phronesis',this)">Sensory realisation — Phronesis</button>
-    </div>
-    <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);letter-spacing:.1em">TRIAD</span>
+    <span style="font-size:11px;color:var(--text-tertiary)">Episteme · Techne · Phronesis — three layers per article, for your profession</span>
   </div>
+  <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
 </div>
 
 <div class="role-row">
@@ -387,60 +381,63 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:28px;font-weight:300">The TRIAD model maps Aristotle's three forms of knowledge onto culinary and hospitality practice. They are not three equal alternatives — they form a developmental hierarchy. Every professional begins with Episteme, trains through Techne, and aspires toward Phronesis. Each research article in this library is translated into all three levels for your profession.</p>
 
     <!-- TRIAD Triangle SVG -->
-    <div style="display:flex;justify-content:center;margin-bottom:32px">
-      <svg viewBox="0 0 500 420" style="width:100%;max-width:500px" xmlns="http://www.w3.org/2000/svg">
-        <!-- Outer triangle - dark fill sections -->
-        <!-- Phronesis top - deep green -->
-        <polygon points="250,20 130,240 370,240" fill="#1a3a2a" opacity="0.9"/>
-        <!-- Techne bottom left - deep red -->
-        <polygon points="130,240 30,400 250,400" fill="#3a1a1a" opacity="0.9"/>
-        <!-- Episteme bottom right - deep blue -->
-        <polygon points="370,240 250,400 470,400" fill="#1a1a3a" opacity="0.9"/>
-        <!-- Outer border -->
-        <polygon points="250,20 30,400 470,400" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+    <div style="display:flex;justify-content:center;margin-bottom:28px;background:#0C0B09;border-radius:12px;padding:28px 20px">
+      <svg viewBox="0 0 520 400" style="width:100%;max-width:520px" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background sections -->
+        <!-- Top: Phronesis - dark green -->
+        <polygon points="260,22 145,220 375,220" fill="#1B3A2D"/>
+        <!-- Bottom left: Techne - dark red -->  
+        <polygon points="145,220 28,398 260,398" fill="#3A1A1A"/>
+        <!-- Bottom right: Episteme - dark navy -->
+        <polygon points="375,220 260,398 492,398" fill="#1A2440"/>
+        <!-- Outer border in gold -->
+        <polygon points="260,22 28,398 492,398" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
         <!-- Inner dividing lines -->
-        <line x1="250" y1="20" x2="250" y2="240" stroke="#C9A84C" stroke-width="1" opacity="0.6"/>
-        <line x1="30" y1="400" x2="250" y2="240" stroke="#C9A84C" stroke-width="1" opacity="0.6"/>
-        <line x1="470" y1="400" x2="250" y2="240" stroke="#C9A84C" stroke-width="1" opacity="0.6"/>
+        <line x1="260" y1="22" x2="260" y2="220" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+        <line x1="28" y1="398" x2="260" y2="220" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+        <line x1="492" y1="398" x2="260" y2="220" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
 
-        <!-- Center circle - Det Dubbla Greppet -->
-        <circle cx="250" cy="255" r="52" fill="#0C0B09" stroke="#C9A84C" stroke-width="1"/>
-        <text x="250" y="244" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1">DET DUBBLA</text>
-        <text x="250" y="255" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1">GREPPET</text>
-        <!-- Infinity symbol approximation -->
-        <path d="M225,267 Q232,258 242,264 Q250,270 258,264 Q268,258 275,267 Q268,276 258,270 Q250,264 242,270 Q232,276 225,267Z" fill="none" stroke="#C9A84C" stroke-width="1.2"/>
-        <text x="231" y="269" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6" fill="#C9A84C">ANALYS</text>
-        <text x="269" y="269" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6" fill="#C9A84C">UPP-</text>
-        <text x="269" y="276" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6" fill="#C9A84C">LEVELSE</text>
+        <!-- Center circle: Det Dubbla Greppet -->
+        <circle cx="260" cy="232" r="58" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.2"/>
+        <text x="260" y="218" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="1.5">DET DUBBLA</text>
+        <text x="260" y="230" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="1.5">GREPPET</text>
+        <!-- Left side: ANALYS -->
+        <text x="237" y="250" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.6)">ANALYS</text>
+        <!-- Infinity loop -->
+        <path d="M228,244 C228,238 236,234 244,240 C252,246 260,246 268,240 C276,234 284,238 284,244 C284,250 276,254 268,248 C260,242 252,242 244,248 C236,254 228,250 228,244Z" fill="none" stroke="#C9A84C" stroke-width="1.3"/>
+        <!-- Right side: UPPLEVELSE -->
+        <text x="283" y="263" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.6)">UPPLEVELSE</text>
 
-        <!-- 1. Phronesis top -->
-        <text x="250" y="80" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" fill="#C9A84C" letter-spacing="1">1.</text>
-        <text x="250" y="96" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">SINNLIG</text>
-        <text x="250" y="113" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">REALISERING</text>
-        <text x="250" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
-        <text x="250" y="148" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.7)">Det situerade omdömet —</text>
-        <text x="250" y="160" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.7)">där kunskap blir erfaren sanning</text>
+        <!-- 1. SINNLIG REALISERING - top (Phronesis) -->
+        <text x="260" y="75" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">1.</text>
+        <text x="260" y="93" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">SINNLIG</text>
+        <text x="260" y="110" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">REALISERING</text>
+        <text x="260" y="126" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
+        <text x="260" y="143" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">Smak · doft · ljud · textur</text>
+        <text x="260" y="156" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">estetisk balans</text>
 
-        <!-- 2. Techne bottom left -->
-        <text x="135" y="295" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" fill="#C9A84C" letter-spacing="1">2.</text>
-        <text x="135" y="311" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRAKTISK</text>
-        <text x="135" y="327" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORKESTRERING</text>
-        <text x="135" y="342" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
-        <text x="135" y="358" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.7)">Kunskap blir handling</text>
+        <!-- 2. PRAKTISK ORKESTRERING - bottom left (Techne) -->
+        <text x="138" y="272" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">2.</text>
+        <text x="138" y="289" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRAKTISK</text>
+        <text x="138" y="305" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORKESTRERING</text>
+        <text x="138" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
+        <text x="138" y="336" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Matlagning · servering</text>
+        <text x="138" y="349" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">arbetsflöden · logistik</text>
 
-        <!-- 3. Episteme bottom right -->
-        <text x="365" y="295" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" fill="#C9A84C" letter-spacing="1">3.</text>
-        <text x="365" y="311" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLISK</text>
-        <text x="365" y="327" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">INRAMNING</text>
-        <text x="365" y="342" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
-        <text x="365" y="358" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.7)">Kunskap blir begrepp</text>
+        <!-- 3. SYMBOLISK INRAMNING - bottom right (Episteme) -->
+        <text x="382" y="272" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">3.</text>
+        <text x="382" y="289" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLISK</text>
+        <text x="382" y="305" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">INRAMNING</text>
+        <text x="382" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
+        <text x="382" y="336" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Ritualer · identitet</text>
+        <text x="382" y="349" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">värdskap · estetikens idé</text>
 
-        <!-- Central dynamic bottom -->
-        <text x="250" y="393" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.5">Episteme isolerar · Techne realiserar · Phronesis integrerar</text>
+        <!-- Bottom caption -->
+        <text x="260" y="390" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.8">Episteme isolerar · Techne realiserar · Phronesis integrerar</text>
       </svg>
     </div>
 
-    <!-- Three knowledge descriptions -->
+        <!-- Three knowledge descriptions -->
     <div style="display:grid;gap:16px;margin-bottom:20px">
 
       <div class="knowledge-card phronesis" style="border-left:3px solid #2d6a4f">
@@ -730,70 +727,54 @@ function getScenario(a){
 
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
-  const scenario=getScenario(a)
   const topicLabel=(a.topic||'').replace(/_/g,' ')
-  const kType=a.knowledge_type
   const hasIMRaD=a.imrad_introduction&&a.imrad_introduction.length>5
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
   const isSaved=savedArticleIds.has(a.id)
+  const r=role==='all'?'sommelier':role
+  const roleName=t('roles')[r]||r
+
+  // TRIAD content with fallback to old scenarios
+  const ep=a['episteme_'+r]||''
+  const tc=a['techne_'+r]||(a['scenario_'+r]&&a['scenario_'+r].length>10?a['scenario_'+r]:'')||''
+  const ph=a['phronesis_'+r]||''
+  const hasTriad=ep.length>10&&tc.length>10&&ph.length>10
+  const legacyScenario=a['scenario_'+r]||''
+  const hasScenario=tc.length>10||legacyScenario.length>10
+
+  function triadBlock(text,label,bc,bg,lc){
+    if(!text||text.length<10||text.startsWith('Not directly')) return ''
+    return `<div style="border-left:3px solid ${bc};background:${bg};padding:11px 14px;border-radius:0 6px 6px 0;margin-top:8px">
+      <div style="font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:${lc};margin-bottom:5px">${label}</div>
+      <div class="scenario-text">${text}</div></div>`
+  }
+
+  const displayScenario=tc.length>10?tc:legacyScenario
+  const triadHTML=locked?'':hasTriad?`
+    <div style="margin-top:10px">
+      ${triadBlock(ep,'Symbolisk inramning · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
+      ${triadBlock(tc,'Praktisk orkestrering · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
+      ${triadBlock(ph,'Sinnlig realisering · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
+    </div>`:displayScenario.length>10?triadBlock(displayScenario,'Praktisk tillämpning · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)'):`<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic;padding:8px 0">TRIAD analysis being generated — check back shortly.</div>`
 
   const inner=`
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
-      ${kType&&kType!=='unknown'&&kType!=='pending'?`<span class="knowledge-badge ${kType}">${kType}</span>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
       ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
-    <div class="card-insight">${a.insight||''}</div>
+    ${a.insight?`<div class="card-insight">${a.insight}</div>`:''}
     ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}"><div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div><div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div><div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div><div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div></div>`:''}
-    ${(()=>{
-      if(locked) return ''
-      const r = role==='all'?'sommelier':role
-      const roleName = t('roles')[r]||r
-      const ep = a['episteme_'+r]; const tc = a['techne_'+r]; const ph = a['phronesis_'+r]
-      const k = knowledgeFilter
-      if(k==='episteme'&&ep&&ep.length>10&&!ep.startsWith('Not')){
-        return `<div class="scenario-block" style="border-left:3px solid var(--episteme);background:var(--episteme-light);padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
-          <div class="scenario-eyebrow" style="color:var(--episteme)">Symbolisk inramning · Episteme · ${roleName}</div>
-          <div class="scenario-text">${ep}</div></div>`
-      }
-      if(k==='phronesis'&&ph&&ph.length>10&&!ph.startsWith('Not')){
-        return `<div class="scenario-block" style="border-left:3px solid #2d6a4f;background:#eaf5ee;padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
-          <div class="scenario-eyebrow" style="color:#2d6a4f">Sinnlig realisering · Phronesis · ${roleName}</div>
-          <div class="scenario-text">${ph}</div></div>`
-      }
-      if(k==='techne'&&tc&&tc.length>10&&!tc.startsWith('Not')){
-        return `<div class="scenario-block" style="border-left:3px solid var(--techne);background:var(--techne-light);padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
-          <div class="scenario-eyebrow" style="color:var(--techne)">Praktisk orkestrering · Techne · ${roleName}</div>
-          <div class="scenario-text">${tc}</div></div>`
-      }
-      // Default: show all three if available
-      if(ep&&tc&&ph&&ep.length>10&&tc.length>10&&ph.length>10){
-        return `<div style="margin-top:10px;display:grid;gap:8px">
-          <div class="scenario-block" style="border-left:3px solid #1a2d5a;background:var(--episteme-light);padding:10px 12px;border-radius:0 6px 6px 0">
-            <div class="scenario-eyebrow" style="color:#1a2d5a;font-size:10px">3. SYMBOLISK INRAMNING · Episteme</div>
-            <div class="scenario-text" style="font-size:11px">${ep.slice(0,180)}${ep.length>180?'…':''}</div></div>
-          <div class="scenario-block" style="border-left:3px solid var(--techne);background:var(--techne-light);padding:10px 12px;border-radius:0 6px 6px 0">
-            <div class="scenario-eyebrow" style="color:var(--techne);font-size:10px">2. PRAKTISK ORKESTRERING · Techne</div>
-            <div class="scenario-text" style="font-size:11px">${tc.slice(0,180)}${tc.length>180?'…':''}</div></div>
-          <div class="scenario-block" style="border-left:3px solid #2d6a4f;background:#eaf5ee;padding:10px 12px;border-radius:0 6px 6px 0">
-            <div class="scenario-eyebrow" style="color:#2d6a4f;font-size:10px">1. SINNLIG REALISERING · Phronesis</div>
-            <div class="scenario-text" style="font-size:11px">${ph.slice(0,180)}${ph.length>180?'…':''}</div></div>
-        </div>`
-      }
-      const s = getScenario(a)
-      if(!s) return ''
-      return `<div class="scenario-block"><div class="scenario-eyebrow">${t('scenarioLabel')}</div><div class="scenario-text">${s}</div></div>`
-    })()}
+    ${triadHTML}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
       <div class="card-actions">
         ${hasIMRaD&&!locked?`<button class="imrad-toggle" id="it-${cid}" onclick="toggleIMRaD('${cid}')">IMRaD</button>`:''}
-        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">${t('readPaper')}</button>`:''}
+        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">` + `${t('readPaper')}</button>`:''}
         <button class="action-btn share-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">${t('share')}</button>
         <button class="save-btn${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ Saved':'☆ Save'}</button>
       </div>
@@ -821,7 +802,7 @@ function renderFeed(){
   const sort=document.getElementById('sortSel').value
   let filtered=source
   if(year!=='all') filtered=filtered.filter(a=>parseInt(a.year||'0')>=parseInt(year))
-  if(knowledgeFilter!=='all') filtered=filtered.filter(a=>a.knowledge_type===knowledgeFilter)
+  // Knowledge type no longer filters articles — shown as layers within each card
   if(search) filtered=filtered.filter(a=>(a.title||'').toLowerCase().includes(search)||(a.authors||'').toLowerCase().includes(search)||(a.journal||'').toLowerCase().includes(search))
   // Hide articles where all relevance scores are 0 (genuinely irrelevant)
   filtered=filtered.filter(a=>{
@@ -830,7 +811,17 @@ function renderFeed(){
     if(!hasScores) return true // show if not yet enriched
     return scores.some(s=>parseInt(s||0)>0)
   })
-  if(sort==='relevance'&&role!=='all') filtered=[...filtered].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
+  // Always sort by profession relevance when role is selected
+  if(role!=='all'){
+    filtered=[...filtered].sort((a,b)=>{
+      const ra=parseInt(a['relevance_'+role]||0)
+      const rb=parseInt(b['relevance_'+role]||0)
+      if(rb!==ra) return rb-ra
+      return parseInt(b.year||0)-parseInt(a.year||0)
+    })
+  } else if(sort==='relevance'){
+    filtered=[...filtered].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
+  }
   document.getElementById('feedCount').textContent=filtered.length+' articles'+(showingSaved?' (saved)':'')
   pane.innerHTML=filtered.slice(0,30).map((a,i)=>cardHTML(a,i)).join('')
   updateFreeBar()
