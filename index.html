@@ -242,7 +242,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div>
     <div class="hero-eyebrow" id="heroEyebrow">Research intelligence for culinary professionals</div>
     <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
-    <p class="hero-sub" id="heroSub">AI-curated research for sommeliers, chefs, and hospitality professionals — with practical scenarios, IMRaD analysis, and Aristotelian knowledge classification.</p>
+    <p class="hero-sub" id="heroSub">Gastronomy is the only art form that engages all the senses simultaneously — sight, sound, touch, taste, smell. Mastering this field demands three forms of knowledge: the theoretical foundation of science (<em>Episteme</em>), the skill of practice (<em>Techne</em>), and the ethical and aesthetic wisdom to act well in every situation (<em>Phronesis</em>). Every article here is translated into all three — for your profession.</p>
     <div class="new-badge"><div class="new-dot"></div><span id="newCount">Loading...</span></div>
   </div>
   <div class="hero-stats">
@@ -253,17 +253,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </section>
 
-<div class="filter-section">
-  <div class="knowledge-row">
-    <span class="section-label" style="color:var(--gold);font-family:'Playfair Display',serif;font-style:normal;font-size:14px;letter-spacing:.08em">TRIAD</span>
-    <div class="k-chips">
-      <button class="k-chip on all" data-k="all" onclick="setKnowledge('all',this)">All</button>
-      <button class="k-chip" data-k="episteme" onclick="setKnowledge('episteme',this)">Symbolic framing — Episteme</button>
-      <button class="k-chip" data-k="techne" onclick="setKnowledge('techne',this)">Practical orchestration — Techne</button>
-      <button class="k-chip" data-k="phronesis" onclick="setKnowledge('phronesis',this)">Sensory realisation — Phronesis</button>
-    </div>
-    <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);letter-spacing:.1em">TRIAD</span>
+    <span style="font-size:11px;color:var(--text-tertiary)">Episteme · Techne · Phronesis — three layers per article, for your profession</span>
   </div>
+  <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
 </div>
 
 <div class="role-row">
@@ -730,70 +725,52 @@ function getScenario(a){
 
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
-  const scenario=getScenario(a)
   const topicLabel=(a.topic||'').replace(/_/g,' ')
-  const kType=a.knowledge_type
   const hasIMRaD=a.imrad_introduction&&a.imrad_introduction.length>5
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
   const isSaved=savedArticleIds.has(a.id)
+  const r=role==='all'?'sommelier':role
+  const roleName=t('roles')[r]||r
+
+  // TRIAD content with fallback to old scenarios
+  const ep=a['episteme_'+r]||''
+  const tc=a['techne_'+r]||a['scenario_'+r]||''
+  const ph=a['phronesis_'+r]||''
+  const hasTriad=ep.length>10&&tc.length>10&&ph.length>10
+  const hasScenario=tc.length>10||a['scenario_'+r]
+
+  function triadBlock(text,label,bc,bg,lc){
+    if(!text||text.length<10||text.startsWith('Not directly')) return ''
+    return `<div style="border-left:3px solid ${bc};background:${bg};padding:11px 14px;border-radius:0 6px 6px 0;margin-top:8px">
+      <div style="font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:${lc};margin-bottom:5px">${label}</div>
+      <div class="scenario-text">${text}</div></div>`
+  }
+
+  const triadHTML=locked?'':hasTriad?`
+    <div style="margin-top:10px">
+      ${triadBlock(ep,'Symbolisk inramning · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
+      ${triadBlock(tc,'Praktisk orkestrering · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
+      ${triadBlock(ph,'Sinnlig realisering · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
+    </div>`:hasScenario?triadBlock(tc,'Praktisk tillämpning · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)'):''
 
   const inner=`
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
-      ${kType&&kType!=='unknown'&&kType!=='pending'?`<span class="knowledge-badge ${kType}">${kType}</span>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
       ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
-    <div class="card-insight">${a.insight||''}</div>
+    ${a.insight?`<div class="card-insight">${a.insight}</div>`:''}
     ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}"><div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div><div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div><div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div><div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div></div>`:''}
-    ${(()=>{
-      if(locked) return ''
-      const r = role==='all'?'sommelier':role
-      const roleName = t('roles')[r]||r
-      const ep = a['episteme_'+r]; const tc = a['techne_'+r]; const ph = a['phronesis_'+r]
-      const k = knowledgeFilter
-      if(k==='episteme'&&ep&&ep.length>10&&!ep.startsWith('Not')){
-        return `<div class="scenario-block" style="border-left:3px solid var(--episteme);background:var(--episteme-light);padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
-          <div class="scenario-eyebrow" style="color:var(--episteme)">Symbolisk inramning · Episteme · ${roleName}</div>
-          <div class="scenario-text">${ep}</div></div>`
-      }
-      if(k==='phronesis'&&ph&&ph.length>10&&!ph.startsWith('Not')){
-        return `<div class="scenario-block" style="border-left:3px solid #2d6a4f;background:#eaf5ee;padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
-          <div class="scenario-eyebrow" style="color:#2d6a4f">Sinnlig realisering · Phronesis · ${roleName}</div>
-          <div class="scenario-text">${ph}</div></div>`
-      }
-      if(k==='techne'&&tc&&tc.length>10&&!tc.startsWith('Not')){
-        return `<div class="scenario-block" style="border-left:3px solid var(--techne);background:var(--techne-light);padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
-          <div class="scenario-eyebrow" style="color:var(--techne)">Praktisk orkestrering · Techne · ${roleName}</div>
-          <div class="scenario-text">${tc}</div></div>`
-      }
-      // Default: show all three if available
-      if(ep&&tc&&ph&&ep.length>10&&tc.length>10&&ph.length>10){
-        return `<div style="margin-top:10px;display:grid;gap:8px">
-          <div class="scenario-block" style="border-left:3px solid #1a2d5a;background:var(--episteme-light);padding:10px 12px;border-radius:0 6px 6px 0">
-            <div class="scenario-eyebrow" style="color:#1a2d5a;font-size:10px">3. SYMBOLISK INRAMNING · Episteme</div>
-            <div class="scenario-text" style="font-size:11px">${ep.slice(0,180)}${ep.length>180?'…':''}</div></div>
-          <div class="scenario-block" style="border-left:3px solid var(--techne);background:var(--techne-light);padding:10px 12px;border-radius:0 6px 6px 0">
-            <div class="scenario-eyebrow" style="color:var(--techne);font-size:10px">2. PRAKTISK ORKESTRERING · Techne</div>
-            <div class="scenario-text" style="font-size:11px">${tc.slice(0,180)}${tc.length>180?'…':''}</div></div>
-          <div class="scenario-block" style="border-left:3px solid #2d6a4f;background:#eaf5ee;padding:10px 12px;border-radius:0 6px 6px 0">
-            <div class="scenario-eyebrow" style="color:#2d6a4f;font-size:10px">1. SINNLIG REALISERING · Phronesis</div>
-            <div class="scenario-text" style="font-size:11px">${ph.slice(0,180)}${ph.length>180?'…':''}</div></div>
-        </div>`
-      }
-      const s = getScenario(a)
-      if(!s) return ''
-      return `<div class="scenario-block"><div class="scenario-eyebrow">${t('scenarioLabel')}</div><div class="scenario-text">${s}</div></div>`
-    })()}
+    ${triadHTML}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
       <div class="card-actions">
         ${hasIMRaD&&!locked?`<button class="imrad-toggle" id="it-${cid}" onclick="toggleIMRaD('${cid}')">IMRaD</button>`:''}
-        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">${t('readPaper')}</button>`:''}
+        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">` + `${t('readPaper')}</button>`:''}
         <button class="action-btn share-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">${t('share')}</button>
         <button class="save-btn${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ Saved':'☆ Save'}</button>
       </div>
