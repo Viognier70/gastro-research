@@ -373,7 +373,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- KNOWLEDGE MODAL -->
 <div class="modal-bg" id="knowledgeModal">
-  <div class="modal" style="max-width:700px;padding:32px">
+  <div class="modal" style="max-width:680px;padding:28px 24px;max-height:90vh;overflow-y:auto">
     <button class="modal-close" onclick="closeModal('knowledgeModal')">×</button>
     <div class="modal-eyebrow">Dr. Anders Crichton-Fock · Örebro University</div>
     <div class="modal-title">TRIAD — The Epistemological Model</div>
@@ -381,7 +381,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:28px;font-weight:300">The TRIAD model maps Aristotle's three forms of knowledge onto culinary and hospitality practice. They are not three equal alternatives — they form a developmental hierarchy. Every professional begins with Episteme, trains through Techne, and aspires toward Phronesis. Each research article in this library is translated into all three levels for your profession.</p>
 
     <!-- TRIAD Triangle SVG -->
-    <div style="display:flex;justify-content:center;margin-bottom:28px;background:#0C0B09;border-radius:12px;padding:28px 20px">
+    <div style="display:flex;justify-content:center;margin-bottom:24px;background:#0C0B09;border-radius:10px;padding:24px 16px;overflow:hidden">
       <svg viewBox="0 0 520 400" style="width:100%;max-width:520px" xmlns="http://www.w3.org/2000/svg">
         <!-- Background sections -->
         <!-- Top: Phronesis - dark green -->
@@ -827,8 +827,8 @@ async function loadArticles(){
   const search=document.getElementById('searchInput').value.trim()
   const pane=document.getElementById('feedPane')
   pane.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
-  let fields='id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,scenario,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion'
-  if(role!=='all') fields+=`,scenario_${role},relevance_${role}`
+  const roleFields=role==='all'?',scenario_sommelier,scenario_chef,scenario_creator,scenario_waiter,scenario_educator,episteme_sommelier,techne_sommelier,phronesis_sommelier,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator':`${',scenario_'+role+',episteme_'+role+',techne_'+role+',phronesis_'+role+',relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator'}`
+  let fields='id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion'+roleFields
   let url=`${SB_URL}/rest/v1/articles?select=${fields}&order=year.desc,fetched_at.desc&limit=80`
   if(search){
     url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(title.ilike.*${encodeURIComponent(search)}*,authors.ilike.*${encodeURIComponent(search)}*,journal.ilike.*${encodeURIComponent(search)}*)&order=year.desc&limit=80`
