@@ -255,15 +255,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <div class="filter-section">
   <div class="knowledge-row">
-    <span class="section-label">Knowledge type</span>
+    <span class="section-label" style="color:var(--gold);font-family:'Playfair Display',serif;font-style:normal;font-size:14px;letter-spacing:.08em">TRIAD</span>
     <div class="k-chips">
       <button class="k-chip on all" data-k="all" onclick="setKnowledge('all',this)">All</button>
-      <button class="k-chip" data-k="episteme" onclick="setKnowledge('episteme',this)">Episteme — theoretical</button>
-      <button class="k-chip" data-k="techne" onclick="setKnowledge('techne',this)">Techne — craft</button>
-      <button class="k-chip" data-k="phronesis" onclick="setKnowledge('phronesis',this)">Phronesis — practical wisdom</button>
-      <button class="k-chip" data-k="mixed" onclick="setKnowledge('mixed',this)">Mixed</button>
+      <button class="k-chip" data-k="episteme" onclick="setKnowledge('episteme',this)">Symbolic framing — Episteme</button>
+      <button class="k-chip" data-k="techne" onclick="setKnowledge('techne',this)">Practical orchestration — Techne</button>
+      <button class="k-chip" data-k="phronesis" onclick="setKnowledge('phronesis',this)">Sensory realisation — Phronesis</button>
     </div>
-    <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is this? →</button>
+    <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
   </div>
 </div>
 
@@ -380,46 +379,110 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- KNOWLEDGE MODAL -->
 <div class="modal-bg" id="knowledgeModal">
-  <div class="modal">
+  <div class="modal" style="max-width:700px;padding:32px">
     <button class="modal-close" onclick="closeModal('knowledgeModal')">×</button>
-    <div class="modal-eyebrow">Aristotelian knowledge</div>
-    <div class="modal-title">Three forms of knowledge</div>
-    <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;font-weight:300">Aristotle identified three forms of knowledge, each relevant to culinary and hospitality practice in distinct ways. Understanding which type a study represents helps you apply findings appropriately.</p>
+    <div class="modal-eyebrow">Dr. Anders Crichton-Fock · Örebro University</div>
+    <div class="modal-title">TRIAD — The Epistemological Model</div>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:24px;font-weight:300;font-style:italic">Aristoteliska kunskapsformer och det dubbla greppet</p>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:28px;font-weight:300">The TRIAD model maps Aristotle's three forms of knowledge onto culinary and hospitality practice. They are not three equal alternatives — they form a developmental hierarchy. Every professional begins with Episteme, trains through Techne, and aspires toward Phronesis. Each research article in this library is translated into all three levels for your profession.</p>
 
-    <div class="knowledge-card episteme">
-      <div class="kc-title episteme">Episteme — theoretical knowledge</div>
-      <div class="kc-greek">ἐπιστήμη · Universal truths, provable and teachable</div>
-      <div class="kc-text">Scientific principles you can apply with confidence across contexts. In gastronomy: flavour chemistry, sensory physiology, the neuroscience of taste.</div>
-      <div class="kc-roles">
-        <div class="kc-role"><div class="kc-role-title">Sommelier</div><div class="kc-role-text">Retronasal olfaction accounts for ~80% of perceived flavour. Explains scientifically why a guest with a cold experiences wine differently.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Chef</div><div class="kc-role-text">Maillard reactions begin at 140°C. Precise temperature control becomes a scientific decision, not just intuition.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Meal creator</div><div class="kc-role-text">Crossmodal research shows low-pitched music enhances bitter notes. You can design sound environments to shape flavour perception.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Service staff</div><div class="kc-role-text">Studies show red lighting increases appetite. Understanding environmental science helps you read how the room affects your guests.</div></div>
-      </div>
+    <!-- TRIAD Triangle SVG -->
+    <div style="display:flex;justify-content:center;margin-bottom:32px">
+      <svg viewBox="0 0 500 420" style="width:100%;max-width:500px" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer triangle - dark fill sections -->
+        <!-- Phronesis top - deep green -->
+        <polygon points="250,20 130,240 370,240" fill="#1a3a2a" opacity="0.9"/>
+        <!-- Techne bottom left - deep red -->
+        <polygon points="130,240 30,400 250,400" fill="#3a1a1a" opacity="0.9"/>
+        <!-- Episteme bottom right - deep blue -->
+        <polygon points="370,240 250,400 470,400" fill="#1a1a3a" opacity="0.9"/>
+        <!-- Outer border -->
+        <polygon points="250,20 30,400 470,400" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+        <!-- Inner dividing lines -->
+        <line x1="250" y1="20" x2="250" y2="240" stroke="#C9A84C" stroke-width="1" opacity="0.6"/>
+        <line x1="30" y1="400" x2="250" y2="240" stroke="#C9A84C" stroke-width="1" opacity="0.6"/>
+        <line x1="470" y1="400" x2="250" y2="240" stroke="#C9A84C" stroke-width="1" opacity="0.6"/>
+
+        <!-- Center circle - Det Dubbla Greppet -->
+        <circle cx="250" cy="255" r="52" fill="#0C0B09" stroke="#C9A84C" stroke-width="1"/>
+        <text x="250" y="244" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1">DET DUBBLA</text>
+        <text x="250" y="255" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1">GREPPET</text>
+        <!-- Infinity symbol approximation -->
+        <path d="M225,267 Q232,258 242,264 Q250,270 258,264 Q268,258 275,267 Q268,276 258,270 Q250,264 242,270 Q232,276 225,267Z" fill="none" stroke="#C9A84C" stroke-width="1.2"/>
+        <text x="231" y="269" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6" fill="#C9A84C">ANALYS</text>
+        <text x="269" y="269" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6" fill="#C9A84C">UPP-</text>
+        <text x="269" y="276" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6" fill="#C9A84C">LEVELSE</text>
+
+        <!-- 1. Phronesis top -->
+        <text x="250" y="80" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" fill="#C9A84C" letter-spacing="1">1.</text>
+        <text x="250" y="96" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">SINNLIG</text>
+        <text x="250" y="113" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">REALISERING</text>
+        <text x="250" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
+        <text x="250" y="148" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.7)">Det situerade omdömet —</text>
+        <text x="250" y="160" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.7)">där kunskap blir erfaren sanning</text>
+
+        <!-- 2. Techne bottom left -->
+        <text x="135" y="295" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" fill="#C9A84C" letter-spacing="1">2.</text>
+        <text x="135" y="311" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRAKTISK</text>
+        <text x="135" y="327" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORKESTRERING</text>
+        <text x="135" y="342" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
+        <text x="135" y="358" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.7)">Kunskap blir handling</text>
+
+        <!-- 3. Episteme bottom right -->
+        <text x="365" y="295" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" fill="#C9A84C" letter-spacing="1">3.</text>
+        <text x="365" y="311" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLISK</text>
+        <text x="365" y="327" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">INRAMNING</text>
+        <text x="365" y="342" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
+        <text x="365" y="358" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.7)">Kunskap blir begrepp</text>
+
+        <!-- Central dynamic bottom -->
+        <text x="250" y="393" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.5">Episteme isolerar · Techne realiserar · Phronesis integrerar</text>
+      </svg>
     </div>
 
-    <div class="knowledge-card techne">
-      <div class="kc-title techne">Techne — craft knowledge</div>
-      <div class="kc-greek">τέχνη · Skill developed through deliberate practice</div>
-      <div class="kc-text">Knowledge that lives in the hands, the nose, the palate. Cannot be learned from textbooks alone — it requires repetition and feedback.</div>
-      <div class="kc-roles">
-        <div class="kc-role"><div class="kc-role-title">Sommelier</div><div class="kc-role-text">Sensory panel training studies show 3 blind tastings/week over 6 months significantly improves grape variety identification. Your nose learns by doing.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Chef</div><div class="kc-role-text">Research on expert chefs shows seasoning accuracy improves through tactile feedback loops — weight, texture, sound of a sizzle. Craft is embodied knowledge.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Educator</div><div class="kc-role-text">Studies on culinary apprenticeship show tacit knowledge transfers best through side-by-side practice, not demonstration alone.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Service staff</div><div class="kc-role-text">Research on hospitality training shows upselling techniques improve most through role-play rehearsal, not scripted memorisation.</div></div>
+    <!-- Three knowledge descriptions -->
+    <div style="display:grid;gap:16px;margin-bottom:20px">
+
+      <div class="knowledge-card phronesis" style="border-left:3px solid #2d6a4f">
+        <div class="kc-title" style="color:#2d8a5f">1. Sinnlig realisering — Phronesis · φρόνησις</div>
+        <div class="kc-greek">Det situerade omdömet — där kunskap blir erfaren sanning</div>
+        <div class="kc-text" style="margin-bottom:12px">Phronesis is the apex and the integration principle. It is not just a third form of knowledge — it gives meaning to the other two. The sommelier with Phronesis moves fluidly between "What is in the glass?" (analytical) and "What does this evoke?" (analogical). This is the Double Grip in action: aesthetic and ethical judgment in a concrete, unrepeatable moment.</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.7">
+          <strong style="color:var(--text-primary)">Uttrycksformer:</strong> Analogier, metaforer, narrativ · Kroppslig och temporal perception (attack, mitt, avslut) · Estetisk och etisk bedömning<br>
+          <strong style="color:var(--text-primary)">Nyckelfråga:</strong> "What does this evoke?" — den analogiska frågan
+        </div>
       </div>
+
+      <div class="knowledge-card techne" style="border-left:3px solid #6b2d2d">
+        <div class="kc-title" style="color:#a04040">2. Praktisk orkestrering — Techne · τέχνη</div>
+        <div class="kc-greek">Det utförande kunnandet — där kunskap blir handling</div>
+        <div class="kc-text" style="margin-bottom:12px">Techne is craft knowledge — the skill that lives in the body and hands. It cannot be learned from textbooks alone. It requires deliberate practice, repetition and feedback. Techne mediates between Episteme and Phronesis: it is the trained capacity that makes analytical knowledge actionable and experiential wisdom repeatable.</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.7">
+          <strong style="color:var(--text-primary)">Uttrycksformer:</strong> Servering, temperatur, glasval · Vinifiering, blending, logistik · Sensoriska protokoll och träningsmetoder<br>
+          <strong style="color:var(--text-primary)">Nyckelfråga:</strong> "How do I do this?" — den procedurella frågan
+        </div>
+      </div>
+
+      <div class="knowledge-card episteme" style="border-left:3px solid #1a2d5a">
+        <div class="kc-title" style="color:#4060a0">3. Symbolisk inramning — Episteme · ἐπιστήμη</div>
+        <div class="kc-greek">Det analytiska vetandet — där kunskap blir begrepp och struktur</div>
+        <div class="kc-text" style="margin-bottom:12px">Episteme is the foundation — universal, provable, teachable knowledge. It isolates and describes: flavour chemistry, sensory physiology, hospitality theory. In research terms, this is the IMRaD structure, the proven principle, the classification system. Every professional begins here, but mastery cannot end here.</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.7">
+          <strong style="color:var(--text-primary)">Uttrycksformer:</strong> Syranivå, tanninstruktur, aromkategorier · QDA, flash profiling · Klassificeringar och typiciteter<br>
+          <strong style="color:var(--text-primary)">Nyckelfråga:</strong> "What is in the glass?" — den analytiska frågan
+        </div>
+      </div>
+
     </div>
 
-    <div class="knowledge-card phronesis">
-      <div class="kc-title phronesis">Phronesis — practical wisdom</div>
-      <div class="kc-greek">φρόνησις · Contextual judgment, cultivated through experience</div>
-      <div class="kc-text">The wisdom to act well in a specific situation — reading context, adapting to the guest, making sound ethical judgments under uncertainty.</div>
-      <div class="kc-roles">
-        <div class="kc-role"><div class="kc-role-title">Sommelier</div><div class="kc-role-text">Research shows guests who feel "tested" order cheaper wine and enjoy less. Phronesis is knowing when to show expertise — and when to simply listen.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Chef</div><div class="kc-role-text">Studies on kitchen leadership show the best chefs adapt their communication style to each team member. Recipe mastery is techne — team wisdom is phronesis.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Meal creator</div><div class="kc-role-text">Research on experiential dining shows that surprise must be balanced with comfort. Knowing when to push boundaries — and when to reassure — is practical wisdom.</div></div>
-        <div class="kc-role"><div class="kc-role-title">Service staff</div><div class="kc-role-text">Studies on service recovery show that a sincere apology outperforms a discount. Reading what a guest actually needs in that moment is phronesis in action.</div></div>
-      </div>
+    <div style="background:rgba(201,168,76,0.08);border:0.5px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px;font-size:12px;color:var(--text-secondary);line-height:1.8">
+      <strong style="color:var(--gold);font-family:'Playfair Display',serif;font-size:13px">The Double Grip — Det dubbla greppet</strong><br>
+      The movement between Episteme and Phronesis is not linear — it is a trained oscillation. "What is in the glass?" anchors you in analysis. "What does this evoke?" opens you to experience. Techne is the craft that makes this movement possible. The professional who has mastered the Double Grip does not choose between science and intuition — they move between them, fluidly, in every situation.<br><br>
+      <em>Modellens syfte: Att utveckla förmågan att växla och integrera mellan analytiska, praktiska och intuitiva kunskapsformer. Triaden tränas genom reflektion, dialog, erfarenhet och medveten praktik — det dubbla greppet i handling.</em>
+    </div>
+
+    <div style="margin-top:16px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center">
+      Crichton-Fock & Spence (2024) · Herdenstam (2011, 2024) · Based on Aristotle (trans. 2000)
     </div>
   </div>
 </div>
@@ -644,10 +707,25 @@ function setKnowledge(k,btn){
 }
 
 function getRelevanceScore(a){if(role==='all')return 0;return parseInt(a['relevance_'+role]||0)}
-function getScenario(a){
-  if(role!=='all'){const s=a['scenario_'+role];if(s&&s.length>10)return s}
-  if(a.scenario&&a.scenario.length>10)return a.scenario
+function getTriadContent(a){
+  // Returns TRIAD content based on selected knowledge filter and role
+  const r = role === 'all' ? 'sommelier' : role
+  const k = knowledgeFilter === 'all' ? null : knowledgeFilter
+  if(k && k !== 'mixed'){
+    const val = a[k+'_'+r]
+    if(val && val.length > 10 && !val.startsWith('Not directly')) return {type:k, text:val}
+  }
+  // Default: show techne (practical) as most immediately useful
+  const techne = a['techne_'+r]
+  if(techne && techne.length > 10) return {type:'techne', text:techne}
+  // Fallback to old scenario
+  const s = a['scenario_'+r] || a.scenario
+  if(s && s.length > 10) return {type:'techne', text:s}
   return null
+}
+function getScenario(a){
+  const t = getTriadContent(a)
+  return t ? t.text : null
 }
 
 function cardHTML(a,idx){
@@ -671,7 +749,45 @@ function cardHTML(a,idx){
     <div class="card-title">${a.title||''}</div>
     <div class="card-insight">${a.insight||''}</div>
     ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}"><div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div><div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div><div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div><div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div></div>`:''}
-    ${scenario&&!locked?`<div class="scenario-block"><div class="scenario-eyebrow">${t('scenarioLabel')}</div>${role!=='all'?`<div class="scenario-role-label">${t('roles')[role]||role}</div>`:''}<div class="scenario-text">${scenario}</div></div>`:''}
+    ${(()=>{
+      if(locked) return ''
+      const r = role==='all'?'sommelier':role
+      const roleName = t('roles')[r]||r
+      const ep = a['episteme_'+r]; const tc = a['techne_'+r]; const ph = a['phronesis_'+r]
+      const k = knowledgeFilter
+      if(k==='episteme'&&ep&&ep.length>10&&!ep.startsWith('Not')){
+        return `<div class="scenario-block" style="border-left:3px solid var(--episteme);background:var(--episteme-light);padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
+          <div class="scenario-eyebrow" style="color:var(--episteme)">Symbolisk inramning · Episteme · ${roleName}</div>
+          <div class="scenario-text">${ep}</div></div>`
+      }
+      if(k==='phronesis'&&ph&&ph.length>10&&!ph.startsWith('Not')){
+        return `<div class="scenario-block" style="border-left:3px solid #2d6a4f;background:#eaf5ee;padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
+          <div class="scenario-eyebrow" style="color:#2d6a4f">Sinnlig realisering · Phronesis · ${roleName}</div>
+          <div class="scenario-text">${ph}</div></div>`
+      }
+      if(k==='techne'&&tc&&tc.length>10&&!tc.startsWith('Not')){
+        return `<div class="scenario-block" style="border-left:3px solid var(--techne);background:var(--techne-light);padding:12px 14px;border-radius:0 6px 6px 0;margin-top:10px">
+          <div class="scenario-eyebrow" style="color:var(--techne)">Praktisk orkestrering · Techne · ${roleName}</div>
+          <div class="scenario-text">${tc}</div></div>`
+      }
+      // Default: show all three if available
+      if(ep&&tc&&ph&&ep.length>10&&tc.length>10&&ph.length>10){
+        return `<div style="margin-top:10px;display:grid;gap:8px">
+          <div class="scenario-block" style="border-left:3px solid #1a2d5a;background:var(--episteme-light);padding:10px 12px;border-radius:0 6px 6px 0">
+            <div class="scenario-eyebrow" style="color:#1a2d5a;font-size:10px">3. SYMBOLISK INRAMNING · Episteme</div>
+            <div class="scenario-text" style="font-size:11px">${ep.slice(0,180)}${ep.length>180?'…':''}</div></div>
+          <div class="scenario-block" style="border-left:3px solid var(--techne);background:var(--techne-light);padding:10px 12px;border-radius:0 6px 6px 0">
+            <div class="scenario-eyebrow" style="color:var(--techne);font-size:10px">2. PRAKTISK ORKESTRERING · Techne</div>
+            <div class="scenario-text" style="font-size:11px">${tc.slice(0,180)}${tc.length>180?'…':''}</div></div>
+          <div class="scenario-block" style="border-left:3px solid #2d6a4f;background:#eaf5ee;padding:10px 12px;border-radius:0 6px 6px 0">
+            <div class="scenario-eyebrow" style="color:#2d6a4f;font-size:10px">1. SINNLIG REALISERING · Phronesis</div>
+            <div class="scenario-text" style="font-size:11px">${ph.slice(0,180)}${ph.length>180?'…':''}</div></div>
+        </div>`
+      }
+      const s = getScenario(a)
+      if(!s) return ''
+      return `<div class="scenario-block"><div class="scenario-eyebrow">${t('scenarioLabel')}</div><div class="scenario-text">${s}</div></div>`
+    })()}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
