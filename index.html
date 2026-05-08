@@ -9,258 +9,203 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--gold:#C9A84C;--gold-light:#F5EDD3;--gold-dark:#8B6914;--black:#0C0B09;--white:#FDFCF8;--warm-100:#F7F4ED;--warm-200:#EDE8DC;--text-primary:#0C0B09;--text-secondary:#5C5649;--text-tertiary:#9C9484;--border:rgba(12,11,9,0.08);--border-mid:rgba(12,11,9,0.15);--episteme:#1A3A5C;--episteme-light:#E8EFF6;--techne:#2D5016;--techne-light:#EAF0E5;--phronesis:#5C2D00;--phronesis-light:#F5EDE3;--mixed:#3D1A5C;--mixed-light:#EDE8F5}
+:root{
+  --gold:#C9A84C;--gold-light:#F5EDD3;--black:#0C0B09;--white:#FDFCF8;
+  --warm-100:#F7F4ED;--warm-200:#EDE8DC;
+  --text-primary:#0C0B09;--text-secondary:#5C5649;--text-tertiary:#9C9484;
+  --border:rgba(12,11,9,0.08);--border-mid:rgba(12,11,9,0.15);
+  --episteme:#1A3A5C;--episteme-light:#E8EFF6;
+  --techne:#2D5016;--techne-light:#EAF0E5;
+  --phronesis:#5C2D00;--phronesis-light:#F5EDE3;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);min-height:100vh}
 
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
-.logo{display:flex;align-items:baseline;gap:2px;flex-shrink:0}
-.logo-gusto{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--text-primary)}
-.logo-science{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-left:10px}
-.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.academy-link{font-size:12px;color:var(--gold-dark);border:0.5px solid var(--gold);padding:5px 14px;border-radius:20px;cursor:pointer;background:var(--gold-light);text-decoration:none;transition:all .15s}
-.academy-link:hover{background:var(--gold);color:white}
-.lang-btn{font-size:11px;letter-spacing:.08em;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);font-family:'Outfit',sans-serif}
-.auth-btn{font-size:13px;padding:7px 18px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);font-family:'Outfit',sans-serif;transition:all .15s}
-.auth-btn:hover{border-color:var(--gold);color:var(--gold-dark)}
-.upgrade-btn{font-size:13px;padding:8px 18px;border-radius:20px;background:var(--gold);color:var(--white);border:none;cursor:pointer;font-weight:500;font-family:'Outfit',sans-serif;transition:opacity .15s}
-.upgrade-btn:hover{opacity:.88}
+.logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
+.logo-gusto{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--text-primary)}
+.logo-science{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-left:10px;position:relative;top:-1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.academy-btn{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:flex;align-items:center;gap:4px}
+.lang-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
+.auth-btn{font-size:12px;font-weight:500;background:var(--black);color:var(--white);border:none;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--black);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer}
 
 /* HERO */
-.hero{padding:44px 32px 32px;border-bottom:0.5px solid var(--border);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;background:linear-gradient(135deg,var(--white) 0%,var(--warm-100) 100%)}
-.hero-eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:400;margin-bottom:12px}
-.hero-title{font-family:'Playfair Display',serif;font-size:40px;font-weight:400;line-height:1.15;margin-bottom:12px}
-.hero-title em{font-style:italic;color:var(--gold-dark)}
-.hero-sub{font-size:14px;color:var(--text-secondary);line-height:1.75;font-weight:300;max-width:460px;margin-bottom:18px}
-.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:12px;overflow:hidden}
-.stat-item{background:var(--white);padding:16px 20px}
-.stat-num{font-family:'Playfair Display',serif;font-size:30px;font-weight:400;line-height:1;margin-bottom:3px}
-.stat-label{font-size:11px;color:var(--text-tertiary);letter-spacing:.04em;font-weight:300}
-.new-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;background:var(--techne-light);color:var(--techne);padding:4px 12px;border-radius:20px}
-.new-dot{width:6px;height:6px;border-radius:50%;background:var(--techne);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero{padding:56px 32px 40px;max-width:900px}
+.hero-eyebrow{font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.hero-title{font-family:'Playfair Display',serif;font-size:48px;font-weight:400;line-height:1.1;margin-bottom:20px;color:var(--text-primary)}
+.hero-title em{color:var(--gold);font-style:italic}
+.hero-sub{font-size:14px;color:var(--text-secondary);line-height:1.8;font-weight:300;max-width:640px;margin-bottom:20px}
+.hero-stats{display:flex;gap:32px;flex-wrap:wrap}
+.stat-item{display:flex;flex-direction:column}
+.stat-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:400;line-height:1;margin-bottom:3px}
+.stat-label{font-size:11px;color:var(--text-tertiary);letter-spacing:.06em}
 
-/* SMART FILTER BAR */
-.filter-section{border-bottom:0.5px solid var(--border);background:var(--black)}
+/* BLACK FILTER BAR */
+.filter-bar{background:var(--black);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.triad-label{font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);letter-spacing:.1em;flex-shrink:0}
+.triad-desc{font-size:11px;color:rgba(255,255,255,.4);flex:1;min-width:200px}
+.triad-btn{font-size:11px;color:rgba(255,255,255,.4);border:0.5px solid rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;flex-shrink:0}
+.triad-btn:hover{color:var(--gold);border-color:var(--gold)}
 
-.knowledge-row{padding:12px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.section-label{font-family:'Playfair Display',serif;font-size:12px;font-style:italic;color:rgba(255,255,255,.4);white-space:nowrap}
-.k-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
-.k-chip{font-size:11px;padding:4px 12px;border-radius:20px;cursor:pointer;border:0.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.55);background:none;transition:all .15s;font-family:'Outfit',sans-serif;white-space:nowrap}
-.k-chip:hover{border-color:var(--gold);color:var(--gold-light)}
-.k-chip.on.all{background:var(--gold);color:#fff;border-color:var(--gold)}
-.k-chip.on.episteme{background:var(--episteme);color:#fff;border-color:var(--episteme)}
-.k-chip.on.techne{background:var(--techne);color:#fff;border-color:var(--techne)}
-.k-chip.on.phronesis{background:var(--phronesis);color:#fff;border-color:var(--phronesis)}
-.k-chip.on.mixed{background:var(--mixed);color:#fff;border-color:var(--mixed)}
-.k-info-btn{font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;border:0.5px solid rgba(255,255,255,.1);padding:3px 10px;border-radius:20px;background:none;font-family:'Outfit',sans-serif;white-space:nowrap}
+/* ROLE FILTER */
+.role-bar{padding:16px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.role-label{font-size:12px;color:var(--text-tertiary);margin-right:4px}
+.role-chip{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s}
+.role-chip.on{background:var(--black);color:var(--white);border-color:var(--black)}
+.role-chip:hover:not(.on){border-color:var(--text-secondary)}
 
-.role-row{padding:10px 32px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--warm-100);border-bottom:0.5px solid var(--border)}
-.role-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin-right:4px}
-.role-chip{font-size:12px;padding:4px 13px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--white);cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
-.role-chip:hover{border-color:var(--gold);color:var(--gold-dark)}
-.role-chip.on{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
+/* TOOLBAR */
+.toolbar{padding:12px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-select{font-size:12px;color:var(--text-primary);border:0.5px solid var(--border-mid);padding:5px 10px;border-radius:20px;background:var(--white);cursor:pointer;font-family:'Outfit',sans-serif}
+.search-wrap{flex:1;min-width:200px;max-width:400px;position:relative}
+.search-input{width:100%;font-size:12px;border:0.5px solid var(--border-mid);padding:6px 12px 6px 30px;border-radius:20px;background:var(--white);font-family:'Outfit',sans-serif;color:var(--text-primary);outline:none}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-tertiary)}
+.saved-btn{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
+.saved-btn.on{background:var(--gold-light);color:var(--gold);border-color:var(--gold)}
 
-.filters-row{padding:10px 32px;border-bottom:0.5px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--white)}
-.filter-select{font-family:'Outfit',sans-serif;font-size:12px;padding:5px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary);cursor:pointer}
-.search-wrap{position:relative;flex:1;min-width:200px;max-width:320px}
-.search-input{width:100%;font-family:'Outfit',sans-serif;font-size:12px;padding:5px 10px 5px 30px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary)}
-.search-input::placeholder{color:var(--text-tertiary)}
-.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-tertiary);pointer-events:none}
-.free-bar{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
-.free-text{font-size:11px;color:var(--text-tertiary)}
-.free-track{width:50px;height:2px;background:var(--warm-200);border-radius:2px;overflow:hidden}
-.free-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+/* LAYOUT */
+.main-layout{display:grid;grid-template-columns:1fr 220px;gap:0;max-width:1100px;margin:0 auto;padding:24px 32px}
+.feed-pane{min-width:0}
+.sidebar{padding-left:28px;border-left:0.5px solid var(--border)}
+.feed-count{font-size:12px;color:var(--text-tertiary);margin-bottom:16px}
+.new-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--techne);background:var(--techne-light);padding:3px 10px;border-radius:20px;margin-left:8px}
 
-/* SAVED TAB */
-.saved-tab{font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);font-family:'Outfit',sans-serif;transition:all .15s}
-.saved-tab.on{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
+/* ARTICLE CARDS */
+.article-card{border:0.5px solid var(--border);border-radius:10px;padding:20px;margin-bottom:14px;background:var(--white);transition:border-color .15s}
+.article-card:hover{border-color:var(--border-mid)}
+.article-card.saved-card{border-color:var(--gold);background:rgba(201,168,76,.03)}
+.card-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.topic-badge{font-size:10px;color:var(--gold);font-weight:400;letter-spacing:.04em}
+.source-badge{font-size:10px;color:var(--text-tertiary);background:var(--warm-100);padding:2px 8px;border-radius:10px}
+.study-badge{font-size:10px;color:var(--text-tertiary);border:0.5px solid var(--border-mid);padding:2px 8px;border-radius:10px}
+.relevance-badge{font-size:10px;color:var(--gold);background:rgba(201,168,76,.1);padding:2px 8px;border-radius:10px;font-weight:500}
+.card-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:400;line-height:1.35;margin-bottom:8px;color:var(--text-primary)}
+.card-insight{font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:0;font-weight:300}
 
-/* MAIN */
-.main{display:grid;grid-template-columns:1fr 290px;min-height:calc(100vh - 54px)}
-.feed{padding:18px 32px;border-right:0.5px solid var(--border)}
-.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-.feed-count{font-size:12px;color:var(--text-tertiary)}
-.sort-select{font-family:'Outfit',sans-serif;font-size:12px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--warm-100);color:var(--text-secondary)}
+/* TRIAD BLOCKS */
+.triad-section{margin-top:12px;display:grid;gap:8px}
+.triad-block{padding:11px 14px;border-radius:0 6px 6px 0;font-size:12px;color:var(--text-secondary);line-height:1.7;font-weight:300}
+.triad-block-label{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.triad-pending{margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic;padding:6px 0}
 
-/* ARTICLE CARD */
-.article-card{border:0.5px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:8px;background:var(--white);transition:border-color .15s;position:relative;overflow:hidden}
-.article-card:hover{border-color:var(--gold)}
-.article-card.saved-card{border-color:var(--gold);background:var(--gold-light)}
-.article-card.locked::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,rgba(253,252,248,.97) 65%);border-radius:12px;pointer-events:none}
-.lock-cta{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px}
-.lock-msg{font-size:12px;color:var(--text-secondary);white-space:nowrap;background:var(--white);padding:4px 14px;border-radius:20px;border:0.5px solid var(--border-mid)}
+/* IMRAD */
+.imrad-block{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;padding:14px;background:var(--warm-100);border-radius:8px;font-size:11px}
+.imrad-block.open{display:grid}
+.imrad-label{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px}
+.imrad-text{color:var(--text-secondary);line-height:1.6}
 
-.card-top{display:flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap}
-.topic-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;background:var(--gold-light);color:var(--gold-dark)}
-.source-badge,.study-badge{font-size:10px;padding:2px 7px;border-radius:20px;border:0.5px solid var(--border-mid);color:var(--text-tertiary)}
-.knowledge-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
-.knowledge-badge.episteme{background:var(--episteme-light);color:var(--episteme)}
-.knowledge-badge.techne{background:var(--techne-light);color:var(--techne)}
-.knowledge-badge.phronesis{background:var(--phronesis-light);color:var(--phronesis)}
-.knowledge-badge.mixed{background:var(--mixed-light);color:var(--mixed)}
-.relevance-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--gold-light);color:var(--gold-dark);border:0.5px solid var(--gold)}
-
-.card-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:400;line-height:1.4;margin-bottom:5px}
-.card-insight{font-size:13px;color:var(--text-secondary);line-height:1.65;margin-bottom:8px;font-weight:300}
-
-.imrad-block{display:none;background:var(--warm-100);border-radius:8px;padding:11px 13px;margin-bottom:8px;gap:8px}
-.imrad-block.open{display:grid;grid-template-columns:1fr 1fr}
-.imrad-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-dark);font-weight:500;margin-bottom:2px}
-.imrad-text{font-size:11px;color:var(--text-secondary);line-height:1.5;font-weight:300}
-
-.scenario-block{background:var(--warm-100);border-left:2px solid var(--gold);border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:8px}
-.scenario-eyebrow{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);font-weight:500;margin-bottom:3px}
-.scenario-role-label{font-size:11px;color:var(--gold-dark);font-weight:500;margin-bottom:5px;font-family:'Playfair Display',serif;font-style:italic}
-.scenario-text{font-size:12px;color:var(--text-secondary);line-height:1.7;font-weight:300}
-
-.card-limitation{font-size:11px;color:var(--text-tertiary);margin-bottom:7px;padding-top:7px;border-top:0.5px solid var(--border);font-weight:300}
-.card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
-.card-meta{font-size:11px;color:var(--text-tertiary);font-weight:300}
-.card-actions{display:flex;gap:5px;flex-wrap:wrap}
-.action-btn{font-size:11px;padding:4px 11px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
-.action-btn:hover{border-color:var(--gold);color:var(--gold-dark)}
+/* CARD FOOTER */
+.card-limitation{font-size:11px;color:var(--text-tertiary);margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);line-height:1.6}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);gap:8px;flex-wrap:wrap}
+.card-meta{font-size:11px;color:var(--text-tertiary);line-height:1.5;flex:1;min-width:0}
+.card-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.action-btn{font-size:11px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:4px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
 .action-btn.primary{background:var(--black);color:var(--white);border-color:var(--black)}
-.action-btn.share-btn{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
-.save-btn{font-size:11px;padding:4px 11px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-tertiary);transition:all .15s;font-family:'Outfit',sans-serif}
-.save-btn:hover{border-color:var(--gold);color:var(--gold)}
-.save-btn.saved{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
-.imrad-toggle{font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;color:var(--text-tertiary);font-family:'Outfit',sans-serif;transition:all .15s}
-.imrad-toggle:hover,.imrad-toggle.open{color:var(--gold-dark);border-color:var(--gold)}
+.imrad-toggle{font-size:10px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:3px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;letter-spacing:.04em}
+.imrad-toggle.open{background:var(--warm-200);color:var(--text-primary)}
+.save-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
+.save-btn.saved{color:var(--gold);border-color:var(--gold)}
+
+/* LOCKED */
+.article-card.locked{position:relative;overflow:hidden}
+.article-card.locked .card-insight{filter:blur(4px);user-select:none}
+.lock-cta{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,var(--white) 60%,transparent);padding:32px 20px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lock-msg{font-size:12px;color:var(--text-secondary)}
+.upgrade-btn{font-size:12px;font-weight:500;background:var(--gold);color:var(--black);border:none;padding:7px 18px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap}
+
+/* FREE BAR */
+.free-bar{background:var(--warm-100);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.free-progress{flex:1;height:3px;background:var(--warm-200);border-radius:2px;overflow:hidden}
+.free-fill{height:100%;background:var(--gold);transition:width .3s}
+.free-text{font-size:11px;color:var(--text-tertiary);white-space:nowrap}
+.upgrade-link{font-size:11px;color:var(--gold);cursor:pointer;text-decoration:underline;white-space:nowrap}
 
 /* SIDEBAR */
-.sidebar{padding:16px;overflow-y:auto}
-.sidebar-section{margin-bottom:20px}
-.sidebar-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px}
-.pro-card{background:var(--black);border-radius:12px;padding:16px;margin-bottom:14px}
-.pro-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:400;color:var(--white);margin-bottom:6px;line-height:1.3}
-.pro-title em{color:var(--gold-light);font-style:italic}
-.pro-features{list-style:none;margin-bottom:14px}
-.pro-features li{font-size:11px;color:rgba(255,255,255,.5);padding:3px 0;display:flex;align-items:center;gap:7px;font-weight:300}
-.pro-features li::before{content:'';width:3px;height:3px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.pro-btn{width:100%;padding:9px;background:var(--gold);color:var(--white);border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;transition:opacity .15s}
-.pro-btn:hover{opacity:.88}
-.admin-btn{width:100%;padding:7px;background:var(--warm-100);color:var(--text-secondary);border:0.5px solid var(--border-mid);border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:5px;transition:all .15s}
-.admin-btn:hover{background:var(--gold-light);color:var(--gold-dark);border-color:var(--gold)}
-.topic-item,.journal-item{display:flex;align-items:center;gap:7px;padding:4px 0;cursor:pointer;border-bottom:0.5px solid var(--border)}
-.topic-item:last-child,.journal-item:last-child{border-bottom:none}
-.topic-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.topic-name,.journal-name{font-size:11px;color:var(--text-secondary);flex:1;text-transform:capitalize;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topic-count,.journal-count{font-size:10px;color:var(--text-tertiary);flex-shrink:0}
-.topic-item:hover .topic-name,.journal-item:hover .journal-name{color:var(--gold-dark)}
+.sidebar-section{margin-bottom:24px}
+.sidebar-title{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px}
+.topic-item{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:12px;color:var(--text-secondary)}
+.topic-item:hover .topic-name{color:var(--gold)}
+.topic-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;opacity:.5}
+.topic-count{font-size:10px;color:var(--text-tertiary);margin-left:auto}
+.journal-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;cursor:pointer}
+.journal-name{font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.journal-name:hover{color:var(--gold)}
+.journal-count{font-size:10px;color:var(--text-tertiary);flex-shrink:0}
+.loading-state{display:flex;align-items:center;gap:10px;padding:40px;color:var(--text-tertiary);font-size:13px}
+.spinner{width:20px;height:20px;border:2px solid var(--border-mid);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* MODALS */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(12,11,9,.6);z-index:200;align-items:center;justify-content:center}
+.modal-bg{position:fixed;inset:0;background:rgba(12,11,9,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .modal-bg.open{display:flex}
-.modal{background:var(--white);border-radius:16px;padding:28px 32px;width:min(540px,92vw);position:relative;max-height:90vh;overflow-y:auto}
-.modal-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-size:16px;color:var(--text-secondary);display:flex;align-items:center;justify-content:center}
-.modal-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:14px;line-height:1.2}
-
-.knowledge-card{border-radius:10px;padding:13px 15px;margin-bottom:8px}
+.modal{background:var(--white);border-radius:12px;padding:28px 24px;width:100%;position:relative;max-height:90vh;overflow-y:auto}
+.modal-close{position:absolute;top:14px;right:16px;font-size:20px;background:none;border:none;cursor:pointer;color:var(--text-tertiary);line-height:1}
+.modal-eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.modal-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;margin-bottom:14px;line-height:1.2}
+.knowledge-card{padding:14px 16px;border-radius:6px;margin-bottom:12px}
 .knowledge-card.episteme{background:var(--episteme-light);border-left:3px solid var(--episteme)}
 .knowledge-card.techne{background:var(--techne-light);border-left:3px solid var(--techne)}
 .knowledge-card.phronesis{background:var(--phronesis-light);border-left:3px solid var(--phronesis)}
-.kc-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:500;margin-bottom:2px}
+.kc-title{font-size:13px;font-weight:500;margin-bottom:4px}
 .kc-title.episteme{color:var(--episteme)}.kc-title.techne{color:var(--techne)}.kc-title.phronesis{color:var(--phronesis)}
-.kc-greek{font-size:11px;color:var(--text-tertiary);margin-bottom:5px;font-style:italic}
-.kc-text{font-size:12px;line-height:1.6;color:var(--text-secondary);font-weight:300;margin-bottom:8px}
-.kc-roles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.kc-role{background:rgba(255,255,255,.6);border-radius:6px;padding:7px 9px}
-.kc-role-title{font-size:10px;font-weight:500;color:var(--text-primary);margin-bottom:2px;letter-spacing:.04em}
-.kc-role-text{font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic;font-weight:300}
-
-.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.plan-card{border:0.5px solid var(--border-mid);border-radius:10px;padding:13px;cursor:pointer;transition:border-color .15s}
-.plan-card:hover,.plan-card.selected{border-color:var(--gold)}
-.plan-card.selected{background:var(--gold-light)}
-.plan-name{font-size:13px;font-weight:500;margin-bottom:3px}
-.plan-price{font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--gold-dark);margin-bottom:2px}
-.plan-desc{font-size:11px;color:var(--text-tertiary)}
-.modal-input{width:100%;padding:9px 13px;border:0.5px solid var(--border-mid);border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;background:var(--white);color:var(--text-primary);margin-bottom:8px}
-.modal-input:focus{outline:none;border-color:var(--gold)}
-.modal-submit{width:100%;padding:11px;background:var(--black);color:var(--white);border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px}
-.modal-link{font-size:12px;color:var(--gold-dark);cursor:pointer;text-align:center;display:block;margin-top:10px}
-
-.share-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.share-option{padding:11px;border:0.5px solid var(--border-mid);border-radius:8px;cursor:pointer;text-align:center;font-size:12px;color:var(--text-secondary);transition:all .15s;font-family:'Outfit',sans-serif}
-.share-option:hover{border-color:var(--gold);color:var(--gold-dark);background:var(--gold-light)}
-
-.loading-state{display:flex;flex-direction:column;align-items:center;padding:60px 20px;color:var(--text-tertiary);font-size:13px;gap:12px;font-weight:300}
-.spinner{width:20px;height:20px;border:1.5px solid var(--warm-200);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.user-menu{position:relative}
-.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--gold-light);border:0.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--gold-dark);cursor:pointer;font-weight:500}
-.user-dropdown{display:none;position:absolute;right:0;top:36px;background:var(--white);border:0.5px solid var(--border-mid);border-radius:10px;padding:8px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-.user-dropdown.open{display:block}
-.user-email{font-size:11px;color:var(--text-tertiary);padding:4px 8px 8px;border-bottom:0.5px solid var(--border);margin-bottom:4px}
-.dropdown-item{font-size:12px;color:var(--text-secondary);padding:6px 8px;border-radius:6px;cursor:pointer;display:block;font-family:'Outfit',sans-serif}
-.dropdown-item:hover{background:var(--warm-100);color:var(--text-primary)}
-
-@media(max-width:768px){
-  .topbar{padding:0 16px}
-  .hero{grid-template-columns:1fr;padding:28px 16px}
-  .hero-stats{display:none}
-  .knowledge-row,.role-row,.filters-row{padding:10px 16px}
-  .main{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .feed{padding:12px 16px}
-  .hero-title{font-size:30px}
-  .imrad-block.open{grid-template-columns:1fr}
-}
+.kc-greek{font-size:11px;color:var(--text-tertiary);margin-bottom:8px;font-style:italic}
+.kc-text{font-size:12px;color:var(--text-secondary);line-height:1.7}
+.auth-form input{width:100%;border:0.5px solid var(--border-mid);border-radius:8px;padding:10px 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:10px;outline:none}
+.auth-form button{width:100%;background:var(--black);color:var(--white);border:none;padding:11px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif}
+.auth-switch{font-size:12px;color:var(--text-secondary);text-align:center;margin-top:12px;cursor:pointer}
+.auth-switch span{color:var(--gold);text-decoration:underline}
+.upgrade-features{list-style:none;margin:16px 0;display:grid;gap:8px}
+.upgrade-features li{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+.upgrade-features li::before{content:'✓';color:var(--gold);font-weight:600}
+.price-row{display:flex;gap:10px;margin:16px 0}
+.price-card{flex:1;border:0.5px solid var(--border-mid);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:all .15s}
+.price-card.on{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.price-amount{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:4px}
+.price-period{font-size:11px;color:var(--text-tertiary)}
+.share-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.share-opt{display:flex;align-items:center;gap:8px;padding:10px 14px;border:0.5px solid var(--border-mid);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text-secondary);background:none;font-family:'Outfit',sans-serif;transition:border-color .15s}
+.share-opt:hover{border-color:var(--gold);color:var(--gold)}
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="logo">
-    <span class="logo-gusto">Gusto</span><span style="color:var(--gold);margin:0 3px;font-family:'Outfit',sans-serif;font-weight:300"> </span><span class="logo-science">Science</span>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo" onclick="window.scrollTo(0,0)">
+    <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
   </div>
   <div class="topbar-right">
-    <a href="https://gusto.academy" target="_blank" class="academy-link">Gusto Academy ↗</a>
+    <a href="https://gusto.academy" target="_blank" class="academy-btn">Gusto Academy ↗</a>
     <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
-    <div id="authArea">
-      <button class="auth-btn" onclick="openModal('authModal')">Sign in</button>
-      <button class="upgrade-btn" onclick="openModal('upgradeModal')">Start free trial</button>
-    </div>
-    <div id="userArea" style="display:none" class="user-menu">
-      <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()">G</div>
-      <div class="user-dropdown" id="userDropdown">
-        <div class="user-email" id="userEmail"></div>
-        <div class="dropdown-item" onclick="showSaved()">⭐ Saved articles</div>
-        <div class="dropdown-item" onclick="openModal('upgradeModal')">↑ Upgrade to Pro</div>
-        <div class="dropdown-item" onclick="signOut()">Sign out</div>
-      </div>
-    </div>
+    <div id="authArea"><button class="auth-btn" onclick="openModal('authModal')" id="authBtn">A</button></div>
   </div>
-</header>
-
-<section class="hero">
-  <div>
-    <div class="hero-eyebrow" id="heroEyebrow">Research intelligence for culinary professionals</div>
-    <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
-    <p class="hero-sub" id="heroSub">Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates thousands of research studies into three forms of professional knowledge: <em>Episteme</em> (the science, via IMRaD), <em>Techne</em> (practical application in your profession), and <em>Phronesis</em> (the ethical and aesthetic judgment to act wisely). Select your profession to begin.</p>
-    <div class="new-badge"><div class="new-dot"></div><span id="newCount">Loading...</span></div>
-  </div>
-  <div class="hero-stats">
-    <div class="stat-item"><div class="stat-num" id="totalCount">2527</div><div class="stat-label">articles indexed</div></div>
-    <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">topic areas</div></div>
-    <div class="stat-item"><div class="stat-num">40</div><div class="stat-label">years of research</div></div>
-    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">professions</div></div>
-  </div>
-</section>
-
-<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
-  <div style="display:flex;align-items:center;gap:10px">
-    <span style="font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);letter-spacing:.1em">TRIAD</span>
-    <span style="font-size:11px;color:var(--text-tertiary)">Episteme · Techne · Phronesis — three layers per article, for your profession</span>
-  </div>
-  <button class="k-info-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
 </div>
 
-<div class="role-row">
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow" id="heroEyebrow">Research intelligence for culinary professionals</div>
+  <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
+  <p class="hero-sub" id="heroSub">Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates thousands of research studies into three forms of professional knowledge: <em>Episteme</em> (the science, via IMRaD), <em>Techne</em> (practical application in your profession), and <em>Phronesis</em> (ethical and aesthetic judgment). Select your profession to begin.</p>
+  <div class="hero-stats">
+    <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles indexed</div></div>
+    <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">topic areas</div></div>
+    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">professions</div></div>
+    <div class="stat-item"><div class="stat-num" id="newCount" style="font-size:12px;padding-top:6px"></div></div>
+  </div>
+</div>
+
+<!-- TRIAD BAR -->
+<div class="filter-bar">
+  <span class="triad-label">TRIAD</span>
+  <span class="triad-desc">Episteme · Techne · Phronesis — three layers of knowledge per article, for your profession</span>
+  <button class="triad-btn" onclick="openModal('knowledgeModal')">What is TRIAD? →</button>
+</div>
+
+<!-- ROLE FILTER -->
+<div class="role-bar">
   <span class="role-label" id="roleLabel">For</span>
   <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All professionals</button>
   <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)">Sommelier</button>
@@ -270,7 +215,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <button class="role-chip" data-role="educator" onclick="setRole('educator',this)">Educator</button>
 </div>
 
-<div class="filters-row">
+<!-- TOOLBAR -->
+<div class="toolbar">
   <select class="filter-select" id="topicSel" onchange="loadArticles()">
     <option value="all">All topics</option>
     <option value="sommellerie">Sommellerie</option>
@@ -278,248 +224,178 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <option value="multisensory">Multisensory</option>
     <option value="culinary_science">Culinary science</option>
     <option value="food_science">Food science</option>
-    <option value="flavor_science">Flavor science</option>
+    <option value="flavor_science">Flavour science</option>
     <option value="sensory_evaluation">Sensory evaluation</option>
     <option value="food_psychology">Food psychology</option>
     <option value="neurogastronomy">Neurogastronomy</option>
     <option value="food_anthropology">Food anthropology</option>
     <option value="atmospherics">Atmospherics</option>
     <option value="hospitality">Hospitality</option>
-    <option value="servicescape">Servicescape</option>
     <option value="experiential_dining">Experiential dining</option>
     <option value="nutritional_science">Nutritional science</option>
     <option value="food_behavior">Food behavior</option>
     <option value="appetite_research">Appetite research</option>
     <option value="food_technology">Food technology</option>
-    <option value="fermentation_science">Fermentation</option>
+    <option value="fermentation_science">Fermentation science</option>
     <option value="food_pairing">Food pairing</option>
-    <option value="molecular_mixology">Molecular mixology</option>
     <option value="culinary_education">Culinary education</option>
     <option value="sensory_training">Sensory training</option>
     <option value="novel_foods">Novel foods</option>
     <option value="crossmodal">Crossmodal</option>
   </select>
-  <select class="filter-select" id="yearSel" onchange="loadArticles()">
+  <select class="filter-select" id="yearSel" onchange="renderFeed()">
     <option value="all">All years</option>
-    <option value="2020">2020–now</option>
-    <option value="2015">2015–now</option>
-    <option value="2010">2010–now</option>
-    <option value="2000">2000–now</option>
-    <option value="1985">1985–now</option>
+    <option value="2024">From 2024</option>
+    <option value="2020">From 2020</option>
+    <option value="2015">From 2015</option>
+    <option value="2010">From 2010</option>
+    <option value="2000">From 2000</option>
   </select>
   <select class="filter-select" id="srcSel" onchange="loadArticles()">
     <option value="all">All sources</option>
+    <option value="scopus">Scopus</option>
     <option value="pubmed">PubMed</option>
     <option value="openalex">OpenAlex</option>
-    <option value="arxiv">arXiv</option>
+    <option value="endnote">EndNote</option>
+  </select>
+  <select class="filter-select" id="sortSel" onchange="renderFeed()">
+    <option value="newest">Newest first</option>
+    <option value="relevance">By relevance</option>
   </select>
   <div class="search-wrap">
     <span class="search-icon">⌕</span>
-    <input type="text" class="search-input" id="searchInput" placeholder="Search title, author, journal..." oninput="debounceSearch()">
+    <input class="search-input" id="searchInput" placeholder="Search title, author, journal..." oninput="debounceSearch()">
   </div>
-  <select class="filter-select" id="sortSel" onchange="renderFeed()">
-    <option value="year">Newest first</option>
-    <option value="relevance">Role relevance</option>
-  </select>
-  <button class="saved-tab" id="savedTab" onclick="toggleSaved()" style="display:none">⭐ Saved</button>
-  <div class="free-bar" id="freeBar">
-    <span class="free-text" id="freeText">5 free today</span>
-    <div class="free-track"><div class="free-fill" id="freeFill" style="width:0%"></div></div>
-  </div>
+  <button class="saved-btn" id="savedBtn" onclick="toggleSaved()">☆ Saved</button>
 </div>
 
-<div class="main">
-  <div class="feed">
-    <div class="feed-header">
-      <span class="feed-count" id="feedCount"></span>
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+  <div class="feed-pane">
+    <div class="free-bar" id="freeBar">
+      <div class="free-progress"><div class="free-fill" id="freeFill" style="width:0%"></div></div>
+      <span class="free-text" id="freeText"></span>
+      <span class="upgrade-link" onclick="openModal('upgradeModal')">Upgrade to Pro</span>
     </div>
+    <div class="feed-count" id="feedCount"></div>
     <div id="feedPane"><div class="loading-state"><div class="spinner"></div><span>Loading research...</span></div></div>
   </div>
-
-  <aside class="sidebar">
-    <div id="proCardSection">
-      <div class="pro-card">
-        <div class="pro-title">Unlock <em>unlimited</em><br>research</div>
-        <ul class="pro-features">
-          <li>Unlimited articles daily</li>
-          <li>All 5 profession scenarios</li>
-          <li>IMRaD analysis per article</li>
-          <li>Aristotelian knowledge filter</li>
-          <li>Save & share collections</li>
-          <li>Weekly personalized digest</li>
-          <li>Manual fetch on demand</li>
-        </ul>
-        <button class="pro-btn" onclick="openModal('upgradeModal')">Start 14-day free trial →</button>
-      </div>
-    </div>
-
-    <div class="sidebar-section" id="adminSection" style="display:none">
-      <div class="sidebar-title">Admin</div>
-      <button class="admin-btn" onclick="adminFetch()">↻ Fetch new research now</button>
-      <div id="adminStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:3px"></div>
-    </div>
-
+  <div class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-title">Top topics</div>
       <div id="topicList"></div>
     </div>
-
     <div class="sidebar-section">
-      <div class="sidebar-title">Journals in database</div>
+      <div class="sidebar-title">Journals</div>
       <div id="journalList"></div>
     </div>
-  </aside>
+  </div>
 </div>
 
-<!-- KNOWLEDGE MODAL -->
+<!-- TRIAD MODAL -->
 <div class="modal-bg" id="knowledgeModal">
-  <div class="modal" style="max-width:680px;padding:28px 24px;max-height:90vh;overflow-y:auto">
+  <div class="modal" style="max-width:680px">
     <button class="modal-close" onclick="closeModal('knowledgeModal')">×</button>
     <div class="modal-eyebrow">Dr. Anders Crichton-Fock · Örebro University</div>
     <div class="modal-title">TRIAD — The Epistemological Model</div>
-    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:24px;font-weight:300;font-style:italic">Aristoteliska kunskapsformer och det dubbla greppet</p>
-    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:28px;font-weight:300">The TRIAD model maps Aristotle's three forms of knowledge onto culinary and hospitality practice. They are not three equal alternatives — they form a developmental hierarchy. Every professional begins with Episteme, trains through Techne, and aspires toward Phronesis. Each research article in this library is translated into all three levels for your profession.</p>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:8px;font-style:italic">Aristoteliska kunskapsformer och det dubbla greppet</p>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:24px;font-weight:300">The TRIAD model applies Aristotle's three forms of knowledge to culinary and hospitality practice — forming a developmental hierarchy toward professional mastery. Every article in this library is translated into all three levels for your profession.</p>
 
-    <!-- TRIAD Triangle SVG -->
-    <div style="display:flex;justify-content:center;margin-bottom:24px;background:#0C0B09;border-radius:10px;padding:24px 16px;overflow:hidden">
-      <svg viewBox="0 0 520 400" style="width:100%;max-width:520px" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background sections -->
-        <!-- Top: Phronesis - dark green -->
-        <polygon points="260,22 145,220 375,220" fill="#1B3A2D"/>
-        <!-- Bottom left: Techne - dark red -->  
-        <polygon points="145,220 28,398 260,398" fill="#3A1A1A"/>
-        <!-- Bottom right: Episteme - dark navy -->
-        <polygon points="375,220 260,398 492,398" fill="#1A2440"/>
-        <!-- Outer border in gold -->
-        <polygon points="260,22 28,398 492,398" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-        <!-- Inner dividing lines -->
-        <line x1="260" y1="22" x2="260" y2="220" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
-        <line x1="28" y1="398" x2="260" y2="220" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
-        <line x1="492" y1="398" x2="260" y2="220" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
-
-        <!-- Center circle: Det Dubbla Greppet -->
-        <circle cx="260" cy="232" r="58" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.2"/>
-        <text x="260" y="218" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="1.5">DET DUBBLA</text>
-        <text x="260" y="230" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="1.5">GREPPET</text>
-        <!-- Left side: ANALYS -->
-        <text x="237" y="250" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.6)">ANALYS</text>
-        <!-- Infinity loop -->
-        <path d="M228,244 C228,238 236,234 244,240 C252,246 260,246 268,240 C276,234 284,238 284,244 C284,250 276,254 268,248 C260,242 252,242 244,248 C236,254 228,250 228,244Z" fill="none" stroke="#C9A84C" stroke-width="1.3"/>
-        <!-- Right side: UPPLEVELSE -->
-        <text x="283" y="263" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.6)">UPPLEVELSE</text>
-
-        <!-- 1. SINNLIG REALISERING - top (Phronesis) -->
-        <text x="260" y="75" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">1.</text>
-        <text x="260" y="93" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">SINNLIG</text>
-        <text x="260" y="110" text-anchor="middle" font-family="Playfair Display,serif" font-size="14" font-weight="700" fill="#fff">REALISERING</text>
-        <text x="260" y="126" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
-        <text x="260" y="143" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">Smak · doft · ljud · textur</text>
-        <text x="260" y="156" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">estetisk balans</text>
-
-        <!-- 2. PRAKTISK ORKESTRERING - bottom left (Techne) -->
-        <text x="138" y="272" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">2.</text>
-        <text x="138" y="289" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRAKTISK</text>
-        <text x="138" y="305" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORKESTRERING</text>
-        <text x="138" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
-        <text x="138" y="336" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Matlagning · servering</text>
-        <text x="138" y="349" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">arbetsflöden · logistik</text>
-
-        <!-- 3. SYMBOLISK INRAMNING - bottom right (Episteme) -->
-        <text x="382" y="272" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">3.</text>
-        <text x="382" y="289" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLISK</text>
-        <text x="382" y="305" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">INRAMNING</text>
-        <text x="382" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
-        <text x="382" y="336" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Ritualer · identitet</text>
-        <text x="382" y="349" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">värdskap · estetikens idé</text>
-
-        <!-- Bottom caption -->
-        <text x="260" y="390" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.8">Episteme isolerar · Techne realiserar · Phronesis integrerar</text>
+    <!-- TRIAD TRIANGLE -->
+    <div style="background:#0C0B09;border-radius:10px;padding:24px 16px;margin-bottom:24px;display:flex;justify-content:center">
+      <svg viewBox="0 0 500 380" style="width:100%;max-width:480px" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="250,18 128,218 372,218" fill="#1B3A2D"/>
+        <polygon points="128,218 22,378 250,378" fill="#3A1A1A"/>
+        <polygon points="372,218 250,378 478,378" fill="#1A2440"/>
+        <polygon points="250,18 22,378 478,378" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+        <line x1="250" y1="18" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+        <line x1="22" y1="378" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+        <line x1="478" y1="378" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+        <circle cx="250" cy="228" r="52" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.2"/>
+        <text x="250" y="216" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">DET DUBBLA</text>
+        <text x="250" y="228" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">GREPPET</text>
+        <path d="M224,242 C224,236 232,232 240,238 C248,244 252,244 260,238 C268,232 276,236 276,242 C276,248 268,252 260,246 C252,240 248,240 240,246 C232,252 224,248 224,242Z" fill="none" stroke="#C9A84C" stroke-width="1.3"/>
+        <text x="237" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">ANALYS</text>
+        <text x="263" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">UPPLEVELSE</text>
+        <text x="250" y="65" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">1.</text>
+        <text x="250" y="82" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">SINNLIG REALISERING</text>
+        <text x="250" y="97" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
+        <text x="250" y="113" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">Smak · doft · ljud · textur · estetisk balans</text>
+        <text x="136" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">2.</text>
+        <text x="136" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRAKTISK</text>
+        <text x="136" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORKESTRERING</text>
+        <text x="136" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
+        <text x="136" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Matlagning · servering · arbetsflöden</text>
+        <text x="364" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">3.</text>
+        <text x="364" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLISK</text>
+        <text x="364" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">INRAMNING</text>
+        <text x="364" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
+        <text x="364" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Ritualer · identitet · värdskap</text>
+        <text x="250" y="372" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.5">Episteme isolerar · Techne realiserar · Phronesis integrerar</text>
       </svg>
     </div>
 
-        <!-- Three knowledge descriptions -->
-    <div style="display:grid;gap:16px;margin-bottom:20px">
-
-      <div class="knowledge-card phronesis" style="border-left:3px solid #2d6a4f">
-        <div class="kc-title" style="color:#2d8a5f">1. Sinnlig realisering — Phronesis · φρόνησις</div>
-        <div class="kc-greek">Det situerade omdömet — där kunskap blir erfaren sanning</div>
-        <div class="kc-text" style="margin-bottom:12px">Phronesis is the apex and the integration principle. It is not just a third form of knowledge — it gives meaning to the other two. The sommelier with Phronesis moves fluidly between "What is in the glass?" (analytical) and "What does this evoke?" (analogical). This is the Double Grip in action: aesthetic and ethical judgment in a concrete, unrepeatable moment.</div>
-        <div style="font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.7">
-          <strong style="color:var(--text-primary)">Uttrycksformer:</strong> Analogier, metaforer, narrativ · Kroppslig och temporal perception (attack, mitt, avslut) · Estetisk och etisk bedömning<br>
-          <strong style="color:var(--text-primary)">Nyckelfråga:</strong> "What does this evoke?" — den analogiska frågan
-        </div>
-      </div>
-
-      <div class="knowledge-card techne" style="border-left:3px solid #6b2d2d">
-        <div class="kc-title" style="color:#a04040">2. Praktisk orkestrering — Techne · τέχνη</div>
-        <div class="kc-greek">Det utförande kunnandet — där kunskap blir handling</div>
-        <div class="kc-text" style="margin-bottom:12px">Techne is craft knowledge — the skill that lives in the body and hands. It cannot be learned from textbooks alone. It requires deliberate practice, repetition and feedback. Techne mediates between Episteme and Phronesis: it is the trained capacity that makes analytical knowledge actionable and experiential wisdom repeatable.</div>
-        <div style="font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.7">
-          <strong style="color:var(--text-primary)">Uttrycksformer:</strong> Servering, temperatur, glasval · Vinifiering, blending, logistik · Sensoriska protokoll och träningsmetoder<br>
-          <strong style="color:var(--text-primary)">Nyckelfråga:</strong> "How do I do this?" — den procedurella frågan
-        </div>
-      </div>
-
-      <div class="knowledge-card episteme" style="border-left:3px solid #1a2d5a">
-        <div class="kc-title" style="color:#4060a0">3. Symbolisk inramning — Episteme · ἐπιστήμη</div>
-        <div class="kc-greek">Det analytiska vetandet — där kunskap blir begrepp och struktur</div>
-        <div class="kc-text" style="margin-bottom:12px">Episteme is the foundation — universal, provable, teachable knowledge. It isolates and describes: flavour chemistry, sensory physiology, hospitality theory. In research terms, this is the IMRaD structure, the proven principle, the classification system. Every professional begins here, but mastery cannot end here.</div>
-        <div style="font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.7">
-          <strong style="color:var(--text-primary)">Uttrycksformer:</strong> Syranivå, tanninstruktur, aromkategorier · QDA, flash profiling · Klassificeringar och typiciteter<br>
-          <strong style="color:var(--text-primary)">Nyckelfråga:</strong> "What is in the glass?" — den analytiska frågan
-        </div>
-      </div>
-
+    <div class="knowledge-card phronesis">
+      <div class="kc-title phronesis">1. Sinnlig realisering — Phronesis · φρόνησις</div>
+      <div class="kc-greek">Det situerade omdömet — där kunskap blir erfaren sanning</div>
+      <div class="kc-text">The apex and integration principle. Phronesis is the aesthetic and ethical wisdom to act well in a specific, unrepeatable situation — knowing when the dish is ready, when the wine is right for this guest, when the room calls for silence. It is not a third option alongside Episteme and Techne. It is what gives the other two their meaning. The Double Grip — moving between "What is in the glass?" (analytical) and "What does this evoke?" (analogical) — is Phronesis in action.</div>
+    </div>
+    <div class="knowledge-card techne">
+      <div class="kc-title techne">2. Praktisk orkestrering — Techne · τέχνη</div>
+      <div class="kc-greek">Det utförande kunnandet — där kunskap blir handling</div>
+      <div class="kc-text">Craft knowledge that lives in the body and hands. Cannot be learned from textbooks alone — it requires practice, repetition and feedback. Techne mediates between theory and wisdom: the trained skill that makes analytical knowledge actionable, and experiential judgment repeatable. Servering, temperatur, glasval, sensoriska protokoll, träningsmetoder.</div>
+    </div>
+    <div class="knowledge-card episteme">
+      <div class="kc-title episteme">3. Symbolisk inramning — Episteme · ἐπιστήμη</div>
+      <div class="kc-greek">Det analytiska vetandet — där kunskap blir begrepp och struktur</div>
+      <div class="kc-text">The foundation — universal, provable, teachable knowledge. Episteme isolates and describes: flavour chemistry, sensory physiology, hospitality theory, the IMRaD structure. Every professional begins here. But mastery cannot end here. Syranivå, tanninstruktur, aromkategorier, QDA, klassificeringar.</div>
     </div>
 
-    <div style="background:rgba(201,168,76,0.08);border:0.5px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px;font-size:12px;color:var(--text-secondary);line-height:1.8">
-      <strong style="color:var(--gold);font-family:'Playfair Display',serif;font-size:13px">The Double Grip — Det dubbla greppet</strong><br>
-      The movement between Episteme and Phronesis is not linear — it is a trained oscillation. "What is in the glass?" anchors you in analysis. "What does this evoke?" opens you to experience. Techne is the craft that makes this movement possible. The professional who has mastered the Double Grip does not choose between science and intuition — they move between them, fluidly, in every situation.<br><br>
-      <em>Modellens syfte: Att utveckla förmågan att växla och integrera mellan analytiska, praktiska och intuitiva kunskapsformer. Triaden tränas genom reflektion, dialog, erfarenhet och medveten praktik — det dubbla greppet i handling.</em>
-    </div>
-
-    <div style="margin-top:16px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center">
-      Crichton-Fock & Spence (2024) · Herdenstam (2011, 2024) · Based on Aristotle (trans. 2000)
+    <div style="background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.2);border-radius:6px;padding:14px 16px;margin-top:8px;font-size:12px;color:var(--text-secondary);line-height:1.8">
+      <strong style="color:var(--gold)">The Double Grip — Det dubbla greppet</strong><br>
+      The oscillation between "What is in the glass?" (Episteme) and "What does this evoke?" (Phronesis), enabled by Techne. The mark of professional mastery is fluency in both directions — simultaneously analytical and experiential.<br>
+      <em style="font-size:11px;color:var(--text-tertiary)">Crichton-Fock & Spence (2024) · Herdenstam (2011, 2024) · Aristotle (trans. 2000)</em>
     </div>
   </div>
 </div>
 
 <!-- AUTH MODAL -->
 <div class="modal-bg" id="authModal">
-  <div class="modal" style="max-width:400px">
+  <div class="modal" style="max-width:380px">
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
     <div class="modal-eyebrow">Gusto Science</div>
     <div class="modal-title" id="authTitle">Sign in</div>
-    <input class="modal-input" type="email" placeholder="your@email.com" id="authEmail">
-    <input class="modal-input" type="password" placeholder="Password" id="authPassword">
-    <div id="authNameField" style="display:none"><input class="modal-input" type="text" placeholder="Your name" id="authName"></div>
-    <button class="modal-submit" onclick="handleAuth()" id="authSubmit">Sign in</button>
-    <div id="authError" style="font-size:12px;color:#c0392b;text-align:center;margin-top:8px;display:none"></div>
-    <span class="modal-link" id="authToggle" onclick="toggleAuthMode()">Don't have an account? Sign up</span>
+    <div class="auth-form" id="authForm">
+      <input type="email" id="authEmail" placeholder="Email address">
+      <input type="password" id="authPassword" placeholder="Password">
+      <button onclick="handleAuth()">Sign in</button>
+    </div>
+    <div class="auth-switch" id="authSwitch">No account? <span onclick="toggleAuthMode()">Create one</span></div>
   </div>
 </div>
 
 <!-- UPGRADE MODAL -->
 <div class="modal-bg" id="upgradeModal">
-  <div class="modal">
+  <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="closeModal('upgradeModal')">×</button>
     <div class="modal-eyebrow">Gusto Science Pro</div>
-    <div class="modal-title">Unlock the full<br>research library</div>
-    <div class="plan-grid">
-      <div class="plan-card selected" onclick="selectPlan(this)">
-        <div class="plan-name">Monthly</div>
-        <div class="plan-price">€12<span style="font-size:13px;color:var(--text-tertiary)">/mo</span></div>
-        <div class="plan-desc">Cancel anytime</div>
+    <div class="modal-title">Unlock the full research library</div>
+    <ul class="upgrade-features">
+      <li>Unlimited access to all 3,400+ articles</li>
+      <li>All three TRIAD layers per article</li>
+      <li>IMRaD analysis and full abstracts</li>
+      <li>Save and organise your research</li>
+      <li>New articles added daily</li>
+    </ul>
+    <div class="price-row">
+      <div class="price-card on" onclick="selectPlan(this,'monthly')">
+        <div class="price-amount">€12</div><div class="price-period">per month</div>
       </div>
-      <div class="plan-card" onclick="selectPlan(this)">
-        <div class="plan-name">Annual</div>
-        <div class="plan-price">€99<span style="font-size:13px;color:var(--text-tertiary)">/yr</span></div>
-        <div class="plan-desc">Save 31%</div>
+      <div class="price-card" onclick="selectPlan(this,'annual')">
+        <div class="price-amount">€99</div><div class="price-period">per year — save 31%</div>
       </div>
     </div>
-    <input class="modal-input" type="email" placeholder="your@email.com" id="upgradeEmail">
-    <button class="modal-submit" onclick="submitUpgrade()" id="modalSubmit">Start 14-day free trial</button>
-    <p style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px;font-weight:300">No credit card required</p>
+    <button class="upgrade-btn" style="width:100%;padding:12px;font-size:13px" onclick="handleUpgrade()">Get Pro access</button>
   </div>
 </div>
 
@@ -527,158 +403,51 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="modal-bg" id="shareModal">
   <div class="modal" style="max-width:380px">
     <button class="modal-close" onclick="closeModal('shareModal')">×</button>
-    <div class="modal-eyebrow">Share research</div>
-    <div class="modal-title" id="shareTitle" style="font-size:16px;margin-bottom:12px;line-height:1.3"></div>
+    <div class="modal-eyebrow">Share</div>
+    <div class="modal-title" id="shareTitle" style="font-size:16px;line-height:1.4"></div>
     <div class="share-options">
-      <div class="share-option" onclick="shareEmail()">✉ Email</div>
-      <div class="share-option" onclick="shareLinkedIn()">in LinkedIn</div>
-      <div class="share-option" onclick="shareTwitter()">𝕏 Twitter/X</div>
-      <div class="share-option" onclick="shareCopy()">⎘ Copy link</div>
+      <button class="share-opt" onclick="doShare('email')">✉ Email</button>
+      <button class="share-opt" onclick="doShare('linkedin')">in LinkedIn</button>
+      <button class="share-opt" onclick="doShare('twitter')">𝕏 Twitter</button>
+      <button class="share-opt" onclick="doShare('copy')">⧉ Copy link</button>
     </div>
   </div>
 </div>
 
 <script>
 const SB_URL='https://igmkzhdovyhbfgjomrsc.supabase.co'
-const ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbWt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
-const SERVICE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbWt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzg5MDE5MywiZXhwIjoyMDkzNDY2MTkzfQ.jsZJyRTaoSa2mb4MTN1ytoWkF96PN9lh3uNETarNZzQ'
-const EDGE='https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1'
-
-const { createClient } = supabase
-const sb = createClient(SB_URL, ANON_KEY)
-const H = { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
-
-let lang='en', role='all', knowledgeFilter='all', articles=[], searchTimeout=null, currentShare={}
-let currentUser=null, savedArticleIds=new Set(), showingSaved=false
-let freeCount=parseInt(localStorage.getItem('freeCount')||'0')
-let freeDate=localStorage.getItem('freeDate')||''
-let isPro=localStorage.getItem('isPro')==='true'
-let isAdmin=localStorage.getItem('isAdmin')==='true'
-let authMode='signin'
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnbmt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
+const H={'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON}
 const FREE_LIMIT=5
-const today=new Date().toDateString()
-if(freeDate!==today){freeCount=0;localStorage.setItem('freeDate',today)}
-if(isAdmin) document.getElementById('adminSection').style.display=''
+const sb=supabase.createClient(SB_URL,SB_ANON)
 
-// AUTH
-sb.auth.onAuthStateChange((event, session) => {
-  currentUser = session?.user || null
-  updateAuthUI()
-  if(currentUser) loadSavedArticles()
-})
+let articles=[],role='all',lang='en',isPro=false,savedArticleIds=new Set(),showingSaved=false,freeCount=0,currentShare={},searchTimeout,authMode='signin',selectedPlan='monthly'
 
-function updateAuthUI(){
-  if(currentUser){
-    document.getElementById('authArea').style.display='none'
-    document.getElementById('userArea').style.display=''
-    const email=currentUser.email||''
-    document.getElementById('userEmail').textContent=email
-    document.getElementById('userAvatar').textContent=email[0].toUpperCase()
-    document.getElementById('savedTab').style.display=''
-  } else {
-    document.getElementById('authArea').style.display='flex'
-    document.getElementById('userArea').style.display='none'
-    document.getElementById('savedTab').style.display='none'
-    savedArticleIds=new Set()
-  }
-}
-
-function toggleAuthMode(){
-  authMode=authMode==='signin'?'signup':'signin'
-  document.getElementById('authTitle').textContent=authMode==='signin'?'Sign in':'Create account'
-  document.getElementById('authSubmit').textContent=authMode==='signin'?'Sign in':'Create account'
-  document.getElementById('authToggle').textContent=authMode==='signin'?'Don\'t have an account? Sign up':'Already have an account? Sign in'
-  document.getElementById('authNameField').style.display=authMode==='signup'?'':'none'
-  document.getElementById('authError').style.display='none'
-}
-
-async function handleAuth(){
-  const email=document.getElementById('authEmail').value
-  const password=document.getElementById('authPassword').value
-  const errEl=document.getElementById('authError')
-  errEl.style.display='none'
-  if(!email||!password){errEl.textContent='Please enter email and password.';errEl.style.display='block';return}
-  document.getElementById('authSubmit').textContent='...'
-  let error
-  if(authMode==='signin'){
-    const res=await sb.auth.signInWithPassword({email,password})
-    error=res.error
-  } else {
-    const res=await sb.auth.signUp({email,password})
-    error=res.error
-    if(!error){errEl.style.color='#2D5016';errEl.textContent='Check your email to confirm your account.';errEl.style.display='block';document.getElementById('authSubmit').textContent='Sign up';return}
-  }
-  if(error){errEl.style.color='#c0392b';errEl.textContent=error.message;errEl.style.display='block'}
-  else closeModal('authModal')
-  document.getElementById('authSubmit').textContent=authMode==='signin'?'Sign in':'Create account'
-}
-
-async function signOut(){
-  await sb.auth.signOut()
-  toggleUserMenu()
-  savedArticleIds=new Set()
-  showingSaved=false
-  document.getElementById('savedTab').classList.remove('on')
-  renderFeed()
-}
-
-function toggleUserMenu(){
-  document.getElementById('userDropdown').classList.toggle('open')
-}
-
-document.addEventListener('click',e=>{
-  const menu=document.getElementById('userDropdown')
-  if(menu.classList.contains('open')&&!e.target.closest('.user-menu'))menu.classList.remove('open')
-})
-
-// SAVED ARTICLES
-async function loadSavedArticles(){
-  if(!currentUser) return
-  const {data}=await sb.from('saved_articles').select('article_id').eq('user_id',currentUser.id)
-  savedArticleIds=new Set((data||[]).map(r=>r.article_id))
-  renderFeed()
-}
-
-async function toggleSaveArticle(articleId,btn){
-  if(!currentUser){openModal('authModal');return}
-  if(savedArticleIds.has(articleId)){
-    await sb.from('saved_articles').delete().eq('user_id',currentUser.id).eq('article_id',articleId)
-    savedArticleIds.delete(articleId)
-    btn.classList.remove('saved')
-    btn.textContent='☆ Save'
-  } else {
-    await sb.from('saved_articles').insert({user_id:currentUser.id,article_id:articleId})
-    savedArticleIds.add(articleId)
-    btn.classList.add('saved')
-    btn.textContent='★ Saved'
-  }
-}
-
-function showSaved(){
-  toggleUserMenu()
-  showingSaved=true
-  document.getElementById('savedTab').classList.add('on')
-  renderFeed()
-}
-
-function toggleSaved(){
-  showingSaved=!showingSaved
-  document.getElementById('savedTab').classList.toggle('on',showingSaved)
-  renderFeed()
-}
-
-// TRANSLATIONS
 const T={
-  en:{eyebrow:'Research intelligence for culinary professionals',title:'Where <em>science</em><br>meets the table',sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',forRole:'For',scenarioLabel:'Practical scenario',limitation:'Limitation',readPaper:'Read paper',share:'Share',freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}},
-  sv:{eyebrow:'Forskningsintelligens för kulinariska proffs',title:'Där <em>vetenskap</em><br>möter bordet',sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen, via IMRaD), Techne (praktisk tillämpning) och Phronesis (etiskt och estetiskt omdöme). Välj din yrkesroll för att börja.',forRole:'För',scenarioLabel:'Praktiskt scenario',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare'}}
+  en:{
+    eyebrow:'Research intelligence for culinary professionals',
+    title:'Where <em>science</em><br>meets the table',
+    sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',
+    forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
+    freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
+    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
+  },
+  sv:{
+    eyebrow:'Forskningsintelligens för kulinariska proffs',
+    title:'Där <em>vetenskap</em><br>möter bordet',
+    sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen), Techne (praktisk tillämpning) och Phronesis (omdöme). Välj din yrkesroll för att börja.',
+    forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
+    freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
+    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare'}
+  }
 }
-function t(key,...args){const l=T[lang];if(typeof l[key]==='function')return l[key](...args);return l[key]||key}
 
+function t(key,...args){const l=T[lang];if(typeof l[key]==='function')return l[key](...args);return l[key]||key}
 function toggleLang(){lang=lang==='en'?'sv':'en';document.getElementById('langBtn').textContent=lang==='en'?'SV':'EN';updateTexts();renderFeed()}
 function updateTexts(){
   document.getElementById('heroEyebrow').textContent=t('eyebrow')
   document.getElementById('heroTitle').innerHTML=t('title')
-  document.getElementById('heroSub').textContent=t('sub')
+  document.getElementById('heroSub').innerHTML=t('sub')
   document.getElementById('roleLabel').textContent=t('forRole')
   document.querySelectorAll('.role-chip').forEach(b=>{b.textContent=t('roles')[b.dataset.role]||b.dataset.role})
   updateFreeBar()
@@ -690,43 +459,34 @@ function updateFreeBar(){
   document.getElementById('freeBar').style.display=isPro?'none':'flex'
 }
 
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
+function selectPlan(el,plan){selectedPlan=plan;document.querySelectorAll('.price-card').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+
 function setRole(r,btn){
   role=r
-  document.querySelectorAll('.role-chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on')
+  document.querySelectorAll('.role-chip').forEach(b=>b.classList.remove('on'))
+  btn.classList.add('on')
   loadArticles()
 }
 
-function setKnowledge(k,btn){
-  knowledgeFilter=k
-  document.querySelectorAll('.k-chip').forEach(b=>b.classList.remove('on','all','episteme','techne','phronesis','mixed'))
-  btn.classList.add('on',k)
-  renderFeed()
+function getRelevanceScore(a){
+  if(role==='all') return 0
+  return parseInt(a['relevance_'+role]||0)
 }
 
-function getRelevanceScore(a){if(role==='all')return 0;return parseInt(a['relevance_'+role]||0)}
-function getTriadContent(a){
-  // Returns TRIAD content based on selected knowledge filter and role
-  const r = role === 'all' ? 'sommelier' : role
-  const k = knowledgeFilter === 'all' ? null : knowledgeFilter
-  if(k && k !== 'mixed'){
-    const val = a[k+'_'+r]
-    if(val && val.length > 10 && !val.startsWith('Not directly')) return {type:k, text:val}
-  }
-  // Default: show techne (practical) as most immediately useful
-  const techne = a['techne_'+r]
-  if(techne && techne.length > 10) return {type:'techne', text:techne}
-  // Fallback to old scenario
-  const s = a['scenario_'+r] || a.scenario
-  if(s && s.length > 10) return {type:'techne', text:s}
-  return null
-}
-function getScenario(a){
-  const t = getTriadContent(a)
-  return t ? t.text : null
+function triadBlock(text,label,bc,bg,lc){
+  if(!text||text.length<10||text.startsWith('Not directly')) return ''
+  return `<div class="triad-block" style="border-left:3px solid ${bc};background:${bg}">
+    <div class="triad-block-label" style="color:${lc}">${label}</div>
+    ${text}
+  </div>`
 }
 
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
+  if(!locked) freeCount=Math.max(freeCount,idx+1)
   const topicLabel=(a.topic||'').replace(/_/g,' ')
   const hasIMRaD=a.imrad_introduction&&a.imrad_introduction.length>5
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
@@ -735,52 +495,55 @@ function cardHTML(a,idx){
   const r=role==='all'?'sommelier':role
   const roleName=t('roles')[r]||r
 
-  // TRIAD content with fallback to old scenarios
   const ep=a['episteme_'+r]||''
-  const tc=a['techne_'+r]||(a['scenario_'+r]&&a['scenario_'+r].length>10?a['scenario_'+r]:'')||''
+  const tc=a['techne_'+r]||a['scenario_'+r]||''
   const ph=a['phronesis_'+r]||''
   const hasTriad=ep.length>10&&tc.length>10&&ph.length>10
-  const legacyScenario=a['scenario_'+r]||''
-  const hasScenario=tc.length>10||legacyScenario.length>10
+  const hasAny=ep.length>10||tc.length>10||ph.length>10||a['scenario_'+r]
 
-  function triadBlock(text,label,bc,bg,lc){
-    if(!text||text.length<10||text.startsWith('Not directly')) return ''
-    return `<div style="border-left:3px solid ${bc};background:${bg};padding:11px 14px;border-radius:0 6px 6px 0;margin-top:8px">
-      <div style="font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:${lc};margin-bottom:5px">${label}</div>
-      <div class="scenario-text">${text}</div></div>`
+  let triadHTML=''
+  if(!locked){
+    if(hasTriad){
+      triadHTML=`<div class="triad-section">
+        ${triadBlock(ep,'Symbolisk inramning · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
+        ${triadBlock(tc,'Praktisk orkestrering · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
+        ${triadBlock(ph,'Sinnlig realisering · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
+      </div>`
+    } else if(tc.length>10){
+      triadHTML=triadBlock(tc,'Praktisk tillämpning · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')
+    } else {
+      triadHTML=`<div class="triad-pending">TRIAD analysis being generated — check back shortly.</div>`
+    }
   }
-
-  const displayScenario=tc.length>10?tc:legacyScenario
-  const triadHTML=locked?'':hasTriad?`
-    <div style="margin-top:10px">
-      ${triadBlock(ep,'Symbolisk inramning · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
-      ${triadBlock(tc,'Praktisk orkestrering · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
-      ${triadBlock(ph,'Sinnlig realisering · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
-    </div>`:displayScenario.length>10?triadBlock(displayScenario,'Praktisk tillämpning · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)'):`<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic;padding:8px 0">TRIAD analysis being generated — check back shortly.</div>`
 
   const inner=`
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
-      ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10</span>`:''}
+      ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 for ${roleName}</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
     ${a.insight?`<div class="card-insight">${a.insight}</div>`:''}
-    ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}"><div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div><div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div><div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div><div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div></div>`:''}
+    ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}">
+      <div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div>
+      <div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div>
+      <div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div>
+      <div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div>
+    </div>`:''}
     ${triadHTML}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
       <div class="card-actions">
         ${hasIMRaD&&!locked?`<button class="imrad-toggle" id="it-${cid}" onclick="toggleIMRaD('${cid}')">IMRaD</button>`:''}
-        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">` + `${t('readPaper')}</button>`:''}
-        <button class="action-btn share-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">${t('share')}</button>
+        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">Read paper</button>`:''}
+        <button class="action-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">Share</button>
         <button class="save-btn${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ Saved':'☆ Save'}</button>
       </div>
     </div>`
 
-  if(locked){return`<div class="article-card locked">${inner}<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:12px;padding:6px 14px">Upgrade</button></div></div>`}
+  if(locked){return`<div class="article-card locked">${inner}<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade</button></div></div>`}
   return`<div class="article-card${isSaved?' saved-card':''}">${inner}</div>`
 }
 
@@ -794,28 +557,39 @@ function toggleIMRaD(cid){
 
 function renderFeed(){
   const pane=document.getElementById('feedPane')
-  let source=articles
-  if(showingSaved) source=articles.filter(a=>savedArticleIds.has(a.id))
-  if(!source.length){pane.innerHTML=`<div class="loading-state"><span>${showingSaved?'No saved articles yet.':'No articles found.'}</span></div>`;return}
+  let source=showingSaved?articles.filter(a=>savedArticleIds.has(a.id)):articles
   const year=document.getElementById('yearSel').value
   const search=document.getElementById('searchInput').value.toLowerCase()
   const sort=document.getElementById('sortSel').value
-  let filtered=source
-  if(year!=='all') filtered=filtered.filter(a=>parseInt(a.year||'0')>=parseInt(year))
-  // Knowledge type no longer filters articles — shown as layers within each card
-  // Sort by profession relevance when role is selected
+
+  if(year!=='all') source=source.filter(a=>parseInt(a.year||0)>=parseInt(year))
+  if(search) source=source.filter(a=>(a.title||'').toLowerCase().includes(search)||(a.authors||'').toLowerCase().includes(search)||(a.journal||'').toLowerCase().includes(search))
+
+  // Filter out articles where all relevance scores are 0
+  source=source.filter(a=>{
+    const scores=[a.relevance_sommelier,a.relevance_chef,a.relevance_creator,a.relevance_waiter,a.relevance_educator]
+    const hasScores=scores.some(s=>s!==null&&s!==undefined)
+    if(!hasScores) return true
+    return scores.some(s=>parseInt(s||0)>0)
+  })
+
+  // Sort by profession relevance when role selected
   if(role!=='all'){
-    filtered=[...filtered].sort((a,b)=>{
+    source=[...source].sort((a,b)=>{
       const ra=parseInt(a['relevance_'+role]||0)
       const rb=parseInt(b['relevance_'+role]||0)
       if(rb!==ra) return rb-ra
       return parseInt(b.year||0)-parseInt(a.year||0)
     })
   } else if(sort==='relevance'){
-    filtered=[...filtered].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
+    source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
+  } else {
+    source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
-  document.getElementById('feedCount').textContent=filtered.length+' articles'+(showingSaved?' (saved)':'')
-  pane.innerHTML=filtered.slice(0,30).map((a,i)=>cardHTML(a,i)).join('')
+
+  freeCount=0
+  document.getElementById('feedCount').textContent=source.length+' articles'+(showingSaved?' (saved)':'')
+  pane.innerHTML=source.slice(0,30).map((a,i)=>cardHTML(a,i)).join('')
   updateFreeBar()
 }
 
@@ -827,48 +601,52 @@ async function loadArticles(){
   const search=document.getElementById('searchInput').value.trim()
   const pane=document.getElementById('feedPane')
   pane.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
-  const roleFields=role==='all'?',scenario_sommelier,scenario_chef,scenario_creator,scenario_waiter,scenario_educator,episteme_sommelier,techne_sommelier,phronesis_sommelier,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator':`${',scenario_'+role+',episteme_'+role+',techne_'+role+',phronesis_'+role+',relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator'}`
-  let fields='id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion'+roleFields
-  let url=`${SB_URL}/rest/v1/articles?select=${fields}&order=year.desc,fetched_at.desc&limit=80`
-  if(search){
-    url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(title.ilike.*${encodeURIComponent(search)}*,authors.ilike.*${encodeURIComponent(search)}*,journal.ilike.*${encodeURIComponent(search)}*)&order=year.desc&limit=80`
-  }
+
+  // Fetch all needed columns including TRIAD for selected role
+  const triadCols=role==='all'
+    ? 'scenario_sommelier,episteme_sommelier,techne_sommelier,phronesis_sommelier'
+    : `scenario_${role},episteme_${role},techne_${role},phronesis_${role}`
+  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,${triadCols}`
+
+  let url=`${SB_URL}/rest/v1/articles?select=${fields}&order=fetched_at.desc,year.desc&limit=200`
+  if(search) url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(title.ilike.*${encodeURIComponent(search)}*,authors.ilike.*${encodeURIComponent(search)}*,journal.ilike.*${encodeURIComponent(search)}*)&order=year.desc&limit=200`
   if(topic!=='all') url+=`&topic=eq.${topic}`
   if(src!=='all') url+=`&source=eq.${src}`
+
   try{
     const r=await fetch(url,{headers:H})
     articles=await r.json()
+    if(!Array.isArray(articles)) articles=[]
     renderFeed()
-    loadSidebarData()
-    loadNewCount()
-  }catch(e){pane.innerHTML='<div class="loading-state"><span>Connection error. Please refresh.</span></div>'}
+    loadSidebar()
+  }catch(e){
+    pane.innerHTML='<div class="loading-state">Error loading articles. Please refresh.</div>'
+  }
 }
 
-async function loadSidebarData(){
+async function loadSidebar(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/articles?select=topic,journal&limit=3000`,{headers:H})
     const data=await r.json()
     const topics={},journals={}
     data.forEach(a=>{
       if(a.topic) topics[a.topic]=(topics[a.topic]||0)+1
-      if(a.journal&&a.journal.trim()&&a.journal.length<80) journals[a.journal]=(journals[a.journal]||0)+1
+      if(a.journal) journals[a.journal]=(journals[a.journal]||0)+1
     })
     document.getElementById('topicList').innerHTML=Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([t,c])=>`<div class="topic-item" onclick="filterTopic('${t}')"><div class="topic-dot"></div><span class="topic-name">${t.replace(/_/g,' ')}</span><span class="topic-count">${c}</span></div>`).join('')
     document.getElementById('journalList').innerHTML=Object.entries(journals).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([j,c])=>`<div class="journal-item" onclick="filterJournal('${j.replace(/'/g,"\\'")}')"><span class="journal-name" title="${j}">${j}</span><span class="journal-count">${c}</span></div>`).join('')
   }catch(e){}
 }
 
-async function loadNewCount(){
+async function loadCounts(){
   try{
-    // Get total count
     const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
     if(total>0) document.getElementById('totalCount').textContent=total.toLocaleString()
-    // Get new articles last 2 weeks
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
-    document.getElementById('newCount').textContent=`${newCount} new articles in the last 2 weeks`
+    if(newCount>0) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
   }catch(e){}
 }
 
@@ -881,32 +659,73 @@ function openShareFor(data){
   document.getElementById('shareTitle').textContent=currentShare.title||''
   openModal('shareModal')
 }
-function shareEmail(){const s=encodeURIComponent('Research: '+(currentShare.title||''));const b=encodeURIComponent(`${currentShare.title}\n\n${currentShare.insight||''}\n\nRead more: ${currentShare.url||'gusto.science'}`);window.open(`mailto:?subject=${s}&body=${b}`)}
-function shareLinkedIn(){window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentShare.url||'https://gusto.science')}`,'_blank')}
-function shareTwitter(){window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent((currentShare.title||'')+' — via Gusto Science\n'+(currentShare.url||'https://gusto.science'))}`,'_blank')}
-function shareCopy(){navigator.clipboard?.writeText(currentShare.url||'https://gusto.science');closeModal('shareModal')}
-
-async function adminFetch(){
-  const btn=document.querySelector('.admin-btn')
-  const status=document.getElementById('adminStatus')
-  btn.disabled=true;btn.textContent='↻ Fetching...'
-  status.textContent='Triggering...'
-  try{const r=await fetch(`${EDGE}/daily-fetch`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SERVICE_KEY},body:JSON.stringify({scheduled:true})});const d=await r.json();status.textContent=`Done — ${d.added||0} added`;loadArticles()}catch(e){status.textContent='Failed'}
-  btn.disabled=false;btn.textContent='↻ Fetch new research now'
+function doShare(type){
+  const url=currentShare.url||location.href
+  const text=`${currentShare.title||''} — ${currentShare.insight||''}`
+  if(type==='email') window.open(`mailto:?subject=${encodeURIComponent(currentShare.title||'')}&body=${encodeURIComponent(text+'\n\n'+url)}`)
+  if(type==='linkedin') window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`)
+  if(type==='twitter') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`)
+  if(type==='copy'){navigator.clipboard.writeText(url);alert('Link copied!')}
+  closeModal('shareModal')
 }
 
-function openModal(id){document.getElementById(id).classList.add('open')}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
-document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})})
-function selectPlan(card){document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected')}
-function submitUpgrade(){
-  const email=document.getElementById('upgradeEmail').value
-  if(!email||!email.includes('@')){alert('Please enter a valid email.');return}
-  document.getElementById('modalSubmit').textContent='Processing...'
-  setTimeout(()=>{isPro=true;localStorage.setItem('isPro','true');closeModal('upgradeModal');renderFeed();document.getElementById('modalSubmit').textContent='Start 14-day free trial'},1200)
+function toggleSaved(){showingSaved=!showingSaved;document.getElementById('savedBtn').classList.toggle('on',showingSaved);renderFeed()}
+
+async function toggleSaveArticle(id,btn){
+  if(!sb.auth.getSession){return openModal('authModal')}
+  const {data:{session}}=await sb.auth.getSession()
+  if(!session) return openModal('authModal')
+  if(savedArticleIds.has(id)){
+    await fetch(`${SB_URL}/rest/v1/saved_articles?article_id=eq.${id}&user_id=eq.${session.user.id}`,{method:'DELETE',headers:{...H,'Authorization':'Bearer '+session.access_token}})
+    savedArticleIds.delete(id)
+    btn.className='save-btn'
+    btn.textContent='☆ Save'
+  } else {
+    await fetch(`${SB_URL}/rest/v1/saved_articles`,{method:'POST',headers:{...H,'Authorization':'Bearer '+session.access_token,'Prefer':'return=minimal'},body:JSON.stringify({article_id:id,user_id:session.user.id})})
+    savedArticleIds.add(id)
+    btn.className='save-btn saved'
+    btn.textContent='★ Saved'
+  }
 }
 
-loadArticles()
+async function loadSavedArticles(){
+  const {data:{session}}=await sb.auth.getSession()
+  if(!session) return
+  const r=await fetch(`${SB_URL}/rest/v1/saved_articles?user_id=eq.${session.user.id}&select=article_id`,{headers:{...H,'Authorization':'Bearer '+session.access_token}})
+  const data=await r.json()
+  if(Array.isArray(data)) data.forEach(d=>savedArticleIds.add(d.article_id))
+}
+
+let authIsSignup=false
+function toggleAuthMode(){authIsSignup=!authIsSignup;document.getElementById('authTitle').textContent=authIsSignup?'Create account':'Sign in';document.getElementById('authSwitch').innerHTML=authIsSignup?'Have an account? <span onclick="toggleAuthMode()">Sign in</span>':'No account? <span onclick="toggleAuthMode()">Create one</span>'}
+async function handleAuth(){
+  const email=document.getElementById('authEmail').value
+  const password=document.getElementById('authPassword').value
+  if(authIsSignup){await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}})}
+  else{await sb.auth.signInWithPassword({email,password})}
+  closeModal('authModal')
+}
+function handleUpgrade(){openModal('authModal')}
+
+async function initAuth(){
+  const {data:{session}}=await sb.auth.getSession()
+  if(session){
+    const initial=session.user.email[0].toUpperCase()
+    document.getElementById('authArea').innerHTML=`<div class="user-avatar" onclick="sb.auth.signOut().then(()=>location.reload())">${initial}</div>`
+    isPro=true
+    await loadSavedArticles()
+  }
+  if(localStorage.getItem('isAdmin')==='true') isPro=true
+}
+
+// Admin fetch button
+function triggerAdminFetch(){
+  if(localStorage.getItem('isAdmin')!=='true') return
+  fetch(`${SB_URL}/functions/v1/daily-fetch`,{method:'POST',headers:{...H},body:JSON.stringify({})}).then(r=>r.json()).then(d=>alert(JSON.stringify(d,null,2))).catch(e=>alert(e))
+}
+
+// Init
+initAuth().then(()=>{loadArticles();loadCounts()})
 </script>
 </body>
 </html>
