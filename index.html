@@ -17,7 +17,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:2px;flex-shrink:0}
 .logo-gusto{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--text-primary)}
-.logo-science{font-family:'Outfit',sans-serif;font-size:13px;font-weight:400;color:var(--text-primary);letter-spacing:.02em;margin-left:1px}
+.logo-science{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-left:10px}
 .topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .academy-link{font-size:12px;color:var(--gold-dark);border:0.5px solid var(--gold);padding:5px 14px;border-radius:20px;cursor:pointer;background:var(--gold-light);text-decoration:none;transition:all .15s}
 .academy-link:hover{background:var(--gold);color:white}
@@ -669,8 +669,8 @@ function toggleSaved(){
 
 // TRANSLATIONS
 const T={
-  en:{eyebrow:'Research intelligence for culinary professionals',title:'Where <em>science</em><br>meets the table',sub:'AI-curated research for sommeliers, chefs, and hospitality professionals — with practical scenarios, IMRaD analysis, and Aristotelian knowledge classification.',forRole:'For',scenarioLabel:'Practical scenario',limitation:'Limitation',readPaper:'Read paper',share:'Share',freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}},
-  sv:{eyebrow:'Forskningsintelligens för kulinariska proffs',title:'Där <em>vetenskap</em><br>möter bordet',sub:'AI-kurerad forskning för sommellierer, kockar och hospitality-proffs — med praktiska scenarier, IMRaD-analys och aristotelisk kunskapsklassificering.',forRole:'För',scenarioLabel:'Praktiskt scenario',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare'}}
+  en:{eyebrow:'Research intelligence for culinary professionals',title:'Where <em>science</em><br>meets the table',sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',forRole:'For',scenarioLabel:'Practical scenario',limitation:'Limitation',readPaper:'Read paper',share:'Share',freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}},
+  sv:{eyebrow:'Forskningsintelligens för kulinariska proffs',title:'Där <em>vetenskap</em><br>möter bordet',sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen, via IMRaD), Techne (praktisk tillämpning) och Phronesis (etiskt och estetiskt omdöme). Välj din yrkesroll för att börja.',forRole:'För',scenarioLabel:'Praktiskt scenario',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare'}}
 }
 function t(key,...args){const l=T[lang];if(typeof l[key]==='function')return l[key](...args);return l[key]||key}
 
@@ -803,15 +803,7 @@ function renderFeed(){
   let filtered=source
   if(year!=='all') filtered=filtered.filter(a=>parseInt(a.year||'0')>=parseInt(year))
   // Knowledge type no longer filters articles — shown as layers within each card
-  if(search) filtered=filtered.filter(a=>(a.title||'').toLowerCase().includes(search)||(a.authors||'').toLowerCase().includes(search)||(a.journal||'').toLowerCase().includes(search))
-  // Hide articles where all relevance scores are 0 (genuinely irrelevant)
-  filtered=filtered.filter(a=>{
-    const scores=[a.relevance_sommelier,a.relevance_chef,a.relevance_creator,a.relevance_waiter,a.relevance_educator]
-    const hasScores=scores.some(s=>s!==null&&s!==undefined)
-    if(!hasScores) return true // show if not yet enriched
-    return scores.some(s=>parseInt(s||0)>0)
-  })
-  // Always sort by profession relevance when role is selected
+  // Sort by profession relevance when role is selected
   if(role!=='all'){
     filtered=[...filtered].sort((a,b)=>{
       const ra=parseInt(a['relevance_'+role]||0)
