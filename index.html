@@ -421,6 +421,12 @@ const H={'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bea
 const FREE_LIMIT=5
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
+// Debug: test API connection
+fetch(SB_URL+'/rest/v1/articles?select=id&limit=1',{headers:H})
+  .then(r=>{console.log('API test status:',r.status);return r.json()})
+  .then(d=>console.log('API test data:',d))
+  .catch(e=>console.log('API test error:',e))
+
 let articles=[],role='all',lang='en',isPro=false,savedArticleIds=new Set(),showingSaved=false,freeCount=0,currentShare={},searchTimeout,authMode='signin',selectedPlan='monthly'
 
 const T={
