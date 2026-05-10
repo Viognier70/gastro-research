@@ -213,6 +213,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <button class="role-chip" data-role="creator" onclick="setRole('creator',this)">Meal creator</button>
   <button class="role-chip" data-role="waiter" onclick="setRole('waiter',this)">Service staff</button>
   <button class="role-chip" data-role="educator" onclick="setRole('educator',this)">Educator</button>
+  <button style="margin-left:auto;font-size:11px;color:var(--gold);border:0.5px solid rgba(201,168,76,.3);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif" onclick="openTopicGraph()">⬡ Knowledge map</button>
 </div>
 
 <!-- TOOLBAR -->
@@ -414,6 +415,24 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
+<!-- TOPIC GRAPH MODAL -->
+<div class="modal-bg" id="topicGraphModal">
+  <div class="modal" style="max-width:800px;padding:24px">
+    <button class="modal-close" onclick="closeModal('topicGraphModal')">×</button>
+    <div class="modal-eyebrow" id="graphEyebrow">Knowledge map</div>
+    <div class="modal-title" id="graphTitle">Select topics to explore</div>
+    <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:20px" id="graphDesc">Click topics to filter articles. Your profession is at the centre — connected topics show research relevant to your role.</p>
+    <div id="topicGraph" style="position:relative;width:100%;height:420px;background:var(--warm-100);border-radius:10px;overflow:hidden"></div>
+    <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div id="selectedTopics" style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--text-secondary)">No topics selected — showing all</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="clearTopicSelection()" style="font-size:12px;color:var(--text-tertiary);border:0.5px solid var(--border-mid);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif">Clear</button>
+        <button onclick="applyTopicSelection()" style="font-size:12px;font-weight:500;background:var(--black);color:var(--white);border:none;padding:6px 18px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Apply filter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SB_URL='https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_ANON='sb_publishable_sUKpqF-yquV4ny_VDi6V7g_7YgB4s-s'
@@ -571,22 +590,21 @@ function renderFeed(){
   if(year!=='all') source=source.filter(a=>parseInt(a.year||0)>=parseInt(year))
   if(search) source=source.filter(a=>(a.title||'').toLowerCase().includes(search)||(a.authors||'').toLowerCase().includes(search)||(a.journal||'').toLowerCase().includes(search))
 
-  // Filter out articles where all relevance scores are 0
-  source=source.filter(a=>{
-    const scores=[a.relevance_sommelier,a.relevance_chef,a.relevance_creator,a.relevance_waiter,a.relevance_educator]
-    const hasScores=scores.some(s=>s!==null&&s!==undefined)
-    if(!hasScores) return true
-    return scores.some(s=>parseInt(s||0)>0)
-  })
-
-  // Sort by profession relevance when role selected
+  // When role selected: filter to articles WITH relevance data for that role, sort by relevance
   if(role!=='all'){
-    source=[...source].sort((a,b)=>{
+    // Split: enriched (have relevance score) vs not enriched
+    const enriched=source.filter(a=>a['relevance_'+role]!==null&&a['relevance_'+role]!==undefined&&parseInt(a['relevance_'+role])>0)
+    const pending=source.filter(a=>a['relevance_'+role]===null||a['relevance_'+role]===undefined)
+    // Sort enriched by relevance desc, then year
+    enriched.sort((a,b)=>{
       const ra=parseInt(a['relevance_'+role]||0)
       const rb=parseInt(b['relevance_'+role]||0)
       if(rb!==ra) return rb-ra
       return parseInt(b.year||0)-parseInt(a.year||0)
     })
+    // Pending sorted by year
+    pending.sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
+    source=[...enriched,...pending]
   } else if(sort==='relevance'){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
@@ -728,6 +746,185 @@ async function initAuth(){
 function triggerAdminFetch(){
   if(localStorage.getItem('isAdmin')!=='true') return
   fetch(`${SB_URL}/functions/v1/daily-fetch`,{method:'POST',headers:{...H},body:JSON.stringify({})}).then(r=>r.json()).then(d=>alert(JSON.stringify(d,null,2))).catch(e=>alert(e))
+}
+
+// ─── TOPIC GRAPH ─────────────────────────────────────────────────────────────
+const TOPIC_DATA = {
+  sommelier: {
+    core: ['sommellerie','flavor_science','sensory_evaluation','food_pairing','crossmodal','sensory_training'],
+    related: ['multisensory','neurogastronomy','food_psychology','atmospherics','culinary_education','hospitality']
+  },
+  chef: {
+    core: ['culinary_science','food_science','fermentation_science','food_technology','flavor_science','sensory_evaluation'],
+    related: ['food_pairing','novel_foods','nutritional_science','culinary_education','food_behavior','gastronomy']
+  },
+  creator: {
+    core: ['experiential_dining','gastronomy','multisensory','art_science','food_pairing','atmospherics'],
+    related: ['crossmodal','culinary_science','flavor_science','food_psychology','novel_foods','servicescape']
+  },
+  waiter: {
+    core: ['hospitality','servicescape','atmospherics','food_psychology','experiential_dining','food_behavior'],
+    related: ['multisensory','culinary_education','gastronomy','flavor_science','food_pairing','crossmodal']
+  },
+  educator: {
+    core: ['culinary_education','sensory_training','food_psychology','gastronomy','sensory_evaluation','food_behavior'],
+    related: ['neurogastronomy','nutritional_science','novel_foods','fermentation_science','culinary_science','food_science']
+  },
+  all: {
+    core: ['gastronomy','flavor_science','sensory_evaluation','multisensory','food_psychology','food_pairing'],
+    related: ['culinary_science','food_science','crossmodal','atmospherics','hospitality','culinary_education','fermentation_science','novel_foods','neurogastronomy','appetite_research']
+  }
+}
+
+const TOPIC_LABELS = {
+  sommellerie:'Sommellerie',flavor_science:'Flavour science',sensory_evaluation:'Sensory evaluation',
+  food_pairing:'Food pairing',crossmodal:'Crossmodal',sensory_training:'Sensory training',
+  multisensory:'Multisensory',neurogastronomy:'Neurogastronomy',food_psychology:'Food psychology',
+  atmospherics:'Atmospherics',culinary_education:'Culinary education',hospitality:'Hospitality',
+  culinary_science:'Culinary science',food_science:'Food science',fermentation_science:'Fermentation',
+  food_technology:'Food technology',novel_foods:'Novel foods',nutritional_science:'Nutrition',
+  gastronomy:'Gastronomy',food_behavior:'Food behavior',experiential_dining:'Experiential dining',
+  art_science:'Art & food',servicescape:'Servicescape',appetite_research:'Appetite research'
+}
+
+let selectedTopics = new Set()
+
+function openTopicGraph(){
+  renderTopicGraph()
+  openModal('topicGraphModal')
+}
+
+function renderTopicGraph(){
+  const container = document.getElementById('topicGraph')
+  const w = container.offsetWidth || 750
+  const h = 420
+  const cx = w/2, cy = h/2
+  const r = role === 'all' ? 'all' : role
+  const data = TOPIC_DATA[r] || TOPIC_DATA.all
+  const roleNames = {all:'Gastronomy',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
+  
+  document.getElementById('graphTitle').textContent = roleNames[r] + ' — Knowledge map'
+  document.getElementById('graphEyebrow').textContent = 'Research topics for ' + roleNames[r]
+
+  // Position nodes
+  const nodes = []
+  // Center: profession
+  nodes.push({id:'center',label:roleNames[r],x:cx,y:cy,type:'center',size:52})
+  
+  // Core topics in inner ring
+  const coreR = Math.min(w,h)*0.28
+  data.core.forEach((t,i)=>{
+    const angle = (i/data.core.length)*Math.PI*2 - Math.PI/2
+    nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36})
+  })
+  
+  // Related topics in outer ring
+  const outerR = Math.min(w,h)*0.44
+  data.related.forEach((t,i)=>{
+    const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
+    nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28})
+  })
+
+  // Build SVG
+  let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif">`
+  
+  // Lines from center to core
+  data.core.forEach(t=>{
+    const n = nodes.find(n=>n.id===t)
+    if(n) svg += `<line x1="${cx}" y1="${cy}" x2="${n.x}" y2="${n.y}" stroke="#C9A84C" stroke-width="1" opacity="0.3"/>`
+  })
+  
+  // Lines from core to related (proximity based)
+  data.related.forEach(t=>{
+    const n = nodes.find(n=>n.id===t)
+    if(!n) return
+    // Connect to nearest core node
+    let minDist = Infinity, nearestCore = null
+    data.core.forEach(ct=>{
+      const cn = nodes.find(n=>n.id===ct)
+      if(!cn) return
+      const d = Math.hypot(n.x-cn.x, n.y-cn.y)
+      if(d<minDist){minDist=d;nearestCore=cn}
+    })
+    if(nearestCore) svg += `<line x1="${nearestCore.x}" y1="${nearestCore.y}" x2="${n.x}" y2="${n.y}" stroke="#C9A84C" stroke-width="0.5" opacity="0.2" stroke-dasharray="3,3"/>`
+  })
+
+  // Draw nodes
+  nodes.forEach(n=>{
+    const selected = selectedTopics.has(n.id)
+    const isCenter = n.type==='center'
+    const fill = isCenter ? '#0C0B09' : selected ? '#C9A84C' : n.type==='core' ? '#fff' : '#F7F4ED'
+    const stroke = isCenter ? '#C9A84C' : selected ? '#C9A84C' : n.type==='core' ? '#0C0B09' : '#D4CFC5'
+    const textColor = isCenter ? '#C9A84C' : selected ? '#0C0B09' : '#0C0B09'
+    const onclick = isCenter ? '' : `onclick="toggleTopicNode('${n.id}')"`
+    const cursor = isCenter ? '' : 'cursor:pointer;'
+    
+    svg += `<g ${onclick} style="${cursor}">`
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size}" fill="${fill}" stroke="${stroke}" stroke-width="${selected?2:1}"/>`
+    
+    // Word wrap label
+    const words = n.label.split(' ')
+    if(words.length===1){
+      svg += `<text x="${n.x}" y="${n.y}" text-anchor="middle" dominant-baseline="middle" font-size="${n.type==='center'?12:9.5}" fill="${textColor}" font-weight="${isCenter||selected?'600':'400'}">${n.label}</text>`
+    } else {
+      const mid = Math.ceil(words.length/2)
+      const line1 = words.slice(0,mid).join(' ')
+      const line2 = words.slice(mid).join(' ')
+      svg += `<text x="${n.x}" y="${n.y-6}" text-anchor="middle" dominant-baseline="middle" font-size="${n.type==='center'?11:9}" fill="${textColor}" font-weight="${isCenter||selected?'600':'400'}">${line1}</text>`
+      svg += `<text x="${n.x}" y="${n.y+7}" text-anchor="middle" dominant-baseline="middle" font-size="${n.type==='center'?11:9}" fill="${textColor}" font-weight="${isCenter||selected?'600':'400'}">${line2}</text>`
+    }
+    svg += '</g>'
+  })
+
+  // Legend
+  svg += `<circle cx="16" cy="${h-30}" r="6" fill="#fff" stroke="#0C0B09" stroke-width="1"/><text x="26" y="${h-26}" font-size="9" fill="#9C9484">Core topics</text>`
+  svg += `<circle cx="100" cy="${h-30}" r="6" fill="#F7F4ED" stroke="#D4CFC5" stroke-width="1"/><text x="110" y="${h-26}" font-size="9" fill="#9C9484">Related topics</text>`
+  svg += `<circle cx="196" cy="${h-30}" r="6" fill="#C9A84C" stroke="#C9A84C" stroke-width="1"/><text x="206" y="${h-26}" font-size="9" fill="#9C9484">Selected</text>`
+  
+  svg += '</svg>'
+  container.innerHTML = svg
+  updateSelectedLabel()
+}
+
+function toggleTopicNode(id){
+  if(selectedTopics.has(id)) selectedTopics.delete(id)
+  else selectedTopics.add(id)
+  renderTopicGraph()
+}
+
+function updateSelectedLabel(){
+  const el = document.getElementById('selectedTopics')
+  if(selectedTopics.size===0){
+    el.innerHTML='<span style="color:var(--text-tertiary)">No topics selected — showing all</span>'
+  } else {
+    el.innerHTML=[...selectedTopics].map(t=>`<span style="background:rgba(201,168,76,.15);color:var(--gold);padding:2px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.3)">${TOPIC_LABELS[t]||t}</span>`).join('')
+  }
+}
+
+function clearTopicSelection(){
+  selectedTopics.clear()
+  renderTopicGraph()
+}
+
+function applyTopicSelection(){
+  closeModal('topicGraphModal')
+  if(selectedTopics.size===0){
+    document.getElementById('topicSel').value='all'
+  } else if(selectedTopics.size===1){
+    document.getElementById('topicSel').value=[...selectedTopics][0]
+  }
+  loadArticles()
+  // Show selected topics as active filter
+  const filterBar = document.querySelector('.toolbar')
+  const existing = document.getElementById('activeTopicFilter')
+  if(existing) existing.remove()
+  if(selectedTopics.size>1){
+    const div = document.createElement('div')
+    div.id='activeTopicFilter'
+    div.style.cssText='display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%;padding-top:8px;border-top:0.5px solid var(--border)'
+    div.innerHTML='<span style="font-size:11px;color:var(--text-tertiary)">Topics:</span>'+[...selectedTopics].map(t=>`<span style="font-size:11px;background:rgba(201,168,76,.1);color:var(--gold);padding:2px 10px;border-radius:20px;cursor:pointer" onclick="selectedTopics.delete('${t}');applyTopicSelection()">${TOPIC_LABELS[t]||t} ×</span>`).join('')
+    filterBar.appendChild(div)
+  }
 }
 
 // Init
