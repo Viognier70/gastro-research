@@ -435,7 +435,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <div class="price-amount">€99</div><div class="price-period">per year — save 31%</div>
       </div>
     </div>
-    <button class="upgrade-btn" style="width:100%;padding:12px;font-size:13px" onclick="handleUpgrade()">Get Pro access</button>
+    <button class="upgrade-btn" style="width:100%;padding:12px;font-size:13px" onclick="startCheckout()">Get Pro access →</button>
+    <p style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:10px">Secure payment via Stripe · Cancel anytime</p>
   </div>
 </div>
 
@@ -475,6 +476,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <script>
 const SB_URL='https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_ANON='sb_publishable_sUKpqF-yquV4ny_VDi6V7g_7YgB4s-s'
+const STRIPE_PK='pk_live_51PESII01M2w13V3npDEvdbuNBFhxkMS81hr5AxeSD7jFTsqKdJ0JbHPLyla10n2dwmVFhlexjGDQHYg6vXGiNUWI00hxMg0oKb'
 const H={'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON}
 const FREE_LIMIT=5
 const sb=supabase.createClient(SB_URL,SB_ANON)
@@ -769,6 +771,46 @@ async function handleAuth(){
   closeModal('authModal')
 }
 function handleUpgrade(){openModal('authModal')}
+
+async function startCheckout(){
+  // Check if logged in
+  const {data:{session}} = await sb.auth.getSession()
+  if(!session){
+    openModal('authModal')
+    return
+  }
+  
+  const plan = selectedPlan || 'monthly'
+  
+  try {
+    const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/stripe-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({
+        plan,
+        user_id: session.user.id,
+        email: session.user.email,
+        success_url: window.location.origin + '?pro=true',
+        cancel_url: window.location.origin
+      })
+    })
+    const data = await resp.json()
+    if(data.url) window.location.href = data.url
+    else alert('Error: ' + (data.error || 'Could not start checkout'))
+  } catch(e) {
+    alert('Checkout error: ' + e.message)
+  }
+}
+
+// Check for pro=true in URL after Stripe redirect
+if(window.location.search.includes('pro=true')){
+  isPro = true
+  history.replaceState({}, '', window.location.pathname)
+  setTimeout(()=>alert('Welcome to Gusto Science Pro! 🎉 Enjoy unlimited access.'), 500)
+}
 
 async function initAuth(){
   const {data:{session}}=await sb.auth.getSession()
