@@ -999,135 +999,130 @@ function renderLiveMap(){
   const container=document.getElementById('liveKnowledgeMap')
   if(!container||!mapTopicData.length) return
 
-  const w=container.offsetWidth||900
-  const h=420
+  const w=container.offsetWidth||860
+  const h=400
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
   document.getElementById('mapRoleTitle').textContent='Research landscape — '+roleNames[role]
+  document.getElementById('mapSubtitle').textContent='Bubble size = articles · Line thickness = semantic proximity · Color = relevance for '+roleNames[role]
 
   const maxCount=Math.max(...mapTopicData.map(t=>t.count))
-  const minR=18, maxR=58
-  const nodes=mapTopicData.slice(0,22).map(t=>({
-    ...t,
-    r:minR+Math.sqrt(t.count/maxCount)*(maxR-minR),
-    rel:getTopicRelevance(t)
+  const minR=16, maxR=52
+
+  // Build nodes sorted by relevance (most relevant = center)
+  const nodes=[...mapTopicData.slice(0,20)].sort((a,b)=>getTopicRelevance(b)-getTopicRelevance(a)).map(t=>({
+    ...t, r:minR+Math.sqrt(t.count/maxCount)*(maxR-minR), rel:getTopicRelevance(t)
   }))
 
-  // Force-directed layout
+  // Compact concentric layout: relevance determines ring
   const cx=w/2, cy=h/2
-  // Initialize positions in spiral
+  const rings=[
+    {nodes:[],r:0},      // center (top 1)
+    {nodes:[],r:110},    // inner ring (top 2-5)
+    {nodes:[],r:200},    // outer ring (rest)
+  ]
   nodes.forEach((n,i)=>{
-    if(i===0){n.x=cx;n.y=cy;return}
-    const angle=i*2.399
-    const dist=60+i*32*(1.1-Math.min(n.rel/10,1))
-    n.x=cx+Math.cos(angle)*dist
-    n.y=cy+Math.sin(angle)*dist
+    if(i===0) rings[0].nodes.push(n)
+    else if(i<5) rings[1].nodes.push(n)
+    else rings[2].nodes.push(n)
   })
 
-  // Collision resolution (50 iterations)
-  for(let iter=0;iter<50;iter++){
+  // Position nodes in rings
+  rings.forEach(ring=>{
+    ring.nodes.forEach((n,i)=>{
+      if(ring.r===0){n.x=cx;n.y=cy;return}
+      const total=ring.nodes.length
+      const angle=(i/total)*Math.PI*2 - Math.PI/2
+      n.x=cx+Math.cos(angle)*ring.r
+      n.y=cy+Math.sin(angle)*ring.r
+    })
+  })
+
+  // Light collision avoidance
+  for(let iter=0;iter<30;iter++){
     for(let i=0;i<nodes.length;i++){
       for(let j=i+1;j<nodes.length;j++){
-        const a=nodes[i], b=nodes[j]
-        const dx=b.x-a.x, dy=b.y-a.y
-        const dist=Math.hypot(dx,dy)||0.1
-        const minDist=a.r+b.r+12
-        if(dist<minDist){
-          const force=(minDist-dist)/2
-          const fx=(dx/dist)*force, fy=(dy/dist)*force
-          a.x-=fx; a.y-=fy; b.x+=fx; b.y+=fy
+        const a=nodes[i],b=nodes[j]
+        const dx=b.x-a.x,dy=b.y-a.y
+        const d=Math.hypot(dx,dy)||0.1
+        const min=a.r+b.r+10
+        if(d<min){
+          const f=(min-d)*0.3
+          a.x-=(dx/d)*f;a.y-=(dy/d)*f
+          b.x+=(dx/d)*f;b.y+=(dy/d)*f
         }
       }
-      // Keep in bounds
       const n=nodes[i]
-      n.x=Math.max(n.r+8,Math.min(w-n.r-8,n.x))
-      n.y=Math.max(n.r+8,Math.min(h-n.r-8,n.y))
+      n.x=Math.max(n.r+6,Math.min(w-n.r-6,n.x))
+      n.y=Math.max(n.r+6,Math.min(h-n.r-6,n.y))
     }
   }
 
-  // Build edges: connect topics with similar relevance profiles
-  const edges=[]
+  // Build semantic edges based on relevance profile similarity
+  const allEdges=[]
   for(let i=0;i<nodes.length;i++){
     for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i], b=nodes[j]
-      // Similarity = how close their relevance profiles are
-      const diff=Math.abs(a.rel_sommelier-b.rel_sommelier)+
-                 Math.abs(a.rel_chef-b.rel_chef)+
-                 Math.abs(a.rel_creator-b.rel_creator)+
-                 Math.abs(a.rel_waiter-b.rel_waiter)+
-                 Math.abs(a.rel_educator-b.rel_educator)
-      const similarity=1-(diff/50)
-      if(similarity>0.7){
-        edges.push({a,b,strength:similarity})
-      }
+      const a=nodes[i],b=nodes[j]
+      const roles=['sommelier','chef','creator','waiter','educator']
+      // Cosine-like similarity of relevance vectors
+      const dotProd=roles.reduce((s,r)=>s+(a['rel_'+r]||0)*(b['rel_'+r]||0),0)
+      const magA=Math.sqrt(roles.reduce((s,r)=>s+Math.pow(a['rel_'+r]||0,2),0))
+      const magB=Math.sqrt(roles.reduce((s,r)=>s+Math.pow(b['rel_'+r]||0,2),0))
+      const sim=magA&&magB?dotProd/(magA*magB):0
+      if(sim>0.5) allEdges.push({a,b,sim})
     }
   }
-  // Keep only strongest edges (max 3 per node)
-  const nodeEdgeCount={}
-  const filteredEdges=edges
-    .sort((a,b)=>b.strength-a.strength)
-    .filter(e=>{
-      const ka=e.a.topic, kb=e.b.topic
-      nodeEdgeCount[ka]=(nodeEdgeCount[ka]||0)
-      nodeEdgeCount[kb]=(nodeEdgeCount[kb]||0)
-      if(nodeEdgeCount[ka]>=3||nodeEdgeCount[kb]>=3) return false
-      nodeEdgeCount[ka]++; nodeEdgeCount[kb]++
-      return true
-    })
 
-  // Draw SVG
-  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif">`
-
-  // Draw edges first
-  filteredEdges.forEach(e=>{
-    const strength=e.strength
-    const strokeW=strength>0.9?2.5:strength>0.8?1.5:0.8
-    const opacity=strength>0.9?0.35:strength>0.8?0.22:0.12
-    const isDashed=strength<0.82
-    svg+=`<line x1="${e.a.x}" y1="${e.a.y}" x2="${e.b.x}" y2="${e.b.y}" stroke="#C9A84C" stroke-width="${strokeW}" opacity="${opacity}" ${isDashed?'stroke-dasharray="4,4"':''}/>`
+  // Top edges per node (max 3)
+  const edgeCount={}
+  const edges=allEdges.sort((a,b)=>b.sim-a.sim).filter(e=>{
+    const ka=e.a.topic,kb=e.b.topic
+    edgeCount[ka]=(edgeCount[ka]||0);edgeCount[kb]=(edgeCount[kb]||0)
+    if(edgeCount[ka]>=3||edgeCount[kb]>=3) return false
+    edgeCount[ka]++;edgeCount[kb]++;return true
   })
 
-  // Draw nodes
+  // SVG
+  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block">`
+
+  // Edges
+  edges.forEach(e=>{
+    const s=e.sim
+    const sw=s>0.85?3:s>0.7?1.8:0.8
+    const op=s>0.85?0.4:s>0.7?0.25:0.12
+    const dash=s<0.7?'stroke-dasharray="5,4"':''
+    svg+=`<line x1="${e.a.x}" y1="${e.a.y}" x2="${e.b.x}" y2="${e.b.y}" stroke="#C9A84C" stroke-width="${sw}" opacity="${op}" ${dash}/>`
+  })
+
+  // Nodes
   nodes.forEach(n=>{
-    const selected=activeMapTopics.has(n.topic)
-    const intensity=Math.min(n.rel/10,1)
-    const fill=selected?'#C9A84C':interpolateColor('#EDE8DC','#C9A84C',intensity*0.75)
-    const stroke=selected?'#8B6914':n.rel>6?'#C9A84C':'#D4CFC5'
-    const textCol=selected?'#0C0B09':n.rel>7?'#3D2600':'#3C3830'
-    const strokeW=selected?2.5:n.rel>6?1.5:0.5
+    const sel=activeMapTopics.has(n.topic)
+    const int=Math.min(n.rel/10,1)
+    const fill=sel?'#C9A84C':interpolateColor('#EDE8DC','#C9A84C',int*0.8)
+    const sc=sel?'#8B6914':int>0.6?'#C9A84C':'#D4CFC5'
+    const tc=sel?'#0C0B09':int>0.7?'#3D2600':'#3C3830'
+    const sw=sel?2.5:int>0.6?1.5:0.5
 
     svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer">`
-    svg+=`<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}"/>`
+    svg+=`<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${fill}" stroke="${sc}" stroke-width="${sw}"/>`
 
-    // Article count ring
-    const pct=n.count/maxCount
-    const ringR=n.r+4
-    const arc=pct*2*Math.PI
-    const x2=n.x+ringR*Math.sin(arc), y2=n.y-ringR*Math.cos(arc)
-    const large=arc>Math.PI?1:0
-    if(pct>0.02) svg+=`<path d="M${n.x} ${n.y-ringR} A${ringR} ${ringR} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${selected?'#8B6914':'#C9A84C'}" stroke-width="2" opacity="0.4"/>`
-
-    // Label
     const words=n.label.split(' ')
-    const fs=n.r>44?11:n.r>30?9.5:8
-    if(words.length<=2||n.r<26){
-      svg+=`<text x="${n.x}" y="${n.y-3}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="500">${n.label.slice(0,n.r<22?6:20)}</text>`
-      if(n.r>24) svg+=`<text x="${n.x}" y="${n.y+10}" text-anchor="middle" font-size="7.5" fill="${textCol}" opacity="0.6">${n.count}</text>`
+    const fs=n.r>42?11:n.r>28?9.5:8
+    if(words.length<=2||n.r<24){
+      svg+=`<text x="${n.x}" y="${n.y+1}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" fill="${tc}" font-weight="500">${n.label}</text>`
     } else {
       const mid=Math.ceil(words.length/2)
-      svg+=`<text x="${n.x}" y="${n.y-7}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="500">${words.slice(0,mid).join(' ')}</text>`
-      svg+=`<text x="${n.x}" y="${n.y+6}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="500">${words.slice(mid).join(' ')}</text>`
-      if(n.r>30) svg+=`<text x="${n.x}" y="${n.y+18}" text-anchor="middle" font-size="7.5" fill="${textCol}" opacity="0.6">${n.count}</text>`
+      svg+=`<text x="${n.x}" y="${n.y-6}" text-anchor="middle" font-size="${fs}" fill="${tc}" font-weight="500">${words.slice(0,mid).join(' ')}</text>`
+      svg+=`<text x="${n.x}" y="${n.y+7}" text-anchor="middle" font-size="${fs}" fill="${tc}" font-weight="500">${words.slice(mid).join(' ')}</text>`
     }
+    if(n.r>28) svg+=`<text x="${n.x}" y="${n.y+n.r-6}" text-anchor="middle" font-size="7" fill="${tc}" opacity="0.5">${n.count}</text>`
     svg+='</g>'
   })
 
   // Legend
-  svg+=`<g transform="translate(12,${h-46})">`
-  svg+=`<line x1="0" y1="10" x2="20" y2="10" stroke="#C9A84C" stroke-width="2.5" opacity="0.35"/><text x="24" y="14" font-size="9" fill="#9C9484">Strong link</text>`
-  svg+=`<line x1="70" y1="10" x2="90" y2="10" stroke="#C9A84C" stroke-width="1" opacity="0.2" stroke-dasharray="4,4"/><text x="94" y="14" font-size="9" fill="#9C9484">Weak link</text>`
-  svg+=`<circle cx="150" cy="10" r="6" fill="#EDE8DC" stroke="#D4CFC5" stroke-width="0.5"/><text x="160" y="14" font-size="9" fill="#9C9484">Low relevance</text>`
-  svg+=`<circle cx="234" cy="10" r="6" fill="#C9A84C" stroke="#8B6914" stroke-width="1.5"/><text x="244" y="14" font-size="9" fill="#9C9484">High relevance</text>`
-  svg+=`<text x="0" y="32" font-size="8" fill="#B8B0A0">Size = articles · Ring = proportion · Color = relevance for ${roleNames[role]} · Click to filter</text>`
+  svg+=`<g transform="translate(10,${h-36})">`
+  svg+=`<line x1="0" y1="8" x2="22" y2="8" stroke="#C9A84C" stroke-width="3" opacity="0.4"/><text x="26" y="12" font-size="9" fill="#9C9484">Strong match</text>`
+  svg+=`<line x1="100" y1="8" x2="122" y2="8" stroke="#C9A84C" stroke-width="1" opacity="0.18" stroke-dasharray="5,4"/><text x="126" y="12" font-size="9" fill="#9C9484">Weak match</text>`
+  svg+=`<text x="200" y="12" font-size="9" fill="#9C9484">Click topic to filter feed</text>`
   svg+='</g></svg>'
 
   container.innerHTML=svg
@@ -1143,10 +1138,11 @@ function toggleMapTopic(topic){
   loadArticles()
 }
 
-const _origSetRole=setRole
-function setRole(r,btn){
-  _origSetRole(r,btn)
-  setTimeout(renderLiveMap,100)
+// setRole is defined above, patch it to also re-render map
+const _baseSetRole=setRole
+window.setRole=function(r,btn){
+  _baseSetRole(r,btn)
+  setTimeout(()=>{if(mapTopicData.length>0)renderLiveMap()},150)
 }
 
 // Init
