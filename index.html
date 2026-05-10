@@ -773,26 +773,20 @@ async function handleAuth(){
 function handleUpgrade(){openModal('authModal')}
 
 async function startCheckout(){
-  // Check if logged in
-  const {data:{session}} = await sb.auth.getSession()
-  if(!session){
-    openModal('authModal')
-    return
-  }
-  
   const plan = selectedPlan || 'monthly'
+  const {data:{session}} = await sb.auth.getSession()
   
   try {
     const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/stripe-checkout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token
+        'Authorization': session ? 'Bearer ' + session.access_token : 'Bearer ' + SB_ANON
       },
       body: JSON.stringify({
         plan,
-        user_id: session.user.id,
-        email: session.user.email,
+        user_id: session?.user?.id || null,
+        email: session?.user?.email || null,
         success_url: window.location.origin + '?pro=true',
         cancel_url: window.location.origin
       })
