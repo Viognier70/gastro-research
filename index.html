@@ -176,18 +176,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="topbar">
   <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:12px">
     <svg width="36" height="36" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="80" height="80" rx="6" fill="#0C0B09"/>
-      <polygon points="40,8 10,68 70,68" fill="none" stroke="#C9A84C" stroke-width="2" opacity="0.65"/>
-      <line x1="40" y1="8" x2="40" y2="45" stroke="#FDFCF8" stroke-width="1" opacity="0.35"/>
-      <line x1="10" y1="68" x2="40" y2="45" stroke="#FDFCF8" stroke-width="1" opacity="0.35"/>
-      <line x1="70" y1="68" x2="40" y2="45" stroke="#FDFCF8" stroke-width="1" opacity="0.35"/>
-      <circle cx="40" cy="8" r="7" fill="#C9A84C"/>
-      <circle cx="10" cy="68" r="7" fill="#C9A84C"/>
-      <circle cx="70" cy="68" r="7" fill="#C9A84C"/>
-      <text x="40" y="11" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="#0C0B09">φ</text>
-      <text x="10" y="71" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="#0C0B09">τ</text>
-      <text x="70" y="71" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="#0C0B09">ε</text>
-      <text x="40" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#FDFCF8">G</text>
+      <polygon points="40,8 10,72 70,72" fill="none" stroke="#C9A84C" stroke-width="2.5" opacity="0.8"/>
+      <line x1="40" y1="8" x2="40" y2="47" stroke="#0C0B09" stroke-width="1" opacity="0.4"/>
+      <line x1="10" y1="72" x2="40" y2="47" stroke="#0C0B09" stroke-width="1" opacity="0.4"/>
+      <line x1="70" y1="72" x2="40" y2="47" stroke="#0C0B09" stroke-width="1" opacity="0.4"/>
+      <circle cx="40" cy="8" r="8" fill="#C9A84C"/>
+      <circle cx="10" cy="72" r="8" fill="#C9A84C"/>
+      <circle cx="70" cy="72" r="8" fill="#C9A84C"/>
+      <text x="40" y="12" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#0C0B09">φ</text>
+      <text x="10" y="76" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#0C0B09">τ</text>
+      <text x="70" y="76" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#0C0B09">ε</text>
     </svg>
     <div style="display:flex;align-items:baseline;gap:0">
       <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
@@ -214,12 +212,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 
 <!-- KNOWLEDGE MAP (live from database) -->
-<div id="knowledgeMapSection" style="padding:32px 32px 24px;border-bottom:0.5px solid var(--border);background:var(--warm-100)">
+<div id="knowledgeMapSection" style="padding:32px 32px 24px;border-bottom:0.5px solid var(--border);background:#0C0B09">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:12px">
     <div>
       <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Live research landscape</div>
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--text-primary)" id="mapRoleTitle">Select a profession to explore</div>
-      <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px" id="mapSubtitle">Click your profession in the filter above — then explore research areas. Click a topic to filter the feed.</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:#fff" id="mapRoleTitle">Select a profession to explore</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:4px" id="mapSubtitle">Click your profession in the filter above — then explore research areas. Click a topic to filter the feed.</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <div style="display:flex;gap:6px;align-items:center;font-size:10px;color:rgba(255,255,255,.3)">
@@ -230,8 +228,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       </div>
     </div>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:440px;position:relative;margin-top:16px">
-    <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
+  <div id="liveKnowledgeMap" style="width:100%;height:500px;position:relative;margin-top:16px;overflow:visible">
+    <div class="loading-state" style="color:rgba(255,255,255,.4)"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div><span>Building knowledge map...</span></div>
   </div>
 </div>
 
@@ -320,7 +318,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span class="upgrade-link" onclick="openModal('upgradeModal')">Upgrade to Pro</span>
     </div>
     <div class="feed-count" id="feedCount"></div>
-    <div id="feedPane"><div class="loading-state"><div class="spinner"></div><span>Loading research...</span></div></div>
+    <div id="feedPane"><div class="loading-state" style="color:rgba(255,255,255,.4)"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div><span>Loading research...</span></div></div>
   </div>
   <div class="sidebar">
     <div class="sidebar-section">
@@ -665,7 +663,7 @@ async function loadArticles(){
   const src=document.getElementById('srcSel').value
   const search=document.getElementById('searchInput').value.trim()
   const pane=document.getElementById('feedPane')
-  pane.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
+  pane.innerHTML='<div class="loading-state" style="color:rgba(255,255,255,.4)"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div><span>Loading...</span></div>'
 
   // Fetch all needed columns including TRIAD for selected role
   const triadCols=role==='all'
@@ -1040,7 +1038,7 @@ function renderLiveMap(){
   if(!container||!mapTopicData.length) return
 
   const w=container.offsetWidth||860
-  const h=440
+  const h=480
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
 
