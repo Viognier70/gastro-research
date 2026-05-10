@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gusto Science — Research Intelligence for Culinary Professionals</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230C0B09'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='600' fill='%23C9A84C' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230C0B09'/%3E%3Cpolygon points='16,4 4,28 28,28' fill='none' stroke='%23C9A84C' stroke-width='1.5' opacity='0.4'/%3E%3Ctext x='16' y='24' font-family='Georgia,serif' font-size='16' font-weight='700' fill='%23C9A84C' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -25,7 +25,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
 .logo-gusto{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--text-primary)}
-.logo-science{font-family:'Outfit',sans-serif;font-size:11px;font-weight:300;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-left:10px;position:relative;top:-1px}
+.logo-science{font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-left:10px;position:relative;top:-1px}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .academy-btn{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:flex;align-items:center;gap:4px}
 .lang-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
@@ -174,8 +174,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo" onclick="window.scrollTo(0,0)">
-    <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
+  <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:10px">
+    <svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="5" fill="#0C0B09"/>
+      <polygon points="16,4 3,28 29,28" fill="none" stroke="#C9A84C" stroke-width="1.2" opacity="0.5"/>
+      <text x="16" y="24" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#C9A84C" text-anchor="middle">G</text>
+    </svg>
+    <div style="display:flex;align-items:baseline">
+      <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
+    </div>
   </div>
   <div class="topbar-right">
     <a href="https://gusto.academy" target="_blank" class="academy-btn">Gusto Academy ↗</a>
@@ -242,29 +249,32 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="toolbar">
   <select class="filter-select" id="topicSel" onchange="loadArticles()">
     <option value="all">All topics</option>
-    <option value="sommellerie">Sommellerie</option>
-    <option value="gastronomy">Gastronomy</option>
-    <option value="multisensory">Multisensory</option>
-    <option value="culinary_science">Culinary science</option>
-    <option value="food_science">Food science</option>
-    <option value="flavor_science">Flavour science</option>
-    <option value="sensory_evaluation">Sensory evaluation</option>
-    <option value="food_psychology">Food psychology</option>
-    <option value="neurogastronomy">Neurogastronomy</option>
-    <option value="food_anthropology">Food anthropology</option>
-    <option value="atmospherics">Atmospherics</option>
-    <option value="hospitality">Hospitality</option>
-    <option value="experiential_dining">Experiential dining</option>
-    <option value="nutritional_science">Nutritional science</option>
-    <option value="food_behavior">Food behavior</option>
-    <option value="appetite_research">Appetite research</option>
-    <option value="food_technology">Food technology</option>
-    <option value="fermentation_science">Fermentation science</option>
-    <option value="food_pairing">Food pairing</option>
-    <option value="culinary_education">Culinary education</option>
-    <option value="sensory_training">Sensory training</option>
-    <option value="novel_foods">Novel foods</option>
-    <option value="crossmodal">Crossmodal</option>
+    <option value="gastronomy">Gastronomy (794)</option>
+    <option value="sommellerie">Sommellerie (319)</option>
+    <option value="multisensory">Multisensory (234)</option>
+    <option value="hospitality">Hospitality (169)</option>
+    <option value="flavor_science">Flavour science (165)</option>
+    <option value="sensory_evaluation">Sensory evaluation (129)</option>
+    <option value="appetite_research">Appetite research (119)</option>
+    <option value="food_science">Food science (102)</option>
+    <option value="culinary_science">Culinary science (101)</option>
+    <option value="food_psychology">Food psychology (98)</option>
+    <option value="fermentation_science">Fermentation science (97)</option>
+    <option value="nutritional_science">Nutrition science (96)</option>
+    <option value="neurogastronomy">Neurogastronomy (93)</option>
+    <option value="novel_foods">Novel foods (92)</option>
+    <option value="sensory_training">Sensory training (90)</option>
+    <option value="food_behavior">Food behavior (86)</option>
+    <option value="food_technology">Food technology (85)</option>
+    <option value="culinary_education">Culinary education (80)</option>
+    <option value="food_anthropology">Food anthropology (77)</option>
+    <option value="food_pairing">Food pairing (76)</option>
+    <option value="atmospherics">Atmospherics (71)</option>
+    <option value="servicescape">Servicescape (65)</option>
+    <option value="art_science">Art &amp; food (64)</option>
+    <option value="experiential_dining">Experiential dining (61)</option>
+    <option value="molecular_mixology">Molecular gastronomy (51)</option>
+    <option value="crossmodal">Crossmodal (45)</option>
   </select>
   <select class="filter-select" id="yearSel" onchange="renderFeed()">
     <option value="all">All years</option>
@@ -799,14 +809,32 @@ const TOPIC_DATA = {
 }
 
 const TOPIC_LABELS = {
-  sommellerie:'Sommellerie',flavor_science:'Flavour science',sensory_evaluation:'Sensory evaluation',
-  food_pairing:'Food pairing',crossmodal:'Crossmodal',sensory_training:'Sensory training',
-  multisensory:'Multisensory',neurogastronomy:'Neurogastronomy',food_psychology:'Food psychology',
-  atmospherics:'Atmospherics',culinary_education:'Culinary education',hospitality:'Hospitality',
-  culinary_science:'Culinary science',food_science:'Food science',fermentation_science:'Fermentation',
-  food_technology:'Food technology',novel_foods:'Novel foods',nutritional_science:'Nutrition',
-  gastronomy:'Gastronomy',food_behavior:'Food behavior',experiential_dining:'Experiential dining',
-  art_science:'Art & food',servicescape:'Servicescape',appetite_research:'Appetite research'
+  gastronomy:'Gastronomy',
+  sommellerie:'Sommellerie',
+  multisensory:'Multisensory',
+  hospitality:'Hospitality',
+  flavor_science:'Flavour science',
+  sensory_evaluation:'Sensory evaluation',
+  appetite_research:'Appetite research',
+  food_science:'Food science',
+  culinary_science:'Culinary science',
+  food_psychology:'Food psychology',
+  fermentation_science:'Fermentation science',
+  nutritional_science:'Nutrition science',
+  neurogastronomy:'Neurogastronomy',
+  novel_foods:'Novel foods',
+  sensory_training:'Sensory training',
+  food_behavior:'Food behavior',
+  food_technology:'Food technology',
+  culinary_education:'Culinary education',
+  food_anthropology:'Food anthropology',
+  food_pairing:'Food pairing',
+  atmospherics:'Atmospherics',
+  servicescape:'Servicescape',
+  art_science:'Art & food',
+  experiential_dining:'Experiential dining',
+  molecular_mixology:'Molecular gastronomy',
+  crossmodal:'Crossmodal'
 }
 
 let selectedTopics = new Set()
