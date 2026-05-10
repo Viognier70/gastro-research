@@ -214,12 +214,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 
 <!-- KNOWLEDGE MAP (live from database) -->
-<div id="knowledgeMapSection" style="padding:32px 32px 24px;border-bottom:0.5px solid var(--border);background:#0C0B09">
+<div id="knowledgeMapSection" style="padding:32px 32px 24px;border-bottom:0.5px solid var(--border);background:var(--warm-100)">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:12px">
     <div>
       <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Live research landscape</div>
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:#fff" id="mapRoleTitle">Select a profession to explore</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:4px" id="mapSubtitle">Click your profession in the filter above — then explore research areas. Click a topic to filter the feed.</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--text-primary)" id="mapRoleTitle">Select a profession to explore</div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px" id="mapSubtitle">Click your profession in the filter above — then explore research areas. Click a topic to filter the feed.</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <div style="display:flex;gap:6px;align-items:center;font-size:10px;color:rgba(255,255,255,.3)">
@@ -231,7 +231,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
   </div>
   <div id="liveKnowledgeMap" style="width:100%;height:440px;position:relative;margin-top:16px">
-    <div class="loading-state" style="color:rgba(255,255,255,.4)"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div><span>Building knowledge map...</span></div>
+    <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
   </div>
 </div>
 
@@ -1112,7 +1112,7 @@ function renderLiveMap(){
   })
 
   // SVG — dark background
-  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:#0C0B09;border-radius:8px">`
+  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block">`
 
   // Subtle ring guides
   svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(201,168,76,0.06)" stroke-width="1"/>`
