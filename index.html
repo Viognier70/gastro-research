@@ -327,7 +327,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Journals</div>
-      <div id="journalList"></div>
+      <div id="journalList" style="max-height:400px;overflow-y:auto;scrollbar-width:thin"></div>
     </div>
   </div>
 </div>
@@ -715,8 +715,8 @@ async function loadSidebar(){
       if(a.topic) topics[a.topic]=(topics[a.topic]||0)+1
       if(a.journal) journals[a.journal]=(journals[a.journal]||0)+1
     })
-    document.getElementById('topicList').innerHTML=Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([t,c])=>`<div class="topic-item" onclick="filterTopic('${t}')"><div class="topic-dot"></div><span class="topic-name">${t.replace(/_/g,' ')}</span><span class="topic-count">${c}</span></div>`).join('')
-    document.getElementById('journalList').innerHTML=Object.entries(journals).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([j,c])=>`<div class="journal-item" onclick="filterJournal('${j.replace(/'/g,"\\'")}')"><span class="journal-name" title="${j}">${j}</span><span class="journal-count">${c}</span></div>`).join('')
+    document.getElementById('topicList').innerHTML=Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([t,c])=>`<div class="topic-item" onclick="filterTopic('${t}')"><div class="topic-dot"></div><span class="topic-name">${t.replace(/_/g,' ')}</span><span class="topic-count">${c}</span></div>`).join('')
+    document.getElementById('journalList').innerHTML=Object.entries(journals).sort((a,b)=>b[1]-a[1]).map(([j,c])=>`<div class="journal-item" onclick="filterJournal('${j.replace(/'/g,"\\'")}')"><span class="journal-name" title="${j}">${j}</span><span class="journal-count">${c}</span></div>`).join('')
   }catch(e){}
 }
 
