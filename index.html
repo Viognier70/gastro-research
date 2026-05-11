@@ -228,7 +228,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       </div>
     </div>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:500px;position:relative;margin-top:16px;overflow:visible">
+  <div id="liveKnowledgeMap" style="width:100%;height:540px;position:relative;margin-top:16px;overflow:visible">
     <div class="loading-state" style="color:rgba(255,255,255,.4)"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div><span>Building knowledge map...</span></div>
   </div>
 </div>
@@ -571,12 +571,12 @@ function cardHTML(a,idx){
   if(!locked){
     if(hasTriad){
       triadHTML=`<div class="triad-section">
-        ${triadBlock(ep,'Symbolisk inramning · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
-        ${triadBlock(tc,'Praktisk orkestrering · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
-        ${triadBlock(ph,'Sinnlig realisering · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
+        ${triadBlock(ep,'ε · Symbolic framing · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
+        ${triadBlock(tc,'τ · Practical orchestration · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
+        ${triadBlock(ph,'φ · Sensory realisation · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
       </div>`
     } else if(tc.length>10){
-      triadHTML=triadBlock(tc,'Praktisk tillämpning · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')
+      triadHTML=triadBlock(tc,'Practical application · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')
     } else {
       triadHTML=`<div class="triad-pending">TRIAD analysis being generated — check back shortly.</div>`
     }
@@ -591,13 +591,13 @@ function cardHTML(a,idx){
     </div>
     <div class="card-title">${a.title||''}</div>
     ${a.insight?`<div class="card-insight">${a.insight}</div>`:''}
-    ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}">
-      <div><div class="imrad-label">Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div>
-      <div><div class="imrad-label">Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div>
-      <div><div class="imrad-label">Results</div><div class="imrad-text">${a.imrad_results||''}</div></div>
-      <div><div class="imrad-label">Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div>
-    </div>`:''}
     ${triadHTML}
+    ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}">
+      <div><div class="imrad-label" style="color:var(--episteme)">ε Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div>
+      <div><div class="imrad-label" style="color:var(--episteme)">ε Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div>
+      <div><div class="imrad-label" style="color:var(--episteme)">ε Results</div><div class="imrad-text">${a.imrad_results||''}</div></div>
+      <div><div class="imrad-label" style="color:var(--episteme)">ε Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div>
+    </div>`:''}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
@@ -708,7 +708,7 @@ async function loadArticles(){
 
 async function loadSidebar(){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/articles?select=topic,journal&limit=3000`,{headers:H})
+    const r=await fetch(`${SB_URL}/rest/v1/articles?select=topic,journal&limit=5000`,{headers:H})
     const data=await r.json()
     const topics={},journals={}
     data.forEach(a=>{
@@ -1092,7 +1092,7 @@ function renderLiveMap(){
   if(!container||!mapTopicData.length) return
 
   const w=container.offsetWidth||860
-  const h=480
+  const h=520
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
 
