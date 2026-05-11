@@ -249,6 +249,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <button class="role-chip" data-role="creator" onclick="setRole('creator',this)">Meal creator</button>
   <button class="role-chip" data-role="waiter" onclick="setRole('waiter',this)">Service staff</button>
   <button class="role-chip" data-role="educator" onclick="setRole('educator',this)">Educator</button>
+  <button class="role-chip" data-role="researcher" onclick="setRole('researcher',this)">Researcher</button>
+  <button class="role-chip" data-role="fbmanager" onclick="setRole('fbmanager',this)">F&amp;B Manager</button>
+  <button class="role-chip" data-role="restaurantmanager" onclick="setRole('restaurantmanager',this)">Restaurant manager</button>
+  <button class="role-chip" data-role="hotelier" onclick="setRole('hotelier',this)">Hotelier</button>
+  <button class="role-chip" data-role="winebar" onclick="setRole('winebar',this)">Wine bar owner</button>
   <button style="margin-left:auto;font-size:11px;color:var(--gold);border:0.5px solid rgba(201,168,76,.3);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif" onclick="openTopicGraph()">⬡ Knowledge map</button>
 </div>
 
@@ -496,7 +501,7 @@ const T={
     sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',
     forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
     freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
-    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
+    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',researcher:'Researcher',fbmanager:'F&B Manager',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner'}
   },
   sv:{
     eyebrow:'Forskningsintelligens för kulinariska proffs',
@@ -504,7 +509,7 @@ const T={
     sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen), Techne (praktisk tillämpning) och Phronesis (omdöme). Välj din yrkesroll för att börja.',
     forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
     freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
-    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare'}
+    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare',researcher:'Forskare',fbmanager:'F&B Manager',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare'}
   }
 }
 
