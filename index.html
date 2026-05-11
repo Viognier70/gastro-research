@@ -781,7 +781,8 @@ async function startCheckout(){
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': session ? 'Bearer ' + session.access_token : 'Bearer ' + SB_ANON
+        'Authorization': 'Bearer ' + (session?.access_token || SB_ANON),
+        'apikey': SB_ANON
       },
       body: JSON.stringify({
         plan,
