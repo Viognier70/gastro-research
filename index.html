@@ -135,6 +135,40 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .journal-name:hover{color:var(--gold)}
 .journal-count{font-size:10px;color:var(--text-tertiary);flex-shrink:0}
 .loading-state{display:flex;align-items:center;gap:10px;padding:40px;color:var(--text-tertiary);font-size:13px}
+.core-claim{font-size:12.5px;color:var(--text-primary);line-height:1.65;font-style:italic;padding:10px 14px;background:var(--warm-100);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;margin:8px 0}
+.keywords-row{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.keyword-tag{font-size:10px;color:var(--text-tertiary);background:var(--warm-100);border:0.5px solid var(--border-mid);padding:2px 8px;border-radius:10px;cursor:pointer}
+.keyword-tag:hover{color:var(--gold);border-color:var(--gold)}
+.triad-nav{display:flex;gap:6px;margin:12px 0 6px;flex-wrap:wrap}
+.triad-nav-btn{font-size:11px;padding:5px 14px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-tertiary);transition:all .15s;display:flex;align-items:center;gap:4px}
+.triad-nav-btn.active{color:var(--white);border-color:transparent}
+.triad-nav-btn.e-active{background:var(--episteme);border-color:var(--episteme);color:#fff}
+.triad-nav-btn.t-active{background:var(--techne);border-color:var(--techne);color:#fff}
+.triad-nav-btn.p-active{background:#2d6a4f;border-color:#2d6a4f;color:#fff}
+.triad-content{padding:12px 14px;border-radius:0 6px 6px 0;font-size:12px;line-height:1.75;color:var(--text-secondary);margin-bottom:8px}
+.triad-content.e{background:var(--episteme-light);border-left:3px solid var(--episteme)}
+.triad-content.t{background:var(--techne-light);border-left:3px solid var(--techne)}
+.triad-content.p{background:#eaf5ee;border-left:3px solid #2d6a4f}
+.imrad-compact{display:grid;gap:6px;margin:10px 0;padding:12px;background:var(--warm-100);border-radius:6px}
+.imrad-compact-row{display:flex;gap:8px;font-size:11px;line-height:1.6}
+.imrad-compact-label{font-weight:500;color:var(--episteme);min-width:72px;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;padding-top:1px;flex-shrink:0}
+.core-claim{font-size:13px;color:var(--text-primary);line-height:1.6;font-style:italic;padding:10px 14px;background:var(--warm-100);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;margin:8px 0}
+.keywords-row{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.keyword-tag{font-size:10px;color:var(--text-tertiary);background:var(--warm-100);border:0.5px solid var(--border-mid);padding:2px 8px;border-radius:10px;cursor:pointer}
+.keyword-tag:hover{color:var(--gold);border-color:var(--gold)}
+.triad-nav{display:flex;gap:6px;margin:12px 0 4px}
+.triad-nav-btn{font-size:11px;padding:5px 14px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-tertiary);transition:all .15s}
+.triad-nav-btn.active{background:var(--black);color:var(--white);border-color:var(--black)}
+.triad-nav-btn.episteme.active{background:var(--episteme);border-color:var(--episteme)}
+.triad-nav-btn.techne.active{background:var(--techne);border-color:var(--techne)}
+.triad-nav-btn.phronesis.active{background:#2d6a4f;border-color:#2d6a4f}
+.triad-content{padding:12px 14px;border-radius:6px;font-size:12px;line-height:1.75;color:var(--text-secondary);margin-bottom:8px}
+.triad-content.episteme{background:var(--episteme-light);border-left:3px solid var(--episteme)}
+.triad-content.techne{background:var(--techne-light);border-left:3px solid var(--techne)}
+.triad-content.phronesis{background:#eaf5ee;border-left:3px solid #2d6a4f}
+.imrad-compact{font-size:11px;color:var(--text-secondary);line-height:1.6;display:grid;gap:4px;margin:8px 0}
+.imrad-compact-row{display:flex;gap:6px}
+.imrad-compact-label{font-weight:500;color:var(--episteme);min-width:80px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding-top:1px}
 .spinner{width:20px;height:20px;border:2px solid var(--border-mid);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -569,53 +603,79 @@ function cardHTML(a,idx){
   const ep=a['episteme_'+r]||''
   const tc=a['techne_'+r]||a['scenario_'+r]||''
   const ph=a['phronesis_'+r]||''
-  const hasTriad=ep.length>10&&tc.length>10&&ph.length>10
-  const hasAny=ep.length>10||tc.length>10||ph.length>10||a['scenario_'+r]
+  const hasTriad=ep.length>10||tc.length>10||ph.length>10
+  const keywords=a.claim_keywords||[]
+  const coreClaim=a.core_claim||a.insight||''
 
-  let triadHTML=''
-  if(!locked){
-    if(hasTriad){
-      triadHTML=`<div class="triad-section">
-        ${triadBlock(ep,'ε · Symbolic framing · Episteme · '+roleName,'var(--episteme)','var(--episteme-light)','var(--episteme)')}
-        ${triadBlock(tc,'τ · Practical orchestration · Techne · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')}
-        ${triadBlock(ph,'φ · Sensory realisation · Phronesis · '+roleName,'#2d6a4f','#eaf5ee','#2d6a4f')}
-      </div>`
-    } else if(tc.length>10){
-      triadHTML=triadBlock(tc,'Practical application · '+roleName,'var(--techne)','var(--techne-light)','var(--techne)')
-    } else {
-      triadHTML=`<div class="triad-pending">TRIAD analysis being generated — check back shortly.</div>`
-    }
+  function triadBtn(key,label,symbol,activeClass){
+    return `<button class="triad-nav-btn${activeClass}" onclick="setTriadPerspective('${cid}','${key}')">${symbol} ${label}</button>`
   }
+
+  function triadBlock(key,text,cssClass){
+    if(!text||text.length<10||text.startsWith('Not directly')) return ''
+    return `<div class="triad-content ${cssClass}" id="triad-${cid}-${key}">${text}</div>`
+  }
+
+  // Default perspective: techne (most actionable)
+  const defaultPerspective = 'techne'
 
   const inner=`
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
-      ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 for ${roleName}</span>`:''}
+      ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 · ${roleName}</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
-    ${a.insight?`<div class="card-insight">${a.insight}</div>`:''}
-    ${triadHTML}
-    ${hasIMRaD&&!locked?`<div class="imrad-block" id="im-${cid}">
-      <div><div class="imrad-label" style="color:var(--episteme)">ε Introduction</div><div class="imrad-text">${a.imrad_introduction||''}</div></div>
-      <div><div class="imrad-label" style="color:var(--episteme)">ε Methods</div><div class="imrad-text">${a.imrad_methods||''}</div></div>
-      <div><div class="imrad-label" style="color:var(--episteme)">ε Results</div><div class="imrad-text">${a.imrad_results||''}</div></div>
-      <div><div class="imrad-label" style="color:var(--episteme)">ε Discussion</div><div class="imrad-text">${a.imrad_discussion||''}</div></div>
+    ${keywords.length>0&&!locked?`<div class="keywords-row">${keywords.map(k=>`<span class="keyword-tag" onclick="document.getElementById('searchInput').value='${k}';debounceSearch()">${k}</span>`).join('')}</div>`:''}
+    ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
+    ${hasIMRaD&&!locked?`<div class="imrad-compact">
+      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Introduction</span><span>${a.imrad_introduction||''}</span></div>
+      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Methods</span><span>${a.imrad_methods||''}</span></div>
+      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Results</span><span>${a.imrad_results||''}</span></div>
+      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Discussion</span><span>${a.imrad_discussion||''}</span></div>
     </div>`:''}
-    ${a.limitation&&!locked?`<div class="card-limitation"><strong>${t('limitation')}:</strong> ${a.limitation}</div>`:''}
+    ${hasTriad&&!locked?`
+      <div class="triad-nav">
+        ${triadBtn('episteme','Episteme','ε',ep.length>10?' e-active':'')}
+        ${triadBtn('techne','Techne','τ',tc.length>10?' t-active':'')}
+        ${triadBtn('phronesis','Phronesis','φ',ph.length>10?' p-active':'')}
+      </div>
+      <div id="triad-container-${cid}">
+        ${ep.length>10?triadBlock('episteme',ep,'e'):''}
+        ${tc.length>10?triadBlock('techne',tc,'t'):''}
+        ${ph.length>10?triadBlock('phronesis',ph,'p'):''}
+      </div>`:!locked&&(tc.length>10)?`<div class="triad-content t" style="margin-top:8px">${tc}</div>`:`<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic">TRIAD knowledge being generated — check back shortly.</div>`}
+    ${a.limitation&&!locked?`<div class="card-limitation"><strong>Limitation:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
       <div class="card-actions">
-        ${hasIMRaD&&!locked?`<button class="imrad-toggle" id="it-${cid}" onclick="toggleIMRaD('${cid}')">IMRaD</button>`:''}
         ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">Read paper</button>`:''}
-        <button class="action-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight}).replace(/"/g,'&quot;')})">Share</button>
+        <button class="action-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">Share</button>
         <button class="save-btn${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ Saved':'☆ Save'}</button>
       </div>
     </div>`
 
   if(locked){return`<div class="article-card locked">${inner}<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade</button></div></div>`}
   return`<div class="article-card${isSaved?' saved-card':''}">${inner}</div>`
+}
+
+function setTriadPerspective(cid, key){
+  const container = document.getElementById('triad-container-'+cid)
+  if(!container) return
+  // Show all, highlight selected
+  const blocks = container.querySelectorAll('.triad-content')
+  blocks.forEach(b => b.style.display = 'none')
+  const selected = document.getElementById('triad-'+cid+'-'+key)
+  if(selected) selected.style.display = 'block'
+  // Update nav buttons
+  const nav = container.previousElementSibling
+  if(nav) nav.querySelectorAll('.triad-nav-btn').forEach(btn => {
+    btn.className = 'triad-nav-btn'
+    if(btn.onclick && btn.getAttribute('onclick').includes("'"+key+"'")) {
+      btn.className += key==='episteme'?' e-active':key==='techne'?' t-active':' p-active'
+    }
+  })
 }
 
 function toggleIMRaD(cid){
