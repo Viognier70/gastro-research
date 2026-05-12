@@ -229,7 +229,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <text x="60" y="17" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="13" fill="#FDFCF8">φ</text>
       <text x="14" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="13" fill="#FDFCF8">τ</text>
       <text x="106" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="13" fill="#FDFCF8">ε</text>
-      <text x="60" y="76" text-anchor="middle" dominant-baseline="middle" font-family="Palatino Linotype,Book Antiqua,Palatino,Georgia,serif" font-size="42" font-weight="400" fill="#0C0B09">G</text>
+      <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-family="Palatino Linotype,Book Antiqua,Palatino,Georgia,serif" font-size="44" font-weight="400" fill="#0C0B09">G</text>
     </svg>
     <div style="display:flex;align-items:baseline;gap:0">
       <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
@@ -1262,7 +1262,7 @@ function renderLiveMap(){
     const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
     const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.18)" stroke-width="${sw}" opacity="1" ${dash}/>`
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.4)" stroke-width="${sw}" opacity="1" ${dash}/>`
   })
 
   // Center: profession node
@@ -1279,7 +1279,7 @@ function renderLiveMap(){
     const baseOpacity=0.15+0.75*(n.count/maxCount)
     const fill=sel?'#C9A84C':`rgba(201,168,76,${(0.08+int*0.3).toFixed(2)})`
     const stroke=sel?'#C9A84C':int>0.6?'rgba(201,168,76,0.6)':'rgba(201,168,76,0.2)'
-    const sw=sel?2:int>0.6?1.2:0.5
+    const sw=sel?2.5:1.2
     const textCol=sel?'#0C0B09':'rgba(255,255,255,0.85)'
 
     svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer">`
