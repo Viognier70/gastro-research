@@ -257,25 +257,17 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
-<!-- KNOWLEDGE MAP (live from database) -->
-<div id="knowledgeMapSection" style="padding:32px 32px 24px;border-bottom:0.5px solid var(--border);background:var(--warm-100)">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:12px">
+<!-- KNOWLEDGE MAP INLINE -->
+<div id="knowledgeMapSection" style="padding:28px 32px;border-bottom:0.5px solid var(--border);background:#0C0B09">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     <div>
-      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Live research landscape</div>
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--text-primary)" id="mapRoleTitle">Select a profession to explore</div>
-      <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px" id="mapSubtitle">Click your profession in the filter above — then explore research areas. Click a topic to filter the feed.</div>
+      <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">Research landscape</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:400;color:#FDFCF8" id="mapRoleTitle">Select a profession above to explore</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div style="display:flex;gap:6px;align-items:center;font-size:10px;color:rgba(255,255,255,.3)">
-        <svg width="30" height="10"><line x1="0" y1="5" x2="30" y2="5" stroke="#C9A84C" stroke-width="2.5" opacity="0.7"/></svg>Strong link
-        <svg width="30" height="10" style="margin-left:8px"><line x1="0" y1="5" x2="30" y2="5" stroke="#C9A84C" stroke-width="1" opacity="0.4" stroke-dasharray="4,3"/></svg>Weak link
-        <svg width="12" height="12" style="margin-left:8px"><circle cx="6" cy="6" r="5" fill="#C9A84C" opacity="0.9"/></svg>Many articles
-        <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#C9A84C" opacity="0.25"/></svg>Few articles
-      </div>
-    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.35)" id="mapSubtitle">Click a topic to filter the feed below</div>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:540px;position:relative;margin-top:16px;overflow:visible">
-    <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
+  <div id="liveKnowledgeMap" style="width:100%;height:460px;position:relative;overflow:visible">
+    <div class="loading-state" style="color:rgba(255,255,255,.4)"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div><span>Building knowledge map...</span></div>
   </div>
 </div>
 
@@ -300,7 +292,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <button class="role-chip" data-role="restaurantmanager" onclick="setRole('restaurantmanager',this)">Restaurant manager</button>
   <button class="role-chip" data-role="hotelier" onclick="setRole('hotelier',this)">Hotelier</button>
   <button class="role-chip" data-role="winebar" onclick="setRole('winebar',this)">Wine bar owner</button>
-  <button style="margin-left:auto;font-size:11px;color:var(--gold);border:0.5px solid rgba(201,168,76,.3);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif" onclick="openTopicGraph()">⬡ Knowledge map</button>
+
 </div>
 
 <!-- TOOLBAR -->
@@ -1258,11 +1250,11 @@ function renderLiveMap(){
   })
 
   // SVG — dark background
-  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:var(--warm-100)">`
+  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:#0C0B09;border-radius:8px">`
 
   // Subtle ring guides
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(12,11,9,0.06)" stroke-width="1"/>`
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(12,11,9,0.04)" stroke-width="1"/>`
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(201,168,76,0.07)" stroke-width="1"/>`
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(201,168,76,0.04)" stroke-width="1"/>`
 
   // Edges
   edges.forEach(e=>{
@@ -1270,14 +1262,14 @@ function renderLiveMap(){
     const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
     const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.2)" stroke-width="${sw}" opacity="1" ${dash}/>`
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="#C9A84C" stroke-width="${sw}" opacity="${op}" ${dash}/>`
   })
 
   // Center: profession node
   const rname=roleNames[role]
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.5"/>`
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#1A1714" stroke="#C9A84C" stroke-width="1.5"/>`
   svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#C9A84C">${rname}</text>`
-  svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(12,11,9,0.35)">Aristotle·TRIAD</text>`
+  svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.45)">Aristotle·TRIAD</text>`
 
   // Topic nodes
   allNodes.forEach(n=>{
@@ -1287,7 +1279,7 @@ function renderLiveMap(){
     const baseOpacity=0.15+0.75*(n.count/maxCount)
     const fill=sel?'#C9A84C':`rgba(201,168,76,${(0.08+int*0.3).toFixed(2)})`
     const stroke=sel?'#C9A84C':int>0.6?'rgba(201,168,76,0.6)':'rgba(201,168,76,0.2)'
-    const sw=sel?2:int>0.6?1.2:0.5
+    const sw=sel?2.5:int>0.6?1.5:0.5
     const textCol=sel?'#0C0B09':'rgba(255,255,255,0.85)'
 
     svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer">`
@@ -1304,7 +1296,7 @@ function renderLiveMap(){
       svg+=`<text x="${n._x}" y="${n._y+7}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="${sel?'600':'400'}">${words.slice(mid).join(' ')}</text>`
     }
     // Article count
-    if(n._r>22) svg+=`<text x="${n._x}" y="${n._y+n._r+10}" text-anchor="middle" font-size="7.5" fill="rgba(12,11,9,0.35)">${n.count}</text>`
+    if(n._r>22) svg+=`<text x="${n._x}" y="${n._y+n._r+10}" text-anchor="middle" font-size="7.5" fill="rgba(201,168,76,0.45)">${n.count}</text>`
     svg+='</g>'
   })
 
