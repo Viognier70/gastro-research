@@ -250,7 +250,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:12px">
     <div>
       <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Live research landscape</div>
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:#fff" id="mapRoleTitle">Select a profession to explore</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:#FDFCF8" id="mapRoleTitle">Select a profession to explore</div>
       <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:4px" id="mapSubtitle">Click your profession in the filter above — then explore research areas. Click a topic to filter the feed.</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -627,14 +627,11 @@ function cardHTML(a,idx){
       ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 · ${roleName}</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
+    ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 5px">${a.authors}</div>`:''}
+    ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;margin-bottom:4px">${a.authors}</div>`:''}
     ${keywords.length>0&&!locked?`<div class="keywords-row">${keywords.map(k=>`<span class="keyword-tag" onclick="document.getElementById('searchInput').value='${k}';debounceSearch()">${k}</span>`).join('')}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
-    ${hasIMRaD&&!locked?`<div class="imrad-compact">
-      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Introduction</span><span>${a.imrad_introduction||''}</span></div>
-      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Methods</span><span>${a.imrad_methods||''}</span></div>
-      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Results</span><span>${a.imrad_results||''}</span></div>
-      <div class="imrad-compact-row"><span class="imrad-compact-label">ε Discussion</span><span>${a.imrad_discussion||''}</span></div>
-    </div>`:''}
+
     ${hasTriad&&!locked?`
       <div class="triad-nav">
         ${triadBtn('episteme','Episteme','ε',ep.length>10?' e-active':'')}
@@ -642,13 +639,22 @@ function cardHTML(a,idx){
         ${triadBtn('phronesis','Phronesis','φ',ph.length>10?' p-active':'')}
       </div>
       <div id="triad-container-${cid}">
-        ${ep.length>10?triadBlock('episteme',ep,'e'):''}
+        ${ep.length>10?`<div class="triad-content e" id="triad-${cid}-episteme">
+          <div style="font-size:11px;font-weight:500;color:var(--episteme);margin-bottom:6px">ε Episteme — Symbolic framing</div>
+          ${ep}
+          ${hasIMRaD?`<div class="imrad-compact" style="margin-top:10px">
+            <div class="imrad-compact-row"><span class="imrad-compact-label">Introduction</span><span>${a.imrad_introduction||''}</span></div>
+            <div class="imrad-compact-row"><span class="imrad-compact-label">Methods</span><span>${a.imrad_methods||''}</span></div>
+            <div class="imrad-compact-row"><span class="imrad-compact-label">Results</span><span>${a.imrad_results||''}</span></div>
+            <div class="imrad-compact-row"><span class="imrad-compact-label">Discussion</span><span>${a.imrad_discussion||''}</span></div>
+          </div>`:''}
+        </div>`:''}
         ${tc.length>10?triadBlock('techne',tc,'t'):''}
         ${ph.length>10?triadBlock('phronesis',ph,'p'):''}
       </div>`:!locked&&(tc.length>10)?`<div class="triad-content t" style="margin-top:8px">${tc}</div>`:`<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic">TRIAD knowledge being generated — check back shortly.</div>`}
     ${a.limitation&&!locked?`<div class="card-limitation"><strong>Limitation:</strong> ${a.limitation}</div>`:''}
     <div class="card-footer">
-      <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''}</span>
+      <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''} ${countryFlags(a.countries||[a.country])}</span>
       <div class="card-actions">
         ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">Read paper</button>`:''}
         <button class="action-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">Share</button>
@@ -735,7 +741,7 @@ async function loadArticles(){
   const triadCols=role==='all'
     ? 'scenario_sommelier,episteme_sommelier,techne_sommelier,phronesis_sommelier'
     : `scenario_${role},episteme_${role},techne_${role},phronesis_${role}`
-  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,${triadCols}`
+  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,${triadCols}`
 
   try {
     if(search && search.length > 1) {
@@ -1308,6 +1314,16 @@ window.setRole=function(r,btn){
   _baseSetRole(r,btn)
   setTimeout(()=>{if(mapTopicData.length>0)renderLiveMap()},150)
 }
+
+// ─── COUNTRY FLAGS ───────────────────────────────────────────────────────────
+const COUNTRY_FLAGS = {'Sweden':'🇸🇪','United Kingdom':'🇬🇧','United States':'🇺🇸',
+'France':'🇫🇷','Germany':'🇩🇪','Italy':'🇮🇹','Spain':'🇪🇸','Netherlands':'🇳🇱',
+'Australia':'🇦🇺','Canada':'🇨🇦','Japan':'🇯🇵','China':'🇨🇳','Denmark':'🇩🇰',
+'Norway':'🇳🇴','Finland':'🇫🇮','Switzerland':'🇨🇭','Belgium':'🇧🇪','Austria':'🇦🇹',
+'Portugal':'🇵🇹','Brazil':'🇧🇷','India':'🇮🇳','South Korea':'🇰🇷',
+'New Zealand':'🇳🇿','Ireland':'🇮🇪','Israel':'🇮🇱','Greece':'🇬🇷',
+'Poland':'🇵🇱','Singapore':'🇸🇬','Argentina':'🇦🇷','Mexico':'🇲🇽','Turkey':'🇹🇷'}
+function countryFlags(c){if(!c||!c.length)return '';return(Array.isArray(c)?c:[c]).slice(0,4).map(x=>COUNTRY_FLAGS[x]||'').filter(Boolean).join(' ')}
 
 // Init
 initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
