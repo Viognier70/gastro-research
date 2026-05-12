@@ -1267,7 +1267,7 @@ function renderLiveMap(){
 
   // Center: profession node
   const rname=roleNames[role]
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.5"/>`
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="2"/>`
   svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#C9A84C">${rname}</text>`
   svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(12,11,9,0.3)">Aristotle·TRIAD</text>`
 
@@ -1277,10 +1277,10 @@ function renderLiveMap(){
     const int=Math.min(n._rel/10,1)
     // Color: gold intensity = relevance, opacity = article count proportion
     const baseOpacity=0.15+0.75*(n.count/maxCount)
-    const fill=sel?'#C9A84C':`rgba(201,168,76,${(0.08+int*0.3).toFixed(2)})`
-    const stroke=sel?'#C9A84C':int>0.6?'rgba(201,168,76,0.6)':'rgba(201,168,76,0.2)'
+    const fill=sel?'#C9A84C':int>0.6?interpolateColor('#D4BE8A','#C9A84C',int*0.9):'#E8DFC0'
+    const stroke=sel?'#8B6914':int>0.4?'#C9A84C':'#B8A060'
     const sw=sel?2.5:1.2
-    const textCol=sel?'#0C0B09':'rgba(255,255,255,0.85)'
+    const textCol=sel?'#0C0B09':'#1A1000'
 
     svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer">`
     svg+=`<circle cx="${n._x}" cy="${n._y}" r="${n._r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`
