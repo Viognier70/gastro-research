@@ -631,7 +631,7 @@ function cardHTML(a,idx){
       ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 · ${roleName}</span>`:''}
     </div>
     <div class="card-title">${a.title||''}</div>
-    ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''} ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':\''}</div>`:''}
+    ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 6px;font-style:italic">${a.authors}</div>`:''}
     ${keywords.length>0&&!locked?`<div class="keywords-row">${keywords.map(k=>`<span class="keyword-tag" onclick="document.getElementById('searchInput').value='${k}';debounceSearch()">${k}</span>`).join('')}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
 
