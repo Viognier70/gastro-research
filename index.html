@@ -1337,5 +1337,184 @@ function countryFlags(c){if(!c||!c.length)return '';return(Array.isArray(c)?c:[c
 // Init
 initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
 </script>
+<!-- TRIAD MODAL — paste this block into index.html -->
+<!-- Add this CSS to the <style> section -->
+<style id="triad-modal-styles">
+.triad-overlay{position:fixed;inset:0;background:rgba(12,11,9,0.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.triad-overlay.open{display:flex}
+.triad-panel{background:var(--white);border:0.5px solid var(--border-mid);border-radius:12px;width:100%;max-width:860px;max-height:90vh;overflow-y:auto;position:relative;padding:40px}
+.triad-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-tertiary);line-height:1}
+.triad-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.triad-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:400;margin-bottom:6px}
+.triad-subtitle{font-size:13px;font-style:italic;color:var(--text-secondary);margin-bottom:28px}
+.triad-intro{font-size:14px;color:var(--text-secondary);line-height:1.8;max-width:640px;margin-bottom:32px}
+.triad-diagram-wrap{background:var(--black);border-radius:10px;padding:32px;margin-bottom:32px;display:flex;justify-content:center}
+.triad-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+@media(max-width:640px){.triad-cards{grid-template-columns:1fr}}
+.triad-card{border-radius:8px;padding:20px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.triad-card:hover{transform:translateY(-2px)}
+.triad-card.episteme{background:var(--episteme-light);border:1px solid rgba(26,58,92,0.2)}
+.triad-card.techne{background:var(--techne-light);border:1px solid rgba(45,80,22,0.2)}
+.triad-card.phronesis{background:var(--phronesis-light);border:1px solid rgba(92,45,0,0.2)}
+.triad-card-greek{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:4px}
+.triad-card.episteme .triad-card-greek{color:var(--episteme)}
+.triad-card.techne .triad-card-greek{color:var(--techne)}
+.triad-card.phronesis .triad-card-greek{color:var(--phronesis)}
+.triad-card-number{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px}
+.triad-card-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.triad-card.episteme .triad-card-name{color:var(--episteme)}
+.triad-card.techne .triad-card-name{color:var(--techne)}
+.triad-card.phronesis .triad-card-name{color:var(--phronesis)}
+.triad-card-swe{font-size:11px;font-weight:500;margin-bottom:8px;opacity:.7}
+.triad-card.episteme .triad-card-swe{color:var(--episteme)}
+.triad-card.techne .triad-card-swe{color:var(--techne)}
+.triad-card.phronesis .triad-card-swe{color:var(--phronesis)}
+.triad-card-subtitle{font-size:11px;font-style:italic;color:var(--text-secondary);margin-bottom:10px;line-height:1.5}
+.triad-card-dims{font-size:11px;color:var(--text-tertiary);margin-bottom:10px}
+.triad-card-action{font-size:11px;font-weight:500;letter-spacing:.06em}
+.triad-card.episteme .triad-card-action{color:var(--episteme)}
+.triad-card.techne .triad-card-action{color:var(--techne)}
+.triad-card.phronesis .triad-card-action{color:var(--phronesis)}
+.triad-card-detail{display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text-secondary);line-height:1.7}
+.triad-card.active .triad-card-detail{display:block}
+.double-grip{background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.double-grip-symbol{font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);flex-shrink:0}
+.double-grip-text h4{font-size:13px;font-weight:600;margin-bottom:4px}
+.double-grip-text p{font-size:12px;color:var(--text-secondary);line-height:1.6;margin:0}
+.triad-relation{font-size:11px;color:var(--text-tertiary);text-align:center;letter-spacing:.08em;padding-bottom:8px}
+</style>
+
+<!-- TRIAD MODAL HTML — paste just before </body> -->
+<div class="triad-overlay" id="triadOverlay" onclick="if(event.target===this)closeTriad()">
+  <div class="triad-panel">
+    <button class="triad-close" onclick="closeTriad()">×</button>
+    <div class="triad-eyebrow">Dr. Anders Crichton-Fock · Örebro University</div>
+    <div class="triad-title">TRIAD — The Epistemological Model</div>
+    <div class="triad-subtitle">Aristoteliska kunskapsformer och det dubbla greppet</div>
+    <div class="triad-intro">
+      The TRIAD model applies Aristotle's three forms of knowledge to culinary and hospitality practice — forming a developmental hierarchy toward professional mastery. Every article in this library is translated into all three levels for your profession.
+    </div>
+
+    <!-- SVG Triangle diagram -->
+    <div class="triad-diagram-wrap">
+      <svg width="100%" viewBox="0 0 520 380" role="img" style="max-width:520px">
+        <title>TRIAD epistemological model triangle</title>
+        <desc>Triangle showing three knowledge forms: Phronesis at apex, Techne bottom-left, Episteme bottom-right, with The Double Grip at center</desc>
+
+        <!-- Triangle outline -->
+        <polygon points="260,30 60,340 460,340" fill="none" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
+
+        <!-- Phronesis zone (top) -->
+        <polygon points="260,30 180,200 340,200" fill="#5C2D00" opacity="0.35"/>
+
+        <!-- Techne zone (bottom-left) -->
+        <polygon points="180,200 60,340 280,340" fill="#2D5016" opacity="0.35"/>
+
+        <!-- Episteme zone (bottom-right) -->
+        <polygon points="340,200 280,340 460,340" fill="#1A3A5C" opacity="0.35"/>
+
+        <!-- PHRONESIS label -->
+        <text x="260" y="82" text-anchor="middle" font-family="'Playfair Display',serif" font-size="11" font-weight="600" fill="#C9A84C" letter-spacing="2">SENSORY REALISATION</text>
+        <text x="260" y="98" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="rgba(201,168,76,0.8)">(Phronesis)</text>
+        <text x="260" y="116" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.5)">Taste · Scent · Sound · Texture · Aesthetic balance</text>
+
+        <!-- TECHNE label -->
+        <text x="138" y="292" text-anchor="middle" font-family="'Playfair Display',serif" font-size="11" font-weight="600" fill="#C9A84C" letter-spacing="2">PRACTICAL</text>
+        <text x="138" y="306" text-anchor="middle" font-family="'Playfair Display',serif" font-size="11" font-weight="600" fill="#C9A84C" letter-spacing="2">ORCHESTRATION</text>
+        <text x="138" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="rgba(201,168,76,0.8)">(Techne)</text>
+        <text x="138" y="334" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.5)">Cooking · Service · Workflows</text>
+
+        <!-- EPISTEME label -->
+        <text x="382" y="292" text-anchor="middle" font-family="'Playfair Display',serif" font-size="11" font-weight="600" fill="#C9A84C" letter-spacing="2">SYMBOLIC</text>
+        <text x="382" y="306" text-anchor="middle" font-family="'Playfair Display',serif" font-size="11" font-weight="600" fill="#C9A84C" letter-spacing="2">FRAMING</text>
+        <text x="382" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="rgba(201,168,76,0.8)">(Episteme)</text>
+        <text x="382" y="334" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.5)">Rituals · Identity · Hospitality</text>
+
+        <!-- Double Grip circle -->
+        <circle cx="260" cy="220" r="36" fill="#0C0B09" stroke="#C9A84C" stroke-width="0.8" opacity="0.9"/>
+        <text x="260" y="210" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="rgba(201,168,76,0.9)" letter-spacing="1">THE DOUBLE</text>
+        <text x="260" y="220" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="rgba(201,168,76,0.9)" letter-spacing="1">GRIP</text>
+        <!-- Infinity symbol -->
+        <text x="260" y="235" text-anchor="middle" font-family="Playfair Display,serif" font-size="16" fill="#C9A84C">∞</text>
+        <text x="226" y="248" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7" fill="rgba(255,255,255,0.4)">ANALYSIS</text>
+        <text x="294" y="248" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7" fill="rgba(255,255,255,0.4)">EXPERIENCE</text>
+
+        <!-- Bottom tagline -->
+        <text x="260" y="368" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(201,168,76,0.5)" letter-spacing="1">Episteme isolates · Techne realises · Phronesis integrates</text>
+      </svg>
+    </div>
+
+    <!-- Three cards -->
+    <div class="triad-cards">
+
+      <!-- PHRONESIS -->
+      <div class="triad-card phronesis" onclick="toggleCard(this)">
+        <div class="triad-card-number">1 · apex principle</div>
+        <div class="triad-card-greek">φρόνησις</div>
+        <div class="triad-card-name">Phronesis</div>
+        <div class="triad-card-swe">Sensory Realisation</div>
+        <div class="triad-card-subtitle">The situated judgement — where knowledge becomes experienced truth</div>
+        <div class="triad-card-dims">Taste · Scent · Sound · Texture · Aesthetic balance</div>
+        <div class="triad-card-action">↑ Phronesis integrates</div>
+        <div class="triad-card-detail">
+          The apex and integration principle. Phronesis is the aesthetic and ethical wisdom to act well in a specific, unrepeatable situation — knowing when the dish is ready, when the wine is right for this guest, when the room needs to change its rhythm.<br><br>
+          <strong>In practice:</strong> The Double Grip in action. You lift the glass and pause — the wine has opened just enough. You know before thinking that this is the moment to serve. Analysis and experience arrive simultaneously.
+        </div>
+      </div>
+
+      <!-- TECHNE -->
+      <div class="triad-card techne" onclick="toggleCard(this)">
+        <div class="triad-card-number">2 · left vertex</div>
+        <div class="triad-card-greek">τέχνη</div>
+        <div class="triad-card-name">Techne</div>
+        <div class="triad-card-swe">Practical Orchestration</div>
+        <div class="triad-card-subtitle">Craft knowledge — where skill becomes embodied action</div>
+        <div class="triad-card-dims">Cooking · Service · Workflows · Training · Physical technique</div>
+        <div class="triad-card-action">→ Techne realises</div>
+        <div class="triad-card-detail">
+          The procedural and methodological knowledge. Techne is the repeatable, teachable craft — the techniques, workflows, systems and physical skills that can be demonstrated, practised and refined.<br><br>
+          <strong>In practice:</strong> When evaluating wine for temperature sensitivity, hold the glass at the base, tilt 45 degrees, assess colour at the rim. The protocol is reproducible. Anyone can learn it.
+        </div>
+      </div>
+
+      <!-- EPISTEME -->
+      <div class="triad-card episteme" onclick="toggleCard(this)">
+        <div class="triad-card-number">3 · right vertex</div>
+        <div class="triad-card-greek">ἐπιστήμη</div>
+        <div class="triad-card-name">Episteme</div>
+        <div class="triad-card-swe">Symbolic Framing</div>
+        <div class="triad-card-subtitle">Theoretical knowledge — where understanding becomes transferable</div>
+        <div class="triad-card-dims">Rituals · Identity · Hospitality · Science · Classification · IMRaD</div>
+        <div class="triad-card-action">← Episteme isolates</div>
+        <div class="triad-card-detail">
+          The universal, provable and communicable knowledge. Episteme is the scientific and theoretical framework — the studies, principles and classifications that explain WHY things work as they do.<br><br>
+          <strong>In practice:</strong> Research establishes that genetic polymorphisms in bitter taste receptors create measurable variation in perception. This provides a biological framework for understanding why guests respond differently to the same wine.
+        </div>
+      </div>
+    </div>
+
+    <!-- Double Grip -->
+    <div class="double-grip">
+      <div class="double-grip-symbol">∞</div>
+      <div class="double-grip-text">
+        <h4>The Double Grip</h4>
+        <p>The integrating principle at the centre of the triangle. Analysis ↔ Experience: the professional moves fluidly between theoretical understanding and lived sensory reality. Neither pure analysis nor pure intuition — but the simultaneous grip of both. This is mastery.</p>
+      </div>
+    </div>
+
+    <div class="triad-relation">Episteme isolates · Techne realises · Phronesis integrates</div>
+  </div>
+</div>
+
+<script>
+function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
+function closeTriad(){document.getElementById('triadOverlay').classList.remove('open');document.body.style.overflow=''}
+function toggleCard(el){
+  var wasActive=el.classList.contains('active');
+  document.querySelectorAll('.triad-card').forEach(c=>c.classList.remove('active'));
+  if(!wasActive)el.classList.add('active');
+}
+</script>
+
 </body>
 </html>
