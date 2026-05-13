@@ -1432,7 +1432,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
 
       <label class="nl-label">Your profession <span style="color:var(--text-tertiary);font-weight:400">(select all that apply)</span></label>
       <div class="nl-roles">
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="sommelier">
           <span class="nl-role-emoji">🍷</span>
           <div>
@@ -1440,7 +1440,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Wine & beverage</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="chef">
           <span class="nl-role-emoji">👨‍🍳</span>
           <div>
@@ -1448,7 +1448,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Culinary professional</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="pastry_chef">
           <span class="nl-role-emoji">🧁</span>
           <div>
@@ -1456,7 +1456,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Pastry & desserts</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="meal_creator">
           <span class="nl-role-emoji">✨</span>
           <div>
@@ -1464,7 +1464,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Dining experience</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="fb_manager">
           <span class="nl-role-emoji">📊</span>
           <div>
@@ -1472,7 +1472,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Operations & strategy</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="hotelier">
           <span class="nl-role-emoji">🏨</span>
           <div>
@@ -1480,7 +1480,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Hotel F&B</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="researcher">
           <span class="nl-role-emoji">🔬</span>
           <div>
@@ -1488,7 +1488,7 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
             <div class="nl-role-desc">Academic & industry</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="food_photographer">
           <span class="nl-role-emoji">📸</span>
           <div>
@@ -1513,10 +1513,10 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
 <script>
 function openNewsletter(){document.getElementById('nlOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeNewsletter(){document.getElementById('nlOverlay').classList.remove('open');document.body.style.overflow=''}
-function toggleRole(el){
+function toggleRole(e,el){e.preventDefault();
   el.classList.toggle('selected')
   const cb = el.querySelector('input')
-  cb.checked = !cb.checked
+  cb.checked = el.classList.contains("selected")
 }
 async function submitNewsletter(){
   const email = document.getElementById('nlEmail').value.trim()
@@ -1739,7 +1739,7 @@ function toggleCard(el){
 
       <label class="nl-label">Your profession <span style="color:var(--text-tertiary);font-weight:400">(select all that apply)</span></label>
       <div class="nl-roles">
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="sommelier">
           <span class="nl-role-emoji">🍷</span>
           <div>
@@ -1747,7 +1747,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Wine & beverage</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="chef">
           <span class="nl-role-emoji">👨‍🍳</span>
           <div>
@@ -1755,7 +1755,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Culinary professional</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="pastry_chef">
           <span class="nl-role-emoji">🧁</span>
           <div>
@@ -1763,7 +1763,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Pastry & desserts</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="meal_creator">
           <span class="nl-role-emoji">✨</span>
           <div>
@@ -1771,7 +1771,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Dining experience</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="fb_manager">
           <span class="nl-role-emoji">📊</span>
           <div>
@@ -1779,7 +1779,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Operations & strategy</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="hotelier">
           <span class="nl-role-emoji">🏨</span>
           <div>
@@ -1787,7 +1787,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Hotel F&B</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="researcher">
           <span class="nl-role-emoji">🔬</span>
           <div>
@@ -1795,7 +1795,7 @@ function toggleCard(el){
             <div class="nl-role-desc">Academic & industry</div>
           </div>
         </label>
-        <label class="nl-role" onclick="toggleRole(this)">
+        <label class="nl-role" onclick="toggleRole(event,this)">
           <input type="checkbox" value="food_photographer">
           <span class="nl-role-emoji">📸</span>
           <div>
@@ -1820,10 +1820,10 @@ function toggleCard(el){
 <script>
 function openNewsletter(){document.getElementById('nlOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeNewsletter(){document.getElementById('nlOverlay').classList.remove('open');document.body.style.overflow=''}
-function toggleRole(el){
+function toggleRole(e,el){e.preventDefault();
   el.classList.toggle('selected')
   const cb = el.querySelector('input')
-  cb.checked = !cb.checked
+  cb.checked = el.classList.contains("selected")
 }
 async function submitNewsletter(){
   const email = document.getElementById('nlEmail').value.trim()
