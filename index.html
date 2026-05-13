@@ -1384,7 +1384,181 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
 .triad-relation{font-size:11px;color:var(--text-tertiary);text-align:center;letter-spacing:.08em;padding-bottom:8px}
 </style>
 
-<!-- TRIAD MODAL HTML — paste just before </body> -->
+<!-- TRIAD MODAL HTML — paste just before <!-- NEWSLETTER SUBSCRIBE MODAL — paste before </body> in index.html -->
+
+<!-- CSS — add to <style> section -->
+<style id="newsletter-modal-styles">
+.nl-overlay{position:fixed;inset:0;background:rgba(12,11,9,0.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.nl-overlay.open{display:flex}
+.nl-panel{background:var(--white);border:0.5px solid var(--border-mid);border-radius:12px;width:100%;max-width:520px;position:relative;padding:40px}
+.nl-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-tertiary);line-height:1}
+.nl-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.nl-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;margin-bottom:8px}
+.nl-subtitle{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:24px}
+.nl-label{font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:10px;display:block}
+.nl-input{width:100%;height:40px;border:0.5px solid var(--border-mid);border-radius:6px;padding:0 14px;font-size:14px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);margin-bottom:20px;outline:none}
+.nl-input:focus{border-color:var(--gold)}
+.nl-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
+.nl-role{display:flex;align-items:center;gap:10px;padding:10px 14px;border:0.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.nl-role:hover{border-color:var(--gold);background:var(--warm-100)}
+.nl-role.selected{border-color:var(--gold);background:var(--gold-light)}
+.nl-role input{display:none}
+.nl-role-emoji{font-size:18px;flex-shrink:0}
+.nl-role-name{font-size:13px;font-weight:500;color:var(--text-primary)}
+.nl-role-desc{font-size:11px;color:var(--text-tertiary);margin-top:1px}
+.nl-submit{width:100%;height:44px;background:var(--black);color:var(--white);border:none;border-radius:22px;font-size:14px;font-weight:500;font-family:'Outfit',sans-serif;cursor:pointer;transition:opacity .15s}
+.nl-submit:hover{opacity:.85}
+.nl-submit:disabled{opacity:.4;cursor:not-allowed}
+.nl-success{text-align:center;padding:20px 0}
+.nl-success-icon{font-size:40px;margin-bottom:12px}
+.nl-success h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:8px}
+.nl-success p{font-size:13px;color:var(--text-secondary);line-height:1.7}
+.nl-error{font-size:12px;color:#993C1D;margin-top:8px;display:none}
+</style>
+
+<!-- HTML — paste before </body> -->
+<div class="nl-overlay" id="nlOverlay" onclick="if(event.target===this)closeNewsletter()">
+  <div class="nl-panel">
+    <button class="nl-close" onclick="closeNewsletter()">×</button>
+
+    <div id="nlForm">
+      <div class="nl-eyebrow">Weekly Research Digest</div>
+      <div class="nl-title">Stay ahead of the research</div>
+      <div class="nl-subtitle">Every week, the most relevant new research — translated into Episteme, Techne and Phronesis for your profession. Select your role to personalise your digest.</div>
+
+      <label class="nl-label">Email address</label>
+      <input type="email" class="nl-input" id="nlEmail" placeholder="your@email.com">
+
+      <label class="nl-label">Your profession <span style="color:var(--text-tertiary);font-weight:400">(select all that apply)</span></label>
+      <div class="nl-roles">
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="sommelier">
+          <span class="nl-role-emoji">🍷</span>
+          <div>
+            <div class="nl-role-name">Sommelier</div>
+            <div class="nl-role-desc">Wine & beverage</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="chef">
+          <span class="nl-role-emoji">👨‍🍳</span>
+          <div>
+            <div class="nl-role-name">Chef</div>
+            <div class="nl-role-desc">Culinary professional</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="pastry_chef">
+          <span class="nl-role-emoji">🧁</span>
+          <div>
+            <div class="nl-role-name">Pastry Chef</div>
+            <div class="nl-role-desc">Pastry & desserts</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="meal_creator">
+          <span class="nl-role-emoji">✨</span>
+          <div>
+            <div class="nl-role-name">Meal Creator</div>
+            <div class="nl-role-desc">Dining experience</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="fb_manager">
+          <span class="nl-role-emoji">📊</span>
+          <div>
+            <div class="nl-role-name">F&B Manager</div>
+            <div class="nl-role-desc">Operations & strategy</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="hotelier">
+          <span class="nl-role-emoji">🏨</span>
+          <div>
+            <div class="nl-role-name">Hotelier</div>
+            <div class="nl-role-desc">Hotel F&B</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="researcher">
+          <span class="nl-role-emoji">🔬</span>
+          <div>
+            <div class="nl-role-name">Researcher</div>
+            <div class="nl-role-desc">Academic & industry</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="food_photographer">
+          <span class="nl-role-emoji">📸</span>
+          <div>
+            <div class="nl-role-name">Food Photographer</div>
+            <div class="nl-role-desc">Visual storytelling</div>
+          </div>
+        </label>
+      </div>
+
+      <button class="nl-submit" id="nlSubmit" onclick="submitNewsletter()">Subscribe to weekly digest</button>
+      <div class="nl-error" id="nlError"></div>
+    </div>
+
+    <div id="nlSuccess" class="nl-success" style="display:none">
+      <div class="nl-success-icon">✓</div>
+      <h3>You're subscribed</h3>
+      <p>Your first digest arrives next Monday. Every week, new research translated into your profession's language — Episteme, Techne and Phronesis.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function openNewsletter(){document.getElementById('nlOverlay').classList.add('open');document.body.style.overflow='hidden'}
+function closeNewsletter(){document.getElementById('nlOverlay').classList.remove('open');document.body.style.overflow=''}
+function toggleRole(el){
+  el.classList.toggle('selected')
+  const cb = el.querySelector('input')
+  cb.checked = !cb.checked
+}
+async function submitNewsletter(){
+  const email = document.getElementById('nlEmail').value.trim()
+  const roles = [...document.querySelectorAll('.nl-role.selected input')].map(i=>i.value)
+  const err = document.getElementById('nlError')
+  const btn = document.getElementById('nlSubmit')
+
+  err.style.display='none'
+  if(!email || !email.includes('@')){err.textContent='Please enter a valid email address.';err.style.display='block';return}
+  if(!roles.length){err.textContent='Please select at least one role.';err.style.display='block';return}
+
+  btn.disabled=true
+  btn.textContent='Subscribing...'
+
+  try {
+    const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/weekly-newsletter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnbmt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
+      },
+      body: JSON.stringify({ subscribe: true, email, roles })
+    })
+    const d = await resp.json()
+    if(d.ok){
+      document.getElementById('nlForm').style.display='none'
+      document.getElementById('nlSuccess').style.display='block'
+    } else {
+      err.textContent='Something went wrong. Please try again.'
+      err.style.display='block'
+      btn.disabled=false
+      btn.textContent='Subscribe to weekly digest'
+    }
+  } catch(e){
+    err.textContent='Connection error. Please try again.'
+    err.style.display='block'
+    btn.disabled=false
+    btn.textContent='Subscribe to weekly digest'
+  }
+}
+</script>
+
+</body> -->
 <div class="triad-overlay" id="triadOverlay" onclick="if(event.target===this)closeTriad()">
   <div class="triad-panel">
     <button class="triad-close" onclick="closeTriad()">×</button>
@@ -1514,6 +1688,180 @@ function toggleCard(el){
   var wasActive=el.classList.contains('active');
   document.querySelectorAll('.triad-card').forEach(c=>c.classList.remove('active'));
   if(!wasActive)el.classList.add('active');
+}
+</script>
+
+<!-- NEWSLETTER SUBSCRIBE MODAL — paste before </body> in index.html -->
+
+<!-- CSS — add to <style> section -->
+<style id="newsletter-modal-styles">
+.nl-overlay{position:fixed;inset:0;background:rgba(12,11,9,0.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.nl-overlay.open{display:flex}
+.nl-panel{background:var(--white);border:0.5px solid var(--border-mid);border-radius:12px;width:100%;max-width:520px;position:relative;padding:40px}
+.nl-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-tertiary);line-height:1}
+.nl-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.nl-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;margin-bottom:8px}
+.nl-subtitle{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:24px}
+.nl-label{font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:10px;display:block}
+.nl-input{width:100%;height:40px;border:0.5px solid var(--border-mid);border-radius:6px;padding:0 14px;font-size:14px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);margin-bottom:20px;outline:none}
+.nl-input:focus{border-color:var(--gold)}
+.nl-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
+.nl-role{display:flex;align-items:center;gap:10px;padding:10px 14px;border:0.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.nl-role:hover{border-color:var(--gold);background:var(--warm-100)}
+.nl-role.selected{border-color:var(--gold);background:var(--gold-light)}
+.nl-role input{display:none}
+.nl-role-emoji{font-size:18px;flex-shrink:0}
+.nl-role-name{font-size:13px;font-weight:500;color:var(--text-primary)}
+.nl-role-desc{font-size:11px;color:var(--text-tertiary);margin-top:1px}
+.nl-submit{width:100%;height:44px;background:var(--black);color:var(--white);border:none;border-radius:22px;font-size:14px;font-weight:500;font-family:'Outfit',sans-serif;cursor:pointer;transition:opacity .15s}
+.nl-submit:hover{opacity:.85}
+.nl-submit:disabled{opacity:.4;cursor:not-allowed}
+.nl-success{text-align:center;padding:20px 0}
+.nl-success-icon{font-size:40px;margin-bottom:12px}
+.nl-success h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:8px}
+.nl-success p{font-size:13px;color:var(--text-secondary);line-height:1.7}
+.nl-error{font-size:12px;color:#993C1D;margin-top:8px;display:none}
+</style>
+
+<!-- HTML — paste before </body> -->
+<div class="nl-overlay" id="nlOverlay" onclick="if(event.target===this)closeNewsletter()">
+  <div class="nl-panel">
+    <button class="nl-close" onclick="closeNewsletter()">×</button>
+
+    <div id="nlForm">
+      <div class="nl-eyebrow">Weekly Research Digest</div>
+      <div class="nl-title">Stay ahead of the research</div>
+      <div class="nl-subtitle">Every week, the most relevant new research — translated into Episteme, Techne and Phronesis for your profession. Select your role to personalise your digest.</div>
+
+      <label class="nl-label">Email address</label>
+      <input type="email" class="nl-input" id="nlEmail" placeholder="your@email.com">
+
+      <label class="nl-label">Your profession <span style="color:var(--text-tertiary);font-weight:400">(select all that apply)</span></label>
+      <div class="nl-roles">
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="sommelier">
+          <span class="nl-role-emoji">🍷</span>
+          <div>
+            <div class="nl-role-name">Sommelier</div>
+            <div class="nl-role-desc">Wine & beverage</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="chef">
+          <span class="nl-role-emoji">👨‍🍳</span>
+          <div>
+            <div class="nl-role-name">Chef</div>
+            <div class="nl-role-desc">Culinary professional</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="pastry_chef">
+          <span class="nl-role-emoji">🧁</span>
+          <div>
+            <div class="nl-role-name">Pastry Chef</div>
+            <div class="nl-role-desc">Pastry & desserts</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="meal_creator">
+          <span class="nl-role-emoji">✨</span>
+          <div>
+            <div class="nl-role-name">Meal Creator</div>
+            <div class="nl-role-desc">Dining experience</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="fb_manager">
+          <span class="nl-role-emoji">📊</span>
+          <div>
+            <div class="nl-role-name">F&B Manager</div>
+            <div class="nl-role-desc">Operations & strategy</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="hotelier">
+          <span class="nl-role-emoji">🏨</span>
+          <div>
+            <div class="nl-role-name">Hotelier</div>
+            <div class="nl-role-desc">Hotel F&B</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="researcher">
+          <span class="nl-role-emoji">🔬</span>
+          <div>
+            <div class="nl-role-name">Researcher</div>
+            <div class="nl-role-desc">Academic & industry</div>
+          </div>
+        </label>
+        <label class="nl-role" onclick="toggleRole(this)">
+          <input type="checkbox" value="food_photographer">
+          <span class="nl-role-emoji">📸</span>
+          <div>
+            <div class="nl-role-name">Food Photographer</div>
+            <div class="nl-role-desc">Visual storytelling</div>
+          </div>
+        </label>
+      </div>
+
+      <button class="nl-submit" id="nlSubmit" onclick="submitNewsletter()">Subscribe to weekly digest</button>
+      <div class="nl-error" id="nlError"></div>
+    </div>
+
+    <div id="nlSuccess" class="nl-success" style="display:none">
+      <div class="nl-success-icon">✓</div>
+      <h3>You're subscribed</h3>
+      <p>Your first digest arrives next Monday. Every week, new research translated into your profession's language — Episteme, Techne and Phronesis.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function openNewsletter(){document.getElementById('nlOverlay').classList.add('open');document.body.style.overflow='hidden'}
+function closeNewsletter(){document.getElementById('nlOverlay').classList.remove('open');document.body.style.overflow=''}
+function toggleRole(el){
+  el.classList.toggle('selected')
+  const cb = el.querySelector('input')
+  cb.checked = !cb.checked
+}
+async function submitNewsletter(){
+  const email = document.getElementById('nlEmail').value.trim()
+  const roles = [...document.querySelectorAll('.nl-role.selected input')].map(i=>i.value)
+  const err = document.getElementById('nlError')
+  const btn = document.getElementById('nlSubmit')
+
+  err.style.display='none'
+  if(!email || !email.includes('@')){err.textContent='Please enter a valid email address.';err.style.display='block';return}
+  if(!roles.length){err.textContent='Please select at least one role.';err.style.display='block';return}
+
+  btn.disabled=true
+  btn.textContent='Subscribing...'
+
+  try {
+    const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/weekly-newsletter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnbmt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
+      },
+      body: JSON.stringify({ subscribe: true, email, roles })
+    })
+    const d = await resp.json()
+    if(d.ok){
+      document.getElementById('nlForm').style.display='none'
+      document.getElementById('nlSuccess').style.display='block'
+    } else {
+      err.textContent='Something went wrong. Please try again.'
+      err.style.display='block'
+      btn.disabled=false
+      btn.textContent='Subscribe to weekly digest'
+    }
+  } catch(e){
+    err.textContent='Connection error. Please try again.'
+    err.style.display='block'
+    btn.disabled=false
+    btn.textContent='Subscribe to weekly digest'
+  }
 }
 </script>
 
