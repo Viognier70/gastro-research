@@ -805,6 +805,7 @@ async function loadArticles(){
     }
     renderFeed()
     loadSidebar()
+    loadTicker()
   }catch(e){
     pane.innerHTML='<div class="loading-state">Error loading articles. Please refresh.</div>'
   }
