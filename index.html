@@ -47,7 +47,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .ticker-sep{color:rgba(201,168,76,0.3);margin:0 4px;font-size:14px}
 @keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 /* RESEARCH SPOTLIGHT */
-.spotlight-wrap{background:var(--black);padding:20px 32px;border-bottom:0.5px solid rgba(201,168,76,0.15);position:relative;z-index:1}
+.spotlight-wrap{background:var(--black);padding:20px 32px 0;position:relative;z-index:0}
 .spotlight-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .spotlight-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .spotlight-sub{font-size:11px;color:rgba(255,255,255,.3);font-style:italic}
@@ -64,6 +64,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spotlight-claim{font-size:13px;font-weight:500;color:rgba(255,255,255,.88);line-height:1.5;margin-bottom:8px;font-family:"Playfair Display",serif}
 .spotlight-journal{font-size:10px;color:rgba(255,255,255,.3)}
 .spotlight-arrow{margin-left:auto;color:var(--gold);font-size:14px;opacity:0;transition:opacity .2s}
+.mini-ticker{height:28px;overflow:hidden;background:rgba(201,168,76,0.06);border-top:0.5px solid rgba(201,168,76,0.12);display:flex;align-items:center}
+.mini-ticker-track{display:flex;align-items:center;white-space:nowrap;animation:ticker-scroll 45s linear infinite;gap:0}
+.mini-ticker-track:hover{animation-play-state:paused}
+.mini-ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 24px;font-size:10px;color:rgba(255,255,255,.35)}
+.mini-ticker-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.5;flex-shrink:0}
+
 .spotlight-card:hover .spotlight-arrow{opacity:1}
 
 
@@ -832,6 +838,7 @@ async function loadArticles(){
     renderFeed()
     loadSidebar()
     loadSpotlight()
+    loadMiniTicker()
   }catch(e){
     pane.innerHTML='<div class="loading-state">Error loading articles. Please refresh.</div>'
   }
@@ -1759,6 +1766,17 @@ async function loadSpotlight(){
     const grid = document.getElementById('spotlightGrid')
     if(grid) grid.innerHTML = html
   } catch(e) { console.log('Spotlight error:', e.message) }
+}
+
+async function loadMiniTicker(){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/articles?select=title,journal,year&core_claim=not.is.null&order=fetched_at.desc&limit=20`,{headers:H})
+    const data = await r.json()
+    if(!Array.isArray(data)||!data.length) return
+    const items = data.map(a=>'<span class="mini-ticker-item"><span class="mini-ticker-dot"></span>'+(a.title||'').slice(0,60)+(a.journal?' · '+(a.journal||'').slice(0,25):'')+'</span>').join('')
+    const track = document.getElementById('miniTickerTrack')
+    if(track) track.innerHTML = items + items
+  } catch(e){}
 }
 function scrollToArticle(id){
   const el = document.querySelector('[data-id="'+id+'"]') || document.getElementById('c'+id.replace(/-/g,'').slice(0,10))
