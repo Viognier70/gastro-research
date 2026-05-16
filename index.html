@@ -1876,7 +1876,7 @@ function openArticleModal(article){
   var cr = typeof currentRole!=='undefined' ? currentRole : 'sommelier'
   var col = colMap[cr] || cr || 'sommelier'
   document.getElementById('artBadges').innerHTML = '<span class="topic-badge">'+(article.topic||'').replace(/_/g,' ')+'</span>'+(article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+(article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
-  document.getElementById('artTitle').textContent = article.title || ''
+  document.getElementById('artTitle').innerHTML = (article.title || '').replace(/&#xa0;/gi,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
   document.getElementById('artMeta').innerHTML = [article.authors?article.authors.split(',')[0]:null,article.journal,article.year].filter(Boolean).join(' - ')
   var claim = article.core_claim || article.insight || ''
   var claimEl = document.getElementById('artClaim')
