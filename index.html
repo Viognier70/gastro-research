@@ -1753,7 +1753,7 @@ async function loadSpotlight(){
     const colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
     const col = colMap[role] || role
     const r = await fetch(
-      `${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,topic,episteme_${col},techne_${col},phronesis_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=${col==="sommelier"?"relevance_sommelier":"relevance_"+col}.desc.nullslast,fetched_at.desc&limit=5`,
+      `${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,topic,episteme_${col},techne_${col},phronesis_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=fetched_at.desc&limit=5`,
       {headers:H}
     )
     const data = await r.json()
