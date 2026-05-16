@@ -46,6 +46,26 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .ticker-journal{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
 .ticker-sep{color:rgba(201,168,76,0.3);margin:0 4px;font-size:14px}
 @keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+/* RESEARCH SPOTLIGHT */
+.spotlight-wrap{background:var(--black);padding:24px 32px;border-bottom:0.5px solid rgba(201,168,76,0.15)}
+.spotlight-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.spotlight-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.spotlight-sub{font-size:11px;color:rgba(255,255,255,.3);font-style:italic}
+.spotlight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.spotlight-grid{grid-template-columns:1fr}}
+.spotlight-card{background:rgba(255,255,255,.04);border:0.5px solid rgba(201,168,76,.12);border-radius:8px;padding:16px 18px;cursor:pointer;transition:background .2s,border-color .2s;display:block}
+.spotlight-card:hover{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.35)}
+.spotlight-card-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.spotlight-triad{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:10px}
+.spotlight-triad.e{background:rgba(26,58,92,.6);color:#A8C4E0}
+.spotlight-triad.t{background:rgba(45,80,22,.6);color:#A8D4A0}
+.spotlight-triad.p{background:rgba(92,45,0,.6);color:#E0B890}
+.spotlight-topic{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.06em}
+.spotlight-claim{font-size:13px;font-weight:500;color:rgba(255,255,255,.88);line-height:1.5;margin-bottom:8px;font-family:"Playfair Display",serif}
+.spotlight-journal{font-size:10px;color:rgba(255,255,255,.3)}
+.spotlight-arrow{margin-left:auto;color:var(--gold);font-size:14px;opacity:0;transition:opacity .2s}
+.spotlight-card:hover .spotlight-arrow{opacity:1}
+
 
 
 /* HERO */
@@ -251,11 +271,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
     </div>
 
-<div class="ticker-wrap" id="tickerWrap">
-  <div class="ticker-label">Research Now</div>
-  <div class="ticker-track" id="tickerTrack">
-    <span style="color:rgba(255,255,255,.2);font-size:11px;padding:0 32px">Loading latest findings...</span>
+
+<div class="spotlight-wrap" id="spotlightWrap">
+  <div class="spotlight-header">
+    <span class="spotlight-label">Research Spotlight</span>
+    <span class="spotlight-sub">Latest high-impact findings for your profession</span>
   </div>
+  <div class="spotlight-grid" id="spotlightGrid">
+    <div class="spotlight-card" style="opacity:.3"><div class="spotlight-claim" style="font-size:12px">Loading latest findings...</div></div>
+  </div>
+</div>
 </div>
   </div>
   </div>
@@ -806,7 +831,7 @@ async function loadArticles(){
     }
     renderFeed()
     loadSidebar()
-    loadTicker()
+    loadSpotlight()
   }catch(e){
     pane.innerHTML='<div class="loading-state">Error loading articles. Please refresh.</div>'
   }
@@ -1709,31 +1734,35 @@ async function submitNewsletter(){
 
 <script>
 
-async function loadTicker(){
+
+async function loadSpotlight(){
   try {
     const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
     const colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
     const col = colMap[role] || role
     const r = await fetch(
-      `${SB_URL}/rest/v1/articles?select=title,core_claim,journal,citation_count,relevance_sci_${col}&core_claim=not.is.null&core_claim=neq.&relevance_sci_${col}=gte.5&order=citation_count.desc.nullslast,relevance_sci_${col}.desc&limit=15`,
+      `${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,topic,episteme_${col},techne_${col},phronesis_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=year.desc,fetched_at.desc&limit=6`,
       {headers:H}
     )
     const data = await r.json()
     if(!Array.isArray(data)||!data.length) return
-    const triadTypes = ['episteme','techne','phronesis']
-    const items = data.map((a,i) => {
-      const triad = triadTypes[i%3]
-      const claim = (a.core_claim||'').slice(0,120)
-      const journal = (a.journal||'').slice(0,30)
-      return '<span class="ticker-item"><span class="ticker-role ' + triad + '">' + (triad==='episteme'?'ε':triad==='techne'?'τ':'φ') + ' ' + triad + '</span><span class="ticker-claim">' + claim + '</span><span class="ticker-journal">' + journal + '</span></span><span class="ticker-sep">·</span>'
+    const picks = data.slice(0,3)
+    const tt = [{key:'e',label:'\u03b5 Episteme',field:'episteme_'+col},{key:'t',label:'\u03c4 Techne',field:'techne_'+col},{key:'p',label:'\u03c6 Phronesis',field:'phronesis_'+col}]
+    const html = picks.map((a,i) => {
+      const t = tt[i]
+      const claim = (a.core_claim||'').slice(0,110)
+      const preview = (a[t.field]||'').slice(0,130)
+      const topic = (a.topic||'').replace(/_/g,' ')
+      const journal = (a.journal||'').slice(0,35)
+      return '<div class="spotlight-card" onclick="scrollToArticle(\''+a.id+'\')"><div class="spotlight-card-top"><span class="spotlight-triad '+t.key+'">'+t.label+'</span><span class="spotlight-topic">'+topic+'</span><span class="spotlight-arrow">\u2192</span></div><div class="spotlight-claim">'+claim+'</div>'+(preview?'<div style="font-size:11px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:8px">'+preview+(preview.length>=130?'\u2026':'')+'</div>':'')+'<div class="spotlight-journal">'+journal+(a.year?' \u00b7 '+a.year:'')+'</div></div>'
     }).join('')
-    const track = document.getElementById('tickerTrack')
-    if(track){
-      track.innerHTML = items + items
-      const duration = Math.max(30, (track.scrollWidth/2) / 80)
-      track.style.animationDuration = duration + 's'
-    }
-  } catch(e) { console.log('Ticker error:', e.message) }
+    const grid = document.getElementById('spotlightGrid')
+    if(grid) grid.innerHTML = html
+  } catch(e) { console.log('Spotlight error:', e.message) }
+}
+function scrollToArticle(id){
+  const el = document.querySelector('[data-id="'+id+'"]') || document.getElementById('c'+id.replace(/-/g,'').slice(0,10))
+  if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.transition='box-shadow .4s'; el.style.boxShadow='0 0 0 2px var(--gold)'; setTimeout(()=>el.style.boxShadow='',2500) }
 }
 
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
