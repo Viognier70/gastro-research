@@ -1784,16 +1784,19 @@ async function loadMiniTicker(){
   } catch(e){}
 }
 function scrollToArticle(id){
-  // Try to find and highlight article card
-  const el = document.getElementById('c'+id.replace(/-/g,'').slice(0,10))
-  if(el){
-    el.scrollIntoView({behavior:'smooth',block:'center'})
-    el.style.transition='box-shadow .4s'
-    el.style.boxShadow='0 0 0 2px var(--gold)'
-    setTimeout(()=>el.style.boxShadow='',3000)
-  } else {
-    // Article not loaded yet — switch to sommelier role and search
-    if(typeof loadFeed==='function') loadFeed()
+  // Search for article by ID
+  const searchInput = document.getElementById('searchInput')
+  if(searchInput){
+    // Find article title from spotlight card
+    const card = document.querySelector('[onclick*="'+id+'"]')
+    const title = card ? card.querySelector('.spotlight-claim')?.textContent?.slice(0,40) : ''
+    if(title && searchInput){
+      searchInput.value = title
+      searchInput.dispatchEvent(new Event('input'))
+      // Scroll to feed
+      const feed = document.getElementById('feed') || document.querySelector('.feed-pane')
+      if(feed) setTimeout(()=>feed.scrollIntoView({behavior:'smooth',block:'start'}), 300)
+    }
   }
 }
 
