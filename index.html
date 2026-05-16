@@ -1754,7 +1754,7 @@ async function loadSpotlight(){
     const tt = [{key:'e',label:'\u03b5 Episteme',field:'episteme_'+col},{key:'t',label:'\u03c4 Techne',field:'techne_'+col},{key:'p',label:'\u03c6 Phronesis',field:'phronesis_'+col}]
     const html = picks.map((a,i) => {
       const t = tt[i]
-      const claim = (a.core_claim||'').slice(0,110)
+      const claim = (a.core_claim||'').slice(0,160)
       const preview = (a[t.field]||'').slice(0,130)
       const topic = (a.topic||'').replace(/_/g,' ')
       const journal = (a.journal||'').slice(0,35)
