@@ -1823,7 +1823,7 @@ async function loadSpotlight(){
       const preview = (a[t.field]||'').slice(0,130)
       const topic = (a.topic||'').replace(/_/g,' ')
       const journal = (a.journal||'').slice(0,35)
-      return '<div class="spotlight-card" onclick="scrollToArticle(\''+a.id+'\')"><div class="spotlight-card-top"><span class="spotlight-triad '+t.key+'">'+t.label+'</span><span class="spotlight-topic">'+topic+'</span><span class="spotlight-arrow">\u2192</span></div><div class="spotlight-claim">'+claim+'</div>'+(preview?'<div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:8px">'+preview+(preview.length>=130?'\u2026':'')+'</div>':'')+'<div class="spotlight-journal">'+journal+(a.year?' \u00b7 '+a.year:'')+'</div></div>'
+      return '<div class="spotlight-card" onclick="fetchAndOpenModal(\''+a.id+'\')"><div class="spotlight-card-top"><span class="spotlight-triad '+t.key+'">'+t.label+'</span><span class="spotlight-topic">'+topic+'</span><span class="spotlight-arrow">\u2192</span></div><div class="spotlight-claim">'+claim+'</div>'+(preview?'<div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:8px">'+preview+(preview.length>=130?'\u2026':'')+'</div>':'')+'<div class="spotlight-journal">'+journal+(a.year?' \u00b7 '+a.year:'')+'</div></div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
     if(grid) grid.innerHTML = html
