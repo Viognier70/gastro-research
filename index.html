@@ -658,6 +658,7 @@ function cardHTML(a,idx){
     ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''} ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
     ${keywords.length>0&&!locked?`<div class="keywords-row">${keywords.map(k=>`<span class="keyword-tag" onclick="document.getElementById('searchInput').value='${k}';debounceSearch()">${k}</span>`).join('')}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
+    ${!locked&&ep.length>10?`<div style="margin-top:10px;padding:10px 14px;background:var(--episteme-light);border-radius:6px;border-left:2px solid var(--episteme)"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--episteme);margin-bottom:4px;text-transform:uppercase">ε Episteme</div><div style="font-size:11px;color:#2A4A6C;line-height:1.6">${ep.slice(0,180)}${ep.length>180?'…':''}</div></div>`:``}
 
     ${hasTriad&&!locked?`
       <div class="triad-nav">
