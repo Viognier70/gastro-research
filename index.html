@@ -244,6 +244,37 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .share-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .share-opt{display:flex;align-items:center;gap:8px;padding:10px 14px;border:0.5px solid var(--border-mid);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text-secondary);background:none;font-family:'Outfit',sans-serif;transition:border-color .15s}
 .share-opt:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ARTICLE MODAL */
+.art-overlay{position:fixed;inset:0;background:rgba(12,11,9,0.85);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(6px)}
+.art-overlay.open{display:flex}
+.art-panel{background:var(--white);border-radius:12px;width:100%;max-width:720px;position:relative;margin:auto}
+.art-header{padding:28px 32px 20px;border-bottom:0.5px solid var(--border)}
+.art-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-tertiary);line-height:1;padding:4px}
+.art-close:hover{color:var(--text-primary)}
+.art-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.art-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;line-height:1.35;color:var(--text-primary);margin-bottom:8px}
+.art-meta{font-size:12px;color:var(--text-tertiary);line-height:1.6}
+.art-body{padding:24px 32px 32px}
+.art-claim{font-size:13px;font-weight:500;color:var(--text-primary);font-style:italic;line-height:1.6;padding:14px 18px;background:var(--warm-100);border-radius:8px;margin-bottom:20px}
+.art-triad-nav{display:flex;gap:6px;margin-bottom:16px}
+.art-triad-btn{font-size:11px;font-weight:500;padding:6px 16px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s}
+.art-triad-btn.active-e{background:var(--episteme);color:#E8EFF6;border-color:var(--episteme)}
+.art-triad-btn.active-t{background:var(--techne);color:#EAF0E5;border-color:var(--techne)}
+.art-triad-btn.active-p{background:var(--phronesis);color:#F5EDE3;border-color:var(--phronesis)}
+.art-triad-content{font-size:13px;line-height:1.8;color:var(--text-secondary);padding:16px 20px;border-radius:8px;min-height:120px}
+.art-triad-content.e{background:var(--episteme-light);border-left:3px solid var(--episteme)}
+.art-triad-content.t{background:var(--techne-light);border-left:3px solid var(--techne)}
+.art-triad-content.p{background:var(--phronesis-light);border-left:3px solid var(--phronesis)}
+.art-imrad{margin-top:20px;border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
+.art-imrad-toggle{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--text-tertiary);padding:10px 16px;cursor:pointer;background:var(--warm-100);border:none;width:100%;text-align:left;text-transform:uppercase}
+.art-imrad-body{padding:16px;display:none}
+.art-imrad-body.open{display:block}
+.art-imrad-row{margin-bottom:12px}
+.art-imrad-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px}
+.art-imrad-text{font-size:12px;color:var(--text-secondary);line-height:1.7}
+.art-footer{display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:20px;border-top:0.5px solid var(--border)}
+.art-read-btn{font-size:12px;font-weight:500;background:var(--black);color:var(--white);border:none;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 </style>
 </head>
 <body>
@@ -1447,7 +1478,34 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
 .triad-relation{font-size:11px;color:var(--text-tertiary);text-align:center;letter-spacing:.08em;padding-bottom:8px}
 </style>
 
-<!-- TRIAD MODAL HTML — paste just before <!-- NEWSLETTER SUBSCRIBE MODAL — paste before </body> in index.html -->
+<!-- TRIAD MODAL HTML — paste just before <!-- NEWSLETTER SUBSCRIBE MODAL — paste before 
+<div class="art-overlay" id="artOverlay" onclick="if(event.target===this)closeArticleModal()">
+  <div class="art-panel">
+    <button class="art-close" onclick="closeArticleModal()">x</button>
+    <div class="art-header">
+      <div class="art-badges" id="artBadges"></div>
+      <div class="art-title" id="artTitle"></div>
+      <div class="art-meta" id="artMeta"></div>
+    </div>
+    <div class="art-body">
+      <div class="art-claim" id="artClaim" style="display:none"></div>
+      <div class="art-triad-nav">
+        <button class="art-triad-btn active-e" id="artBtnE" onclick="switchTriad('e')">e Episteme</button>
+        <button class="art-triad-btn" id="artBtnT" onclick="switchTriad('t')">t Techne</button>
+        <button class="art-triad-btn" id="artBtnP" onclick="switchTriad('p')">p Phronesis</button>
+      </div>
+      <div class="art-triad-content e" id="artTriadContent"></div>
+      <div class="art-imrad" id="artImrad" style="display:none">
+        <button class="art-imrad-toggle" onclick="toggleImrad()">IMRaD - Full Scientific Structure</button>
+        <div class="art-imrad-body" id="artImradBody"></div>
+      </div>
+      <div class="art-footer">
+        <a href="#" id="artReadBtn" class="art-read-btn" target="_blank">Read paper</a>
+      </div>
+    </div>
+  </div>
+</div>
+</body> in index.html -->
 
 <!-- CSS — add to <style> section -->
 <style id="newsletter-modal-styles">
@@ -1797,6 +1855,56 @@ function scrollToArticle(id, topic){
     }, 800)
   }, 400)
 }
+
+
+var _artData = null
+var _artTriad = 'e'
+
+async function fetchAndOpenModal(id){
+  try {
+    const colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
+    const cr = typeof currentRole!=='undefined'?currentRole:'sommelier'
+    const col = colMap[cr]||cr||'sommelier'
+    const r = await fetch(SB_URL+'/rest/v1/articles?select=*&id=eq.'+id,{headers:H})
+    const data = await r.json()
+    if(data&&data[0]) openArticleModal(data[0])
+  } catch(e){ console.log('Modal error:',e.message) }
+}
+function openArticleModal(article){
+  _artData = article
+  _artTriad = 'e'
+  var colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
+  var cr = typeof currentRole!=='undefined' ? currentRole : 'sommelier'
+  var col = colMap[cr] || cr || 'sommelier'
+  document.getElementById('artBadges').innerHTML = '<span class="topic-badge">'+(article.topic||'').replace(/_/g,' ')+'</span>'+(article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+(article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
+  document.getElementById('artTitle').textContent = article.title || ''
+  document.getElementById('artMeta').innerHTML = [article.authors?article.authors.split(',')[0]:null,article.journal,article.year].filter(Boolean).join(' - ')
+  var claim = article.core_claim || article.insight || ''
+  var claimEl = document.getElementById('artClaim')
+  if(claim){claimEl.textContent=claim;claimEl.style.display='block'}else claimEl.style.display='none'
+  _artData._ep = article['episteme_'+col] || article.episteme_sommelier || ''
+  _artData._tc = article['techne_'+col] || article.techne_sommelier || ''
+  _artData._ph = article['phronesis_'+col] || article.phronesis_sommelier || ''
+  switchTriad('e')
+  if(article.imrad_introduction){
+    document.getElementById('artImrad').style.display='block'
+    document.getElementById('artImradBody').innerHTML = ['introduction','methods','results','discussion'].map(function(k){return article['imrad_'+k]?'<div class="art-imrad-row"><div class="art-imrad-label">'+k+'</div><div class="art-imrad-text">'+article['imrad_'+k]+'</div></div>':''}).join('')
+  } else document.getElementById('artImrad').style.display='none'
+  var btn = document.getElementById('artReadBtn')
+  if(article.url){btn.href=article.url;btn.style.display='inline-flex'}else btn.style.display='none'
+  document.getElementById('artOverlay').classList.add('open')
+  document.body.style.overflow='hidden'
+}
+function switchTriad(t){
+  _artTriad=t
+  var content=document.getElementById('artTriadContent')
+  var text=t==='e'?_artData._ep:t==='t'?_artData._tc:_artData._ph
+  content.textContent=text||(t==='e'?'Episteme not yet generated.':t==='t'?'Techne not yet generated.':'Phronesis not yet generated.')
+  content.className='art-triad-content '+t
+  ;['E','T','P'].forEach(function(x){document.getElementById('artBtn'+x).className='art-triad-btn'+(x.toLowerCase()===t?' active-'+t:'')})
+}
+function toggleImrad(){document.getElementById('artImradBody').classList.toggle('open')}
+function closeArticleModal(){document.getElementById('artOverlay').classList.remove('open');document.body.style.overflow=''}
 
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeTriad(){document.getElementById('triadOverlay').classList.remove('open');document.body.style.overflow=''}
