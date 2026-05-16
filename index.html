@@ -1783,21 +1783,19 @@ async function loadMiniTicker(){
     if(track) track.innerHTML = items + items
   } catch(e){}
 }
-function scrollToArticle(id){
-  // Search for article by ID
-  const searchInput = document.getElementById('searchInput')
-  if(searchInput){
-    // Find article title from spotlight card
-    const card = document.querySelector('[onclick*="'+id+'"]')
-    const title = card ? card.querySelector('.spotlight-claim')?.textContent?.slice(0,40) : ''
-    if(title && searchInput){
-      searchInput.value = title
-      searchInput.dispatchEvent(new Event('input'))
-      // Scroll to feed
-      const feed = document.getElementById('feed') || document.querySelector('.feed-pane')
-      if(feed) setTimeout(()=>feed.scrollIntoView({behavior:'smooth',block:'start'}), 300)
-    }
-  }
+function scrollToArticle(id, topic){
+  const sortSel = document.getElementById('sortSel')
+  if(sortSel){ sortSel.value = 'relevance'; }
+  if(typeof renderFeed === 'function') renderFeed()
+  setTimeout(()=>{
+    const feed = document.querySelector('.feed-pane') || document.querySelector('.main-col') || document.getElementById('feedPane')
+    if(feed) feed.scrollIntoView({behavior:'smooth', block:'start'})
+    // Try highlight
+    setTimeout(()=>{
+      const el = document.getElementById('c'+id.replace(/-/g,'').slice(0,10))
+      if(el){ el.style.transition='box-shadow .4s'; el.style.boxShadow='0 0 0 2px var(--gold)'; setTimeout(()=>el.style.boxShadow='',3000) }
+    }, 800)
+  }, 400)
 }
 
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
