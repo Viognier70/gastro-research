@@ -31,6 +31,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .lang-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
 .auth-btn{font-size:12px;font-weight:500;background:var(--black);color:var(--white);border:none;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif}
 .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--black);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer}
+/* NEWS TICKER */
+.ticker-wrap{background:var(--black);border-bottom:0.5px solid rgba(201,168,76,0.2);height:34px;overflow:hidden;position:relative}
+.ticker-label{position:absolute;left:0;top:0;height:34px;background:var(--gold);color:var(--black);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:0 14px;display:flex;align-items:center;z-index:2;white-space:nowrap}
+.ticker-track{display:flex;align-items:center;height:34px;white-space:nowrap;animation:ticker-scroll 60s linear infinite;padding-left:120px}
+.ticker-track:hover{animation-play-state:paused}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;padding:0 32px;cursor:pointer;transition:opacity .15s}
+.ticker-item:hover{opacity:.75}
+.ticker-role{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.ticker-role.episteme{background:var(--episteme);color:#E8EFF6}
+.ticker-role.techne{background:var(--techne);color:#EAF0E5}
+.ticker-role.phronesis{background:var(--phronesis);color:#F5EDE3}
+.ticker-claim{font-size:11px;color:rgba(255,255,255,.75);max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ticker-journal{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
+.ticker-sep{color:rgba(201,168,76,0.3);margin:0 4px;font-size:14px}
+@keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
 
 /* HERO */
 .hero{padding:56px 32px 40px;max-width:900px}
@@ -234,6 +250,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div style="display:flex;align-items:baseline;gap:0">
       <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
     </div>
+
+<div class="ticker-wrap" id="tickerWrap">
+  <div class="ticker-label">Research Now</div>
+  <div class="ticker-track" id="tickerTrack">
+    <span style="color:rgba(255,255,255,.2);font-size:11px;padding:0 32px">Loading latest findings...</span>
+  </div>
+</div>
   </div>
   </div>
   </div>
@@ -1683,6 +1706,34 @@ async function submitNewsletter(){
 </div>
 
 <script>
+
+async function loadTicker(){
+  try {
+    const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
+    const colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
+    const col = colMap[role] || role
+    const r = await fetch(
+      `${SB_URL}/rest/v1/articles?select=title,core_claim,journal,citation_count,relevance_sci_${col}&core_claim=not.is.null&core_claim=neq.&relevance_sci_${col}=gte.5&order=citation_count.desc.nullslast,relevance_sci_${col}.desc&limit=15`,
+      {headers:H}
+    )
+    const data = await r.json()
+    if(!Array.isArray(data)||!data.length) return
+    const triadTypes = ['episteme','techne','phronesis']
+    const items = data.map((a,i) => {
+      const triad = triadTypes[i%3]
+      const claim = (a.core_claim||'').slice(0,120)
+      const journal = (a.journal||'').slice(0,30)
+      return '<span class="ticker-item"><span class="ticker-role ' + triad + '">' + (triad==='episteme'?'ε':triad==='techne'?'τ':'φ') + ' ' + triad + '</span><span class="ticker-claim">' + claim + '</span><span class="ticker-journal">' + journal + '</span></span><span class="ticker-sep">·</span>'
+    }).join('')
+    const track = document.getElementById('tickerTrack')
+    if(track){
+      track.innerHTML = items + items
+      const duration = Math.max(30, (track.scrollWidth/2) / 80)
+      track.style.animationDuration = duration + 's'
+    }
+  } catch(e) { console.log('Ticker error:', e.message) }
+}
+
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeTriad(){document.getElementById('triadOverlay').classList.remove('open');document.body.style.overflow=''}
 function toggleCard(el){
