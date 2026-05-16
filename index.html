@@ -53,7 +53,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spotlight-sub{font-size:11px;color:rgba(255,255,255,.3);font-style:italic}
 .spotlight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media(max-width:700px){.spotlight-grid{grid-template-columns:1fr}}
-.spotlight-card{background:rgba(255,255,255,.07);border:0.5px solid rgba(201,168,76,.2);border-radius:8px;padding:18px 20px;cursor:pointer;transition:background .2s,border-color .2s;display:block}
+.spotlight-card{background:rgba(255,255,255,.06);border:0.5px solid rgba(201,168,76,.2);border-radius:8px;padding:20px 22px 18px;cursor:pointer;transition:background .2s,border-color .2s;display:block;min-height:160px}
 .spotlight-card:hover{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.35)}
 .spotlight-card-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .spotlight-triad{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:10px}
@@ -61,10 +61,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spotlight-triad.t{background:rgba(45,80,22,.6);color:#A8D4A0}
 .spotlight-triad.p{background:rgba(92,45,0,.6);color:#E0B890}
 .spotlight-topic{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.06em}
-.spotlight-claim{font-size:14px;font-weight:500;color:#FDFCF8;line-height:1.5;margin-bottom:8px;font-family:"Playfair Display",serif}
-.spotlight-journal{font-size:10px;color:rgba(255,255,255,.3)}
+.spotlight-claim{font-size:15px;font-weight:500;color:#FDFCF8;line-height:1.45;margin-bottom:10px;font-family:"Playfair Display",serif}
+.spotlight-journal{font-size:11px;color:rgba(255,255,255,.4);margin-top:auto;padding-top:8px}
 .spotlight-arrow{margin-left:auto;color:var(--gold);font-size:14px;opacity:0;transition:opacity .2s}
-.mini-ticker{height:28px;overflow:hidden;background:rgba(201,168,76,0.06);border-top:0.5px solid rgba(201,168,76,0.12);display:flex;align-items:center}
+.mini-ticker{height:26px;overflow:hidden;background:rgba(255,255,255,0.03);border-top:0.5px solid rgba(201,168,76,0.1);display:flex;align-items:center;margin-top:12px}
 .mini-ticker-track{display:flex;align-items:center;white-space:nowrap;animation:ticker-scroll 45s linear infinite;gap:0}
 .mini-ticker-track:hover{animation-play-state:paused}
 .mini-ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 24px;font-size:10px;color:rgba(255,255,255,.35)}
