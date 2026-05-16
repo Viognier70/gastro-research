@@ -64,11 +64,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spotlight-claim{font-size:15px;font-weight:500;color:#FDFCF8;line-height:1.45;margin-bottom:10px;font-family:"Playfair Display",serif}
 .spotlight-journal{font-size:11px;color:rgba(255,255,255,.4);margin-top:auto;padding-top:8px}
 .spotlight-arrow{margin-left:auto;color:var(--gold);font-size:14px;opacity:0;transition:opacity .2s}
-.mini-ticker{height:26px;overflow:hidden;background:rgba(255,255,255,0.03);border-top:0.5px solid rgba(201,168,76,0.1);display:flex;align-items:center;margin-top:12px}
-.mini-ticker-track{display:flex;align-items:center;white-space:nowrap;animation:ticker-scroll 45s linear infinite;gap:0}
+.mini-ticker{height:30px;overflow:hidden;background:rgba(201,168,76,0.06);border-top:0.5px solid rgba(201,168,76,0.2);display:flex;align-items:center;margin-top:12px}
+.mini-ticker-track{display:flex;align-items:center;white-space:nowrap;animation:ticker-scroll 90s linear infinite;gap:0}
 .mini-ticker-track:hover{animation-play-state:paused}
-.mini-ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 24px;font-size:10px;color:rgba(255,255,255,.35)}
-.mini-ticker-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.5;flex-shrink:0}
+.mini-ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 28px;font-size:11px;color:rgba(255,255,255,.6);letter-spacing:.04em}
+.mini-ticker-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);opacity:.7;flex-shrink:0}
 
 .spotlight-card:hover .spotlight-arrow{opacity:1}
 
@@ -1784,8 +1784,17 @@ async function loadMiniTicker(){
   } catch(e){}
 }
 function scrollToArticle(id){
-  const el = document.querySelector('[data-id="'+id+'"]') || document.getElementById('c'+id.replace(/-/g,'').slice(0,10))
-  if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.transition='box-shadow .4s'; el.style.boxShadow='0 0 0 2px var(--gold)'; setTimeout(()=>el.style.boxShadow='',2500) }
+  // Try to find and highlight article card
+  const el = document.getElementById('c'+id.replace(/-/g,'').slice(0,10))
+  if(el){
+    el.scrollIntoView({behavior:'smooth',block:'center'})
+    el.style.transition='box-shadow .4s'
+    el.style.boxShadow='0 0 0 2px var(--gold)'
+    setTimeout(()=>el.style.boxShadow='',3000)
+  } else {
+    // Article not loaded yet — switch to sommelier role and search
+    if(typeof loadFeed==='function') loadFeed()
+  }
 }
 
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
