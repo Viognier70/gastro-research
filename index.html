@@ -881,8 +881,8 @@ async function loadArticles(){
     : hasScenario
       ? `scenario_${role},episteme_${role},techne_${role},phronesis_${role}`
       : `episteme_${role},techne_${role},phronesis_${role}`
-  const relevanceCols = role==='all' ? 'relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier' : `relevance_${role}`
-  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,${triadCols}`
+  const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher' : `relevance_sci_${role}`
+  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,${sciCols},${triadCols}`
 
   try {
     if(search && search.length > 1) {
