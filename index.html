@@ -1156,11 +1156,17 @@ function renderTopicGraph(){
   const outerR = Math.min(w,h)*0.44
   data.related.forEach((t,i)=>{
     const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
-    nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28})
+    const td2=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
   })
 
   // Build SVG
-  let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif">`
+  let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif">
+  <defs>
+    <radialGradient id="pulseGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>`
   
   // Lines from center to core
   data.core.forEach(t=>{
@@ -1194,7 +1200,11 @@ function renderTopicGraph(){
     const cursor = isCenter ? '' : 'cursor:pointer;'
     
     svg += `<g ${onclick} style="${cursor}">`
-    svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size}" fill="${fill}" stroke="${stroke}" stroke-width="${selected?2:1}"/>`
+    // Pulse for recent articles
+    if(n._recent > 0){
+      svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size*1.8}" fill="url(#pulseGrad)" opacity="0.6"><animate attributeName="r" values="${n.size*1.5};${n.size*2.2};${n.size*1.5}" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0.1;0.5" dur="2s" repeatCount="indefinite"/></circle>`
+    }
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size}" fill="${fill}" stroke="${n._recent>0?'#C9A84C':stroke}" stroke-width="${n._recent>0?2:selected?2:1}"/>`
     
     // Word wrap label
     const words = n.label.split(' ')
@@ -1281,9 +1291,12 @@ async function loadKnowledgeMap(){
     const topicMap = {}
     arts.forEach(a=>{
       if(!a.topic) return
-      if(!topicMap[a.topic]) topicMap[a.topic]={topic:a.topic,count:0,rs:[],rc:[],rCr:[],rW:[],rE:[]}
+      const sevenDaysAgo = new Date(Date.now()-7*24*60*60*1000).toISOString()
+      if(!topicMap[a.topic]) topicMap[a.topic]={topic:a.topic,count:0,recent:0,rs:[],rc:[],rCr:[],rW:[],rE:[]}
+
       const t=topicMap[a.topic]
       t.count++
+      if(a.fetched_at && a.fetched_at > sevenDaysAgo) t.recent++
       // Prefer scientific relevance, fallback to Claude relevance
       const gs=(f,s)=>a[f]!=null?parseFloat(a[f]):a[s]!=null?parseFloat(a[s]):null
       const vs=gs('relevance_sci_sommelier','relevance_sommelier'); if(vs!=null) t.rs.push(vs)
@@ -1295,7 +1308,7 @@ async function loadKnowledgeMap(){
 
     const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0
     mapTopicData=Object.values(topicMap).map(t=>({
-      topic:t.topic, count:t.count,
+      topic:t.topic, count:t.count, recent:t.recent||0,
       label:TOPIC_LABELS[t.topic]||t.topic.replace(/_/g,' '),
       rel_sommelier:avg(t.rs), rel_chef:avg(t.rc),
       rel_creator:avg(t.rCr), rel_waiter:avg(t.rW), rel_educator:avg(t.rE)
