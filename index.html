@@ -339,7 +339,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <div class="spotlight-wrap" id="spotlightWrap">
   <div class="spotlight-header">
-    <span class="spotlight-label">Research Spotlight</span>
+    <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
     <span class="spotlight-sub">Latest high-impact findings for your profession</span>
   </div>
   <div class="spotlight-grid" id="spotlightGrid">
@@ -947,7 +947,9 @@ async function loadCounts(){
   try{
     const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
-    if(total>0) document.getElementById('totalCount').textContent=total.toLocaleString()
+    if(total>0) const countEl=document.getElementById('totalCount')
+    let c=0,step=Math.ceil(total/40)
+    const timer=setInterval(()=>{c=Math.min(c+step,total);countEl.textContent=c.toLocaleString('sv-SE');if(c>=total)clearInterval(timer)},30).toLocaleString()
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
