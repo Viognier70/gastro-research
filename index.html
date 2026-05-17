@@ -947,9 +947,7 @@ async function loadCounts(){
   try{
     const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
-    if(total>0) const countEl=document.getElementById('totalCount')
-    let c=0,step=Math.ceil(total/40)
-    const timer=setInterval(()=>{c=Math.min(c+step,total);countEl.textContent=c.toLocaleString('sv-SE');if(c>=total)clearInterval(timer)},30).toLocaleString()
+    if(total>0) animateCount(document.getElementById('totalCount'), total).toLocaleString()
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
@@ -2059,6 +2057,11 @@ function checkOnboarding(){
   }
 }
 
+function animateCount(el, target){
+  if(!el) return
+  let c=0, step=Math.ceil(target/40)
+  const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('sv-SE');if(c>=target)clearInterval(timer)},30)
+}
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeTriad(){document.getElementById('triadOverlay').classList.remove('open');document.body.style.overflow=''}
 function toggleCard(el){
