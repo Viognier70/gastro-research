@@ -1284,7 +1284,7 @@ function interpolateColor(hex1, hex2, t){
 
 async function loadKnowledgeMap(){
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=topic,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_waiter,relevance_sci_educator,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator&limit=5000`,{headers:H})
+    const r = await fetch(`${SB_URL}/rest/v1/articles?select=topic,fetched_at,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_waiter,relevance_sci_educator,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator&limit=5000`,{headers:H})
     const arts = await r.json()
     if(!Array.isArray(arts)||arts.length===0) return
 
