@@ -1555,7 +1555,21 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
     <div class="ob-title">Research intelligence for your profession</div>
-    <div class="ob-sub">Thousands of research studies translated into three forms of professional knowledge — Episteme, Techne and Phronesis. Select your profession to personalise your feed.</div>
+    <div class="ob-sub">Thousands of research studies translated into three forms of professional knowledge — for your specific profession.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
+      <div style="padding:12px;border-radius:8px;background:#E8EFF6;border-left:3px solid var(--episteme)">
+        <div style="font-size:11px;font-weight:700;color:var(--episteme);margin-bottom:4px">ε Episteme</div>
+        <div style="font-size:11px;color:#2A4A6C;line-height:1.5">What science has proven — the universal truth behind the research</div>
+      </div>
+      <div style="padding:12px;border-radius:8px;background:#EAF0E5;border-left:3px solid var(--techne)">
+        <div style="font-size:11px;font-weight:700;color:var(--techne);margin-bottom:4px">τ Techne</div>
+        <div style="font-size:11px;color:#2D5016;line-height:1.5">How to apply it — concrete skills and methods for your daily work</div>
+      </div>
+      <div style="padding:12px;border-radius:8px;background:#F5EDE3;border-left:3px solid var(--phronesis)">
+        <div style="font-size:11px;font-weight:700;color:var(--phronesis);margin-bottom:4px">φ Phronesis</div>
+        <div style="font-size:11px;color:#5C2D00;line-height:1.5">The moment of judgment — where knowledge becomes lived experience</div>
+      </div>
+    </div>
     <div class="ob-roles">
       <div class="ob-role" onclick="selectObRole(this,'sommelier')">
         <span class="ob-role-emoji">🍷</span>
