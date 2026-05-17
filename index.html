@@ -1940,7 +1940,16 @@ async function loadSpotlight(){
         '</div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
-    if(grid) grid.innerHTML = html
+    if(grid){
+      grid.innerHTML = html
+      // Animate cards in
+      grid.querySelectorAll('.spotlight-card').forEach((card,i)=>{
+        card.style.opacity='0'
+        card.style.transform='translateY(12px)'
+        card.style.transition='opacity .4s ease, transform .4s ease'
+        setTimeout(()=>{card.style.opacity='1';card.style.transform='translateY(0)'},100+i*150)
+      })
+    }
   } catch(e) { console.log('Spotlight error:', e.message) }
 }
 
@@ -2059,8 +2068,8 @@ function checkOnboarding(){
 
 function animateCount(el, target){
   if(!el) return
-  let c=0, step=Math.ceil(target/40)
-  const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('sv-SE');if(c>=target)clearInterval(timer)},30)
+  let c=0, step=Math.ceil(target/60)
+  const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('sv-SE');if(c>=target)clearInterval(timer)},25)
 }
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeTriad(){document.getElementById('triadOverlay').classList.remove('open');document.body.style.overflow=''}
