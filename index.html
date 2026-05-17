@@ -863,7 +863,8 @@ async function loadArticles(){
   const triadCols=role==='all'
     ? 'scenario_sommelier,episteme_sommelier,techne_sommelier,phronesis_sommelier'
     : `scenario_${role},episteme_${role},techne_${role},phronesis_${role}`
-  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,${triadCols}`
+  const relevanceCols = role==='all' ? 'relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier' : `relevance_${role}`
+  const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,${triadCols}`
 
   try {
     if(search && search.length > 1) {
