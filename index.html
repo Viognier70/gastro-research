@@ -1982,14 +1982,13 @@ function selectObRole(el, role){
 }
 function confirmObRole(){
   if(!_obRole) return
-  localStorage.setItem('gs_role', _obRole)
+  const roleMap = {meal_creator:'creator',fb_manager:'fbmanager',pastry_chef:'sommelier',food_photographer:'sommelier'}
+  const feedRole = roleMap[_obRole] || _obRole
+  localStorage.setItem('gs_role', feedRole)
   localStorage.setItem('gs_onboarded', '1')
-  // Set role in feed
-  const roleBtn = document.querySelector('.role-btn[data-role="'+_obRole+'"]') || 
-    Array.from(document.querySelectorAll('.role-btn')).find(b=>b.textContent.toLowerCase().includes(_obRole.replace('_',' ')))
+  const roleBtn = document.querySelector('.role-chip[data-role="'+feedRole+'"]')
   if(roleBtn) roleBtn.click()
-  else if(typeof setRole==='function') setRole(_obRole)
-  else { if(typeof currentRole!=='undefined') currentRole=_obRole; if(typeof loadFeed==='function') loadFeed() }
+  else if(typeof setRole==='function') setRole(feedRole)
   closeOnboarding()
 }
 function closeOnboarding(){
