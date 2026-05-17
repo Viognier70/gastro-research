@@ -899,7 +899,7 @@ async function loadArticles(){
       let url
       if(role!=='all'){
         // Get top articles by relevance for this role
-        url=`${SB_URL}/rest/v1/articles?select=${fields}&order=${`relevance_${role}`}.desc.nullslast,fetched_at.desc&limit=200`
+        url=`${SB_URL}/rest/v1/articles?select=${fields}&order=${`relevance_sci_${role}`}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
