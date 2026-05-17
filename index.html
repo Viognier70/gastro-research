@@ -1583,18 +1583,12 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap()})
         <span class="ob-role-emoji">📊</span>
         <div><div class="ob-role-name">F&B Manager</div><div class="ob-role-desc">Operations & strategy</div></div>
       </div>
-      <div class="ob-role" onclick="selectObRole(this,'hotelier')">
-        <span class="ob-role-emoji">🏨</span>
-        <div><div class="ob-role-name">Hotelier</div><div class="ob-role-desc">Hotel F&B</div></div>
-      </div>
+
       <div class="ob-role" onclick="selectObRole(this,'researcher')">
         <span class="ob-role-emoji">🔬</span>
         <div><div class="ob-role-name">Researcher</div><div class="ob-role-desc">Academic & industry</div></div>
       </div>
-      <div class="ob-role" onclick="selectObRole(this,'food_photographer')">
-        <span class="ob-role-emoji">📸</span>
-        <div><div class="ob-role-name">Food Photographer</div><div class="ob-role-desc">Visual storytelling</div></div>
-      </div>
+
     </div>
     <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Show me the research →</button>
     <div class="ob-skip" onclick="closeOnboarding()">Skip — browse all professions</div>
@@ -2019,14 +2013,16 @@ function selectObRole(el, role){
 }
 function confirmObRole(){
   if(!_obRole) return
-  const roleMap = {meal_creator:'creator',fb_manager:'fbmanager',pastry_chef:'chef',food_photographer:'sommelier'}
+  const roleMap = {meal_creator:'creator',fb_manager:'fbmanager',pastry_chef:'chef',food_photographer:'sommelier',hotelier:'fbmanager'}
   const feedRole = roleMap[_obRole] || _obRole
   localStorage.setItem('gs_role', feedRole)
   localStorage.setItem('gs_onboarded', '1')
-  const roleBtn = document.querySelector('.role-chip[data-role="'+feedRole+'"]')
-  if(roleBtn) roleBtn.click()
-  else if(typeof setRole==='function') setRole(feedRole)
   closeOnboarding()
+  setTimeout(()=>{
+    const roleBtn = document.querySelector('.role-chip[data-role="'+feedRole+'"]')
+    if(roleBtn) roleBtn.click()
+    else if(typeof setRole==='function') setRole(feedRole)
+  }, 100)
 }
 function closeOnboarding(){
   document.getElementById('obOverlay').classList.remove('open')
