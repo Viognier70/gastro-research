@@ -1982,7 +1982,7 @@ function selectObRole(el, role){
 }
 function confirmObRole(){
   if(!_obRole) return
-  const roleMap = {meal_creator:'creator',fb_manager:'fbmanager',pastry_chef:'sommelier',food_photographer:'sommelier'}
+  const roleMap = {meal_creator:'creator',fb_manager:'fbmanager',pastry_chef:'chef',food_photographer:'sommelier'}
   const feedRole = roleMap[_obRole] || _obRole
   localStorage.setItem('gs_role', feedRole)
   localStorage.setItem('gs_onboarded', '1')
