@@ -1314,7 +1314,7 @@ function renderLiveMap(){
 
   const w=container.offsetWidth||860
   const h=520
-  const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
+  const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',fbmanager:'F&B Manager',researcher:'Researcher'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
 
   const maxCount=Math.max(...mapTopicData.map(t=>t.count))
