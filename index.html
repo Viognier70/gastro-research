@@ -1149,7 +1149,7 @@ function renderTopicGraph(){
   const coreR = Math.min(w,h)*0.28
   data.core.forEach((t,i)=>{
     const angle = (i/data.core.length)*Math.PI*2 - Math.PI/2
-    nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36})
+    const td1=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36,_recent:td1?.recent||0})
   })
   
   // Related topics in outer ring
