@@ -1201,11 +1201,11 @@ function renderTopicGraph(){
     
     svg += `<g ${onclick} style="${cursor}">`
     // Pulse for recent articles
-    if(n._recent > 0){
-      svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size+8}" fill="none" stroke="#C9A84C" stroke-width="1" opacity="0.4" stroke-dasharray="3,2"/>`
-      svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size+14}" fill="none" stroke="#C9A84C" stroke-width="0.5" opacity="0.2" stroke-dasharray="2,4"/>`
-    }
     svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size}" fill="${fill}" stroke="${n._recent>0?'#C9A84C':stroke}" stroke-width="${n._recent>0?2.5:selected?2:1}"/>`
+    if(n._recent > 0){
+      svg += `<circle cx="${n.x+n.size*0.7}" cy="${n.y-n.size*0.7}" r="5" fill="#C9A84C"/>`
+      svg += `<text x="${n.x+n.size*0.7}" y="${n.y-n.size*0.7+3.5}" text-anchor="middle" font-size="6" fill="#0C0B09" font-weight="bold">+${n._recent>99?'99':n._recent}</text>`
+    }
     
     // Word wrap label
     const words = n.label.split(' ')
