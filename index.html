@@ -1888,14 +1888,21 @@ async function loadSpotlight(){
     const data = await r.json()
     if(!Array.isArray(data)||!data.length) return
     const picks = data.slice(0,3)
-    const tt = [{key:'e',label:'\u03b5 Episteme',field:'episteme_'+col},{key:'t',label:'\u03c4 Techne',field:'techne_'+col},{key:'p',label:'\u03c6 Phronesis',field:'phronesis_'+col}]
     const html = picks.map((a,i) => {
-      const t = tt[i]
-      const claim = (a.core_claim||'').slice(0,160)
-      const preview = (a[t.field]||'').slice(0,130)
+      const claim = (a.core_claim||'').slice(0,120)
       const topic = (a.topic||'').replace(/_/g,' ')
       const journal = (a.journal||'').slice(0,35)
-      return '<div class="spotlight-card" onclick="fetchAndOpenModal(\''+a.id+'\')"><div class="spotlight-card-top"><span class="spotlight-triad '+t.key+'">'+t.label+'</span><span class="spotlight-topic">'+topic+'</span><span class="spotlight-arrow">\u2192</span></div><div class="spotlight-claim">'+claim+'</div>'+(preview?'<div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:8px">'+preview+(preview.length>=130?'\u2026':'')+'</div>':'')+'<div class="spotlight-journal">'+journal+(a.year?' \u00b7 '+a.year:'')+'</div></div>'
+      const ep = (a['episteme_'+col]||'').slice(0,100)
+      const tc = (a['techne_'+col]||'').slice(0,100)
+      const ph = (a['phronesis_'+col]||'').slice(0,100)
+      return '<div class="spotlight-card" onclick="fetchAndOpenModal(\''+a.id+'\')">'+
+        '<div class="spotlight-card-top"><span class="spotlight-topic">'+topic+'</span><span class="spotlight-arrow">→</span></div>'+
+        '<div class="spotlight-claim">'+claim+'</div>'+
+        (ep?'<div style="margin:8px 0 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:#A8C4E0;text-transform:uppercase;margin-bottom:3px">ε Episteme</div><div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.55">'+ep+(ep.length>=100?'…':'')+'</div></div>':'')+
+        (tc?'<div style="margin:6px 0 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:#A8D4A0;text-transform:uppercase;margin-bottom:3px">τ Techne</div><div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.55">'+tc+(tc.length>=100?'…':'')+'</div></div>':'')+
+        (ph?'<div style="margin:6px 0 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:#E0B890;text-transform:uppercase;margin-bottom:3px">φ Phronesis</div><div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.55">'+ph+(ph.length>=100?'…':'')+'</div></div>':'')+
+        '<div class="spotlight-journal" style="margin-top:10px">'+journal+(a.year?' · '+a.year:'')+'</div>'+
+        '</div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
     if(grid) grid.innerHTML = html
