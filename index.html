@@ -841,12 +841,12 @@ function renderFeed(){
   // When role selected: filter to articles WITH relevance data for that role, sort by relevance
   if(role!=='all'){
     // Split: enriched (have relevance score) vs not enriched
-    const enriched=source.filter(a=>a['relevance_'+role]!==null&&a['relevance_'+role]!==undefined&&parseInt(a['relevance_'+role])>0)
-    const pending=source.filter(a=>a['relevance_'+role]===null||a['relevance_'+role]===undefined)
+    const enriched=source.filter(a=>a['relevance_sci_'+role]!==null&&a['relevance_sci_'+role]!==undefined&&parseInt(a['relevance_sci_'+role])>0)
+    const pending=source.filter(a=>a['relevance_sci_'+role]===null||a['relevance_sci_'+role]===undefined)
     // Sort enriched by relevance desc, then year
     enriched.sort((a,b)=>{
-      const ra=parseInt(a['relevance_'+role]||0)
-      const rb=parseInt(b['relevance_'+role]||0)
+      const ra=parseInt(a['relevance_sci_'+role]||0)
+      const rb=parseInt(b['relevance_sci_'+role]||0)
       if(rb!==ra) return rb-ra
       return parseInt(b.year||0)-parseInt(a.year||0)
     })
