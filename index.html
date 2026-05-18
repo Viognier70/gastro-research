@@ -842,7 +842,8 @@ function renderFeed(){
   if(role!=='all'){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest
-      source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_creator||a.episteme_fbmanager||a.episteme_researcher)
+      const ecol = role==='all'?'sommelier':role
+      source=source.filter(a=>a['episteme_'+ecol]||a.episteme_sommelier)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default)
@@ -860,7 +861,7 @@ function renderFeed(){
   } else if(sort==='relevance'){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
-    source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_creator||a.episteme_fbmanager||a.episteme_researcher)
+    source=source.filter(a=>a.episteme_sommelier)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
