@@ -870,6 +870,9 @@ function renderFeed(){
   document.getElementById('feedCount').textContent=source.length+' articles'+(showingSaved?' (saved)':'')
   pane.innerHTML=source.slice(0,50).map((a,i)=>cardHTML(a,i)).join('')
   updateFreeBar()
+  const _at=document.getElementById('topicSel')?.value
+  if(_at&&_at!=='all'&&typeof loadSynthesis==='function') loadSynthesis(role,_at)
+  else{const sc=document.getElementById('synthContainer');if(sc)sc.innerHTML=''}
 }
 
 function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(loadArticles,400)}
