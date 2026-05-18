@@ -487,7 +487,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span class="upgrade-link" onclick="openModal('upgradeModal')">Upgrade to Pro</span>
     </div>
     <div class="feed-count" id="feedCount"></div>
-    <div id="feedPane"><div class="loading-state"><div class="spinner"></div><span>Loading research...</span></div></div>
+    <div id="synthContainer"></div>
+  <div id="feedPane"><div class="loading-state"><div class="spinner"></div><span>Loading research...</span></div></div>
   </div>
   <div class="sidebar">
     <div class="sidebar-section">
@@ -1263,6 +1264,7 @@ function applyTopicSelection(){
     document.getElementById('topicSel').value=[...selectedTopics][0]
   }
   loadArticles()
+  if(selectedTopics.size===1) loadSynthesis(role,[...selectedTopics][0])
   // Show selected topics as active filter
   const filterBar = document.querySelector('.toolbar')
   const existing = document.getElementById('activeTopicFilter')
@@ -2075,6 +2077,67 @@ function animateCount(el, target){
   let c=0, step=Math.ceil(target/60)
   const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('sv-SE');if(c>=target)clearInterval(timer)},25)
 }
+
+let _synthCache = {}
+let _synthExpanded = false
+
+async function loadSynthesis(role, topic){
+  if(!topic||topic==='all'||!role||role==='all') return
+  const key = role+'_'+topic
+  const container = document.getElementById('synthContainer')
+  if(!container) return
+
+  // Show loading
+  container.innerHTML = '<div class="synth-card synth-collapsed"><div class="synth-eyebrow"><span>⬡</span> Research Synthesis</div><div class="synth-loading">Generating synthesis for '+topic.replace(/_/g,' ')+'...</div></div>'
+
+  if(_synthCache[key]){
+    renderSynthesis(_synthCache[key], role, topic)
+    return
+  }
+
+  try {
+    const r = await fetch(SB_URL+'/functions/v1/synthesize', {
+      method:'POST',
+      headers:{...H,'Authorization':'Bearer '+SB_ANON_KEY},
+      body:JSON.stringify({role,topic})
+    })
+    const d = await r.json()
+    if(d.synthesis){
+      _synthCache[key] = d.synthesis
+      renderSynthesis(d.synthesis, role, topic)
+    } else {
+      container.innerHTML = ''
+    }
+  } catch(e){
+    container.innerHTML = ''
+  }
+}
+
+function renderSynthesis(s, role, topic){
+  const container = document.getElementById('synthContainer')
+  if(!container) return
+  const badge = s.evidence_strength||'moderate'
+  const collapsed = !_synthExpanded
+  container.innerHTML = '<div class="synth-card'+(collapsed?' synth-collapsed':'')+'">'+
+    '<div class="synth-eyebrow"><span style="color:var(--gold)">⬡</span> Research Synthesis · '+topic.replace(/_/g,' ')+'</div>'+
+    '<div class="synth-title">'+( s.title||'')+'</div>'+
+    '<div class="synth-section"><div class="synth-label conv">Convergence</div><div class="synth-text">'+(s.convergence||'')+'</div></div>'+
+    (s.divergence?'<div class="synth-section"><div class="synth-label div">Divergence</div><div class="synth-text">'+(s.divergence)+'</div></div>':'')+
+    '<div class="synth-section"><div class="synth-label syn">φ Synthesis for '+role+'</div><div class="synth-text">'+(s.synthesis_text||s.synthesis||'')+'</div></div>'+
+    '<div class="synth-footer">'+
+    '<span class="synth-badge '+badge+'">'+badge+' evidence</span>'+
+    '<span class="synth-count">'+(s.article_count||'')+ ' articles</span>'+
+    '<button class="synth-toggle" onclick="toggleSynth(this)">'+( collapsed?'Expand ↓':'Collapse ↑')+'</button>'+
+    '</div></div>'
+}
+
+function toggleSynth(btn){
+  const card = btn.closest('.synth-card')
+  const collapsed = card.classList.toggle('synth-collapsed')
+  btn.textContent = collapsed?'Expand ↓':'Collapse ↑'
+  _synthExpanded = !collapsed
+}
+
 function openTriad(){document.getElementById('triadOverlay').classList.add('open');document.body.style.overflow='hidden'}
 function closeTriad(){document.getElementById('triadOverlay').classList.remove('open');document.body.style.overflow=''}
 function toggleCard(el){
