@@ -842,7 +842,7 @@ function renderFeed(){
   if(role!=='all'){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest
-      source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_creator)
+      source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_creator||a.episteme_fbmanager||a.episteme_researcher)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default)
