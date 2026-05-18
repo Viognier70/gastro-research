@@ -423,7 +423,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- TOOLBAR -->
 <div class="toolbar">
-  <select class="filter-select" id="topicSel" onchange="loadArticles()">
+  <select class="filter-select" id="topicSel" onchange="loadArticles();const _t=this.value;if(_t&&_t!=='all')loadSynthesis(role,_t)">
     <option value="all">All topics</option>
     <option value="gastronomy">Gastronomy (794)</option>
     <option value="sommellerie">Sommellerie (319)</option>
