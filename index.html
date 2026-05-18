@@ -860,6 +860,7 @@ function renderFeed(){
   } else if(sort==='relevance'){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
+    source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_creator||a.episteme_fbmanager||a.episteme_researcher)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
