@@ -920,7 +920,7 @@ async function loadArticles(){
     }
     renderFeed()
     loadSidebar()
-    setTimeout(()=>loadSpotlight(), 200)
+    setTimeout(()=>loadSpotlight(), 800)
     checkOnboarding()
     loadMiniTicker()
   }catch(e){
@@ -1492,7 +1492,7 @@ const COUNTRY_FLAGS = {'Sweden':'🇸🇪','United Kingdom':'🇬🇧','United S
 function countryFlags(c){if(!c||!c.length)return '';return(Array.isArray(c)?c:[c]).slice(0,4).map(x=>COUNTRY_FLAGS[x]||'').filter(Boolean).join(' ')}
 
 // Init
-initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap().then(()=>renderLiveMap())})
+initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>loadSpotlight(),600)})
 </script>
 <!-- TRIAD MODAL — paste this block into index.html -->
 <!-- Add this CSS to the <style> section -->
