@@ -920,7 +920,7 @@ async function loadArticles(){
     }
     renderFeed()
     loadSidebar()
-    loadSpotlight()
+    setTimeout(()=>loadSpotlight(), 200)
     checkOnboarding()
     loadMiniTicker()
   }catch(e){
