@@ -841,6 +841,9 @@ function renderFeed(){
   // When role selected: filter to articles WITH relevance data for that role, sort by relevance
   if(role!=='all'){
     if(sort==='newest'){
+      // Only show articles with TRIAD when sorting newest
+      const col = role==='all'?'sommelier':role
+      source=source.filter(a=>a['episteme_'+col]||a['episteme_sommelier'])
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default)
