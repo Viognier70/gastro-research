@@ -910,7 +910,7 @@ async function loadArticles(){
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
-        url=`${SB_URL}/rest/v1/articles?select=${fields}&order=${sort==='newest'?'year.desc,fetched_at.desc':'year.desc,fetched_at.desc'}&limit=200`+(sort==='newest'?'&episteme_sommelier=not.is.null':'')
+        url=`${SB_URL}/rest/v1/articles?select=${fields}&order=relevance_sci_sommelier.desc.nullslast,year.desc&limit=200`+(sort==='newest'?'&episteme_sommelier=not.is.null':'')
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       }
@@ -2116,6 +2116,7 @@ async function loadSynthesis(role, topic){
 function renderSynthesis(s, role, topic){
   const container = document.getElementById('synthContainer')
   if(!container) return
+  setTimeout(()=>container.scrollIntoView({behavior:'smooth',block:'start'}),300)
   const badge = s.evidence_strength||'moderate'
   const collapsed = !_synthExpanded
   container.innerHTML = '<div class="synth-card'+(collapsed?' synth-collapsed':'')+'">'+
