@@ -2098,7 +2098,7 @@ async function loadSynthesis(role, topic){
   try {
     const r = await fetch(SB_URL+'/functions/v1/synthesize', {
       method:'POST',
-      headers:{...H,'Authorization':'Bearer '+SB_ANON_KEY},
+      headers:H,
       body:JSON.stringify({role,topic})
     })
     const d = await r.json()
