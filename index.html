@@ -2116,7 +2116,10 @@ async function loadSynthesis(role, topic){
 function renderSynthesis(s, role, topic){
   const container = document.getElementById('synthContainer')
   if(!container) return
-  setTimeout(()=>container.scrollIntoView({behavior:'smooth',block:'start'}),300)
+  setTimeout(()=>{
+    const feedArea = document.querySelector('.main-col') || document.querySelector('.feed-col') || container
+    feedArea.scrollIntoView({behavior:'smooth',block:'start'})
+  },300)
   const badge = s.evidence_strength||'moderate'
   const collapsed = !_synthExpanded
   container.innerHTML = '<div class="synth-card'+(collapsed?' synth-collapsed':'')+'">'+
