@@ -1920,9 +1920,8 @@ async function submitNewsletter(){
 
 async function loadSpotlight(){
   try {
-    const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
-    const colMap = {}
-    const col = colMap[role] || role
+    const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sensory_pro'
+    const col = role
     const r = await fetch(
       `${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,topic,episteme_${col},techne_${col},phronesis_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=relevance_sci_${col}.desc.nullslast,fetched_at.desc&limit=10`,
       {headers:H}
