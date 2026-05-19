@@ -412,12 +412,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- ROLE FILTER -->
 <div class="role-bar">
   <span class="role-label" id="roleLabel">For</span>
-  <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All professionals</button>
-  <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)">Sommelier</button>
-  <button class="role-chip" data-role="chef" onclick="setRole('chef',this)">Chef</button>
-  <button class="role-chip" data-role="creator" onclick="setRole('creator',this)">Meal creator</button>
-  <button class="role-chip" data-role="fbmanager" onclick="setRole('fbmanager',this)">F&amp;B Manager</button>
-  <button class="role-chip" data-role="researcher" onclick="setRole('researcher',this)">Researcher</button>
+  <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All</button>
+  <button class="role-chip" data-role="sensory_pro" onclick="setRole('sensory_pro',this)" title="Sommelier · Sensory scientist · Flavor technologist">Sensory Pro</button>
+  <button class="role-chip" data-role="culinary_pro" onclick="setRole('culinary_pro',this)" title="Chef · Pastry chef · Fermentation specialist">Culinary Pro</button>
+  <button class="role-chip" data-role="gastronomy_culture" onclick="setRole('gastronomy_culture',this)" title="Food anthropologist · Food stylist · Photographer">Gastronomy</button>
+  <button class="role-chip" data-role="hospitality_mgmt" onclick="setRole('hospitality_mgmt',this)" title="F&B Manager · Hotelier · Menu strategist">Hospitality</button>
+  <button class="role-chip" data-role="educator_researcher" onclick="setRole('educator_researcher',this)" title="Researcher · Culinary educator · Food scientist">Educator</button>
 
 </div>
 
@@ -2040,8 +2040,14 @@ function closeArticleModal(){document.getElementById('artOverlay').classList.rem
 
 var _obRole = null
 function selectObRole(el, role){
-  document.querySelectorAll('.ob-role').forEach(r=>r.classList.remove('selected'))
+  document.querySelectorAll('.ob-role').forEach(r=>{
+    r.classList.remove('selected')
+    const hex = r.querySelector('.ob-role-emoji')
+    if(hex) hex.textContent = '⬡'
+  })
   el.classList.add('selected')
+  const hex = el.querySelector('.ob-role-emoji')
+  if(hex) hex.textContent = '⬢'
   _obRole = role
   document.getElementById('obBtn').disabled = false
 }
