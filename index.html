@@ -2137,7 +2137,9 @@ function renderSynthesis(s, role, topic){
     '<span class="synth-badge '+badge+'">'+badge+' evidence</span>'+
     '<span class="synth-count">'+(s.article_count||'')+ ' articles</span>'+
     '<button class="synth-toggle" onclick="toggleSynth(this)">'+( collapsed?'Expand ↓':'Collapse ↑')+'</button>'+
-    '</div></div>'
+    '</div>'+
+    (s.references&&s.references.length?'<div style="margin-top:14px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,0.08)"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:8px">References</div>'+s.references.map((r,i)=>'<div style="font-size:10px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:4px">['+( i+1)+'] '+r+'</div>').join('')+'</div>':'')+
+    '</div>'
 }
 
 function toggleSynth(btn){
