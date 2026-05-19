@@ -1921,7 +1921,7 @@ async function submitNewsletter(){
 async function loadSpotlight(){
   try {
     const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
-    const colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
+    const colMap = {}
     const col = colMap[role] || role
     const r = await fetch(
       `${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,topic,episteme_${col},techne_${col},phronesis_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=relevance_sci_${col}.desc.nullslast,fetched_at.desc&limit=10`,
@@ -1991,7 +1991,7 @@ var _artTriad = 'e'
 
 async function fetchAndOpenModal(id){
   try {
-    const colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
+    const colMap = {}
     const cr = typeof currentRole!=='undefined'?currentRole:'sommelier'
     const col = colMap[cr]||cr||'sommelier'
     const r = await fetch(SB_URL+'/rest/v1/articles?select=*&id=eq.'+id,{headers:H})
@@ -2002,9 +2002,8 @@ async function fetchAndOpenModal(id){
 function openArticleModal(article){
   _artData = article
   _artTriad = 'e'
-  var colMap = {meal_creator:'creator',fb_manager:'waiter',pastry_chef:'pastry_chef'}
-  var cr = typeof currentRole!=='undefined' ? currentRole : 'sommelier'
-  var col = colMap[cr] || cr || 'sommelier'
+  var cr = typeof currentRole!=='undefined' && currentRole!=='all' ? currentRole : 'sensory_pro'
+  var col = cr
   document.getElementById('artBadges').innerHTML = '<span class="topic-badge">'+(article.topic||'').replace(/_/g,' ')+'</span>'+(article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+(article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
   document.getElementById('artTitle').innerHTML = (article.title || '').replace(/&#xa0;/gi,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
   document.getElementById('artMeta').innerHTML = [article.authors?article.authors.split(',')[0]:null,article.journal,article.year].filter(Boolean).join(' - ')
