@@ -843,8 +843,8 @@ function renderFeed(){
   if(role!=='all'){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest
-      const ecol = role==='all'?'sommelier':role
-      source=source.filter(a=>a['episteme_'+ecol]||a.episteme_sommelier)
+      const ecol = role==='all'?'sensory_pro':role
+      source=source.filter(a=>a['episteme_'+ecol]||a.episteme_sensory_pro)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default)
@@ -862,7 +862,7 @@ function renderFeed(){
   } else if(sort==='relevance'){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
-    source=source.filter(a=>a.episteme_sommelier)
+    source=source.filter(a=>a.episteme_sensory_pro||a.episteme_culinary_pro||a.episteme_gastronomy_culture||a.episteme_hospitality_mgmt||a.episteme_educator_researcher)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
@@ -884,14 +884,12 @@ async function loadArticles(){
   const pane=document.getElementById('feedPane')
   pane.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>'
 
-  const scenarioRoles = ['sommelier','chef','creator','waiter','educator','pastry_chef']
+  const scenarioRoles = []
   const hasScenario = scenarioRoles.includes(role)
   const triadCols=role==='all'
-    ? 'scenario_sommelier,episteme_sommelier,techne_sommelier,phronesis_sommelier'
-    : hasScenario
-      ? `scenario_${role},episteme_${role},techne_${role},phronesis_${role}`
-      : `episteme_${role},techne_${role},phronesis_${role}`
-  const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher' : `relevance_sci_${role}`
+    ? 'episteme_sensory_pro,techne_sensory_pro,phronesis_sensory_pro'
+    : `episteme_${role},techne_${role},phronesis_${role}`
+  const sciCols = role==='all' ? 'relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher' : `relevance_sci_${role}`
   const fields=`id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,${sciCols},${triadCols}`
 
   try {
