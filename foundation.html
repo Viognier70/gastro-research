@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Intellectual Foundation of TRIAD — Gusto Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0C0B09;
+  --white: #FDFCF8;
+  --warm: #F5F0E8;
+  --gold: #C9A84C;
+  --gold-light: rgba(201,168,76,0.12);
+  --episteme: #1A3A5C;
+  --techne: #2D5016;
+  --phronesis: #5C2D00;
+  --episteme-light: #E8EFF6;
+  --techne-light: #EAF0E5;
+  --phronesis-light: #F5EDE3;
+  --text: #2A2520;
+  --text-mid: #6B5E50;
+  --text-faint: #9C9080;
+  --border: rgba(44,37,32,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box }
+
+body {
+  background: var(--white);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  background: rgba(253,252,248,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  color: var(--black);
+  text-decoration: none;
+}
+.nav-logo span { color: var(--gold); font-weight: 300; letter-spacing: .2em; font-size: 11px; margin-left: 6px; text-transform: uppercase; }
+.nav-back {
+  font-size: 12px;
+  color: var(--text-mid);
+  text-decoration: none;
+  letter-spacing: .06em;
+}
+.nav-back:hover { color: var(--gold) }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 120px 48px 80px;
+  background: var(--black);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 60% 40% at 20% 60%, rgba(26,58,92,0.3) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(92,45,0,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(45,80,22,0.1) 0%, transparent 70%);
+}
+
+.hero-triangle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.04;
+}
+
+.hero-eyebrow {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp .8s ease .2s forwards;
+}
+
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(42px, 6vw, 84px);
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1.1;
+  max-width: 800px;
+  opacity: 0;
+  animation: fadeUp .8s ease .4s forwards;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.5);
+  max-width: 560px;
+  margin-top: 24px;
+  line-height: 1.8;
+  opacity: 0;
+  animation: fadeUp .8s ease .6s forwards;
+}
+
+.hero-triad {
+  display: flex;
+  gap: 32px;
+  margin-top: 48px;
+  opacity: 0;
+  animation: fadeUp .8s ease .8s forwards;
+}
+
+.triad-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  border: 0.5px solid;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+}
+.triad-pill.e { border-color: rgba(26,58,92,0.6); background: rgba(26,58,92,0.15); color: #A8C4E0; }
+.triad-pill.t { border-color: rgba(45,80,22,0.6); background: rgba(45,80,22,0.15); color: #A8D4A0; }
+.triad-pill.p { border-color: rgba(92,45,0,0.6); background: rgba(92,45,0,0.15); color: #E0C090; }
+.triad-pill-sym { font-family: 'IM Fell English', serif; font-size: 16px; }
+
+.scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeUp .8s ease 1.2s forwards;
+}
+.scroll-hint span { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+.scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, rgba(201,168,76,0.6), transparent); animation: scrollPulse 2s ease-in-out infinite; }
+
+/* GENEALOGY SECTION */
+.section {
+  padding: 120px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 48px;
+  color: var(--black);
+}
+
+/* TIMELINE */
+.timeline {
+  position: relative;
+  padding: 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 140px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--border) 5%, var(--border) 95%, transparent);
+}
+
+.timeline-era {
+  margin-bottom: 80px;
+}
+
+.era-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-left: 160px;
+  margin-bottom: 32px;
+}
+
+.thinker {
+  display: grid;
+  grid-template-columns: 120px 40px 1fr;
+  gap: 0 20px;
+  margin-bottom: 40px;
+  align-items: start;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+
+.thinker.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.thinker-year {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: right;
+  padding-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.thinker-dot {
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+  position: relative;
+}
+
+.thinker-dot::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--gold);
+  flex-shrink: 0;
+}
+
+.thinker.episteme .thinker-dot::before { border-color: var(--episteme); background: var(--episteme-light); }
+.thinker.techne .thinker-dot::before { border-color: var(--techne); background: var(--techne-light); }
+.thinker.phronesis .thinker-dot::before { border-color: var(--phronesis); background: var(--phronesis-light); }
+.thinker.all .thinker-dot::before { border-color: var(--gold); background: var(--gold-light); }
+
+.thinker-content {}
+
+.thinker-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.thinker-work {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.thinker-text {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.75;
+  max-width: 560px;
+}
+
+.thinker-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+.tag.e { background: var(--episteme-light); color: var(--episteme); }
+.tag.t { background: var(--techne-light); color: var(--techne); }
+.tag.p { background: var(--phronesis-light); color: var(--phronesis); }
+
+/* DOUBLE GRIP SECTION */
+.double-grip {
+  background: var(--black);
+  padding: 120px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.double-grip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.double-grip-text .section-label { color: var(--gold); }
+.double-grip-text .section-title { color: var(--white); }
+
+.double-grip-text p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.9;
+  margin-bottom: 20px;
+}
+
+.double-grip-text blockquote {
+  border-left: 2px solid var(--gold);
+  padding-left: 20px;
+  margin: 24px 0;
+  font-family: 'IM Fell English', serif;
+  font-size: 17px;
+  color: rgba(255,255,255,0.8);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.double-grip-text cite {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  font-style: normal;
+  letter-spacing: .06em;
+}
+
+.triangle-vis {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tri-svg { width: 100%; max-width: 360px; }
+
+/* CRICHTON-FOCK SECTION */
+.cf-section {
+  padding: 120px 48px;
+  background: var(--warm);
+  border-top: 0.5px solid var(--border);
+}
+
+.cf-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.cf-inner .section-label { text-align: center; }
+.cf-inner .section-title { text-align: center; margin-bottom: 32px; }
+
+.cf-text {
+  font-size: 15px;
+  color: var(--text-mid);
+  line-height: 1.9;
+  margin-bottom: 24px;
+}
+
+.cf-references {
+  margin-top: 48px;
+  text-align: left;
+  border-top: 0.5px solid var(--border);
+  padding-top: 32px;
+}
+
+.cf-ref {
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.8;
+  margin-bottom: 8px;
+  padding-left: 20px;
+  text-indent: -20px;
+}
+
+/* FOOTER */
+footer {
+  background: var(--black);
+  padding: 48px;
+  text-align: center;
+}
+
+footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gold);
+  text-decoration: none;
+  border: 0.5px solid rgba(201,168,76,0.3);
+  padding: 10px 24px;
+  border-radius: 24px;
+}
+
+footer a:hover { background: rgba(201,168,76,0.08); }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  nav { padding: 16px 20px; }
+  .hero { padding: 100px 20px 60px; }
+  .hero-triad { flex-wrap: wrap; gap: 10px; }
+  .section { padding: 80px 20px; }
+  .timeline::before { left: 100px; }
+  .thinker { grid-template-columns: 80px 30px 1fr; gap: 0 12px; }
+  .era-label { padding-left: 120px; }
+  .double-grip { padding: 80px 20px; }
+  .double-grip-inner { grid-template-columns: 1fr; gap: 48px; }
+  .cf-section { padding: 80px 20px; }
+  footer { padding: 40px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Gusto <span>Science</span></a>
+  <a href="/" class="nav-back">← Back to research</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  
+  <svg class="hero-triangle" width="600" height="520" viewBox="0 0 600 520">
+    <polygon points="300,20 20,500 580,500" fill="none" stroke="white" stroke-width="1"/>
+    <circle cx="300" cy="20" r="8" fill="none" stroke="white" stroke-width="1"/>
+    <circle cx="20" cy="500" r="8" fill="none" stroke="white" stroke-width="1"/>
+    <circle cx="580" cy="500" r="8" fill="none" stroke="white" stroke-width="1"/>
+    <text x="300" y="10" text-anchor="middle" fill="white" font-size="11" font-family="Georgia">ε</text>
+    <text x="10" y="520" text-anchor="middle" fill="white" font-size="11" font-family="Georgia">τ</text>
+    <text x="590" y="520" text-anchor="middle" fill="white" font-size="11" font-family="Georgia">φ</text>
+  </svg>
+
+  <div class="hero-eyebrow">The Philosophical Foundation of TRIAD</div>
+  
+  <h1 class="hero-title">
+    Two and a half millennia<br>of thinking about <em>how</em><br>professionals know.
+  </h1>
+  
+  <p class="hero-sub">
+    From Socrates to Crichton-Fock — the intellectual genealogy behind the TRIAD model and its application to gastronomy and professional practice.
+  </p>
+
+  <div class="hero-triad">
+    <div class="triad-pill e"><span class="triad-pill-sym">ε</span> Episteme — What science proves</div>
+    <div class="triad-pill t"><span class="triad-pill-sym">τ</span> Techne — How craft realises</div>
+    <div class="triad-pill p"><span class="triad-pill-sym">φ</span> Phronesis — Where judgment integrates</div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="section">
+  <div class="section-label">Intellectual Genealogy</div>
+  <h2 class="section-title">The thinkers who shaped<br>how we understand professional knowledge</h2>
+
+  <div class="timeline">
+
+    <!-- ANTIQUITY -->
+    <div class="timeline-era">
+      <div class="era-label">Antiquity</div>
+
+      <div class="thinker all">
+        <div class="thinker-year">470–399 BCE</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Socrates</div>
+          <div class="thinker-work">Dialogues (via Plato)</div>
+          <p class="thinker-text">"I know that I know nothing." The Socratic method — maieutics — does not transfer knowledge but draws it forth through dialogue. Professional knowledge is not received; it is generated through conscious questioning of practice. The beginning of all TRIAD thinking.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span><span class="tag e">Episteme</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">496–406 BCE</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Sophocles — Antigone</div>
+          <div class="thinker-work">Antigone, c. 441 BCE</div>
+          <p class="thinker-text">Antigone chooses the unwritten right over the written law — phronesis over episteme. The professional practitioner faces the same paradox: when the situation demands a decision that transcends the manual, written protocol, or established rule. Excellence requires the courage of situated judgment.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">384–322 BCE</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Aristotle</div>
+          <div class="thinker-work">Nicomachean Ethics, c. 350 BCE</div>
+          <p class="thinker-text">The origin. Aristotle distinguishes three irreducible forms of knowledge: Episteme (universal, demonstrable, scientific), Techne (productive craft, skill, repeatable), and Phronesis (practical wisdom, situational judgment, ethical). No single form is sufficient. Professional excellence requires all three — in dynamic tension.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENLIGHTENMENT -->
+    <div class="timeline-era">
+      <div class="era-label">Enlightenment & Modernity</div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1596–1650</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">René Descartes</div>
+          <div class="thinker-work">Meditations on First Philosophy, 1641</div>
+          <p class="thinker-text">The mind/body dualism that TRIAD overcomes. Descartes separates thinking from bodily experience — episteme from techne and phronesis. The TRIAD model insists they cannot be separated in professional practice: the sommelier's knowledge lives in the body, the hand, the nose, not only the mind.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1713–1784</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Denis Diderot</div>
+          <div class="thinker-work">Paradoxe sur le comédien, c. 1773</div>
+          <p class="thinker-text">The double grip in its purest form. The great actor must simultaneously feel and not feel — be inside the role and outside it, both technically precise and emotionally present. Diderot's paradox is the professional practitioner's paradox: the chef, the sommelier, the educator must be analytically rigorous and aesthetically responsive at the same moment. This is the origin of what Crichton-Fock develops as the double grip.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1828–1906</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Henrik Ibsen</div>
+          <div class="thinker-work">The Wild Duck, Hedda Gabler, The Master Builder</div>
+          <p class="thinker-text">The hidden beneath the surface — what is unsaid drives action. Professional knowledge is never fully explicit. The practitioner reads what is not on the menu, hears what is not ordered, senses what the guest cannot articulate. Ibsen's theatre is a school of situated perception.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1854–1900</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Oscar Wilde</div>
+          <div class="thinker-work">The Decay of Lying, 1889; De Profundis, 1897</div>
+          <p class="thinker-text">"Life imitates Art far more than Art imitates Life." Aesthetic sensibility as a form of knowledge — not decoration, not entertainment, but a distinct epistemic mode. For Wilde, the capacity to perceive beauty is cognitive, not merely emotional. Phronesis in the dining room is aesthetic judgment as much as ethical judgment.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 20TH CENTURY -->
+    <div class="timeline-era">
+      <div class="era-label">20th Century</div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1868–1963</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">John Dewey</div>
+          <div class="thinker-work">Art as Experience, 1934; Experience and Education, 1938</div>
+          <p class="thinker-text">Knowledge is constituted in and through practice — the pragmatic-constitutive position. Experience is not the application of prior knowledge; it is where knowledge is formed. Dewey's aesthetic theory insists that the experience of art — like the experience of a great meal — is a complete cognitive act, not a passive reception.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1879–1955</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Albert Einstein — Picasso</div>
+          <div class="thinker-work">Relativity, 1905 · Les Demoiselles d'Avignon, 1907</div>
+          <p class="thinker-text">Cubism and relativity emerge simultaneously — multi-perspectival truth. The same object, seen from multiple simultaneous positions, reveals what no single perspective can. TRIAD is cubist epistemology: the same research article, translated into three simultaneous dimensions of professional knowledge, reveals what no single reading can.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1889–1951</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Ludwig Wittgenstein</div>
+          <div class="thinker-work">Philosophical Investigations, 1953</div>
+          <p class="thinker-text">"Meaning is use." Knowledge does not exist prior to practice — it is constituted in the language games of a form of life. The sommelier's vocabulary is not a description of wine; it is the wine, for practical purposes. To change how professionals speak about their practice is to change the practice itself. The TRIAD model gives gastronomy a new language game.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1906–1943</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Simone Weil</div>
+          <div class="thinker-work">Gravity and Grace, 1947; Waiting for God, 1950</div>
+          <p class="thinker-text">"Attention is the rarest and purest form of generosity." Weil's concept of attention — complete, selfless, present — is the ethical core of phronesis. The practitioner who truly attends to the guest, the dish, the moment, is performing an ethical act, not merely a professional one. Excellence is attention.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1912–1954</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Alan Turing</div>
+          <div class="thinker-work">Computing Machinery and Intelligence, 1950</div>
+          <p class="thinker-text">"Can machines think?" Turing's question defines TRIAD's boundary. Machines can compute episteme — accumulate, pattern-match, and translate scientific knowledge. But phronesis — situated, embodied, ethical judgment in the unrepeatable moment — remains irreducibly human. Gusto Science uses AI to generate episteme and techne so practitioners can focus on what only they can do: phronesis.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1906–1989</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Samuel Beckett</div>
+          <div class="thinker-work">Waiting for Godot, 1953; Worstward Ho, 1983</div>
+          <p class="thinker-text">"Ever tried. Ever failed. No matter. Try again. Fail again. Fail better." Techne is the practice of failing better — the craft that develops through repetition with reflection. Each service, each preparation, each evaluation is unique and unrepeatable (phronesis) but built on accumulated practice (techne). Beckett's absurdism is the phenomenology of professional development.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1891–1976</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Michael Polanyi</div>
+          <div class="thinker-work">Personal Knowledge, 1958; The Tacit Dimension, 1966</div>
+          <p class="thinker-text">"We know more than we can tell." Tacit knowledge — the knowledge in the hands, the body, the trained perception — cannot be fully articulated. The master sommelier knows more than she can write down. The great chef does more than any recipe captures. Polanyi's insight grounds the phronesis dimension of TRIAD: some professional knowledge resists codification, but it can be cultivated through practice and reflection.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1916–2003</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Georg Henrik von Wright</div>
+          <div class="thinker-work">Norm and Action, 1963; Explanation and Understanding, 1971</div>
+          <p class="thinker-text">Wittgenstein's successor at Cambridge. Von Wright distinguishes causal explanation (episteme — the scientist's mode) from teleological understanding (phronesis — the practitioner's mode). Science explains; practice understands. The TRIAD model holds both: Episteme explains, Techne applies, Phronesis understands the whole in the moment of action.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1930–</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Pierre Bourdieu</div>
+          <div class="thinker-work">Outline of a Theory of Practice, 1972; The Logic of Practice, 1980</div>
+          <p class="thinker-text">Habitus — the body knows. Practice is not the execution of rules but the embodied disposition accumulated through experience. The professional practitioner does not consciously apply knowledge; she is that knowledge, in her body, her movements, her perceptions. Bourdieu's habitus is the sociological grounding of phronesis.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1934–2025</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Donald Schön</div>
+          <div class="thinker-work">The Reflective Practitioner, 1983</div>
+          <p class="thinker-text">Knowing-in-action and reflection-in-action — the practitioner generates knowledge through practice, not before it. Schön's reflective practitioner is the archetype TRIAD aims to cultivate: a professional who can articulate, examine, and develop their tacit knowledge through conscious reflection. The TRIAD model is a tool for making reflection-in-action possible.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1946–</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Marina Abramović</div>
+          <div class="thinker-work">The Artist is Present, MoMA 2010</div>
+          <p class="thinker-text">"The hardest thing is to do something which is close to nothing." Pure presence as artistic form — the body as the instrument of knowledge. Abramović's performance art is phronesis made visible: complete attention, complete presence, complete responsibility for the unrepeatable moment. The practitioner who achieves this in service, in the kitchen, in the classroom, achieves excellence.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">c. 1974–</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Banksy</div>
+          <div class="thinker-work">Street art, anonymous, global</div>
+          <p class="thinker-text">Context as meaning. Banksy's art demonstrates that where knowledge appears transforms what it means. The same research finding, presented to a sommelier or a food scientist or a restaurateur, means something different — not because the science changes, but because the context of application transforms its meaning. The TRIAD model is a context engine: it makes the same episteme mean differently for different practitioners.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- APPLICATION -->
+    <div class="timeline-era">
+      <div class="era-label">Application to Gastronomy</div>
+
+      <div class="thinker all">
+        <div class="thinker-year">2024</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Anders Crichton-Fock</div>
+          <div class="thinker-work">The TRIAD Model — Applied Epistemology for Gastronomy, Örebro University</div>
+          <p class="thinker-text">The double grip: where scientific rigour and aesthetic sensibility converge into professional mastery. Crichton-Fock applies Aristotle's three forms of knowledge to gastronomy as a living framework for professional development. The practitioner who develops all three simultaneously — who can read the science, execute the craft, and exercise situated judgment — achieves a form of excellence that no single dimension alone can produce. Gusto Science is the infrastructure for this development.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- DOUBLE GRIP -->
+<section class="double-grip">
+  <div class="double-grip-inner">
+    <div class="double-grip-text">
+      <div class="section-label">The Double Grip</div>
+      <h2 class="section-title" style="color:var(--white)">Where science<br>meets aesthetic<br>judgment</h2>
+      
+      <p>The double grip is Crichton-Fock's central contribution: the insight that professional excellence in gastronomy requires holding scientific knowledge and aesthetic sensibility simultaneously — not alternating between them, but integrating them in the moment of practice.</p>
+
+      <blockquote>
+        "The great actor must feel the emotion fully and yet remain perfectly in control. He must be inside the role and outside it simultaneously."
+        <br><cite>— Denis Diderot, Paradoxe sur le comédien, c. 1773</cite>
+      </blockquote>
+
+      <p>Diderot's paradox, applied to gastronomy: the sommelier who pours with complete technical precision while remaining fully present to the guest's unspoken response. The chef who executes the recipe flawlessly while remaining responsive to the living ingredients. The educator who commands the research while remaining genuinely open to the student's emerging understanding.</p>
+
+      <blockquote>
+        "We know more than we can tell."
+        <br><cite>— Michael Polanyi, The Tacit Dimension, 1966</cite>
+      </blockquote>
+
+      <p>The double grip is what allows the practitioner to act on what they know but cannot fully articulate — to be guided by tacit knowledge while remaining accountable to explicit knowledge. This is the space TRIAD inhabits.</p>
+    </div>
+
+    <div class="triangle-vis">
+      <svg class="tri-svg" viewBox="0 0 360 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gE" cx="50%" cy="0%" r="80%">
+            <stop offset="0%" stop-color="#1A3A5C" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#1A3A5C" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gT" cx="0%" cy="100%" r="80%">
+            <stop offset="0%" stop-color="#2D5016" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#2D5016" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gP" cx="100%" cy="100%" r="80%">
+            <stop offset="0%" stop-color="#5C2D00" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#5C2D00" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        
+        <!-- Triangle fill -->
+        <polygon points="180,20 20,290 340,290" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        
+        <!-- Colored glows at vertices -->
+        <circle cx="180" cy="20" r="60" fill="url(#gE)"/>
+        <circle cx="20" cy="290" r="60" fill="url(#gT)"/>
+        <circle cx="340" cy="290" r="60" fill="url(#gP)"/>
+        
+        <!-- Center point -->
+        <circle cx="180" cy="200" r="4" fill="rgba(201,168,76,0.6)"/>
+        <circle cx="180" cy="200" r="12" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
+        
+        <!-- Lines to center -->
+        <line x1="180" y1="20" x2="180" y2="200" stroke="rgba(201,168,76,0.1)" stroke-width="1" stroke-dasharray="3,4"/>
+        <line x1="20" y1="290" x2="180" y2="200" stroke="rgba(201,168,76,0.1)" stroke-width="1" stroke-dasharray="3,4"/>
+        <line x1="340" y1="290" x2="180" y2="200" stroke="rgba(201,168,76,0.1)" stroke-width="1" stroke-dasharray="3,4"/>
+        
+        <!-- Vertex labels -->
+        <text x="180" y="12" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#A8C4E0">ε</text>
+        <text x="180" y="8" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" dy="16">EPISTEME</text>
+        
+        <text x="12" y="286" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#A8D4A0">τ</text>
+        <text x="12" y="282" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" dy="16">TECHNE</text>
+        
+        <text x="348" y="286" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#E0C090">φ</text>
+        <text x="348" y="282" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" dy="16">PHRONESIS</text>
+        
+        <!-- Center label -->
+        <text x="180" y="215" text-anchor="middle" font-family="'Outfit',sans-serif" font-size="8" fill="rgba(201,168,76,0.6)" letter-spacing="2">THE DOUBLE GRIP</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- CRICHTON-FOCK -->
+<section class="cf-section">
+  <div class="cf-inner">
+    <div class="section-label">The Application</div>
+    <h2 class="section-title">Crichton-Fock & The TRIAD Model</h2>
+    
+    <p class="cf-text">
+      The TRIAD model is not an abstract philosophical framework — it is a practical tool for professional development in gastronomy. Developed by Anders Crichton-Fock at Örebro University, it applies Aristotle's three forms of knowledge to the lived reality of professional practice: the sommelier at the table, the chef at the pass, the educator in the classroom, the researcher at the bench.
+    </p>
+    
+    <p class="cf-text">
+      The double grip — the simultaneous holding of scientific rigour and aesthetic sensibility — is the condition of excellence. Not scientific knowledge applied to practice, not aesthetic sensibility informed by science, but both at once: the unrepeatable moment in which the practitioner integrates what she knows, what she can do, and what the situation demands.
+    </p>
+
+    <p class="cf-text">
+      Gusto Science is the infrastructure for developing this capacity. 66 726 research articles, translated into three dimensions of professional knowledge, available for every profession in gastronomy — so that the practitioner can build the knowledge base from which excellence can grow.
+    </p>
+
+    <div class="cf-references">
+      <p class="cf-ref">Aristotle. (trans. 2000). <em>Nicomachean Ethics</em>. (R. Crisp, Trans.). Cambridge University Press.</p>
+      <p class="cf-ref">Beckett, S. (1983). <em>Worstward Ho</em>. Grove Press.</p>
+      <p class="cf-ref">Bourdieu, P. (1980). <em>The Logic of Practice</em>. (R. Nice, Trans.). Stanford University Press.</p>
+      <p class="cf-ref">Crichton-Fock, A. (2024). <em>The TRIAD Model: Applied epistemology for gastronomy</em>. Örebro University.</p>
+      <p class="cf-ref">Dewey, J. (1934). <em>Art as Experience</em>. Minton, Balch & Company.</p>
+      <p class="cf-ref">Diderot, D. (1830). <em>Paradoxe sur le comédien</em>. (W. H. Pollock, Trans.). Chatto & Windus.</p>
+      <p class="cf-ref">Herdenstam, A. (2011, 2024). <em>Sensory evaluation and professional knowledge in wine</em>.</p>
+      <p class="cf-ref">Polanyi, M. (1966). <em>The Tacit Dimension</em>. Doubleday.</p>
+      <p class="cf-ref">Schön, D. A. (1983). <em>The Reflective Practitioner</em>. Basic Books.</p>
+      <p class="cf-ref">Turing, A. M. (1950). Computing machinery and intelligence. <em>Mind, 59</em>(236), 433–460.</p>
+      <p class="cf-ref">von Wright, G. H. (1971). <em>Explanation and Understanding</em>. Cornell University Press.</p>
+      <p class="cf-ref">Weil, S. (1947). <em>Gravity and Grace</em>. (E. Crawford, Trans.). Routledge.</p>
+      <p class="cf-ref">Wittgenstein, L. (1953). <em>Philosophical Investigations</em>. (G. E. M. Anscombe, Trans.). Blackwell.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a href="/">← Return to Research Intelligence</a>
+</footer>
+
+<script>
+// Intersection Observer for timeline animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible')
+    }
+  })
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' })
+
+document.querySelectorAll('.thinker').forEach((el, i) => {
+  el.style.transitionDelay = (i % 3) * 0.1 + 's'
+  observer.observe(el)
+})
+</script>
+
+</body>
+</html>
