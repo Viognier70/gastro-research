@@ -2184,6 +2184,28 @@ function toggleCard(el){
 .nl-success h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:8px}
 .nl-success p{font-size:13px;color:var(--text-secondary);line-height:1.7}
 .nl-error{font-size:12px;color:#993C1D;margin-top:8px;display:none}
+
+/* SYNTHESIS CARD */
+.synth-card{background:linear-gradient(135deg,var(--black) 0%,#1A1208 100%);border:0.5px solid rgba(201,168,76,0.3);border-radius:12px;padding:24px 28px;margin-bottom:20px;position:relative;overflow:hidden}
+.synth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--episteme),var(--techne),var(--phronesis))}
+.synth-eyebrow{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.synth-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);margin-bottom:16px;line-height:1.4}
+.synth-section{margin-bottom:12px}
+.synth-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.synth-label.conv{color:#A8C4E0}
+.synth-label.div{color:#E0B890}
+.synth-label.syn{color:var(--gold)}
+.synth-text{font-size:12px;line-height:1.75;color:rgba(255,255,255,0.75)}
+.synth-footer{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:0.5px solid rgba(255,255,255,0.1)}
+.synth-badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600}
+.synth-badge.strong{background:rgba(40,160,80,0.2);color:#6DD98C}
+.synth-badge.moderate{background:rgba(201,168,76,0.15);color:var(--gold)}
+.synth-badge.emerging{background:rgba(100,100,200,0.15);color:#A8B8E0}
+.synth-count{font-size:11px;color:rgba(255,255,255,0.4)}
+.synth-collapsed .synth-section{display:none}
+.synth-collapsed .synth-footer{border:none;margin-top:8px;padding-top:0}
+.synth-toggle{font-size:11px;color:var(--gold);background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;margin-left:auto;padding:0}
+.synth-loading{text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:12px}
 </style>
 
 <!-- HTML — paste before </body> -->
