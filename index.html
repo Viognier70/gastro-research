@@ -2216,6 +2216,10 @@ function toggleCard(el){
 .synth-collapsed .synth-footer{border:none;margin-top:8px;padding-top:0}
 .synth-toggle{font-size:11px;color:var(--gold);background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;margin-left:auto;padding:0}
 .synth-loading{text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:12px}
+
+.role-sub{display:none!important;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--black);border:0.5px solid var(--border-mid);border-radius:6px;padding:6px 10px;font-size:10px;color:var(--text-tertiary);white-space:nowrap;z-index:200;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.role-chip{position:relative!important}
+.role-chip:hover .role-sub{display:block!important}
 </style>
 
 <!-- HTML — paste before </body> -->
