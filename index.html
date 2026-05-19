@@ -2108,6 +2108,8 @@ async function loadSynthesis(role, topic){
     if(d.synthesis){
       _synthCache[key] = d.synthesis
       renderSynthesis(d.synthesis, role, topic)
+    } else if(d.error === 'insufficient_articles'){
+      container.innerHTML = '<div class="synth-card" style="opacity:0.6"><div class="synth-eyebrow">⬡ Research Synthesis · '+topic.replace(/_/g,' ')+'</div><div style="font-size:12px;color:rgba(255,255,255,0.5);padding:8px 0">Synthesis will be available when more articles for this topic have been analysed. Check back shortly.</div></div>'
     } else {
       container.innerHTML = ''
     }
