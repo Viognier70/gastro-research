@@ -378,13 +378,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- HERO -->
 <div class="hero">
   <div class="hero-eyebrow" id="heroEyebrow">Research intelligence for culinary professionals</div>
-  <h1 class="hero-title" id="heroTitle">Where <em>science</em><br>meets the table</h1>
-  <p class="hero-sub" id="heroSub">Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates thousands of research studies into three forms of professional knowledge: <em>Episteme</em> (the science, via IMRaD), <em>Techne</em> (practical application in your profession), and <em>Phronesis</em> (ethical and aesthetic judgment). Select your profession to begin.</p>
+  <h1 class="hero-title" id="heroTitle">New gastronomy research,<br><em>every day.</em></h1>
+  <p class="hero-sub" id="heroSub">Translated into three dimensions of professional knowledge — through the TRIAD model. Based on Aristotle's epistemology, developed for gastronomy by Crichton-Fock (2024). Select your profession and a research area to generate your synthesis.</p>
   <div class="hero-stats">
-    <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles indexed</div></div>
-    <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">topic areas</div></div>
+    <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
+    <div class="stat-item"><div class="stat-num" id="triadCount">—</div><div class="stat-label">TRIAD analyses</div></div>
+    <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">research areas</div></div>
     <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">professions</div></div>
-    <div class="stat-item"><div class="stat-num" id="newCount" style="font-size:12px;padding-top:6px"></div></div>
   </div>
 </div>
 
@@ -953,6 +953,10 @@ async function loadCounts(){
   try{
     const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
+    // TRIAD count
+    const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+    const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
+    if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal)}
     if(total>0) animateCount(document.getElementById('totalCount'), total).toLocaleString()
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
