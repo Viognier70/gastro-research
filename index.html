@@ -2220,6 +2220,86 @@ function toggleCard(el){
 .role-sub{display:none!important;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--black);border:0.5px solid var(--border-mid);border-radius:6px;padding:6px 10px;font-size:10px;color:var(--text-tertiary);white-space:nowrap;z-index:200;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
 .role-chip{position:relative!important}
 .role-chip:hover .role-sub{display:block!important}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  /* TOPBAR */
+  .topbar{padding:10px 16px;gap:8px}
+  .topbar-logo{font-size:14px}
+  .topbar-actions{gap:8px}
+  .topbar-actions .btn{display:none}
+  .topbar-lang{display:none}
+
+  /* SPOTLIGHT */
+  .spotlight-section{padding:12px 16px 0}
+  .spotlight-grid{grid-template-columns:1fr;gap:10px}
+  .spotlight-card{padding:16px}
+
+  /* TRIAD BANNER */
+  .triad-banner-row{flex-wrap:wrap;gap:12px;padding:12px 16px}
+  .triad-banner-items{flex-wrap:wrap;gap:12px}
+
+  /* HERO */
+  .hero{padding:32px 16px 28px}
+  .hero-title{font-size:28px!important}
+  .hero-sub{font-size:13px}
+  .hero-stats{gap:16px;flex-wrap:wrap}
+  .stat-item{min-width:calc(50% - 8px)}
+
+  /* KNOWLEDGE MAP */
+  #knowledgeMapSection{padding:16px}
+  #liveKnowledgeMap{height:320px!important}
+
+  /* TRIAD BAR */
+  .filter-bar{padding:10px 16px;gap:8px;flex-wrap:wrap}
+  .triad-desc{display:none}
+
+  /* ROLE BAR */
+  .role-bar{padding:8px 16px;gap:6px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+  .role-chip{white-space:nowrap;flex-shrink:0;font-size:11px;padding:5px 12px}
+  .role-sub{display:none!important}
+
+  /* TOOLBAR */
+  .toolbar{padding:8px 16px;gap:6px;flex-wrap:wrap}
+  .filter-select{font-size:12px;padding:5px 8px}
+  .search-wrap{width:100%;min-width:unset;max-width:unset;order:5}
+
+  /* MAIN LAYOUT */
+  .main-layout{grid-template-columns:1fr;padding:12px 16px;gap:0}
+  .feed-pane{order:1}
+  .sidebar{display:none}
+
+  /* ARTICLE CARDS */
+  .card{padding:16px}
+  .card-title{font-size:15px}
+  .keywords-row{display:none}
+
+  /* SYNTHESIS CARD */
+  .synth-card{padding:16px 18px}
+  .synth-title{font-size:15px}
+
+  /* MODALS */
+  .art-panel{border-radius:8px;margin:8px}
+  .art-header{padding:20px 20px 16px}
+  .art-body{padding:16px 20px 24px}
+  .art-title{font-size:17px}
+
+  .ob-panel{padding:24px 20px;margin:16px;border-radius:12px}
+  .ob-roles{grid-template-columns:1fr}
+  .ob-title{font-size:20px}
+
+  /* FREE BAR */
+  .free-bar{padding:8px 16px}
+
+  /* TICKER */
+  .mini-ticker{height:34px}
+}
+
+@media(max-width:480px){
+  .hero-title{font-size:24px!important}
+  .stat-item{min-width:calc(50% - 8px)}
+  .triad-banner-items{gap:8px}
+}
 </style>
 
 <!-- HTML — paste before </body> -->
