@@ -938,9 +938,6 @@ async function loadSidebar(){
     if(data.journals) document.getElementById('journalList').innerHTML=data.journals.map(([j,c])=>`<div class="journal-item" onclick="filterJournal('${j.replace(/'/g,"\\'")}')"><span class="journal-name" title="${j}">${j}</span><span class="journal-count">${c}</span></div>`).join('')
   }catch(e){console.log('sidebar error',e)}
 }
-    document.getElementById('topicList').innerHTML=Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([t,c])=>`<div class="topic-item" onclick="filterTopic('${t}')"><div class="topic-dot"></div><span class="topic-name">${t.replace(/_/g,' ')}</span><span class="topic-count">${c}</span></div>`).join('')
-    document.getElementById('journalList').innerHTML=Object.entries(journals).sort((a,b)=>b[1]-a[1]).map(([j,c])=>`<div class="journal-item" onclick="filterJournal('${j.replace(/'/g,"\'")}')"><span class="journal-name" title="${j}">${j}</span><span class="journal-count">${c}</span></div>`).join('')
-  }catch(e){console.log('sidebar error',e)}
 
 async function loadCounts(){
   try{
