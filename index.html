@@ -995,7 +995,7 @@ async function loadCounts(){
     const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
     const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
     const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
-    const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=total.toLocaleString('sv-SE')
+    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE')
     const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' this week'
     const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE')
     const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
