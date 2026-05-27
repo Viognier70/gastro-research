@@ -859,10 +859,11 @@ function renderFeed(){
       pending.sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
       source=[...enriched,...pending]
     }
-  } else if(sort==='relevance'){
+ } else if(sort==='relevance'){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
-    source=source.filter(a=>a.episteme_sensory_pro||a.episteme_culinary_pro||a.episteme_gastronomy_culture||a.episteme_hospitality_mgmt||a.episteme_educator_researcher)
+    const isSearching=document.getElementById('searchInput').value.trim().length>1
+    if(!isSearching) source=source.filter(a=>a.episteme_sensory_pro||a.episteme_culinary_pro||a.episteme_gastronomy_culture||a.episteme_hospitality_mgmt||a.episteme_educator_researcher)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
