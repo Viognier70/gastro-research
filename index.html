@@ -899,9 +899,7 @@ async function loadArticles(){
   try {
     if(search && search.length > 1) {
       // SEARCH MODE: query entire database
-      const s=search.replace(/[%_]/g,' ').trim()
-      let url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(title.ilike.*${s}*,authors.ilike.*${s}*,journal.ilike.*${s}*)&order=year.desc&limit=200`
-      if(topic!=='all') url+=`&topic=eq.${topic}`
+      let url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(title.ilike.*${search.replace(/[%_]/g,' ').trim()}*,authors.ilike.*${search.replace(/[%_]/g,' ').trim()}*,journal.ilike.*${search.replace(/[%_]/g,' ').trim()}*)&order=year.desc&limit=200`
       if(src!=='all') url+=`&source=eq.${src}`
       const r=await fetch(url,{headers:H})
       articles=await r.json()
