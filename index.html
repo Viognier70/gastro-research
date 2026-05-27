@@ -712,7 +712,7 @@ function setRole(r,btn){
 
 function getRelevanceScore(a){
   if(role==='all') return 0
-  return Math.min(10, parseInt(a['relevance_'+role]||0))
+  return Math.min(10, parseInt(a['relevance_sci_'+role]||a['relevance_'+role]||0))
 }
 
 function triadBlock(text,label,bc,bg,lc){
