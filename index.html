@@ -687,7 +687,8 @@ const SB_URL='https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_ANON='sb_publishable_sUKpqF-yquV4ny_VDi6V7g_7YgB4s-s'
 const STRIPE_PK='pk_live_51PESII01M2w13V3npDEvdbuNBFhxkMS81hr5AxeSD7jFTsqKdJ0JbHPLyla10n2dwmVFhlexjGDQHYg6vXGiNUWI00hxMg0oKb'
 const H={'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON}
-const FREE_LIMIT=10
+const FREE_LIMIT=3
+function checkTrialReset(){const today=new Date().toDateString();const last=localStorage.getItem("gs_free_date");if(last!==today){localStorage.setItem("gs_free_date",today);localStorage.removeItem("gs_free_used")}}
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
 // Debug: test API connection
@@ -1617,22 +1618,26 @@ initAuth().then(()=>{loadArticles();loadCounts();loadKnowledgeMap().then(()=>ren
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
-    <div class="ob-title">Research intelligence for your profession</div>
-    <div class="ob-sub">Thousands of research studies translated into three forms of professional knowledge — for your specific profession.</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
-      <div style="padding:12px;border-radius:8px;background:#E8EFF6;border-left:3px solid var(--episteme)">
-        <div style="font-size:11px;font-weight:700;color:var(--episteme);margin-bottom:4px">ε Episteme</div>
-        <div style="font-size:11px;color:#2A4A6C;line-height:1.5">What science has proven — the universal truth behind the research</div>
-      </div>
-      <div style="padding:12px;border-radius:8px;background:#EAF0E5;border-left:3px solid var(--techne)">
-        <div style="font-size:11px;font-weight:700;color:var(--techne);margin-bottom:4px">τ Techne</div>
-        <div style="font-size:11px;color:#2D5016;line-height:1.5">How to apply it — concrete skills and methods for your daily work</div>
-      </div>
-      <div style="padding:12px;border-radius:8px;background:#F5EDE3;border-left:3px solid var(--phronesis)">
-        <div style="font-size:11px;font-weight:700;color:var(--phronesis);margin-bottom:4px">φ Phronesis</div>
-        <div style="font-size:11px;color:#5C2D00;line-height:1.5">The moment of judgment — where knowledge becomes lived experience</div>
-      </div>
+    <div class="ob-title">Research intelligence<br>for your profession</div>
+    <div class="ob-sub">319,000+ research studies translated into three dimensions of professional knowledge. Start your 14-day free trial.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
+      <div style="padding:12px;border-radius:8px;background:#E8EFF6;border-left:3px solid var(--episteme)"><div style="font-size:10px;font-weight:700;color:var(--episteme);margin-bottom:4px">ε Episteme</div><div style="font-size:11px;color:#2A4A6C;line-height:1.5">What science knows</div></div>
+      <div style="padding:12px;border-radius:8px;background:#EAF0E5;border-left:3px solid var(--techne)"><div style="font-size:10px;font-weight:700;color:var(--techne);margin-bottom:4px">τ Techne</div><div style="font-size:11px;color:#2D5016;line-height:1.5">How to apply it</div></div>
+      <div style="padding:12px;border-radius:8px;background:#F5EDE3;border-left:3px solid var(--phronesis)"><div style="font-size:10px;font-weight:700;color:var(--phronesis);margin-bottom:4px">φ Phronesis</div><div style="font-size:11px;color:#5C2D00;line-height:1.5">Where judgment integrates</div></div>
     </div>
+    <div class="ob-roles">
+      <div class="ob-role" onclick="selectObRole(this,'sensory_pro')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sensory Pro</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'culinary_pro')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Culinary Pro</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'gastronomy_culture')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Gastronomy</div><div class="ob-role-desc">Food anthropologist · Food stylist · Photographer</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'hospitality_mgmt')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Hospitality</div><div class="ob-role-desc">F&B Manager · Hotelier · Menu strategist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'educator_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Educator</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
+    </div>
+    <input type="email" id="obEmail" placeholder="Your email address" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:12px;outline:none;background:var(--white)">
+    <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Start 14-day free trial →</button>
+    <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px">No credit card required · Cancel anytime</div>
+    <div class="ob-skip" onclick="closeOnboarding()">Skip — browse without trial</div>
+  </div>
+</div>
     <div class="ob-roles">
       <div class="ob-role" onclick="selectObRole(this,'sommelier')">
         <span class="ob-role-emoji">⬡</span>
@@ -2080,30 +2085,31 @@ function closeArticleModal(){document.getElementById('artOverlay').classList.rem
 
 
 var _obRole = null
-function selectObRole(el, role){
-  document.querySelectorAll('.ob-role').forEach(r=>{
-    r.classList.remove('selected')
-    const hex = r.querySelector('.ob-role-emoji')
-    if(hex) hex.textContent = '⬡'
-  })
+function selectObRole(el,r){
+  document.querySelectorAll('.ob-role').forEach(x=>{x.classList.remove('selected');const h=x.querySelector('.ob-role-emoji');if(h)h.textContent='⬡'})
   el.classList.add('selected')
-  const hex = el.querySelector('.ob-role-emoji')
-  if(hex) hex.textContent = '⬢'
-  _obRole = role
-  document.getElementById('obBtn').disabled = false
+  const h=el.querySelector('.ob-role-emoji');if(h)h.textContent='⬢'
+  _obRole=r
+  document.getElementById('obBtn').disabled=false
 }
 function confirmObRole(){
   if(!_obRole) return
-  const roleMap = {meal_creator:'creator',fb_manager:'fbmanager',pastry_chef:'chef',food_photographer:'sommelier',hotelier:'fbmanager'}
-  const feedRole = roleMap[_obRole] || _obRole
-  localStorage.setItem('gs_role', feedRole)
-  localStorage.setItem('gs_onboarded', '1')
+  const email=document.getElementById('obEmail')?.value?.trim()
+  const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
+  const feedRole=roleMap[_obRole]||_obRole
+  localStorage.setItem('gs_role',feedRole)
+  localStorage.setItem('gs_onboarded','1')
+  if(email&&email.includes('@')){
+    localStorage.setItem('gs_trial_start',Date.now().toString())
+    localStorage.setItem('gs_email',email)
+    isPro=true
+    fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/weekly-newsletter',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_ANON},body:JSON.stringify({subscribe:true,email,roles:[feedRole]})}).catch(()=>{})
+  }
   closeOnboarding()
   setTimeout(()=>{
-    const roleBtn = document.querySelector('.role-chip[data-role="'+feedRole+'"]')
+    const roleBtn=document.querySelector('.role-chip[data-role="'+feedRole+'"]')
     if(roleBtn) roleBtn.click()
-    else if(typeof setRole==='function') setRole(feedRole)
-  }, 100)
+  },100)
 }
 function closeOnboarding(){
   document.getElementById('obOverlay').classList.remove('open')
@@ -2111,14 +2117,18 @@ function closeOnboarding(){
   localStorage.setItem('gs_onboarded','1')
 }
 function checkOnboarding(){
+  checkTrialReset()
+  const trialStart=localStorage.getItem('gs_trial_start')
+  if(trialStart){
+    const daysLeft=14-Math.floor((Date.now()-parseInt(trialStart))/(1000*60*60*24))
+    if(daysLeft>0){isPro=true;const bar=document.getElementById('freeBar');if(bar)bar.innerHTML='<div style="font-size:11px;color:var(--gold)">✓ Pro trial — '+daysLeft+' days remaining</div><span class="upgrade-link" onclick="openModal(\'upgradeModal\')">Subscribe →</span>';return}
+    else{isPro=false}
+  }
   if(!localStorage.getItem('gs_onboarded')){
-    setTimeout(()=>{
-      document.getElementById('obOverlay').classList.add('open')
-      document.body.style.overflow='hidden'
-    }, 800)
+    setTimeout(()=>{document.getElementById('obOverlay').classList.add('open');document.body.style.overflow='hidden'},800)
   } else {
-    const savedRole = localStorage.getItem('gs_role')
-    if(savedRole && typeof currentRole!=='undefined') currentRole = savedRole
+    const savedRole=localStorage.getItem('gs_role')
+    if(savedRole){role=savedRole;document.querySelectorAll('.role-chip').forEach(b=>{b.classList.toggle('on',b.dataset.role===savedRole)})}
   }
 }
 
