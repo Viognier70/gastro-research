@@ -125,7 +125,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .study-badge{font-size:10px;color:var(--text-tertiary);border:0.5px solid var(--border-mid);padding:2px 8px;border-radius:10px}
 .relevance-badge{font-size:10px;color:var(--gold);background:rgba(201,168,76,.1);padding:2px 8px;border-radius:10px;font-weight:500}
 .card-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:400;line-height:1.35;margin-bottom:8px;color:var(--text-primary)}
-.card-insight{font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:0;font-weight:300}
+.card-insight{font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:0;font-weight:300}.gusto-headline{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.gusto-headline::before{content:'';width:16px;height:1px;background:var(--gold);flex-shrink:0}
+.headline-text{font-family:'Playfair Display',serif;font-size:18px;font-weight:500;line-height:1.3;color:var(--text-primary);margin-bottom:6px}
+.original-title{font-size:12px;color:var(--text-tertiary);font-style:italic;margin-bottom:8px;line-height:1.4}
 
 /* TRIAD BLOCKS */
 .triad-section{margin-top:12px;display:grid;gap:8px}
@@ -757,7 +760,7 @@ function cardHTML(a,idx){
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
       ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 · ${roleName}</span>`:''}
     </div>
-    <div class="card-title">${a.title||''}</div>
+    ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gusto Science</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}</div>
     ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''} ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
     ${keywords.length>0&&!locked?`<div class="keywords-row">${keywords.map(k=>`<span class="keyword-tag" onclick="document.getElementById('searchInput').value='${k}';debounceSearch()">${k}</span>`).join('')}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
