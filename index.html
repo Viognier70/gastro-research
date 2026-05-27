@@ -387,6 +387,42 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
     <div class="stat-item"><div class="stat-num" id="triadCount">—</div><div class="stat-label">TRIAD analyses</div></div>
     <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">research areas</div></div>
+<!-- DATABASE STATUS -->
+<div style="border-bottom:0.5px solid var(--border);padding:24px 32px;background:var(--white)">
+  <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:16px">Database status — live</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:0.5px solid var(--border);border-radius:10px;overflow:hidden">
+    <div style="padding:16px 20px;border-right:0.5px solid var(--border)">
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbTotal">—</div>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">Articles tracked<br><span style="color:var(--gold)" id="dbNew"></span></div>
+    </div>
+    <div style="padding:16px 20px;border-right:0.5px solid var(--border)">
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbAnalyzed">—</div>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">Content analysed<br><span style="color:var(--text-tertiary)">core claim · keywords · study type</span></div>
+    </div>
+    <div style="padding:16px 20px;border-right:0.5px solid var(--border)">
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbRelevant">—</div>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">Relevant for gastronomy<br><span style="color:var(--text-tertiary)">relevance scored per profession</span></div>
+    </div>
+    <div style="padding:16px 20px">
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbTriad">—</div>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">TRIAD scenarios created<br><span style="color:var(--text-tertiary)">episteme · techne · phronesis</span></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:0.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
+    <div style="padding:12px 20px;border-right:0.5px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#2D5016;flex-shrink:0"></div>
+      <div><span style="font-size:13px;font-weight:500" id="dbConvergence">—</span> <span style="font-size:11px;color:var(--text-tertiary)">convergent findings</span></div>
+    </div>
+    <div style="padding:12px 20px;border-right:0.5px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#993C1D;flex-shrink:0"></div>
+      <div><span style="font-size:13px;font-weight:500" id="dbDivergence">—</span> <span style="font-size:11px;color:var(--text-tertiary)">divergent findings</span></div>
+    </div>
+    <div style="padding:12px 20px;display:flex;align-items:center;gap:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>
+      <div style="font-size:11px;color:var(--text-tertiary)">Scopus · PubMed · OpenAlex · arXiv · Semantic Scholar</div>
+    </div>
+  </div>
+</div> 
     <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">professions</div></div>
   </div>
 </div>
@@ -953,6 +989,19 @@ async function loadCounts(){
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
     if(newCount>0) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
+    const [r4,r5,r6,r7,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&relevance_sci_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-7*24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
+    const analyzed=parseInt(r4.headers.get('content-range')?.split('/')[1]||'0')
+    const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
+    const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
+    const synthStats=await r7.json()
+    const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
+    const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=total.toLocaleString('sv-SE')
+    const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' this week'
+    const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE')
+    const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
+    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE')
+    const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
+    const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
   }catch(e){}
 }
 
