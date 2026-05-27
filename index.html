@@ -918,8 +918,6 @@ async function loadArticles(){
         if(src!=='all') url+=`&source=eq.${src}`
       }
       const r=await fetch(url,{headers:H})
-      const r=await fetch(url,{headers:H})
-      articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
     }
     renderFeed()
