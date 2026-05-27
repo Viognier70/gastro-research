@@ -992,6 +992,7 @@ async function loadCounts(){
     const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&relevance_sci_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-7*24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
     const synthResp=await fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const synthStats=await synthResp.json()
+    const analyzed=parseInt(r4.headers.get("content-range")?.split("/")[1]||"0")
     const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
     const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
     const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
