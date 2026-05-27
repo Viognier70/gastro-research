@@ -984,7 +984,7 @@ async function loadCounts(){
     const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal)}
-    if(total>0) animateCount(document.getElementById('totalCount'), total).toLocaleString()
+    if(total>0) animateCount(document.getElementById('totalCount'), total)
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
