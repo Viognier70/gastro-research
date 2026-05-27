@@ -1003,7 +1003,7 @@ async function loadCounts(){
     const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE')
     const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
     const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
-  }catch(e){}
+  }catch(e){console.error("loadCounts error:",e)}
 }
 
 function filterTopic(topic){document.getElementById('topicSel').value=topic;loadArticles()}
