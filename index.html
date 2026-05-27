@@ -1186,7 +1186,7 @@ function renderTopicGraph(){
   const cx = w/2, cy = h/2
   const r = role === 'all' ? 'all' : role
   const data = TOPIC_DATA[r] || TOPIC_DATA.all
-  const roleNames = {all:'Gastronomy',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator'}
+  const roleNames = {all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   
   document.getElementById('graphTitle').textContent = roleNames[r] + ' — Knowledge map'
   document.getElementById('graphEyebrow').textContent = 'Research topics for ' + roleNames[r]
