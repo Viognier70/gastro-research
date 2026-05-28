@@ -1019,7 +1019,7 @@ async function loadCounts(){
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
     if(newCount>0&&document.getElementById('newCount')) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
-    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-7*24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
+    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
     const synthResp=await fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const synthStats=await synthResp.json()
     const analyzed=parseInt(r4.headers.get("content-range")?.split("/")[1]||"0")
@@ -1027,7 +1027,7 @@ async function loadCounts(){
     const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
     const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
     const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE')
-    const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' this week'
+    const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' new today'
     const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE')
     const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
     const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE')
@@ -1661,43 +1661,14 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
       <div class="ob-role" onclick="selectObRole(this,'hospitality_mgmt')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Hospitality</div><div class="ob-role-desc">F&B Manager · Hotelier · Menu strategist</div></div></div>
       <div class="ob-role" onclick="selectObRole(this,'educator_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Educator</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
     </div>
-    <input type="email" id="obEmail" placeholder="Your email address" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:12px;outline:none;background:var(--white)">
+    <input type="email" id="obEmail" placeholder="Your email address" oninput="checkObReady()" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:12px;outline:none;background:var(--white)">
     <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Start 14-day free trial →</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px">No credit card required · Cancel anytime</div>
     <div class="ob-skip" onclick="closeOnboarding()">Skip — browse without trial</div>
   </div>
 </div>
-    <div class="ob-roles">
-      <div class="ob-role" onclick="selectObRole(this,'sommelier')">
-        <span class="ob-role-emoji">⬡</span>
-        <div><div class="ob-role-name">Sommelier</div><div class="ob-role-desc">Sommelier & wine bar owner</div></div>
-      </div>
-      <div class="ob-role" onclick="selectObRole(this,'chef')">
-        <span class="ob-role-emoji">⬡</span>
-        <div><div class="ob-role-name">Chef</div><div class="ob-role-desc">Chef, pastry chef & culinary arts</div></div>
-      </div>
 
-      <div class="ob-role" onclick="selectObRole(this,'meal_creator')">
-        <span class="ob-role-emoji">⬡</span>
-        <div><div class="ob-role-name">Meal Creator</div><div class="ob-role-desc">Meal creator & service staff</div></div>
-      </div>
-      <div class="ob-role" onclick="selectObRole(this,'fb_manager')">
-        <span class="ob-role-emoji">⬡</span>
-        <div><div class="ob-role-name">F&B Manager</div><div class="ob-role-desc">Operations & strategy</div></div>
-      </div>
 
-      <div class="ob-role" onclick="selectObRole(this,'researcher')">
-        <span class="ob-role-emoji">⬡</span>
-        <div><div class="ob-role-name">Researcher</div><div class="ob-role-desc">Academic & industry</div></div>
-      </div>
-
-    </div>
-    <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Show me the research →</button>
-    <div class="ob-skip" onclick="closeOnboarding()">Skip — browse all professions</div>
-  </div>
-</div>
-
-</body>
 
 <!-- CSS — add to <style> section -->
 <style id="newsletter-modal-styles">
