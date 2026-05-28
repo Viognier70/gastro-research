@@ -452,11 +452,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="role-bar">
   <span class="role-label" id="roleLabel">For</span>
   <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All</button>
-  <button class="role-chip" data-role="sensory_pro" onclick="setRole('sensory_pro',this)" title="Sommelier · Sensory scientist · Flavor technologist">Sensory Pro<span class="role-sub">Sommelier · Sensory scientist · Flavor technologist</span></button>
-  <button class="role-chip" data-role="culinary_pro" onclick="setRole('culinary_pro',this)" title="Chef · Pastry chef · Fermentation specialist">Culinary Pro<span class="role-sub">Chef · Pastry chef · Fermentation specialist</span></button>
-  <button class="role-chip" data-role="gastronomy_culture" onclick="setRole('gastronomy_culture',this)" title="Food anthropologist · Food stylist · Photographer">Gastronomy<span class="role-sub">Food anthropologist · Food stylist · Photographer</span></button>
-  <button class="role-chip" data-role="hospitality_mgmt" onclick="setRole('hospitality_mgmt',this)" title="F&B Manager · Hotelier · Menu strategist">Hospitality<span class="role-sub">F&B Manager · Hotelier · Menu strategist</span></button>
-  <button class="role-chip" data-role="educator_researcher" onclick="setRole('educator_researcher',this)" title="Researcher · Culinary educator · Food scientist">Educator<span class="role-sub">Researcher · Culinary educator · Food scientist</span></button>
+  <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)" title="Sommelier · Sensory scientist · Flavor technologist">Sommelier<span class="role-sub">Sommelier · Sensory scientist · Flavor technologist</span></button>
+  <button class="role-chip" data-role="chef" onclick="setRole('chef',this)" title="Chef · Pastry chef · Fermentation specialist">Chef<span class="role-sub">Chef · Pastry chef · Fermentation specialist</span></button>
+  <button class="role-chip" data-role="gastronomy" onclick="setRole('gastronomy',this)" title="Food anthropologist · Food stylist · Photographer">Gastronomy<span class="role-sub">Food anthropologist · Food stylist · Photographer</span></button>
+  <button class="role-chip" data-role="fb_manager" onclick="setRole('fb_manager',this)" title="F&B Manager · Hotelier · Menu strategist">F&amp;B Manager<span class="role-sub">F&amp;B Manager · Hotelier · Menu strategist</span></button>
+  <button class="role-chip" data-role="food_researcher" onclick="setRole('food_researcher',this)" title="Researcher · Culinary educator · Food scientist">Food Researcher<span class="role-sub">Researcher · Culinary educator · Food scientist</span></button>
 
 </div>
 
@@ -714,7 +714,7 @@ const T={
     sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',
     forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
     freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
-    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',researcher:'Researcher',fbmanager:'F&B Manager',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
+    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   },
   sv:{
     eyebrow:'Forskningsintelligens för kulinariska proffs',
@@ -722,7 +722,7 @@ const T={
     sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen), Techne (praktisk tillämpning) och Phronesis (omdöme). Välj din yrkesroll för att börja.',
     forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
     freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
-    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Utbildare',researcher:'Forskare',fbmanager:'F&B Manager',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sensorisk Pro',culinary_pro:'Kulinarisk Pro',gastronomy_culture:'Gastronomi',hospitality_mgmt:'Hospitality',educator_researcher:'Utbildare'}
+    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Gastronomi',fb_manager:'F&B Manager',food_researcher:'Forskare',sensory_pro:'Sensorisk Pro',culinary_pro:'Kulinarisk Pro',gastronomy_culture:'Gastronomi',hospitality_mgmt:'Hospitality',educator_researcher:'Utbildare'}
   }
 }
 
@@ -757,7 +757,9 @@ function setRole(r,btn){
 
 function getRelevanceScore(a){
   if(role==='all') return 0
-  return Math.min(10, parseInt(a['relevance_sci_'+role]||a['relevance_'+role]||0))
+  const colMap={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}
+  const rkey=colMap[role]||role
+  return Math.min(10, parseInt(a['relevance_sci_'+rkey]||a['relevance_sci_'+role]||a['relevance_'+role]||0))
 }
 
 function triadBlock(text,label,bc,bg,lc){
@@ -776,7 +778,7 @@ function cardHTML(a,idx){
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
   const isSaved=savedArticleIds.has(a.id)
-  const r=role==='all'?'sensory_pro':role
+  const r=role==='all'?'sommelier':role
   const roleName=t('roles')[r]||r
   const ep=a['episteme_'+r]||''
   const tc=a['techne_'+r]||a['scenario_'+r]||''
@@ -893,11 +895,13 @@ function renderFeed(){
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default)
-      const enriched=source.filter(a=>a['relevance_sci_'+role]!==null&&a['relevance_sci_'+role]!==undefined&&parseInt(a['relevance_sci_'+role])>0)
+      const enriched=source.filter(a=>{const rk=({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'})[role]||role;return (a['relevance_sci_'+rk]!=null&&parseInt(a['relevance_sci_'+rk])>0)||(a['relevance_sci_'+role]!=null&&parseInt(a['relevance_sci_'+role])>0)})
       const pending=source.filter(a=>a['relevance_sci_'+role]===null||a['relevance_sci_'+role]===undefined)
       enriched.sort((a,b)=>{
-        const ra=parseInt(a['relevance_sci_'+role]||0)
-        const rb=parseInt(b['relevance_sci_'+role]||0)
+        const _cm={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}
+        const _rk=_cm[role]||role
+        const ra=Math.max(parseInt(a['relevance_sci_'+_rk]||0),parseInt(a['relevance_sci_'+role]||0))
+        const rb=Math.max(parseInt(b['relevance_sci_'+_rk]||0),parseInt(b['relevance_sci_'+role]||0))
         if(rb!==ra) return rb-ra
         return parseInt(b.year||0)-parseInt(a.year||0)
       })
@@ -934,8 +938,10 @@ async function loadArticles(){
   const hasScenario = scenarioRoles.includes(role)
   const triadCols=role==='all'
     ? 'episteme_sensory_pro,techne_sensory_pro,phronesis_sensory_pro'
-    : `episteme_${role},techne_${role},phronesis_${role}`
-  const sciCols = role==='all' ? 'relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher' : `relevance_sci_${role}`
+    : `episteme_${rkey2},techne_${rkey2},phronesis_${rkey2},bridge_episteme_techne_${rkey2},bridge_techne_phronesis_${rkey2},episteme_${role},techne_${role},phronesis_${role}`
+  const colMap2={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}
+  const rkey2=colMap2[role]||role
+  const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher' : `relevance_sci_${rkey2},relevance_sci_${role}`
   const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,${sciCols},${triadCols}`
   try {
     if(search && search.length > 1) {
@@ -951,7 +957,7 @@ async function loadArticles(){
       let url
       if(role!=='all'){
         // Get top articles by relevance for this role
-        url=`${SB_URL}/rest/v1/articles?select=${fields}&order=${`relevance_sci_${role}`}.desc.nullslast,fetched_at.desc&limit=200`
+        url=`${SB_URL}/rest/v1/articles?select=${fields}&order=relevance_sci_${rkey2}.desc.nullslast,relevance_sci_${role}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
@@ -1216,7 +1222,7 @@ function renderTopicGraph(){
   const cx = w/2, cy = h/2
   const r = role === 'all' ? 'all' : role
   const data = TOPIC_DATA[r] || TOPIC_DATA.all
-  const roleNames = {all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
+  const roleNames = {all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   
   document.getElementById('graphTitle').textContent = roleNames[r] + ' — Knowledge map'
   document.getElementById('graphEyebrow').textContent = 'Research topics for ' + roleNames[r]
@@ -1655,11 +1661,11 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
       <div style="padding:12px;border-radius:8px;background:#F5EDE3;border-left:3px solid var(--phronesis)"><div style="font-size:10px;font-weight:700;color:var(--phronesis);margin-bottom:4px">φ Phronesis</div><div style="font-size:11px;color:#5C2D00;line-height:1.5">Where judgment integrates</div></div>
     </div>
     <div class="ob-roles">
-      <div class="ob-role" onclick="selectObRole(this,'sensory_pro')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sensory Pro</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'culinary_pro')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Culinary Pro</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'gastronomy_culture')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Gastronomy</div><div class="ob-role-desc">Food anthropologist · Food stylist · Photographer</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'hospitality_mgmt')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Hospitality</div><div class="ob-role-desc">F&B Manager · Hotelier · Menu strategist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'educator_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Educator</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'sommelier')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sommelier</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'chef')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Chef</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'gastronomy')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Gastronomy</div><div class="ob-role-desc">Food anthropologist · Food stylist · Photographer</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">F&amp;B Manager</div><div class="ob-role-desc">F&amp;B Manager · Hotelier · Menu strategist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
     </div>
     <input type="email" id="obEmail" placeholder="Your email address" oninput="checkObReady()" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:12px;outline:none;background:var(--white)">
     <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Start 14-day free trial →</button>
@@ -2095,7 +2101,7 @@ function selectObRole(el,r){
 function confirmObRole(){
   if(!_obRole) return
   const email=document.getElementById('obEmail')?.value?.trim()
-  const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
+  const roleMap={meal_creator:'chef',pastry_chef:'chef',food_photographer:'gastronomy',hotelier:'fb_manager',sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}
   const feedRole=roleMap[_obRole]||_obRole
   localStorage.setItem('gs_role',feedRole)
   localStorage.setItem('gs_onboarded','1')
