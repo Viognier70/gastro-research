@@ -936,11 +936,11 @@ async function loadArticles(){
 
   const scenarioRoles = []
   const hasScenario = scenarioRoles.includes(role)
+  const colMap2={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}
+  const rkey2=colMap2[role]||role
   const triadCols=role==='all'
     ? 'episteme_sensory_pro,techne_sensory_pro,phronesis_sensory_pro'
     : `episteme_${rkey2},techne_${rkey2},phronesis_${rkey2},bridge_episteme_techne_${rkey2},bridge_techne_phronesis_${rkey2},episteme_${role},techne_${role},phronesis_${role}`
-  const colMap2={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}
-  const rkey2=colMap2[role]||role
   const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher' : `relevance_sci_${rkey2},relevance_sci_${role}`
   const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,${sciCols},${triadCols}`
   try {
