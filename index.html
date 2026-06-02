@@ -742,8 +742,8 @@ function updateTexts(){
 }
 function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
-  document.getElementById('freeText').textContent=t('freeLeft',remaining)
-  document.getElementById('freeFill').style.width=Math.round((freeCount/FREE_LIMIT)*100)+'%'
+  const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=t('freeLeft',remaining)
+  const _ff=document.getElementById('freeFill');if(_ff)_ff.style.width=Math.round((freeCount/FREE_LIMIT)*100)+'%'
   document.getElementById('freeBar').style.display=isPro?'none':'flex'
 }
 
