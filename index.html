@@ -1650,6 +1650,14 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
   </div>
 </div>
 
+<script>
+var _obRole = null
+function checkObReady(){
+  const email=document.getElementById('obEmail')?.value?.trim()
+  const btn=document.getElementById('obBtn')
+  if(btn) btn.disabled=!(_obRole&&email&&email.includes('@'))
+}
+</script>
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
