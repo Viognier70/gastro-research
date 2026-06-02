@@ -645,6 +645,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <li>IMRaD analysis and full abstracts</li>
       <li>Weekly research digest for your profession</li>
       <li>Save and organise your research</li>
+      <li>Weekly research digest for your profession</li>
       <li>New articles added daily</li>
     </ul>
     <div class="price-row">
@@ -1647,6 +1648,10 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
   </div>
 </div>
 
+<script>
+var _obRole=null
+function checkObReady(){var e=document.getElementById('obEmail')?.value?.trim();var b=document.getElementById('obBtn');if(b)b.disabled=!(_obRole&&e&&e.includes('@'))}
+</script>
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
@@ -1658,11 +1663,11 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
       <div style="padding:12px;border-radius:8px;background:#F5EDE3;border-left:3px solid var(--phronesis)"><div style="font-size:10px;font-weight:700;color:var(--phronesis);margin-bottom:4px">φ Phronesis</div><div style="font-size:11px;color:#5C2D00;line-height:1.5">Where judgment integrates</div></div>
     </div>
     <div class="ob-roles">
-      <div class="ob-role" onclick="selectObRole(this,'sensory_pro')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sensory Pro</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'culinary_pro')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Culinary Pro</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'gastronomy_culture')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Gastronomy</div><div class="ob-role-desc">Food anthropologist · Food stylist · Photographer</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'hospitality_mgmt')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Hospitality</div><div class="ob-role-desc">F&B Manager · Hotelier · Menu strategist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'educator_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Educator</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'sommelier')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sommelier</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'chef')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Chef</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'gastronomy')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Gastronomy</div><div class="ob-role-desc">Food anthropologist · Food stylist · Photographer</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">F&amp;B Manager</div><div class="ob-role-desc">F&amp;B Manager · Hotelier · Menu strategist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
     </div>
     <input type="email" id="obEmail" placeholder="Your email address" oninput="checkObReady()" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:12px;outline:none;background:var(--white)">
     <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Start 14-day free trial →</button>
@@ -2093,7 +2098,7 @@ function selectObRole(el,r){
   el.classList.add('selected')
   const h=el.querySelector('.ob-role-emoji');if(h)h.textContent='⬢'
   _obRole=r
-  document.getElementById('obBtn').disabled=false
+  checkObReady()
 }
 function confirmObRole(){
   if(!_obRole) return
