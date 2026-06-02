@@ -2101,7 +2101,7 @@ function selectObRole(el,r){
   el.classList.add('selected')
   const h=el.querySelector('.ob-role-emoji');if(h)h.textContent='⬢'
   _obRole=r
-  document.getElementById('obBtn').disabled=false
+  checkObReady()
 }
 function confirmObRole(){
   if(!_obRole) return
