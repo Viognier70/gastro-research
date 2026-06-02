@@ -1650,14 +1650,6 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
   </div>
 </div>
 
-<script>
-var _obRole = null
-function checkObReady(){
-  const email=document.getElementById('obEmail')?.value?.trim()
-  const btn=document.getElementById('obBtn')
-  if(btn) btn.disabled=!(_obRole&&email&&email.includes('@'))
-}
-</script>
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
@@ -2099,6 +2091,11 @@ function closeArticleModal(){document.getElementById('artOverlay').classList.rem
 
 
 var _obRole = null
+function checkObReady(){
+  const email=document.getElementById('obEmail')?.value?.trim()
+  const btn=document.getElementById('obBtn')
+  if(btn) btn.disabled=!(_obRole&&email&&email.includes('@'))
+}
 function selectObRole(el,r){
   document.querySelectorAll('.ob-role').forEach(x=>{x.classList.remove('selected');const h=x.querySelector('.ob-role-emoji');if(h)h.textContent='⬡'})
   el.classList.add('selected')
