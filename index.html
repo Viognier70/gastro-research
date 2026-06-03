@@ -1995,7 +1995,9 @@ async function submitNewsletter(){
 
 async function loadSpotlight(){
   try {
-    const spotRole = typeof role !== 'undefined' ? role : 'sommelier'
+    const _activeChip = document.querySelector('.role-chip.on')
+    const _chipRole = _activeChip ? _activeChip.dataset.role : 'all'
+    const spotRole = _chipRole
     const col = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}[role]||role
     const ROLES_META = [
       {key:'sommelier',label:'Sommelier',rc:'relevance_sci_sommelier'},
