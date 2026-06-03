@@ -2024,12 +2024,14 @@ async function loadSpotlight(){
       const rawH = (a.headline_en||a.title||'').slice(0,90)
       const headline = /[?!]$/.test(rawH.trim()) ? rawH : (i%2===0 ? rawH+'?' : rawH+'!')
       const ingress = (a.core_claim||'').slice(0,160)
-      const body = (a['episteme_'+col]||a['techne_'+col]||'').slice(0,200)
+      const epCol=a._rk||col
+      const body=(a['episteme_'+epCol]||a['techne_'+epCol]||'').slice(0,200)
+      const roleTag=a._rl?'<span style="font-size:9px;font-weight:700;background:rgba(201,168,76,.25);color:var(--gold);padding:2px 8px;border-radius:10px;margin-right:4px">'+a._rl+'</span>':''
       const topic = (a.topic||'').replace(/_/g,' ')
       const journal = (a.journal||'').slice(0,32)
       const isLead = i===0
       return `<div class="spotlight-card nyt-card${isLead?' nyt-lead':''}" onclick="fetchAndOpenModal('${a.id}')">`+
-        `<div class="nyt-topic">${topic}${a.year?' · '+a.year:''}</div>`+
+        `<div class="nyt-topic">${roleTag}${topic}${a.year?' · '+a.year:''}</div>`+
         `<div class="nyt-headline">${headline}</div>`+
         `<div class="nyt-ingress">${ingress}</div>`+
         (body?`<div class="nyt-body">${body}${body.length>=200?'…':''}</div>`:'')+
