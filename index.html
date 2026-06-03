@@ -769,6 +769,7 @@ function selectPlan(el,plan){selectedPlan=plan;document.querySelectorAll('.price
 
 function setRole(r,btn){
   role=r
+  roleManuallySet=true
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.remove('on'))
   btn.classList.add('on')
   loadArticles()
@@ -1996,7 +1997,8 @@ async function submitNewsletter(){
 async function loadSpotlight(){
   try {
     const _activeChip = document.querySelector('.role-chip.on')
-    const _chipRole = _activeChip ? _activeChip.dataset.role : 'all'
+    const _manualRole = typeof roleManuallySet !== 'undefined' && roleManuallySet
+    const _chipRole = (_activeChip && _manualRole) ? _activeChip.dataset.role : 'all'
     const spotRole = _chipRole
     const col = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}[role]||role
     const ROLES_META = [
