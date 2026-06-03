@@ -126,6 +126,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .trend-item:hover{color:var(--gold)}
 .trend-badge{font-size:9px;background:rgba(201,168,76,.15);color:var(--gold);padding:1px 6px;border-radius:8px;flex-shrink:0}
 .trend-role{font-size:9px;color:rgba(255,255,255,.3);flex-shrink:0}
+.topic-pill{font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-secondary);white-space:nowrap}
+.topic-pill.on{background:var(--black);color:var(--white);border-color:var(--black)}
+.topic-pill:hover{border-color:var(--gold);color:var(--gold)}
 .spotlight-wrap{background:var(--black);padding:20px 32px 0;display:block;width:100%;box-sizing:border-box}
 .spotlight-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .spotlight-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
@@ -524,6 +527,25 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
+<div id="mobileTopicPills" style="display:none;padding:12px 16px;background:var(--warm-100);border-bottom:0.5px solid var(--border)">
+  <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px">Browse by topic</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px">
+    <button onclick="setTopicMobile('all',this)" class="topic-pill on">All</button>
+    <button onclick="setTopicMobile('gastronomy',this)" class="topic-pill">Gastronomy</button>
+    <button onclick="setTopicMobile('sommellerie',this)" class="topic-pill">Sommellerie</button>
+    <button onclick="setTopicMobile('flavor_science',this)" class="topic-pill">Flavour science</button>
+    <button onclick="setTopicMobile('fermentation_science',this)" class="topic-pill">Fermentation</button>
+    <button onclick="setTopicMobile('sensory_evaluation',this)" class="topic-pill">Sensory</button>
+    <button onclick="setTopicMobile('food_psychology',this)" class="topic-pill">Food psychology</button>
+    <button onclick="setTopicMobile('hospitality',this)" class="topic-pill">Hospitality</button>
+    <button onclick="setTopicMobile('neurogastronomy',this)" class="topic-pill">Neurogastronomy</button>
+    <button onclick="setTopicMobile('novel_foods',this)" class="topic-pill">Novel foods</button>
+    <button onclick="setTopicMobile('food_science',this)" class="topic-pill">Food science</button>
+    <button onclick="setTopicMobile('culinary_science',this)" class="topic-pill">Culinary science</button>
+    <button onclick="setTopicMobile('nutritional_science',this)" class="topic-pill">Nutrition</button>
+    <button onclick="setTopicMobile('multisensory',this)" class="topic-pill">Multisensory</button>
+  </div>
+</div>
 <!-- KNOWLEDGE MAP INLINE -->
 <div id="knowledgeMapSection" style="padding:28px 32px;border-bottom:0.5px solid var(--border);background:var(--warm-100)">
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
@@ -2104,6 +2126,13 @@ async function loadTrends(){
     }
   } catch(e){ console.log('loadTrends error:', e.message) }
 }
+function setTopicMobile(topic, btn){
+  document.querySelectorAll('.topic-pill').forEach(b=>b.classList.remove('on'))
+  btn.classList.add('on')
+  const sel = document.getElementById('topicSel')
+  if(sel){ sel.value = topic; loadArticles() }
+  if(topic && topic !== 'all') loadSynthesis(role, topic)
+}
 async function loadSpotlight(){
   try {
     const _activeChip = document.querySelector('.role-chip.on')
@@ -2486,6 +2515,7 @@ function toggleCard(el){
 
   /* KNOWLEDGE MAP */
   #knowledgeMapSection{display:none}
+  #mobileTopicPills{display:block!important}
   body{overflow-x:hidden}
   /* DATABASE STATUS inline grids */
   [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
