@@ -2440,6 +2440,19 @@ function toggleCard(el){
 
 /* ===== MOBILE ===== */
 @media(max-width:768px){
+  /* TREND SECTION */
+  .trend-wrap{padding:10px 16px 12px}
+  .trend-grid{grid-template-columns:1fr;gap:12px}
+  .trend-col:nth-child(2),.trend-col:nth-child(3){display:none}
+  /* NYT CARDS */
+  .nyt-lead{grid-column:1;display:flex;flex-direction:column}
+  .nyt-lead .nyt-body{border-left:none;padding-left:0}
+  .nyt-headline{font-size:15px}
+  .nyt-ingress{font-size:12px}
+  .nyt-body{display:none}
+  /* UPGRADE MODAL */
+  .price-row{flex-direction:column;gap:8px}
+
   /* TOPBAR */
   .topbar{padding:10px 16px;gap:8px}
   .topbar-logo{font-size:14px}
