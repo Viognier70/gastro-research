@@ -1762,8 +1762,13 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
         <button class="art-imrad-toggle" onclick="toggleImrad()">IMRaD - Full Scientific Structure</button>
         <div class="art-imrad-body" id="artImradBody"></div>
       </div>
+      <div id="artApa" style="margin-top:16px;padding:12px 16px;background:var(--warm-100);border-radius:6px;font-size:11px;color:var(--text-secondary);line-height:1.6;display:none">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px">Reference (APA 7)</div>
+        <div id="artApaText"></div>
+      </div>
       <div class="art-footer">
         <a href="#" id="artReadBtn" class="art-read-btn" target="_blank">Read paper</a>
+        <button onclick="document.getElementById('artApa').style.display=document.getElementById('artApa').style.display==='none'?'block':'none'" style="font-size:11px;color:var(--text-tertiary);background:none;border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Cite</button>
       </div>
     </div>
   </div>
@@ -2267,6 +2272,21 @@ function openArticleModal(article){
   } else document.getElementById('artImrad').style.display='none'
   var btn = document.getElementById('artReadBtn')
   if(article.url){btn.href=article.url;btn.style.display='inline-flex'}else btn.style.display='none'
+  // APA 7 reference
+  var apaEl = document.getElementById('artApaText')
+  var apaBox = document.getElementById('artApa')
+  if(apaEl && apaBox) {
+    var authors = article.authors ? article.authors.split(',').slice(0,6).map(function(a){
+      var p=a.trim().split(' ')
+      var last=p[p.length-1]
+      var initials=p.slice(0,-1).map(function(n){return n[0]+'.'}).join(' ')
+      return last+(initials?' '+initials:'')
+    }).join(', ')+(article.authors.split(',').length>6?', et al.':'') : ''
+    var doi = article.url&&article.url.includes('doi.org') ? article.url : ''
+    var apa = (authors?authors+' ':'')+(article.year?'('+article.year+'). ':'')+(article.title?'<em>'+article.title+'</em>. ':'')+(article.journal?'<em>'+article.journal+'</em>. ':'')+  (doi?'<a href="'+doi+'" target="_blank" style="color:var(--gold)">'+doi+'</a>':'')
+    apaEl.innerHTML = apa
+    apaBox.style.display = 'block'
+  }
   document.getElementById('artOverlay').classList.add('open')
   document.body.style.overflow='hidden'
 }
