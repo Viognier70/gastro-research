@@ -1995,7 +1995,7 @@ async function submitNewsletter(){
 
 async function loadSpotlight(){
   try {
-    const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
+    const spotRole = typeof role !== 'undefined' ? role : 'sommelier'
     const col = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}[role]||role
     const ROLES_META = [
       {key:'sommelier',label:'Sommelier',rc:'relevance_sci_sommelier'},
@@ -2005,10 +2005,10 @@ async function loadSpotlight(){
       {key:'gastronomy',label:'Gastronomy',rc:'relevance_sci_gastronomy'},
     ]
     let picks = [], isAllRoles = false
-    if(!role || role==='all' || role==='sommelier' && !currentRole) {
+    if(spotRole==='all' || spotRole==='sommelier' && true) {
       // keep single-role fetch for now
     }
-    if(role==='all'||!role){
+    if(spotRole==='all'){
       isAllRoles=true
       const roleArts = await Promise.all(ROLES_META.map(async rm=>{
         const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${rm.key},techne_${rm.key}&core_claim=not.is.null&episteme_${rm.key}=not.is.null&${rm.rc}=gte.6&order=${rm.rc}.desc.nullslast,fetched_at.desc&limit=5`,{headers:H})
