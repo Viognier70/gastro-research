@@ -2487,6 +2487,13 @@ function toggleCard(el){
   /* KNOWLEDGE MAP */
   #knowledgeMapSection{padding:16px;overflow:hidden}
   body{overflow-x:hidden}
+  /* DATABASE STATUS inline grids */
+  [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+  [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr!important}
+  /* DATABASE STATUS padding */
+  [style*="padding:24px 32px"]{padding:16px!important}
+  [style*="padding:28px 32px"]{padding:16px!important}
+
   #knowledgeMapSection{overflow:hidden}
 
   #liveKnowledgeMap{height:320px!important;overflow:hidden!important}
