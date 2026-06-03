@@ -1998,7 +1998,7 @@ async function loadSpotlight(){
     const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
     const col = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}[role]||role
     const r = await fetch(
-      `${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,year,topic,episteme_${col},techne_${col}&core_claim=not.is.null&core_claim=neq.&order=year.desc,fetched_at.desc&limit=30`,
+      `${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,episteme_${col},techne_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=fetched_at.desc&limit=30`,
       {headers:H}
     )
     const data = await r.json()
@@ -2017,7 +2017,7 @@ async function loadSpotlight(){
         `<div class="nyt-headline">${headline}</div>`+
         `<div class="nyt-ingress">${ingress}</div>`+
         (body?`<div class="nyt-body">${body}${body.length>=200?'…':''}</div>`:'')+
-        `<div class="nyt-footer"><span>${journal}</span><span class="nyt-read">Read research →</span></div>`+
+        `<div class="nyt-footer"><span>${(a.journal||a.source_label||'').slice(0,32)}</span><span class="nyt-read">Read research →</span></div>`+
         '</div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
