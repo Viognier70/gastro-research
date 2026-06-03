@@ -2017,7 +2017,14 @@ async function loadSpotlight(){
         `<div class="nyt-headline">${headline}</div>`+
         `<div class="nyt-ingress">${ingress}</div>`+
         (body?`<div class="nyt-body">${body}${body.length>=200?'…':''}</div>`:'')+
-        `<div class="nyt-footer"><span>${(a.journal||a.source_label||'').slice(0,32)}</span><span class="nyt-read">Read research →</span></div>`+
+        `<div class="nyt-footer">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="color:rgba(255,255,255,.5)">${(a.journal||a.source_label||'').slice(0,40)}</span>
+            ${a.authors?`<span style="font-size:10px;color:rgba(255,255,255,.3)">${a.authors.split(',').slice(0,3).join(', ')+(a.authors.split(',').length>3?' et al.':'')}</span>`:''}
+            ${(a.claim_keywords||[]).length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${(a.claim_keywords||[]).slice(0,4).map(k=>`<span style="font-size:9px;background:rgba(201,168,76,.12);color:var(--gold);padding:1px 7px;border-radius:10px">${k}</span>`).join('')}</div>`:''}
+          </div>
+          <span class="nyt-read">Read research →</span>
+        </div>`+
         '</div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
