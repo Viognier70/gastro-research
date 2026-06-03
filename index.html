@@ -62,6 +62,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .nyt-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:10px;border-top:0.5px solid rgba(255,255,255,.08);font-size:10px;color:rgba(255,255,255,.3)}
 .nyt-read{color:var(--gold);opacity:.7;font-size:10px;letter-spacing:.05em}
 .nyt-card:hover .nyt-read{opacity:1}
+.trend-wrap{background:var(--black);padding:12px 32px 16px;border-bottom:0.5px solid rgba(201,168,76,.15)}
+.trend-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:700px){.trend-grid{grid-template-columns:1fr}}
+.trend-col-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px}
+.trend-list{display:flex;flex-direction:column;gap:5px}
+.trend-item{font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:0.5px solid rgba(255,255,255,.05)}
+.trend-item:hover{color:var(--gold)}
+.trend-badge{font-size:9px;background:rgba(201,168,76,.15);color:var(--gold);padding:1px 6px;border-radius:8px;flex-shrink:0}
+.trend-role{font-size:9px;color:rgba(255,255,255,.3);flex-shrink:0}
 .spotlight-wrap{background:var(--black);padding:20px 32px 0;display:block;width:100%;box-sizing:border-box}
 .spotlight-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .spotlight-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
@@ -357,6 +366,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
+<div class="trend-wrap" id="trendWrap">
+  <div class="trend-grid">
+    <div class="trend-col">
+      <div class="trend-col-label">🔥 Trending keywords</div>
+      <div id="trendKeywords" class="trend-list"></div>
+    </div>
+    <div class="trend-col">
+      <div class="trend-col-label">📈 Most cited this week</div>
+      <div id="trendCited" class="trend-list"></div>
+    </div>
+    <div class="trend-col">
+      <div class="trend-col-label">🧠 Research pulse</div>
+      <div id="trendPulse" class="trend-list"></div>
+    </div>
+  </div>
+</div>
 <div class="spotlight-wrap" id="spotlightWrap">
   <div class="spotlight-header">
     <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
@@ -989,7 +1014,7 @@ async function loadArticles(){
     loadSidebar()
     loadTrending()
     loadMostCited()
-    setTimeout(()=>loadSpotlight(), 800)
+    setTimeout(()=>loadSpotlight();loadTrends(), 800)
     checkOnboarding()
     loadMiniTicker()
   }catch(e){
@@ -1994,6 +2019,36 @@ async function submitNewsletter(){
 <script>
 
 
+async function loadTrends(){
+  try {
+    // Trending keywords
+    const r1 = await fetch(`${SB_URL}/rest/v1/rpc/get_trending_keywords`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{"limit_n":5}'})
+    const kws = await r1.json()
+    const kwEl = document.getElementById('trendKeywords')
+    if(kwEl && Array.isArray(kws)) {
+      kwEl.innerHTML = kws.map(k=>`<div class="trend-item" onclick="document.getElementById('searchInput').value='${k.keyword}';debounceSearch()"><span>${(k.keyword||'').replace(/_/g,' ')}</span><span class="trend-badge">${k.last_30d||k.count||''}</span></div>`).join('')
+    }
+
+    // Most cited
+    const r2 = await fetch(`${SB_URL}/rest/v1/articles?select=title,citation_count,topic,journal&citation_count=not.is.null&citation_count=gt.0&order=citation_count.desc&limit=5`,{headers:H})
+    const cited = await r2.json()
+    const citEl = document.getElementById('trendCited')
+    if(citEl && Array.isArray(cited)) {
+      citEl.innerHTML = cited.map(a=>`<div class="trend-item" title="${a.title||''}"><span>${(a.title||'').slice(0,45)}…</span><span class="trend-badge">${a.citation_count} citations</span></div>`).join('')
+    }
+
+    // Research pulse — latest topics processed
+    const r3 = await fetch(`${SB_URL}/rest/v1/articles?select=topic,year&episteme_sommelier=not.is.null&order=fetched_at.desc&limit=50`,{headers:H})
+    const pulse = await r3.json()
+    if(Array.isArray(pulse)) {
+      const topicCount = {}
+      pulse.forEach(a=>{if(a.topic)topicCount[a.topic]=(topicCount[a.topic]||0)+1})
+      const sorted = Object.entries(topicCount).sort((a,b)=>b[1]-a[1]).slice(0,5)
+      const pulseEl = document.getElementById('trendPulse')
+      if(pulseEl) pulseEl.innerHTML = sorted.map(([t,c])=>`<div class="trend-item"><span>${t.replace(/_/g,' ')}</span><span class="trend-badge">${c} new</span></div>`).join('')
+    }
+  } catch(e){ console.log('loadTrends error:', e.message) }
+}
 async function loadSpotlight(){
   try {
     const _activeChip = document.querySelector('.role-chip.on')
