@@ -2412,7 +2412,7 @@ function renderSynthesis(s, role, topic){
     '<span class="synth-count">'+(s.article_count||'?')+' articles</span>'+
     '<button class="synth-toggle" onclick="toggleSynth(this)">'+( collapsed?'Expand ↓':'Collapse ↑')+'</button>'+
     '</div>'+
-    (s.references&&s.references.length?'<details style="margin-top:12px"><summary style="font-size:10px;color:rgba(255,255,255,0.4);cursor:pointer;letter-spacing:.08em;text-transform:uppercase">References ('+s.references.length+')</summary><div style="margin-top:8px">'+s.references.map((r,i)=>'<div style="font-size:10px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:4px">['+( i+1)+'] '+r+'</div>').join('')+'</div></details>':'')+
+    (s.references&&s.references.length?'<details style="margin-top:12px"><summary style="font-size:10px;color:rgba(255,255,255,0.4);cursor:pointer;letter-spacing:.08em;text-transform:uppercase">References ('+s.references.length+')</summary><div style="margin-top:8px">'+s.references.map((r,i)=>'<div style="font-size:10px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:6px;padding-bottom:6px;border-bottom:0.5px solid rgba(255,255,255,.06)">'+(i+1)+'. <em>'+r+'</em></div>').join('')+'</div></details>':'')+
     '</div>'
 }
 
