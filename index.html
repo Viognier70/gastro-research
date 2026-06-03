@@ -2030,7 +2030,8 @@ async function loadSpotlight(){
       const ingress = (a.core_claim||'').slice(0,160)
       const epCol=a._rk||col
       const body=(a['episteme_'+epCol]||a['techne_'+epCol]||'').slice(0,200)
-      const roleTag=a._rl?'<span style="font-size:9px;font-weight:700;background:rgba(201,168,76,.25);color:var(--gold);padding:2px 8px;border-radius:10px;margin-right:4px">'+a._rl+'</span>':''
+      const relScore=a._rk?a['relevance_sci_'+a._rk]:null
+      const roleTag=a._rl?'<span style="font-size:9px;font-weight:700;background:rgba(201,168,76,.25);color:var(--gold);padding:2px 8px;border-radius:10px;margin-right:4px">'+a._rl+(relScore?' · '+relScore+'/10':'')+'</span>':''
       const topic = (a.topic||'').replace(/_/g,' ')
       const journal = (a.journal||'').slice(0,32)
       const isLead = i===0
