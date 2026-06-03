@@ -2183,9 +2183,10 @@ async function loadSpotlight(){
         `<div class="nyt-ingress">${ingress}</div>`+
         (body?`<div class="nyt-body">${body}${body.length>=200?'…':''}</div>`:'')+
         `<div class="nyt-footer">
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="color:rgba(255,255,255,.5)">${(a.journal||a.source_label||'').slice(0,40)}</span>
-            ${a.authors?`<span style="font-size:10px;color:rgba(255,255,255,.3)">${a.authors.split(',').slice(0,3).join(', ')+(a.authors.split(',').length>3?' et al.':'')}</span>`:''}
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:10px;color:rgba(255,255,255,.45);line-height:1.5">
+              ${a.authors?a.authors.split(',').slice(0,3).map(n=>n.trim()).join(', ')+(a.authors.split(',').length>3?' et al.':''):''}${a.authors&&a.year?` (${a.year}). `:''}${a.title?`<em>${(a.title||'').slice(0,80)}${a.title.length>80?'...':''}</em>. `:''}${a.journal?`<em>${(a.journal||'').slice(0,40)}</em>. `:''}${a.url&&a.url.includes('doi.org')?`<a href="${a.url}" target="_blank" style="color:var(--gold);text-decoration:none">DOI</a>`:''}
+            </div>
             ${(a.claim_keywords&&a.claim_keywords.length?a.claim_keywords.slice(0,4):(a.topic?[a.topic.replace(/_/g," ")]:[]).concat(a.study_type?[a.study_type]:[])).map(k=>`<span style="font-size:9px;background:rgba(201,168,76,.12);color:var(--gold);padding:1px 7px;border-radius:10px">${k}</span>`).join("")}
           </div>
           <span class="nyt-read">Read research →</span>
