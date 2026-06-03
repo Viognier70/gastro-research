@@ -1014,7 +1014,7 @@ async function loadArticles(){
     loadSidebar()
     loadTrending()
     loadMostCited()
-    setTimeout(()=>loadSpotlight();loadTrends(), 800)
+    setTimeout(()=>{loadSpotlight();loadTrends()}, 800)
     checkOnboarding()
     loadMiniTicker()
   }catch(e){
