@@ -2412,7 +2412,11 @@ function renderSynthesis(s, role, topic){
     '<span class="synth-count">'+(s.article_count||'?')+' articles</span>'+
     '<button class="synth-toggle" onclick="toggleSynth(this)">'+( collapsed?'Expand ↓':'Collapse ↑')+'</button>'+
     '</div>'+
-    (s.references&&s.references.length?'<details style="margin-top:12px"><summary style="font-size:10px;color:rgba(255,255,255,0.4);cursor:pointer;letter-spacing:.08em;text-transform:uppercase">References ('+s.references.length+')</summary><div style="margin-top:8px">'+s.references.map((r,i)=>'<div style="font-size:10px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:6px;padding-bottom:6px;border-bottom:0.5px solid rgba(255,255,255,.06)">'+(i+1)+'. <em>'+r+'</em></div>').join('')+'</div></details>':'')+
+    (s.references&&s.references.length?'<details style="margin-top:12px"><summary style="font-size:10px;color:rgba(255,255,255,0.4);cursor:pointer;letter-spacing:.08em;text-transform:uppercase">References ('+s.references.length+')</summary><div style="margin-top:8px">'+s.references.map((r,i)=>{
+  if(typeof r==='string') return '<div style="font-size:10px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:6px">'+(i+1)+'. <em>'+r+'</em></div>'
+  const au=r.authors||''; const yr=r.year?'('+r.year+'). ':''; const ti=r.title?'<em>'+(r.title).slice(0,100)+'</em>. ':''; const jo=r.journal?'<em>'+r.journal.slice(0,50)+'</em>. ':''; const doi=r.doi?'<a href="'+r.doi+'" target="_blank" style="color:var(--gold);text-decoration:none">DOI</a>':''
+  return '<div style="font-size:10px;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid rgba(255,255,255,.06)">'+(i+1)+'. '+au+' '+yr+ti+jo+doi+'</div>'
+}).join('')+'</div></details>':'')+
     '</div>'
 }
 
