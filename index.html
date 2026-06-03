@@ -1995,29 +1995,29 @@ async function submitNewsletter(){
 
 async function loadSpotlight(){
   try {
-    const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sensory_pro'
-    const col = role
+    const role = typeof currentRole !== 'undefined' && currentRole && currentRole !== 'all' ? currentRole : 'sommelier'
+    const col = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}[role]||role
     const r = await fetch(
-      `${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,topic,episteme_${col},techne_${col},phronesis_${col}&core_claim=not.is.null&core_claim=neq.&episteme_${col}=not.is.null&order=relevance_sci_${col}.desc.nullslast,fetched_at.desc&limit=10`,
+      `${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,year,topic,episteme_${col},techne_${col}&core_claim=not.is.null&core_claim=neq.&order=year.desc,fetched_at.desc&limit=30`,
       {headers:H}
     )
     const data = await r.json()
     if(!Array.isArray(data)||!data.length) return
-    const picks = data.slice(0,3)
+    const picks = data.filter(a=>a.headline_en||a.core_claim).slice(0,6)
     const html = picks.map((a,i) => {
-      const claim = (a.core_claim||'').slice(0,120)
+      const rawH = (a.headline_en||a.title||'').slice(0,90)
+      const headline = /[?!]$/.test(rawH.trim()) ? rawH : (i%2===0 ? rawH+'?' : rawH+'!')
+      const ingress = (a.core_claim||'').slice(0,160)
+      const body = (a['episteme_'+col]||a['techne_'+col]||'').slice(0,200)
       const topic = (a.topic||'').replace(/_/g,' ')
-      const journal = (a.journal||'').slice(0,35)
-      const ep = (a['episteme_'+col]||'').slice(0,100)
-      const tc = (a['techne_'+col]||'').slice(0,100)
-      const ph = (a['phronesis_'+col]||'').slice(0,100)
-      return '<div class="spotlight-card" onclick="fetchAndOpenModal(\''+a.id+'\')">'+
-        '<div class="spotlight-card-top"><span class="spotlight-topic">'+topic+'</span><span class="spotlight-arrow">→</span></div>'+
-        '<div class="spotlight-claim">'+claim+'</div>'+
-        (ep?'<div style="margin:8px 0 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:#A8C4E0;text-transform:uppercase;margin-bottom:3px">ε Episteme</div><div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.55">'+ep+(ep.length>=100?'…':'')+'</div></div>':'')+
-        (tc?'<div style="margin:6px 0 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:#A8D4A0;text-transform:uppercase;margin-bottom:3px">τ Techne</div><div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.55">'+tc+(tc.length>=100?'…':'')+'</div></div>':'')+
-        (ph?'<div style="margin:6px 0 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:#E0B890;text-transform:uppercase;margin-bottom:3px">φ Phronesis</div><div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.55">'+ph+(ph.length>=100?'…':'')+'</div></div>':'')+
-        '<div class="spotlight-journal" style="margin-top:10px">'+journal+(a.year?' · '+a.year:'')+'</div>'+
+      const journal = (a.journal||'').slice(0,32)
+      const isLead = i===0
+      return `<div class="spotlight-card nyt-card${isLead?' nyt-lead':''}" onclick="fetchAndOpenModal('${a.id}')">`+
+        `<div class="nyt-topic">${topic}${a.year?' · '+a.year:''}</div>`+
+        `<div class="nyt-headline">${headline}</div>`+
+        `<div class="nyt-ingress">${ingress}</div>`+
+        (body?`<div class="nyt-body">${body}${body.length>=200?'…':''}</div>`:'')+
+        `<div class="nyt-footer"><span>${journal}</span><span class="nyt-read">Read research →</span></div>`+
         '</div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
@@ -2026,9 +2026,9 @@ async function loadSpotlight(){
       // Animate cards in
       grid.querySelectorAll('.spotlight-card').forEach((card,i)=>{
         card.style.opacity='0'
-        card.style.transform='translateY(12px)'
-        card.style.transition='opacity .4s ease, transform .4s ease'
-        setTimeout(()=>{card.style.opacity='1';card.style.transform='translateY(0)'},100+i*150)
+        card.style.transform='translateY(10px)'
+        card.style.transition='opacity .35s ease, transform .35s ease'
+        setTimeout(()=>{card.style.opacity='1';card.style.transform='translateY(0)'},80+i*120)
       })
     }
   } catch(e) { console.log('Spotlight error:', e.message) }
