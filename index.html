@@ -533,7 +533,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,.35)" id="mapSubtitle">Click a topic to filter the feed below</div>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:460px;position:relative;overflow:visible">
+  <div id="liveKnowledgeMap" style="width:100%;height:460px;position:relative;overflow:hidden">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
   </div>
 </div>
@@ -2485,8 +2485,11 @@ function toggleCard(el){
   .stat-item{min-width:calc(50% - 8px)}
 
   /* KNOWLEDGE MAP */
-  #knowledgeMapSection{padding:16px}
-  #liveKnowledgeMap{height:320px!important}
+  #knowledgeMapSection{padding:16px;overflow:hidden}
+  body{overflow-x:hidden}
+  #knowledgeMapSection{overflow:hidden}
+
+  #liveKnowledgeMap{height:320px!important;overflow:hidden!important}
 
   /* TRIAD BAR */
   .filter-bar{padding:10px 16px;gap:8px;flex-wrap:wrap}
