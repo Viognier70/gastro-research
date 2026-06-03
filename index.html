@@ -2005,9 +2005,6 @@ async function loadSpotlight(){
       {key:'gastronomy',label:'Gastronomy',rc:'relevance_sci_gastronomy'},
     ]
     let picks = [], isAllRoles = false
-    if(spotRole==='all' || spotRole==='sommelier' && true) {
-      // keep single-role fetch for now
-    }
     if(spotRole==='all'){
       isAllRoles=true
       const roleArts = await Promise.all(ROLES_META.map(async rm=>{
