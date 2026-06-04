@@ -1726,8 +1726,18 @@ function toggleMapTopic(topic){
   if(activeMapTopics.has(topic)) activeMapTopics.delete(topic)
   else activeMapTopics.add(topic)
   renderLiveMap()
-  if(activeMapTopics.size===1) document.getElementById('topicSel').value=[...activeMapTopics][0]
-  else document.getElementById('topicSel').value='all'
+  if(activeMapTopics.size===1){
+    const t=[...activeMapTopics][0]
+    document.getElementById('topicSel').value=t
+    loadArticles()
+    setTimeout(()=>{
+      const feed=document.getElementById('freeBar')||document.getElementById('feedPane')
+      if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
+    },200)
+  } else {
+    document.getElementById('topicSel').value='all'
+    loadArticles()
+  }
   loadArticles()
 }
 
