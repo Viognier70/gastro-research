@@ -397,6 +397,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .ob-skip:hover{color:var(--text-primary)}
 @keyframes mapPulse{0%,100%{opacity:1}50%{opacity:.2}}
 .map-pulse-dot{animation:mapPulse 1.8s ease-in-out infinite}
+@keyframes nodeAppear{from{opacity:0;transform-origin:center;transform:scale(0.3)}to{opacity:1;transform:scale(1)}}
+@keyframes edgeDraw{from{opacity:0}to{opacity:1}}
 </style>
 </head>
 <body>
@@ -1671,12 +1673,14 @@ function renderLiveMap(){
   svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(12,11,9,0.03)" stroke-width="1"/>`
 
   // Edges
+  let edgeIdx=0
   edges.forEach(e=>{
     const s=e.sim
     const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
     const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.4)" stroke-width="${sw}" opacity="1" ${dash}/>`
+    const edelay=(edgeIdx++*40)+'ms'
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.4)" stroke-width="${sw}" opacity="1" ${dash} style="animation:edgeDraw 0.3s ease-out ${edelay} both"/>`
   })
 
   // Center: profession node
@@ -1696,7 +1700,8 @@ function renderLiveMap(){
     const sw=sel?2.5:1.2
     const textCol=sel?'#0C0B09':'#1A1000'
 
-    svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer">`
+    const delay=(allNodes.indexOf(n)*60)+'ms'
+    svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer;animation:nodeAppear 0.4s ease-out ${delay} both">`
     svg+=`<circle cx="${n._x}" cy="${n._y}" r="${n._r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`
 
     // Word wrap
