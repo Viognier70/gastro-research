@@ -1116,10 +1116,10 @@ function renderFeed(){
       emptyHint='Star articles you want to revisit — they appear here.'
     } else if(searchVal){
       emptyMsg=`No results for "${searchVal}"`
-      emptyHint='Try a broader search term, or <a href="#" onclick="document.getElementById('searchInput').value='';loadArticles();return false" style="color:var(--gold)">clear the search</a> to browse all articles.'
+      emptyHint='Try a broader search term, or <a href="#" onclick="document.getElementById(&quot;searchInput&quot;).value=&quot;&quot;;loadArticles();return false" style="color:var(--gold)">clear the search</a> to browse all articles.'
     } else if(topicVal&&topicVal!=='all'){
       emptyMsg=`No TRIAD analyses yet for "${topicVal.replace(/_/g,' ')}"`
-      emptyHint='Our pipeline processes new articles daily. <a href="#" onclick="document.getElementById('topicSel').value='all';loadArticles();return false" style="color:var(--gold)">Browse all topics</a> to find related research.'
+      emptyHint='Our pipeline processes new articles daily. <a href="#" onclick="document.getElementById(&quot;topicSel&quot;).value=&quot;all&quot;;loadArticles();return false" style="color:var(--gold)">Browse all topics</a> to find related research.'
     } else {
       emptyMsg=`No articles found for ${roleName}`
       emptyHint='Try selecting a different profession or topic above.'
