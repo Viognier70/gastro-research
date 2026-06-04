@@ -1729,10 +1729,17 @@ function renderLiveMap(){
     container.querySelectorAll('.map-edge').forEach((e,i)=>setTimeout(()=>{e.style.transition='opacity 0.4s';e.setAttribute('opacity','1')},i*40))
     container.querySelectorAll('.map-node').forEach((n,i)=>{n.style.opacity='0';setTimeout(()=>{n.style.transition='opacity 0.5s';n.style.opacity='1'},i*80+200)})
   }
-  const obs=new IntersectionObserver((entries)=>{
-    if(entries[0].isIntersecting){animateMap();obs.disconnect()}
-  },{threshold:0.3})
-  obs.observe(container)
+  // Starta animation direkt om kartan redan är synlig, annars observer
+  const rect=container.getBoundingClientRect()
+  const alreadyVisible=rect.top < window.innerHeight && rect.bottom > 0
+  if(alreadyVisible){
+    setTimeout(animateMap, 300)
+  } else {
+    const obs=new IntersectionObserver((entries)=>{
+      if(entries[0].isIntersecting){animateMap();obs.disconnect()}
+    },{threshold:0.1})
+    obs.observe(container)
+  }
 }
 
 function toggleMapTopic(topic){
