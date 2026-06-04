@@ -1811,7 +1811,22 @@ initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();
 
 <script>
 var _obRole=null
-function checkObReady(){var e=document.getElementById('obEmail')?.value?.trim();var b=document.getElementById('obBtn');if(b)b.disabled=!(_obRole&&e&&e.includes('@'))}
+function checkObReady(){
+  var e=document.getElementById('obEmail')?.value?.trim()
+  var b=document.getElementById('obBtn')
+  var eb=document.getElementById('obExploreBtn')
+  if(b) b.disabled=!(_obRole&&e&&e.includes('@'))
+  if(eb) eb.disabled=!_obRole
+}
+function saveObRoleAndExplore(){
+  if(!_obRole) return
+  localStorage.setItem('gustoRole',_obRole)
+  role=_obRole
+  document.querySelectorAll('.role-chip').forEach(b=>b.classList.toggle('on',b.dataset.role===_obRole))
+  closeOnboarding()
+  loadArticles()
+  loadSpotlight()
+}
 </script>
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
@@ -1830,10 +1845,15 @@ function checkObReady(){var e=document.getElementById('obEmail')?.value?.trim();
       <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">F&amp;B Manager</div><div class="ob-role-desc">F&amp;B Manager · Hotelier · Menu strategist</div></div></div>
       <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
     </div>
-    <input type="email" id="obEmail" placeholder="Your email address" oninput="checkObReady()" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:12px;outline:none;background:var(--white)">
-    <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()">Start 14-day free trial →</button>
+    <button class="ob-btn" id="obExploreBtn" onclick="saveObRoleAndExplore()" disabled style="background:var(--black);color:var(--white);margin-bottom:10px;opacity:0.4;cursor:not-allowed">Explore research for my profession →</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="flex:1;height:0.5px;background:var(--border)"></div>
+      <span style="font-size:11px;color:var(--text-tertiary)">or start with full access</span>
+      <div style="flex:1;height:0.5px;background:var(--border)"></div>
+    </div>
+    <input type="email" id="obEmail" placeholder="Your email address" oninput="checkObReady()" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:10px;outline:none;background:var(--white)">
+    <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()" style="background:var(--white);color:var(--black);border:0.5px solid var(--border-mid)">Start 14-day free trial</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px">No credit card required · Cancel anytime</div>
-    <div class="ob-skip" onclick="closeOnboarding()">Skip — browse without trial</div>
   </div>
 </div>
 
@@ -2356,7 +2376,13 @@ function closeArticleModal(){document.getElementById('artOverlay').classList.rem
 
 var _obRole = null
 function selectObRole(el,r){
-  document.querySelectorAll('.ob-role').forEach(x=>{x.classList.remove('selected');const h=x.querySelector('.ob-role-emoji');if(h)h.textContent='⬡'})
+  _obRole=r
+  document.querySelectorAll('.ob-role').forEach(e=>e.classList.remove('selected'))
+  el.classList.add('selected')
+  var eb=document.getElementById('obExploreBtn')
+  if(eb){eb.disabled=false;eb.style.opacity='1';eb.style.cursor='pointer'}
+  checkObReady()
+})
   el.classList.add('selected')
   const h=el.querySelector('.ob-role-emoji');if(h)h.textContent='⬢'
   _obRole=r
