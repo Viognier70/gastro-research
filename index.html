@@ -428,7 +428,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
   </div>
   <div class="topbar-right">
-    <a href="https://gusto.academy" target="_blank" class="academy-btn">Gusto Academy ↗</a>
+    <!-- Gusto Academy länk dold tills live -->
     <button class="academy-btn" onclick="openNewsletter()">Subscribe →</button>
     <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
     <div id="authArea"><button class="auth-btn" onclick="openModal('authModal')" id="authBtn">A</button></div>
@@ -892,6 +892,7 @@ function setRole(r,btn){
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.remove('on'))
   btn.classList.add('on')
   loadArticles()
+  loadSpotlight()
 }
 
 function getRelevanceScore(a){
@@ -1802,7 +1803,7 @@ function checkObReady(){var e=document.getElementById('obEmail')?.value?.trim();
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
     <div class="ob-title">Research intelligence<br>for your profession</div>
-    <div class="ob-sub">319,000+ research studies translated into three dimensions of professional knowledge. Start your 14-day free trial.</div>
+    <div class="ob-sub">453,000+ research studies translated into three dimensions of professional knowledge. Start your 14-day free trial.</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
       <div style="padding:12px;border-radius:8px;background:#E8EFF6;border-left:3px solid var(--episteme)"><div style="font-size:10px;font-weight:700;color:var(--episteme);margin-bottom:4px">ε Episteme</div><div style="font-size:11px;color:#2A4A6C;line-height:1.5">What science knows</div></div>
       <div style="padding:12px;border-radius:8px;background:#EAF0E5;border-left:3px solid var(--techne)"><div style="font-size:10px;font-weight:700;color:var(--techne);margin-bottom:4px">τ Techne</div><div style="font-size:11px;color:#2D5016;line-height:1.5">How to apply it</div></div>
@@ -2181,10 +2182,7 @@ function filterProduct(term, btn){
 }
 async function loadSpotlight(){
   try {
-    const _activeChip = document.querySelector('.role-chip.on')
-    const _manualRole = typeof roleManuallySet !== 'undefined' && roleManuallySet
-    const _chipRole = (_activeChip && _manualRole) ? _activeChip.dataset.role : 'all'
-    const spotRole = _chipRole
+    const spotRole = (typeof role !== 'undefined' && role) ? role : 'all'
     const col = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher'}[role]||role
     const ROLES_META = [
       {key:'sommelier',label:'Sommelier',rc:'relevance_sci_sommelier'},
