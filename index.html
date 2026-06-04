@@ -2645,7 +2645,9 @@ function toggleCard(el){
 
   /* TRIAD BAR */
   .filter-bar{padding:10px 16px;gap:8px;flex-wrap:wrap}
-  .triad-desc{display:none}
+  .triad-desc{font-size:10px}
+  .triad-dim-sub{display:none}
+  .triad-sep{margin:0 4px}
 
   /* ROLE BAR */
   .role-bar{padding:8px 16px;gap:6px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;max-width:100vw;box-sizing:border-box}
@@ -2655,6 +2657,9 @@ function toggleCard(el){
   /* TOOLBAR */
   .toolbar{padding:8px 16px;gap:6px;flex-wrap:wrap}
   .filter-select{font-size:12px;padding:5px 8px}
+  .filter-select[title="year"],
+  select[onchange*="filterYear"],
+  select[onchange*="filterSource"]{display:none}
   .search-wrap{width:100%;min-width:unset;max-width:unset;order:5}
 
   /* MAIN LAYOUT */
