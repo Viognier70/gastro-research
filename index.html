@@ -577,6 +577,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,.35)" id="mapSubtitle">Click a topic to filter the feed below</div>
   </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:11px;color:var(--text-tertiary);line-height:1.6">
+      <span style="color:var(--gold);font-weight:600">Node size</span> = number of studies &nbsp;·&nbsp;
+      <span style="color:var(--gold);font-weight:600">Lines</span> = shared research focus &nbsp;·&nbsp;
+      <span style="color:var(--gold);font-weight:600">Click a node</span> to filter articles
+    </div>
+    <div style="font-size:10px;color:var(--text-tertiary);font-style:italic">Click again to deselect</div>
+  </div>
   <div id="liveKnowledgeMap" style="width:100%;height:460px;position:relative;overflow:hidden">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
   </div>
@@ -1726,8 +1734,13 @@ function renderLiveMap(){
   container.style.height=h+'px'
   // Intersection Observer — animera när kartan scrollas in i vy
   const animateMap=()=>{
-    container.querySelectorAll('line').forEach((e,i)=>setTimeout(()=>{e.style.transition='opacity 0.4s';e.setAttribute('opacity','1')},i*40))
-    container.querySelectorAll('g').forEach((n,i)=>{n.style.opacity='0';setTimeout(()=>{n.style.transition='opacity 0.5s';n.style.opacity='1'},i*80+200)})
+    // Edges — sätt synliga direkt
+    container.querySelectorAll('line').forEach(e=>e.setAttribute('opacity','1'))
+    // Noder — fade in en efter en
+    container.querySelectorAll('g').forEach((n,i)=>{
+      n.style.opacity='0'
+      setTimeout(()=>{n.style.transition='opacity 0.5s';n.style.opacity='1'},i*80+100)
+    })
   }
   // Starta animation direkt om kartan redan är synlig, annars observer
   const rect=container.getBoundingClientRect()
