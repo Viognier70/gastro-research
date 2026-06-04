@@ -583,7 +583,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span style="color:var(--gold);font-weight:600">Lines</span> = shared research focus &nbsp;·&nbsp;
       <span style="color:var(--gold);font-weight:600">Click a node</span> to filter articles
     </div>
-    <div style="font-size:10px;color:var(--text-tertiary);font-style:italic">Click again to deselect</div>
+    <div style="font-size:10px;color:var(--text-tertiary);font-style:italic" id="mapHint">Click again to deselect</div>
   </div>
   <div id="liveKnowledgeMap" style="width:100%;height:460px;position:relative;overflow:hidden">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
@@ -1647,6 +1647,11 @@ function renderLiveMap(){
   const h=520
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',fbmanager:'F&B Manager',researcher:'Researcher',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
+  const mapHint=document.getElementById('mapHint')
+  if(mapHint&&!localStorage.getItem('gs_map_seen')){
+    mapHint.innerHTML='<span style="color:var(--gold)">↓ Try clicking a topic node to filter articles</span>'
+    mapHint.onclick=()=>{localStorage.setItem('gs_map_seen','1');mapHint.innerHTML='Click again to deselect'}
+  }
 
   const maxCount=Math.max(...mapTopicData.map(t=>t.count))
 
