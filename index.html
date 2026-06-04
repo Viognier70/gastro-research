@@ -1176,7 +1176,11 @@ async function loadCounts(){
     const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal)}
-    if(total>0) animateCount(document.getElementById('totalCount'), total)
+    if(total>0){
+      animateCount(document.getElementById('totalCount'), total)
+      const obSub=document.getElementById('obSubText')
+      if(obSub) obSub.textContent=total.toLocaleString('en-US',{maximumFractionDigits:0}).replace(/,/g,',')+'+  research studies translated into three dimensions of professional knowledge.'
+    }
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
@@ -1838,7 +1842,7 @@ function saveObRoleAndExplore(){
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
     <div class="ob-title">Research intelligence<br>for your profession</div>
-    <div class="ob-sub">453,000+ research studies translated into three dimensions of professional knowledge.</div>
+    <div class="ob-sub"><span id="obSubText">453,000+ research studies translated into three dimensions of professional knowledge.</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
       <div style="padding:12px;border-radius:8px;background:#E8EFF6;border-left:3px solid var(--episteme)"><div style="font-size:10px;font-weight:700;color:var(--episteme);margin-bottom:4px">ε Episteme</div><div style="font-size:11px;color:#2A4A6C;line-height:1.5">What science knows</div></div>
       <div style="padding:12px;border-radius:8px;background:#EAF0E5;border-left:3px solid var(--techne)"><div style="font-size:10px;font-weight:700;color:var(--techne);margin-bottom:4px">τ Techne</div><div style="font-size:11px;color:#2D5016;line-height:1.5">How to apply it</div></div>
