@@ -1723,21 +1723,22 @@ function renderLiveMap(){
 }
 
 function toggleMapTopic(topic){
-  if(activeMapTopics.has(topic)) activeMapTopics.delete(topic)
-  else activeMapTopics.add(topic)
-  renderLiveMap()
-  if(activeMapTopics.size===1){
-    const t=[...activeMapTopics][0]
-    document.getElementById('topicSel').value=t
-    loadArticles()
+  if(activeMapTopics.has(topic)){
+    // Avmarkera — visa allt
+    activeMapTopics.clear()
+    document.getElementById('topicSel').value='all'
+  } else {
+    // Radio-beteende: byt direkt till ny nod
+    activeMapTopics.clear()
+    activeMapTopics.add(topic)
+    document.getElementById('topicSel').value=topic
     setTimeout(()=>{
       const feed=document.getElementById('freeBar')||document.getElementById('feedPane')
       if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
     },200)
-  } else {
-    document.getElementById('topicSel').value='all'
-    loadArticles()
   }
+  renderLiveMap()
+  loadArticles()
   loadArticles()
 }
 
