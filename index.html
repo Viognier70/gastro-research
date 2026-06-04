@@ -1726,8 +1726,8 @@ function renderLiveMap(){
   container.style.height=h+'px'
   // Intersection Observer — animera när kartan scrollas in i vy
   const animateMap=()=>{
-    container.querySelectorAll('.map-edge').forEach((e,i)=>setTimeout(()=>{e.style.transition='opacity 0.4s';e.setAttribute('opacity','1')},i*40))
-    container.querySelectorAll('.map-node').forEach((n,i)=>{n.style.opacity='0';setTimeout(()=>{n.style.transition='opacity 0.5s';n.style.opacity='1'},i*80+200)})
+    container.querySelectorAll('line').forEach((e,i)=>setTimeout(()=>{e.style.transition='opacity 0.4s';e.setAttribute('opacity','1')},i*40))
+    container.querySelectorAll('g').forEach((n,i)=>{n.style.opacity='0';setTimeout(()=>{n.style.transition='opacity 0.5s';n.style.opacity='1'},i*80+200)})
   }
   // Starta animation direkt om kartan redan är synlig, annars observer
   const rect=container.getBoundingClientRect()
