@@ -432,7 +432,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
   <div class="topbar-right">
     <!-- Gusto Academy länk dold tills live -->
-    <button class="academy-btn" onclick="openNewsletter()">Subscribe →</button>
+    <button class="academy-btn" id="navSubscribeBtn" onclick="openNewsletter()">Subscribe →</button>
     <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
     <div id="authArea"><button class="auth-btn" onclick="openModal('authModal')" id="authBtn">A</button></div>
   </div>
@@ -1875,7 +1875,8 @@ function saveObRoleAndExplore(){
       <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">F&amp;B Manager</div><div class="ob-role-desc">F&amp;B Manager · Hotelier · Menu strategist</div></div></div>
       <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher</div><div class="ob-role-desc">Researcher · Culinary educator · Food scientist</div></div></div>
     </div>
-    <button class="ob-btn" id="obExploreBtn" onclick="saveObRoleAndExplore()" disabled style="background:var(--black);color:var(--white);margin-bottom:10px;opacity:0.4;cursor:not-allowed">Explore research for my profession →</button>
+    <button class="ob-btn" id="obExploreBtn" onclick="saveObRoleAndExplore()" disabled style="background:var(--black);color:var(--white);margin-bottom:6px;opacity:0.4;cursor:not-allowed">Explore research for my profession →</button>
+    <div id="obExploreHint" style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-bottom:12px">Select a profession above to continue</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div style="flex:1;height:0.5px;background:var(--border)"></div>
       <span style="font-size:11px;color:var(--text-tertiary)">or get 14 days with email</span>
@@ -2412,6 +2413,8 @@ function selectObRole(el,r){
   const h=el.querySelector('.ob-role-emoji');if(h)h.textContent='⬢'
   var eb=document.getElementById('obExploreBtn')
   if(eb){eb.disabled=false;eb.style.opacity='1';eb.style.cursor='pointer'}
+  var hint=document.getElementById('obExploreHint')
+  if(hint) hint.style.display='none'
   checkObReady()
 }
 function confirmObRole(){
@@ -2440,6 +2443,7 @@ function closeOnboarding(){
 function checkOnboarding(){
   checkTrialReset()
   const trialStart=localStorage.getItem('gs_trial_start')
+  const navBtn=document.getElementById('navSubscribeBtn')
   if(trialStart){
     const isReverse=localStorage.getItem('gs_reverse_trial')==='1'
     const trialDays=isReverse?7:14
@@ -2447,7 +2451,8 @@ function checkOnboarding(){
     if(daysLeft>0){
       isPro=true
       const bar=document.getElementById('freeBar')
-      if(bar) bar.innerHTML='<div style="font-size:11px;color:var(--gold)">'+(isReverse?'Free trial':'Pro trial')+' - '+daysLeft+' day'+(daysLeft===1?'':'s')+' remaining</div><span class="upgrade-link" onclick="openModal(&quot;upgradeModal&quot;)">Subscribe</span>'
+      if(bar) bar.innerHTML='<div style="font-size:11px;color:var(--gold)">'+(isReverse?'Free trial':'Pro trial')+' - '+daysLeft+' day'+(daysLeft===1?'':'s')+' remaining</div><span class="upgrade-link" onclick="openModal(&quot;upgradeModal&quot;)">Upgrade</span>'
+      if(navBtn) navBtn.textContent=daysLeft+' days left'
       return
     } else { isPro=false }
   }
