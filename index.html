@@ -2162,7 +2162,7 @@ async function loadHotProducts(){
     const el = document.getElementById('productScroll')
     if(!el||!Array.isArray(data)) return
     el.innerHTML = '<button class="product-pill on" onclick="filterProduct(null,this)"><span class="product-pill-name">All products</span></button>' +
-      data.map(p=>'<button class="product-pill" onclick="filterProduct(\'"+p.term+"\',this)"><span class="product-pill-name">'+p.term+'</span><span class="product-pill-count">'+p.count.toLocaleString()+' studies</span></button>').join("")
+      data.map(p=>'<button class="product-pill" onclick="filterProduct(&quot;'+p.term+'&quot;,this)"><span class="product-pill-name">'+p.term+'</span><span class="product-pill-count">'+p.count.toLocaleString()+' studies</span></button>').join("")
   } catch(e){ console.log('loadHotProducts error:', e.message) }
 }
 function filterProduct(term, btn){
