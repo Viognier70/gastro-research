@@ -1089,7 +1089,32 @@ function renderFeed(){
 
   freeCount=0
   document.getElementById('feedCount').textContent=source.length+' articles'+(showingSaved?' (saved)':'')
-  pane.innerHTML=source.slice(0,50).map((a,i)=>cardHTML(a,i)).join('')
+  if(source.length===0){
+    const topicVal=document.getElementById('topicSel')?.value
+    const searchVal=document.getElementById('searchInput')?.value?.trim()
+    const roleName={all:'any profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher'}[role]||role
+    let emptyMsg='',emptyHint=''
+    if(showingSaved){
+      emptyMsg='No saved articles yet'
+      emptyHint='Star articles you want to revisit — they appear here.'
+    } else if(searchVal){
+      emptyMsg=`No results for "${searchVal}"`
+      emptyHint='Try a broader search term, or <a href="#" onclick="document.getElementById('searchInput').value='';loadArticles();return false" style="color:var(--gold)">clear the search</a> to browse all articles.'
+    } else if(topicVal&&topicVal!=='all'){
+      emptyMsg=`No TRIAD analyses yet for "${topicVal.replace(/_/g,' ')}"`
+      emptyHint='Our pipeline processes new articles daily. <a href="#" onclick="document.getElementById('topicSel').value='all';loadArticles();return false" style="color:var(--gold)">Browse all topics</a> to find related research.'
+    } else {
+      emptyMsg=`No articles found for ${roleName}`
+      emptyHint='Try selecting a different profession or topic above.'
+    }
+    pane.innerHTML=`<div style="padding:48px 24px;text-align:center;color:var(--text-secondary)">
+      <div style="font-size:32px;margin-bottom:16px">◎</div>
+      <div style="font-size:15px;font-weight:500;color:var(--text-primary);margin-bottom:8px">${emptyMsg}</div>
+      <div style="font-size:13px;line-height:1.7;max-width:360px;margin:0 auto">${emptyHint}</div>
+    </div>`
+  } else {
+    pane.innerHTML=source.slice(0,50).map((a,i)=>cardHTML(a,i)).join('')
+  }
   updateFreeBar()
   const _at=document.getElementById('topicSel')?.value
   if(_at&&_at!=='all'&&typeof loadSynthesis==='function') loadSynthesis(role,_at)
