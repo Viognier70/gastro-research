@@ -2215,7 +2215,7 @@ function setTopicMobile(topic, btn){
 }
 async function loadHotProducts(){
   try {
-    const r = await fetch(SB_URL+'/rest/v1/hot_products_cache?order=count.desc&limit=20',{headers:H})
+    const r = await fetch(SB_URL+'/rest/v1/hot_products_cache?order=count.desc&limit=20&select=term,count',{headers:H})
     const data = await r.json()
     const el = document.getElementById('productScroll')
     if(!el||!Array.isArray(data)) return
