@@ -984,7 +984,21 @@ function cardHTML(a,idx){
       </div>
     </div>`
 
-  if(locked){return`<div class="article-card locked">${inner}<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade</button></div></div>`}
+  if(locked){
+    const phText=a['phronesis_'+r]||a['phronesis_sommelier']||''
+    const phPreview=phText.length>20?phText.slice(0,120)+'…':''
+    const lockedExtra=phPreview?`<div style="margin-top:8px;position:relative;overflow:hidden;border-radius:0 0 6px 6px">
+      <div style="background:var(--phronesis-light);border-left:3px solid var(--phronesis);padding:12px 14px;filter:blur(3px);user-select:none;pointer-events:none">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--phronesis);text-transform:uppercase;margin-bottom:4px">φ Phronesis — the situated judgment</div>
+        <div style="font-size:12px;color:#7A3D00;line-height:1.7">${phPreview}</div>
+      </div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(245,237,227,0.7);backdrop-filter:blur(1px)">
+        <span style="font-size:11px;font-weight:600;color:var(--phronesis)">φ Phronesis unlocks with Pro</span>
+        <button class="upgrade-btn" style="font-size:11px;padding:6px 16px" onclick="openModal('upgradeModal')">Upgrade to Pro →</button>
+      </div>
+    </div>`:`<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade to Pro →</button></div>`
+    return`<div class="article-card locked">${inner}${lockedExtra}</div>`
+  }
   return`<div class="article-card${isSaved?' saved-card':''}">${inner}</div>`
 }
 
