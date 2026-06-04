@@ -1005,6 +1005,23 @@ function cardHTML(a,idx){
       </div>
     </div>`
 
+  // Micro-moment: visa TRIAD-guide på första kortet för nya användare
+  const showTriadGuide = idx===0 && !localStorage.getItem('gs_triad_seen')
+  const triadGuide = showTriadGuide ? `<div style="background:linear-gradient(135deg,#1A3A5C,#2D5016);border-radius:8px;padding:14px 16px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start">
+    <div style="font-size:20px;flex-shrink:0">◈</div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">How to read a TRIAD analysis</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);line-height:1.7">
+        <span style="color:#7BA7D4;font-weight:600">ε Episteme</span> — what the research establishes &nbsp;·&nbsp;
+        <span style="color:#7BC47B;font-weight:600">τ Techne</span> — how to apply it in practice &nbsp;·&nbsp;
+        <span style="color:#D4956A;font-weight:600">φ Phronesis</span> — your judgment in this specific moment
+      </div>
+      <div style="margin-top:8px">
+        <button onclick="localStorage.setItem('gs_triad_seen','1');this.closest('div[style]').style.display='none'" style="font-size:10px;color:rgba(255,255,255,0.5);background:none;border:0.5px solid rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Got it ✓</button>
+      </div>
+    </div>
+  </div>` : ''
+
   if(locked){
     const phText=a['phronesis_'+r]||a['phronesis_sommelier']||''
     const phPreview=phText.length>20?phText.slice(0,120)+'…':''
@@ -1020,7 +1037,7 @@ function cardHTML(a,idx){
     </div>`:`<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade to Pro →</button></div>`
     return`<div class="article-card locked">${inner}${lockedExtra}</div>`
   }
-  return`<div class="article-card${isSaved?' saved-card':''}">${inner}</div>`
+  return`<div class="article-card${isSaved?' saved-card':''}">${triadGuide}${inner}</div>`
 }
 
 function setTriadPerspective(cid, key){
