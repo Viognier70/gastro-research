@@ -2206,7 +2206,7 @@ async function loadTrends(){
     const kws = await r1.json()
     const kwEl = document.getElementById('trendKeywords')
     if(kwEl && Array.isArray(kws)) {
-      kwEl.innerHTML = kws.map(k=>`<div class="trend-item" onclick="document.getElementById('searchInput').value='${k.keyword}';debounceSearch()"><span>${(k.keyword||'').replace(/_/g,' ')}</span><span class="trend-badge">${k.last_30d||k.count||''}</span></div>`).join('')
+      kwEl.innerHTML = kws.map(k=>`<div class="trend-item" onclick="document.getElementById('searchInput').value='${k.keyword}';debounceSearch();setTimeout(()=>{const f=document.getElementById('freeBar');if(f)f.scrollIntoView({behavior:'smooth',block:'start'})},400)"><span>${(k.keyword||'').replace(/_/g,' ')}</span><span class="trend-badge">${k.last_30d||k.count||''}</span></div>`).join('')
     }
 
     // Most cited
@@ -2225,7 +2225,7 @@ async function loadTrends(){
       pulse.forEach(a=>{if(a.topic)topicCount[a.topic]=(topicCount[a.topic]||0)+1})
       const sorted = Object.entries(topicCount).sort((a,b)=>b[1]-a[1]).slice(0,5)
       const pulseEl = document.getElementById('trendPulse')
-      if(pulseEl) pulseEl.innerHTML = sorted.map(([t,c])=>`<div class="trend-item"><span>${t.replace(/_/g,' ')}</span><span class="trend-badge">${c} new</span></div>`).join('')
+      if(pulseEl) pulseEl.innerHTML = sorted.map(([t,c])=>`<div class="trend-item" style="cursor:pointer" onclick="document.getElementById('topicSel').value='${t}';loadArticles();setTimeout(()=>{const f=document.getElementById('freeBar');if(f)f.scrollIntoView({behavior:'smooth',block:'start'})},400)"><span>${t.replace(/_/g,' ')}</span><span class="trend-badge">${c} new</span></div>`).join('')
     }
   } catch(e){ console.log('loadTrends error:', e.message) }
 }
