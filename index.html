@@ -184,6 +184,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .triad-desc{font-size:11px;color:rgba(255,255,255,.4);flex:1;min-width:200px}
 .triad-btn{font-size:11px;color:rgba(255,255,255,.4);border:0.5px solid rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;flex-shrink:0}
 .triad-btn:hover{color:var(--gold);border-color:var(--gold)}
+.triad-dim{font-size:11px;font-weight:500}
+.triad-dim-sub{font-size:10px;opacity:0.6;font-weight:400;margin-left:2px}
+.triad-sep{color:rgba(255,255,255,0.2);margin:0 6px}
 
 /* ROLE FILTER */
 .role-bar{padding:16px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -580,8 +583,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- TRIAD BAR -->
 <div class="filter-bar">
   <span class="triad-label">TRIAD</span>
-  <span class="triad-desc">ε Episteme · τ Techne · φ Phronesis — three dimensions of professional knowledge</span>
-  <button class="triad-btn" onclick="openTriad()">What is TRIAD? →</button>
+  <span class="triad-desc">
+    <span class="triad-dim" style="color:#4A7BC4">ε Episteme <span class="triad-dim-sub">what science knows</span></span>
+    <span class="triad-sep">·</span>
+    <span class="triad-dim" style="color:#3A6020">τ Techne <span class="triad-dim-sub">how to apply it</span></span>
+    <span class="triad-sep">·</span>
+    <span class="triad-dim" style="color:#7A3D00">φ Phronesis <span class="triad-dim-sub">your judgment, this moment</span></span>
+  </span>
+  <button class="triad-btn" onclick="openTriad()">The Foundation →</button>
 </div>
 
 <!-- ROLE FILTER -->
