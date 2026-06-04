@@ -1262,11 +1262,11 @@ async function startCheckout(){
   }
 }
 
-// Check for pro=true in URL after Stripe redirect
+// Check for pro=true in URL after Stripe redirect — verify against DB
 if(window.location.search.includes('pro=true')){
-  isPro = true
   history.replaceState({}, '', window.location.pathname)
-  setTimeout(()=>alert('Welcome to Gusto Science Pro! 🎉 Enjoy unlimited access.'), 500)
+  // Will be verified in initAuth below
+  setTimeout(()=>alert('Welcome to Gusto Science Pro! 🎉 Enjoy unlimited access.'), 1000)
 }
 
 async function initAuth(){
@@ -1274,10 +1274,14 @@ async function initAuth(){
   if(session){
     const initial=session.user.email[0].toUpperCase()
     document.getElementById('authArea').innerHTML=`<div class="user-avatar" onclick="sb.auth.signOut().then(()=>location.reload())">${initial}</div>`
-    isPro=true
+    // Verify Pro status from database
+    try {
+      const {data:profile} = await sb.from('profiles').select('is_pro').eq('id',session.user.id).single()
+      isPro = profile?.is_pro === true
+    } catch(e) { isPro = false }
     await loadSavedArticles()
   }
-  if(localStorage.getItem('isAdmin')==='true') isPro=true
+  if(localStorage.getItem('isAdmin')==='true'&&session?.user?.email?.endsWith('@crichton-fock.com')) isPro=true
 }
 
 // Admin fetch button
