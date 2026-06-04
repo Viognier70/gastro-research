@@ -2169,7 +2169,11 @@ function filterProduct(term, btn){
   document.querySelectorAll('.product-pill').forEach(b=>b.classList.remove('on'))
   btn.classList.add('on')
   const si = document.getElementById('searchInput')
-  if(si){ si.value = term||''; if(typeof debounceSearch==='function') debounceSearch() }
+  if(si){ si.value = term||''; if(typeof loadArticles==='function') loadArticles() }
+  setTimeout(()=>{
+    const feed = document.getElementById('feedPane')||document.querySelector('.main-layout')
+    if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
+  }, 300)
 }
 async function loadSpotlight(){
   try {
