@@ -1679,8 +1679,8 @@ function renderLiveMap(){
     const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
     const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
-    const edelay=(edgeIdx++*40)+'ms'
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.4)" stroke-width="${sw}" opacity="1" ${dash} style="animation:edgeDraw 0.3s ease-out ${edelay} both"/>`
+    edgeIdx++
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.4)" stroke-width="${sw}" opacity="0" ${dash} class="map-edge"/>`
   })
 
   // Center: profession node
@@ -1700,8 +1700,7 @@ function renderLiveMap(){
     const sw=sel?2.5:1.2
     const textCol=sel?'#0C0B09':'#1A1000'
 
-    const delay=(allNodes.indexOf(n)*60)+'ms'
-    svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer;animation:nodeAppear 0.4s ease-out ${delay} both">`
+    svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer" class="map-node" data-idx="${allNodes.indexOf(n)}">`
     svg+=`<circle cx="${n._x}" cy="${n._y}" r="${n._r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`
 
     // Word wrap
@@ -1725,6 +1724,8 @@ function renderLiveMap(){
   svg+='</svg>'
   container.innerHTML=svg
   container.style.height=h+'px'
+  container.querySelectorAll('.map-edge').forEach((e,i)=>setTimeout(()=>{e.style.transition='opacity 0.3s';e.setAttribute('opacity','1')},i*30))
+  container.querySelectorAll('.map-node').forEach((n,i)=>{n.style.opacity='0';setTimeout(()=>{n.style.transition='opacity 0.4s';n.style.opacity='1'},i*60+100)})
 }
 
 function toggleMapTopic(topic){
