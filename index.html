@@ -2445,7 +2445,7 @@ function checkOnboarding(){
     if(daysLeft>0){
       isPro=true
       const bar=document.getElementById('freeBar')
-      if(bar) bar.innerHTML='<div style="font-size:11px;color:var(--gold)">'+(isReverse?'Free trial':'Pro trial')+' - '+daysLeft+' day'+(daysLeft===1?'':'s')+' remaining</div><span class="upgrade-link" onclick="openModal('upgradeModal')">Subscribe</span>'
+      if(bar) bar.innerHTML='<div style="font-size:11px;color:var(--gold)">'+(isReverse?'Free trial':'Pro trial')+' - '+daysLeft+' day'+(daysLeft===1?'':'s')+' remaining</div><span class="upgrade-link" onclick="openModal(&quot;upgradeModal&quot;)">Subscribe</span>'
       return
     } else { isPro=false }
   }
