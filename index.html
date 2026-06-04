@@ -1839,9 +1839,18 @@ function checkObReady(){
 }
 function saveObRoleAndExplore(){
   if(!_obRole) return
+  const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
+  const feedRole=roleMap[_obRole]||_obRole
   localStorage.setItem('gustoRole',_obRole)
-  role=_obRole
-  document.querySelectorAll('.role-chip').forEach(b=>b.classList.toggle('on',b.dataset.role===_obRole))
+  localStorage.setItem('gs_role',feedRole)
+  localStorage.setItem('gs_onboarded','1')
+  if(!localStorage.getItem('gs_trial_start')){
+    localStorage.setItem('gs_trial_start',Date.now().toString())
+    localStorage.setItem('gs_reverse_trial','1')
+  }
+  isPro=true
+  role=feedRole
+  document.querySelectorAll('.role-chip').forEach(b=>b.classList.toggle('on',b.dataset.role===feedRole))
   closeOnboarding()
   loadArticles()
   loadSpotlight()
@@ -2430,9 +2439,15 @@ function checkOnboarding(){
   checkTrialReset()
   const trialStart=localStorage.getItem('gs_trial_start')
   if(trialStart){
-    const daysLeft=14-Math.floor((Date.now()-parseInt(trialStart))/(1000*60*60*24))
-    if(daysLeft>0){isPro=true;const bar=document.getElementById('freeBar');if(bar)bar.innerHTML='<div style="font-size:11px;color:var(--gold)">✓ Pro trial — '+daysLeft+' days remaining</div><span class="upgrade-link" onclick="openModal(\'upgradeModal\')">Subscribe →</span>';return}
-    else{isPro=false}
+    const isReverse=localStorage.getItem('gs_reverse_trial')==='1'
+    const trialDays=isReverse?7:14
+    const daysLeft=trialDays-Math.floor((Date.now()-parseInt(trialStart))/(1000*60*60*24))
+    if(daysLeft>0){
+      isPro=true
+      const bar=document.getElementById('freeBar')
+      if(bar) bar.innerHTML='<div style="font-size:11px;color:var(--gold)">'+(isReverse?'Free trial':'Pro trial')+' - '+daysLeft+' day'+(daysLeft===1?'':'s')+' remaining</div><span class="upgrade-link" onclick="openModal('upgradeModal')">Subscribe</span>'
+      return
+    } else { isPro=false }
   }
   if(!localStorage.getItem('gs_onboarded')){
     setTimeout(()=>{document.getElementById('obOverlay').classList.add('open');document.body.style.overflow='hidden'},800)
