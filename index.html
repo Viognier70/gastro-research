@@ -2422,7 +2422,7 @@ async function loadSpotlight(){
     try {
       const hotTopic = picks[0]?.topic || null
       if(hotTopic && hotTopic !== 'all' && spotRole !== 'all'){
-        const sr = await fetch(`${SB_URL}/rest/v1/syntheses?role=eq.${spotRole}&topic=eq.${hotTopic}&order=created_at.desc&limit=1&select=title,synthesis_text,convergence,divergence,evidence_strength,article_count`,{headers:H})
+        const sr = await fetch(`${SB_URL}/rest/v1/research_syntheses?role=eq.${spotRole}&topic=eq.${hotTopic}&order=created_at.desc&limit=1&select=title,synthesis_text,convergence,divergence,evidence_strength,article_count`,{headers:H})
         const sd = await sr.json()
         const syn = Array.isArray(sd) && sd[0]
         if(syn){
