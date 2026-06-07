@@ -2398,7 +2398,7 @@ async function loadSpotlight(){
     const leadHTML = lead ? `
       <div class="nyt-lead-wrap" onclick="fetchAndOpenModal('${lead.id}')" style="cursor:pointer">
         ${roleTag(lead)}
-        <div class="nyt-lead-headline">${(lead.headline_en||lead.title||'').slice(0,100)}</div>
+        <div class="nyt-lead-headline">${((lead.headline_en||(lead.title||'').split(':')[0]||lead.title||'').slice(0,85)).trimEnd()}${(lead.headline_en||lead.title||'').length>85?'…':''}</div>
         <div class="nyt-lead-ingress">${(lead.core_claim||'').slice(0,220)}</div>
         ${sciTitle(lead)}
       </div>` : ''
