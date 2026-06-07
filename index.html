@@ -144,7 +144,28 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spotlight-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .spotlight-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .spotlight-sub{font-size:11px;color:rgba(255,255,255,.3);font-style:italic}
-.spotlight-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.spotlight-grid{display:grid;grid-template-columns:1fr;gap:0}
+.nyt-newspaper{display:grid;grid-template-columns:2fr 1fr;gap:0;border-bottom:0.5px solid rgba(255,255,255,.1)}
+.nyt-lead-wrap{padding:24px 24px 20px;border-right:0.5px solid rgba(255,255,255,.1)}
+.nyt-secondary-wrap{display:flex;flex-direction:column}
+.nyt-secondary-item{padding:16px 20px;border-bottom:0.5px solid rgba(255,255,255,.08);cursor:pointer;transition:background .15s}
+.nyt-secondary-item:hover{background:rgba(255,255,255,.04)}
+.nyt-secondary-item:last-child{border-bottom:none}
+.nyt-briefs{display:grid;grid-template-columns:repeat(3,1fr);border-top:0.5px solid rgba(255,255,255,.1)}
+.nyt-brief-item{padding:14px 18px;border-right:0.5px solid rgba(255,255,255,.08);cursor:pointer;transition:background .15s}
+.nyt-brief-item:last-child{border-right:none}
+.nyt-brief-item:hover{background:rgba(255,255,255,.04)}
+.nyt-section-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.nyt-lead-headline{font-family:"Playfair Display",serif;font-size:24px;font-weight:700;color:#FDFCF8;line-height:1.25;margin-bottom:10px}
+.nyt-lead-ingress{font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:12px}
+.nyt-lead-meta{font-size:10px;color:rgba(255,255,255,.35);line-height:1.5}
+.nyt-lead-title{font-size:10px;color:rgba(255,255,255,.3);font-style:italic;margin-top:6px;line-height:1.4}
+.nyt-sec-headline{font-family:"Playfair Display",serif;font-size:14px;font-weight:600;color:#FDFCF8;line-height:1.3;margin-bottom:5px}
+.nyt-sec-ingress{font-size:11px;color:rgba(255,255,255,.55);line-height:1.5}
+.nyt-sec-meta{font-size:9px;color:rgba(255,255,255,.3);margin-top:5px}
+.nyt-brief-headline{font-family:"Playfair Display",serif;font-size:12px;font-weight:600;color:#FDFCF8;line-height:1.3;margin-bottom:4px}
+.nyt-brief-meta{font-size:9px;color:rgba(255,255,255,.35)}
+.nyt-role-tag{font-size:9px;font-weight:700;background:rgba(201,168,76,.2);color:var(--gold);padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:8px}
 @media(max-width:700px){.spotlight-grid{grid-template-columns:1fr}}
 .spotlight-card{background:rgba(255,255,255,.06);border:0.5px solid rgba(201,168,76,.2);border-radius:8px;padding:20px 22px 18px;cursor:pointer;transition:background .2s,border-color .2s;display:block;min-height:160px}
 .spotlight-card:hover{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.35)}
@@ -2365,33 +2386,43 @@ async function loadSpotlight(){
 
     }
     if(!picks.length) return
-    const html = picks.map((a,i) => {
-      const rawH = (a.headline_en||a.title||'').slice(0,90)
-      const headline = rawH
-      const ingress = (a.core_claim||'').slice(0,160)
-      const epCol=a._rk||col
-      const body=(a['episteme_'+epCol]||a['techne_'+epCol]||'').slice(0,200)
-      const relScore=a._rk?a['relevance_sci_'+a._rk]:null
-      const roleTag=a._rl?'<span style="font-size:9px;font-weight:700;background:rgba(201,168,76,.25);color:var(--gold);padding:2px 8px;border-radius:10px;margin-right:4px">'+a._rl+(relScore?' · '+relScore+'/10':'')+'</span>':''
-      const topic = (a.topic||'').replace(/_/g,' ')
-      const journal = (a.journal||'').slice(0,32)
-      const isLead = i===0
-      return `<div class="spotlight-card nyt-card${isLead?' nyt-lead':''}" onclick="fetchAndOpenModal('${a.id}')">`+
-        `<div class="nyt-topic">${roleTag}${topic}${a.year?' · '+a.year:''}</div>`+
-        `<div class="nyt-headline">${headline}</div>`+
-        `<div class="nyt-ingress">${ingress}</div>`+
-        (body?`<div class="nyt-body">${body}${body.length>=200?'…':''}</div>`:'')+
-        `<div class="nyt-footer">
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="font-size:10px;color:rgba(255,255,255,.45);line-height:1.5">
-              ${a.authors?a.authors.split(',').slice(0,3).map(n=>n.trim()).join(', ')+(a.authors.split(',').length>3?' et al.':''):''}${a.authors&&a.year?` (${a.year}). `:''}${a.title?`<em>${(a.title||'').slice(0,80)}${a.title.length>80?'...':''}</em>. `:''}${a.journal?`<em>${(a.journal||'').slice(0,40)}</em>. `:''}${a.url&&a.url.includes('doi.org')?`<a href="${a.url}" target="_blank" style="color:var(--gold);text-decoration:none">DOI</a>`:''}
-            </div>
-            ${(a.claim_keywords&&a.claim_keywords.length?a.claim_keywords.slice(0,4):(a.topic?[a.topic.replace(/_/g," ")]:[]).concat(a.study_type?[a.study_type]:[])).map(k=>`<span style="font-size:9px;background:rgba(201,168,76,.12);color:var(--gold);padding:1px 7px;border-radius:10px">${k}</span>`).join("")}
-          </div>
-          <span class="nyt-read">Read research →</span>
-        </div>`+
-        '</div>'
-    }).join('')
+    // Tidningsstruktur: lead + sekundära + briefs
+    const lead = picks[0]
+    const secondaries = picks.slice(1,3)
+    const briefs = picks.slice(3,6)
+
+    function roleTag(a){ return a._rl?`<span class="nyt-role-tag">${a._rl}</span>`:'' }
+    function sciTitle(a){ return a.title?`<div class="nyt-lead-title"><em>${(a.title||'').slice(0,100)}${(a.title||'').length>100?'…':''}</em> · ${a.journal||''} ${a.year||''}</div>`:'' }
+
+    const leadHTML = lead ? `
+      <div class="nyt-lead-wrap" onclick="fetchAndOpenModal('${lead.id}')" style="cursor:pointer">
+        ${roleTag(lead)}
+        <div class="nyt-lead-headline">${(lead.headline_en||lead.title||'').slice(0,100)}</div>
+        <div class="nyt-lead-ingress">${(lead.core_claim||'').slice(0,220)}</div>
+        ${sciTitle(lead)}
+      </div>` : ''
+
+    const secHTML = secondaries.map(a=>`
+      <div class="nyt-secondary-item" onclick="fetchAndOpenModal('${a.id}')">
+        ${roleTag(a)}
+        <div class="nyt-sec-headline">${(a.headline_en||a.title||'').slice(0,70)}</div>
+        <div class="nyt-sec-ingress">${(a.core_claim||'').slice(0,100)}</div>
+        <div class="nyt-sec-meta">${a.journal||''} · ${a.year||''}</div>
+      </div>`).join('')
+
+    const briefsHTML = briefs.map(a=>`
+      <div class="nyt-brief-item" onclick="fetchAndOpenModal('${a.id}')">
+        ${roleTag(a)}
+        <div class="nyt-brief-headline">${(a.headline_en||a.title||'').slice(0,55)}</div>
+        <div class="nyt-brief-meta">${(a.topic||'').replace(/_/g,' ')} · ${a.year||''}</div>
+      </div>`).join('')
+
+    const html = `
+      <div class="nyt-newspaper">
+        ${leadHTML}
+        <div class="nyt-secondary-wrap">${secHTML}</div>
+      </div>
+      ${briefs.length?`<div class="nyt-briefs">${briefsHTML}</div>`:''}`
     const grid = document.getElementById('spotlightGrid')
     // Sätt datum
     const spotDate = document.getElementById('spotlightDate')
