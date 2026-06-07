@@ -684,6 +684,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <input class="search-input" id="searchInput" placeholder="Search title, author, journal..." oninput="debounceSearch()">
   </div>
   <button class="saved-btn" id="savedBtn" onclick="toggleSaved()">☆ Saved</button>
+  <button class="saved-btn" id="alertBtn" onclick="toggleAlert()" style="display:none">🔔 Alert me</button>
 </div>
 
 <!-- MAIN LAYOUT -->
@@ -1305,6 +1306,24 @@ function doShare(type){
 }
 
 function toggleSaved(){showingSaved=!showingSaved;document.getElementById('savedBtn').classList.toggle('on',showingSaved);renderFeed()}
+function updateAlertBtn(topic){
+  const btn=document.getElementById('alertBtn')
+  if(!btn)return
+  if(!topic||topic==='all'){btn.style.display='none';return}
+  btn.style.display='inline-flex'
+  btn.textContent='🔔 Alert me on '+topic.replace(/_/g,' ')
+}
+async function toggleAlert(){
+  const topic=document.getElementById('topicSel')?.value
+  if(!topic||topic==='all')return
+  if(!session){openModal('authModal');return}
+  const email=session.user.email
+  try{
+    await fetch(`${SB_URL}/rest/v1/subscribers`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({email,topics:[topic],active:true})})
+    const btn=document.getElementById('alertBtn')
+    if(btn){btn.textContent='✓ Alert set for '+topic.replace(/_/g,' ');btn.classList.add('on')}
+  }catch(e){console.log('Alert error:',e)}
+}
 
 async function toggleSaveArticle(id,btn){
   if(!sb.auth.getSession){return openModal('authModal')}
@@ -2334,6 +2353,7 @@ function setTopicMobile(topic, btn){
   btn.classList.add('on')
   const sel = document.getElementById('topicSel')
   if(sel){ sel.value = topic; loadArticles() }
+  updateAlertBtn(topic)
   if(topic && topic !== 'all') loadSynthesis(role, topic)
 }
 async function loadHotProducts(){
