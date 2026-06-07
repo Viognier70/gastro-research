@@ -465,7 +465,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="spotlight-wrap" id="spotlightWrap">
   <div class="spotlight-header">
     <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
-    <span class="spotlight-sub">Latest high-impact findings for your profession</span>
+    <span class="spotlight-sub" id="spotlightDate">Latest high-impact findings for your profession</span>
   </div>
   <div class="spotlight-grid" id="spotlightGrid">
     <div class="spotlight-card" style="opacity:.3"><div class="spotlight-claim" style="font-size:12px">Loading latest findings...</div></div>
@@ -2351,14 +2351,14 @@ async function loadSpotlight(){
     if(spotRole==='all'){
       isAllRoles=true
       const roleArts = await Promise.all(ROLES_META.map(async rm=>{
-        const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${rm.key},techne_${rm.key},${rm.rc}&core_claim=not.is.null&episteme_${rm.key}=not.is.null&${rm.rc}=gte.6&order=${rm.rc}.desc.nullslast,fetched_at.desc&limit=5`,{headers:H})
+        const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${rm.key},techne_${rm.key},${rm.rc}&core_claim=not.is.null&episteme_${rm.key}=not.is.null&${rm.rc}=gte.6&order=fetched_at.desc,${rm.rc}.desc.nullslast&limit=10`,{headers:H})
         const d2=await r2.json()
         const best=Array.isArray(d2)?d2.find(a=>a.headline_en||a.core_claim):null
         return best?{...best,_rk:rm.key,_rl:rm.label}:null
       }))
       picks=roleArts.filter(Boolean)
     } else {
-      const r=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${col},techne_${col},relevance_sci_${col}&core_claim=not.is.null&episteme_${col}=not.is.null&order=fetched_at.desc&limit=30`,{headers:H})
+      const r=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${col},techne_${col},phronesis_${col},relevance_sci_${col}&core_claim=not.is.null&episteme_${col}=not.is.null&relevance_sci_${col}=gte.6&order=fetched_at.desc,relevance_sci_${col}.desc.nullslast&limit=20`,{headers:H})
       const data=await r.json()
       const ROLE_LABELS={'sommelier':'Sommelier','chef':'Chef','fb_manager':'F&B Manager','food_researcher':'Food Researcher','gastronomy':'Gastronomy'}
       picks=Array.isArray(data)?data.filter(a=>a.headline_en||a.core_claim).slice(0,6).map(a=>({...a,_rk:col,_rl:ROLE_LABELS[col]||col})):[]
@@ -2367,7 +2367,7 @@ async function loadSpotlight(){
     if(!picks.length) return
     const html = picks.map((a,i) => {
       const rawH = (a.headline_en||a.title||'').slice(0,90)
-      const headline = /[?!]$/.test(rawH.trim()) ? rawH : (i%2===0 ? rawH+'?' : rawH+'!')
+      const headline = rawH
       const ingress = (a.core_claim||'').slice(0,160)
       const epCol=a._rk||col
       const body=(a['episteme_'+epCol]||a['techne_'+epCol]||'').slice(0,200)
@@ -2393,6 +2393,13 @@ async function loadSpotlight(){
         '</div>'
     }).join('')
     const grid = document.getElementById('spotlightGrid')
+    // Sätt datum
+    const spotDate = document.getElementById('spotlightDate')
+    if(spotDate){
+      const now = new Date()
+      const opts = {weekday:'long',month:'long',day:'numeric'}
+      spotDate.textContent = now.toLocaleDateString('en-US', opts)
+    }
     if(grid){
       grid.innerHTML = html
       // Animate cards in
