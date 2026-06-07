@@ -2447,8 +2447,28 @@ async function loadSpotlight(){
       }
     } catch(e){}
 
+    // Hämta senaste artiklar (även utan TRIAD) för "Just in"-sektion
+    let justInHTML = ''
+    try {
+      const jr = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,journal,year,topic,fetched_at&order=fetched_at.desc&limit=4`,{headers:H})
+      const jd = await jr.json()
+      if(Array.isArray(jd) && jd.length){
+        const items = jd.map(a=>`<div style="padding:8px 16px;border-right:0.5px solid rgba(255,255,255,.06);cursor:pointer;flex:1;min-width:0" onclick="fetchAndOpenModal('${a.id}')">
+          <div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px">${(a.topic||'').replace(/_/g,' ')} · ${a.year||''}</div>
+          <div style="font-size:11px;font-weight:500;color:#FDFCF8;line-height:1.35">${(a.title||'').slice(0,60)}${(a.title||'').length>60?'…':''}</div>
+        </div>`).join('')
+        justInHTML = `<div style="border-bottom:0.5px solid rgba(255,255,255,.1);display:flex;align-items:stretch">
+          <div style="padding:8px 16px;display:flex;align-items:center;flex-shrink:0;border-right:0.5px solid rgba(255,255,255,.1)">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);writing-mode:vertical-rl;transform:rotate(180deg)">Just in</span>
+          </div>
+          ${items}
+        </div>`
+      }
+    } catch(e){}
+
     const html = `
       ${synthBlock}
+      ${justInHTML}
       <div class="nyt-newspaper">
         ${leadHTML}
         <div class="nyt-secondary-wrap">${secHTML}</div>
