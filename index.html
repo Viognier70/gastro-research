@@ -909,7 +909,7 @@ function updateTexts(){
 }
 function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
-  const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=t('freeLeft',remaining)
+  const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=remaining>0?'':t('freeLeft',remaining)
   const _ff=document.getElementById('freeFill');if(_ff)_ff.style.width=Math.round((freeCount/FREE_LIMIT)*100)+'%'
   const isReverseTrial=localStorage.getItem('gs_reverse_trial')==='1'
   const trialActive=localStorage.getItem('gs_trial_start')&&isReverseTrial
@@ -2402,7 +2402,7 @@ async function loadSpotlight(){
       <div class="nyt-lead-wrap" onclick="fetchAndOpenModal('${lead.id}')" style="cursor:pointer">
         ${roleTag(lead)}
         <div class="nyt-lead-headline">${((lead.headline_en||(lead.title||'').split(':')[0]||lead.title||'').slice(0,85)).trimEnd()}${(lead.headline_en||lead.title||'').length>85?'…':''}</div>
-        <div class="nyt-lead-ingress">${(lead.core_claim||'').slice(0,220)}</div>
+        <div class="nyt-lead-ingress">${(lead.core_claim||lead.headline_en||'Recently published research in gastronomy and food science — analysis in progress.').slice(0,220)}</div>
         ${sciTitle(lead)}
       </div>` : ''
 
