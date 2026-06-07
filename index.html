@@ -532,66 +532,54 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
     <div class="stat-item"><div class="stat-num" id="triadCount">—</div><div class="stat-label">TRIAD analyses</div></div>
     <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">research areas</div></div>
-<!-- DATABASE STATUS -->
-<div style="border-bottom:0.5px solid var(--border);padding:24px 32px;background:var(--white)">
-  <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:16px">Database status — live</div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:0.5px solid var(--border);border-radius:10px;overflow:hidden">
-    <div style="padding:16px 20px;border-right:0.5px solid var(--border)">
-      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbTotal">—</div>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">Articles tracked<br><span style="color:var(--gold)" id="dbNew"></span></div>
+<!-- KNOWLEDGE PYRAMID -->
+<div style="padding:32px 32px 28px;background:var(--white);border-bottom:0.5px solid var(--border)">
+  <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:20px">Building the world&#39;s most comprehensive gastronomy research database</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center">
+    <svg width="100%" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <!-- Base: all articles -->
+      <polygon points="20,290 380,290 320,220 80,220" fill="rgba(136,135,128,0.15)" stroke="rgba(136,135,128,0.4)" stroke-width="0.5"/>
+      <text x="200" y="250" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="500" fill="var(--text-primary)" id="pyTotal">—</text>
+      <text x="200" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="var(--text-tertiary)">articles in database</text>
+      <!-- Level 2: analysed -->
+      <polygon points="80,220 320,220 270,155 130,155" fill="rgba(29,158,117,0.15)" stroke="rgba(29,158,117,0.4)" stroke-width="0.5"/>
+      <text x="200" y="182" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="500" fill="var(--text-primary)" id="pyAnalysed">—</text>
+      <text x="200" y="198" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="var(--text-tertiary)">relevance analysed</text>
+      <!-- Level 3: TRIAD -->
+      <polygon points="130,155 270,155 230,90 170,90" fill="rgba(186,117,23,0.2)" stroke="rgba(186,117,23,0.4)" stroke-width="0.5"/>
+      <text x="200" y="118" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="500" fill="var(--text-primary)" id="pyTriad">—</text>
+      <text x="200" y="133" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="var(--text-tertiary)">TRIAD + IMRaD</text>
+      <!-- Apex: scenarios -->
+      <polygon points="170,90 230,90 200,40" fill="rgba(216,90,48,0.25)" stroke="rgba(216,90,48,0.5)" stroke-width="0.5"/>
+      <text x="200" y="72" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" font-weight="500" fill="var(--text-primary)" id="pyScenario">—</text>
+      <!-- Pipeline arrow -->
+      <line x1="392" y1="285" x2="392" y2="45" stroke="rgba(201,168,76,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="398" y="165" font-family="Outfit,sans-serif" font-size="9" fill="var(--text-tertiary)" writing-mode="tb">pipeline</text>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(216,90,48,0.4);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Scenario analysis</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Gastronomic application · situated judgment · Phronesis</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(186,117,23,0.35);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">TRIAD analysis + IMRaD</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Episteme · Techne · Phronesis · full scientific structure</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(29,158,117,0.3);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Relevance analysed</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Core claim · keywords · study type · scored per profession</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(136,135,128,0.3);flex-shrink:0;margin-top:2px"></div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Articles in database</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Peer-reviewed research relevant to gastronomy · updated daily</div></div>
+      </div>
+      <div style="margin-top:8px;padding:12px 16px;background:var(--warm-100);border-radius:8px;border-left:2px solid var(--gold)">
+        <div style="font-size:10px;color:var(--gold);font-weight:600;margin-bottom:4px">You are part of the journey</div>
+        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.6">Every day our pipeline analyses new research. The database grows — and so does your professional knowledge.</div>
+      </div>
     </div>
-    <div style="padding:16px 20px;border-right:0.5px solid var(--border)">
-      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbAnalyzed">—</div>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">Content analysed<br><span style="color:var(--text-tertiary)">core claim · keywords · study type</span></div>
-    </div>
-    <div style="padding:16px 20px;border-right:0.5px solid var(--border)">
-      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbRelevant">—</div>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">Relevant for gastronomy<br><span style="color:var(--text-tertiary)">relevance scored per profession</span></div>
-    </div>
-    <div style="padding:16px 20px">
-      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--text-primary)" id="dbTriad">—</div>
-      <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;line-height:1.4">TRIAD scenarios created<br><span style="color:var(--text-tertiary)">episteme · techne · phronesis</span></div>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:0.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
-    <div style="padding:12px 20px;border-right:0.5px solid var(--border);display:flex;align-items:center;gap:10px">
-      <div style="width:8px;height:8px;border-radius:50%;background:#2D5016;flex-shrink:0"></div>
-      <div><span style="font-size:13px;font-weight:500" id="dbConvergence">—</span> <span style="font-size:11px;color:var(--text-tertiary)">convergent findings</span></div>
-    </div>
-    <div style="padding:12px 20px;border-right:0.5px solid var(--border);display:flex;align-items:center;gap:10px">
-      <div style="width:8px;height:8px;border-radius:50%;background:#993C1D;flex-shrink:0"></div>
-      <div><span style="font-size:13px;font-weight:500" id="dbDivergence">—</span> <span style="font-size:11px;color:var(--text-tertiary)">divergent findings</span></div>
-    </div>
-    <div style="padding:12px 20px;display:flex;align-items:center;gap:10px">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>
-      <div style="font-size:11px;color:var(--text-tertiary)">Scopus · PubMed · OpenAlex · arXiv · Semantic Scholar</div>
-    </div>
-  </div>
-</div> 
-    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">professions</div></div>
-  </div>
-</div>
-
-<div id="mobileTopicPills" style="display:none;padding:12px 16px;background:var(--warm-100);border-bottom:0.5px solid var(--border)">
-  <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px">Browse by topic</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px">
-    <button onclick="setTopicMobile('all',this)" class="topic-pill on">All</button>
-    <button onclick="setTopicMobile('gastronomy',this)" class="topic-pill">Gastronomy</button>
-    <button onclick="setTopicMobile('sommellerie',this)" class="topic-pill">Sommellerie</button>
-    <button onclick="setTopicMobile('flavor_science',this)" class="topic-pill">Flavour science</button>
-    <button onclick="setTopicMobile('fermentation_science',this)" class="topic-pill">Fermentation</button>
-    <button onclick="setTopicMobile('sensory_evaluation',this)" class="topic-pill">Sensory</button>
-    <button onclick="setTopicMobile('food_psychology',this)" class="topic-pill">Food psychology</button>
-    <button onclick="setTopicMobile('hospitality',this)" class="topic-pill">Hospitality</button>
-    <button onclick="setTopicMobile('neurogastronomy',this)" class="topic-pill">Neurogastronomy</button>
-    <button onclick="setTopicMobile('novel_foods',this)" class="topic-pill">Novel foods</button>
-    <button onclick="setTopicMobile('food_science',this)" class="topic-pill">Food science</button>
-    <button onclick="setTopicMobile('culinary_science',this)" class="topic-pill">Culinary science</button>
-    <button onclick="setTopicMobile('nutritional_science',this)" class="topic-pill">Nutrition</button>
-    <button onclick="setTopicMobile('multisensory',this)" class="topic-pill">Multisensory</button>
   </div>
 </div>
-<!-- KNOWLEDGE MAP INLINE -->
 <div id="knowledgeMapSection" style="padding:28px 32px;border-bottom:0.5px solid var(--border);background:var(--warm-100)">
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     <div>
@@ -1278,11 +1266,11 @@ async function loadCounts(){
     const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
     const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
     const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
-    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE')
+    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE');const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=totalForDb.toLocaleString('sv-SE')
     const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' new today'
-    const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE')
+    const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE');const pyA=document.getElementById('pyAnalysed');if(pyA)pyA.textContent=analyzed.toLocaleString('sv-SE')
     const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
-    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE')
+    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE');const pyTr=document.getElementById('pyTriad');if(pyTr)pyTr.textContent=triad.toLocaleString('sv-SE');const pyS=document.getElementById('pyScenario');if(pyS)pyS.textContent=triad.toLocaleString('sv-SE')
     const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
     const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
   }catch(e){console.error("loadCounts error:",e)}
