@@ -1270,7 +1270,13 @@ async function loadCounts(){
     const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' new today'
     const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE');const pyA=document.getElementById('pyAnalysed');if(pyA)pyA.textContent=analyzed.toLocaleString('sv-SE')
     const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
-    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE');const pyTr=document.getElementById('pyTriad');if(pyTr)pyTr.textContent=triad.toLocaleString('sv-SE');const pyS=document.getElementById('pyScenario');if(pyS)pyS.textContent=triad.toLocaleString('sv-SE')
+    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE');const pyTr=document.getElementById('pyTriad');if(pyTr)pyTr.textContent=triad.toLocaleString('sv-SE')
+    // Syntes-count för toppen av pyramiden
+    try{
+      const synthR=await fetch(`${SB_URL}/rest/v1/research_syntheses?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+      const synthCount=parseInt(synthR.headers.get('content-range')?.split('/')[1]||'0')
+      const pyS=document.getElementById('pyScenario');if(pyS)pyS.textContent=synthCount.toLocaleString('sv-SE')
+    }catch(e){}
     const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
     const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
   }catch(e){console.error("loadCounts error:",e)}
