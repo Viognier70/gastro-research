@@ -178,7 +178,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spotlight-claim{font-size:15px;font-weight:500;color:#FDFCF8;line-height:1.45;margin-bottom:10px;font-family:"Playfair Display",serif}
 .spotlight-journal{font-size:11px;color:rgba(255,255,255,.4);margin-top:auto;padding-top:8px}
 .spotlight-arrow{margin-left:auto;color:var(--gold);font-size:14px;opacity:0;transition:opacity .2s}
-.mini-ticker{height:38px;overflow:hidden;background:rgba(201,168,76,0.08);border-top:0.5px solid rgba(201,168,76,0.25);display:flex;align-items:center;margin-top:12px}
+.mini-ticker{height:44px;overflow:hidden;background:rgba(201,168,76,0.06);border-top:0.5px solid rgba(201,168,76,0.2);display:flex;align-items:center;margin-top:12px}
 .mini-ticker-track{display:flex;align-items:center;white-space:nowrap;animation:ticker-scroll 90s linear infinite;gap:0}
 .mini-ticker-track:hover{animation-play-state:paused}
 .mini-ticker-item{display:inline-flex;align-items:center;gap:8px;padding:0 32px;font-size:12px;color:rgba(255,255,255,.75);letter-spacing:.03em}
@@ -492,6 +492,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div class="spotlight-card" style="opacity:.3"><div class="spotlight-claim" style="font-size:12px">Loading latest findings...</div></div>
   </div>
   <div class="mini-ticker" id="miniTicker">
+    <div style="flex-shrink:0;padding:0 14px;border-right:0.5px solid rgba(201,168,76,.2);height:100%;display:flex;align-items:center;gap:6px">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:mapPulse 1.8s ease-in-out infinite;flex-shrink:0"></span>
+      <span style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,168,76,.7);white-space:nowrap">Incoming research</span>
+    </div>
     <div class="mini-ticker-track" id="miniTickerTrack">
       <span class="mini-ticker-item"><span class="mini-ticker-dot"></span>New research loading...</span>
       <span class="mini-ticker-item"><span class="mini-ticker-dot"></span>Gusto Science · Research Intelligence for Culinary Professionals</span>
@@ -2447,24 +2451,7 @@ async function loadSpotlight(){
       }
     } catch(e){}
 
-    // Hämta senaste artiklar (även utan TRIAD) för "Just in"-sektion
     let justInHTML = ''
-    try {
-      const jr = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,journal,year,topic,fetched_at&order=fetched_at.desc&limit=4`,{headers:H})
-      const jd = await jr.json()
-      if(Array.isArray(jd) && jd.length){
-        const items = jd.map(a=>`<div style="padding:8px 16px;border-right:0.5px solid rgba(255,255,255,.06);cursor:pointer;flex:1;min-width:0" onclick="fetchAndOpenModal('${a.id}')">
-          <div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px">${(a.topic||'').replace(/_/g,' ')} · ${a.year||''}</div>
-          <div style="font-size:11px;font-weight:500;color:#FDFCF8;line-height:1.35">${(a.title||'').slice(0,60)}${(a.title||'').length>60?'…':''}</div>
-        </div>`).join('')
-        justInHTML = `<div style="border-bottom:0.5px solid rgba(255,255,255,.1);display:flex;align-items:stretch">
-          <div style="padding:8px 16px;display:flex;align-items:center;flex-shrink:0;border-right:0.5px solid rgba(255,255,255,.1)">
-            <span style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);writing-mode:vertical-rl;transform:rotate(180deg)">Just in</span>
-          </div>
-          ${items}
-        </div>`
-      }
-    } catch(e){}
 
     const html = `
       ${synthBlock}
@@ -2502,8 +2489,10 @@ async function loadMiniTicker(){
     if(!Array.isArray(data)||!data.length) return
     const items = data.map(a=>{
       const text = (a.headline_en||a.title||'').slice(0,65)
-      const meta = [a.journal?a.journal.slice(0,20):null, a.year].filter(Boolean).join(' · ')
-      return '<span class="mini-ticker-item"><span class="mini-ticker-dot"></span>'+text+(meta?' <span style="opacity:.45;font-size:10px">'+meta+'</span>':'')+'</span>'
+      const topic = (a.topic||'').replace(/_/g,' ')
+      const meta = [topic?topic:null, a.journal?a.journal.slice(0,18):null, a.year].filter(Boolean).join(' · ')
+      const analysing = !a.headline_en ? ' <span style="font-size:9px;color:rgba(201,168,76,.5);font-style:italic">· analysing</span>' : ''
+      return '<span class="mini-ticker-item"><span class="mini-ticker-dot"></span>'+text+(meta?' <span style="opacity:.4;font-size:10px">'+meta+'</span>':'')+analysing+'</span>'
     }).join('')
     const track = document.getElementById('miniTickerTrack')
     if(track) track.innerHTML = items + items
