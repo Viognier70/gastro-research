@@ -2497,10 +2497,14 @@ async function loadSpotlight(){
 
 async function loadMiniTicker(){
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=title,journal,year&core_claim=not.is.null&order=fetched_at.desc&limit=20`,{headers:H})
+    const r = await fetch(`${SB_URL}/rest/v1/articles?select=title,headline_en,journal,year,topic&order=fetched_at.desc&limit=30`,{headers:H})
     const data = await r.json()
     if(!Array.isArray(data)||!data.length) return
-    const items = data.map(a=>'<span class="mini-ticker-item"><span class="mini-ticker-dot"></span>'+(a.title||'').slice(0,60)+(a.journal?' · '+(a.journal||'').slice(0,25):'')+'</span>').join('')
+    const items = data.map(a=>{
+      const text = (a.headline_en||a.title||'').slice(0,65)
+      const meta = [a.journal?a.journal.slice(0,20):null, a.year].filter(Boolean).join(' · ')
+      return '<span class="mini-ticker-item"><span class="mini-ticker-dot"></span>'+text+(meta?' <span style="opacity:.45;font-size:10px">'+meta+'</span>':'')+'</span>'
+    }).join('')
     const track = document.getElementById('miniTickerTrack')
     if(track) track.innerHTML = items + items
   } catch(e){}
