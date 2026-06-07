@@ -2375,7 +2375,7 @@ async function loadSpotlight(){
       }))
       picks=roleArts.filter(Boolean)
     } else {
-      const r=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${col},techne_${col},phronesis_${col},relevance_sci_${col}&order=fetched_at.desc&limit=20`,{headers:H})
+      const r=await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,source_label,year,topic,authors,claim_keywords,study_type,episteme_${col},techne_${col},phronesis_${col},relevance_sci_${col}&or=(relevance_sci_${col}.gte.3,relevance_sci_${col}.is.null)&order=fetched_at.desc&limit=20`,{headers:H})
       const data=await r.json()
       const ROLE_LABELS={'sommelier':'Sommelier','chef':'Chef','fb_manager':'F&B Manager','food_researcher':'Food Researcher','gastronomy':'Gastronomy'}
       picks=Array.isArray(data)?data.slice(0,6).map(a=>({...a,_rk:col,_rl:ROLE_LABELS[col]||col})):[]
