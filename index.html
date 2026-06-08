@@ -536,7 +536,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 <!-- PYRAMID + MAP GRID -->
-<div id="pyramidMapGrid" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid var(--border);max-width:1100px;margin:0 auto">
+<div id="pyramidMapGrid" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid var(--border);max-width:1100px;margin:0 auto;align-items:center">
 <!-- KNOWLEDGE PYRAMID -->
 <div style="padding:32px 32px 28px;background:var(--white);border-right:0.5px solid var(--border)">
   <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:20px">Building the world&#39;s most comprehensive gastronomy research database</div>
@@ -1502,14 +1502,14 @@ function renderTopicGraph(){
   nodes.push({id:'center',label:roleNames[r],x:cx,y:cy,type:'center',size:52})
   
   // Core topics in inner ring
-  const coreR = Math.min(w,h)*0.22
+  const coreR = Math.min(w,h)*0.18
   data.core.forEach((t,i)=>{
     const angle = (i/data.core.length)*Math.PI*2 - Math.PI/2
     const td1=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36,_recent:td1?.recent||0})
   })
   
   // Related topics in outer ring
-  const outerR = Math.min(w,h)*0.36
+  const outerR = Math.min(w,h)*0.30
   data.related.forEach((t,i)=>{
     const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
     const td2=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
