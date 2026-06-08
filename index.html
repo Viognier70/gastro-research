@@ -1685,7 +1685,7 @@ function renderLiveMap(){
   const container=document.getElementById('liveKnowledgeMap')
   if(!container||!mapTopicData.length) return
 
-  const w=(container.offsetWidth||860)-80
+  const w=(container.offsetWidth||860)-120
   const h=520
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',fbmanager:'F&B Manager',researcher:'Researcher',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
