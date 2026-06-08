@@ -1663,8 +1663,8 @@ function renderLiveMap(){
   let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:#0C0B09">`
 
   // Subtle ring guides
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(12,11,9,0.05)" stroke-width="1"/>`
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(12,11,9,0.03)" stroke-width="1"/>`
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
+  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
 
   // Edges
   let edgeIdx=0
@@ -1674,14 +1674,14 @@ function renderLiveMap(){
     const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
     edgeIdx++
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(12,11,9,0.4)" stroke-width="${sw}" opacity="0" ${dash} class="map-edge"/>`
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,0.4)" stroke-width="${sw}" opacity="0" ${dash} class="map-edge"/>`
   })
 
   // Center: profession node
   const rname=roleNames[role]
   svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="2"/>`
   svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#C9A84C">${rname}</text>`
-  svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(12,11,9,0.3)">Aristotle·TRIAD</text>`
+  svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.5)">Aristotle·TRIAD</text>`
 
   // Topic nodes
   allNodes.forEach(n=>{
@@ -1689,10 +1689,10 @@ function renderLiveMap(){
     const int=Math.min(n._rel/10,1)
     // Color: gold intensity = relevance, opacity = article count proportion
     const baseOpacity=0.15+0.75*(n.count/maxCount)
-    const fill=sel?'#C9A84C':int>0.6?interpolateColor('#D4BE8A','#C9A84C',int*0.9):'#E8DFC0'
-    const stroke=sel?'#8B6914':int>0.4?'#C9A84C':'#B8A060'
+    const fill=sel?'#C9A84C':int>0.6?'rgba(201,168,76,0.7)':'rgba(201,168,76,0.25)'
+    const stroke=sel?'#C9A84C':int>0.4?'rgba(201,168,76,0.6)':'rgba(201,168,76,0.3)'
     const sw=sel?2.5:1.2
-    const textCol=sel?'#0C0B09':'#1A1000'
+    const textCol=sel?'#0C0B09':'rgba(255,255,255,0.85)'
 
     svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer" class="map-node" data-idx="${allNodes.indexOf(n)}">`
     svg+=`<circle cx="${n._x}" cy="${n._y}" r="${n._r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`
@@ -1708,7 +1708,7 @@ function renderLiveMap(){
       svg+=`<text x="${n._x}" y="${n._y+7}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="${sel?'600':'400'}">${words.slice(mid).join(' ')}</text>`
     }
     // Article count
-    if(n._r>22) svg+=`<text x="${n._x}" y="${n._y+n._r+10}" text-anchor="middle" font-size="7.5" fill="rgba(12,11,9,0.3)">${n.count}</text>`
+    if(n._r>22) svg+=`<text x="${n._x}" y="${n._y+n._r+10}" text-anchor="middle" font-size="7.5" fill="rgba(255,255,255,0.3)">${n.count}</text>`
     svg+='</g>'
   })
 
