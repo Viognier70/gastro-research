@@ -1485,117 +1485,8 @@ const TOPIC_LABELS = {
 let selectedTopics = new Set()
 
 function openTopicGraph(){
-  renderTopicGraph()
+  renderLiveMap()
   openModal('topicGraphModal')
-}
-
-function renderTopicGraph(){
-  const container = document.getElementById('topicGraph')
-  const w = container.offsetWidth || 750
-  const h = 420
-  const cx = w/2, cy = h/2
-  const r = role === 'all' ? 'all' : role
-  const data = TOPIC_DATA[r] || TOPIC_DATA.all
-  const roleNames = {all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
-  
-  document.getElementById('graphTitle').textContent = roleNames[r] + ' — Knowledge map'
-  document.getElementById('graphEyebrow').textContent = 'Research topics for ' + roleNames[r]
-
-  // Position nodes
-  const nodes = []
-  // Center: profession
-  nodes.push({id:'center',label:roleNames[r],x:cx,y:cy,type:'center',size:52})
-  
-  // Core topics in inner ring
-  const coreR = Math.min(w,h)*0.14
-  data.core.forEach((t,i)=>{
-    const angle = (i/data.core.length)*Math.PI*2 - Math.PI/2
-    const td1=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36,_recent:td1?.recent||0})
-  })
-  
-  // Related topics in outer ring
-  const outerR = Math.min(w,h)*0.24
-  data.related.slice(0,6).forEach((t,i)=>{
-    const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
-    const td2=mapTopicData.find(x=>x.topic===t); const lbl=(TOPIC_LABELS[t]||t);nodes.push({id:t,label:lbl.length>14?lbl.slice(0,13)+'…':lbl,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
-  })
-
-  // Build SVG
-  let svg = `<svg width="${w}" height="${h}" viewBox="-60 -40 ${w+120} ${h+80}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;overflow:visible;background:#0C0B09;border-radius:8px">
-  <defs>
-    <radialGradient id="pulseGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
-    </radialGradient>
-  </defs>`
-  
-  // Lines from center to core
-  data.core.forEach(t=>{
-    const n = nodes.find(n=>n.id===t)
-    if(n) svg += `<line x1="${cx}" y1="${cy}" x2="${n.x}" y2="${n.y}" stroke="#C9A84C" stroke-width="1" opacity="0.3"/>`
-  })
-  
-  // Lines from core to related (proximity based)
-  data.related.slice(0,6).forEach(t=>{
-    const n = nodes.find(n=>n.id===t)
-    if(!n) return
-    // Connect to nearest core node
-    let minDist = Infinity, nearestCore = null
-    data.core.forEach(ct=>{
-      const cn = nodes.find(n=>n.id===ct)
-      if(!cn) return
-      const d = Math.hypot(n.x-cn.x, n.y-cn.y)
-      if(d<minDist){minDist=d;nearestCore=cn}
-    })
-    if(nearestCore) svg += `<line x1="${nearestCore.x}" y1="${nearestCore.y}" x2="${n.x}" y2="${n.y}" stroke="#C9A84C" stroke-width="0.5" opacity="0.2" stroke-dasharray="3,3"/>`
-  })
-
-  // Draw nodes
-  nodes.forEach(n=>{
-    const selected = selectedTopics.has(n.id)
-    const isCenter = n.type==='center'
-    const fill = isCenter ? '#0C0B09' : selected ? '#C9A84C' : n.type==='core' ? '#fff' : '#F7F4ED'
-    const stroke = isCenter ? '#C9A84C' : selected ? '#C9A84C' : n.type==='core' ? '#0C0B09' : '#D4CFC5'
-    const textColor = isCenter ? '#C9A84C' : selected ? '#0C0B09' : '#0C0B09'
-    const onclick = isCenter ? '' : `onclick="toggleTopicNode('${n.id}')"`
-    const cursor = isCenter ? '' : 'cursor:pointer;'
-    
-    svg += `<g ${onclick} style="${cursor}">`
-    // Pulse for recent articles
-    svg += `<circle cx="${n.x}" cy="${n.y}" r="${n.size}" fill="${fill}" stroke="${n._recent>0?'#C9A84C':stroke}" stroke-width="${n._recent>0?2.5:selected?2:1}"/>`
-    if(n._recent > 0){
-      svg += `<circle cx="${n.x+n.size*0.7}" cy="${n.y-n.size*0.7}" r="5" fill="#C9A84C"/>`
-      svg += `<text x="${n.x+n.size*0.7}" y="${n.y-n.size*0.7+3.5}" text-anchor="middle" font-size="6" fill="#0C0B09" font-weight="bold">+${n._recent>99?'99':n._recent}</text>`
-    }
-    
-    // Word wrap label
-    const words = n.label.split(' ')
-    if(words.length===1){
-      svg += `<text x="${n.x}" y="${n.y}" text-anchor="middle" dominant-baseline="middle" font-size="${n.type==='center'?12:9.5}" fill="${textColor}" font-weight="${isCenter||selected?'600':'400'}">${n.label}</text>`
-    } else {
-      const mid = Math.ceil(words.length/2)
-      const line1 = words.slice(0,mid).join(' ')
-      const line2 = words.slice(mid).join(' ')
-      svg += `<text x="${n.x}" y="${n.y-6}" text-anchor="middle" dominant-baseline="middle" font-size="${n.type==='center'?11:9}" fill="${textColor}" font-weight="${isCenter||selected?'600':'400'}">${line1}</text>`
-      svg += `<text x="${n.x}" y="${n.y+7}" text-anchor="middle" dominant-baseline="middle" font-size="${n.type==='center'?11:9}" fill="${textColor}" font-weight="${isCenter||selected?'600':'400'}">${line2}</text>`
-    }
-    svg += '</g>'
-  })
-
-  // Legend
-  svg += `<circle cx="16" cy="${h-30}" r="6" fill="#fff" stroke="#0C0B09" stroke-width="1"/><text x="26" y="${h-26}" font-size="9" fill="#9C9484">Core topics</text>`
-  svg += `<circle cx="100" cy="${h-30}" r="6" fill="#F7F4ED" stroke="#D4CFC5" stroke-width="1"/><text x="110" y="${h-26}" font-size="9" fill="#9C9484">Related topics</text>`
-  svg += `<circle cx="196" cy="${h-30}" r="6" fill="#C9A84C" stroke="#C9A84C" stroke-width="1"/><text x="206" y="${h-26}" font-size="9" fill="#9C9484">Selected</text>`
-  
-  svg += '</svg>'
-  container.innerHTML = svg
-  updateSelectedLabel()
-}
-
-function toggleTopicNode(id){
-  if(selectedTopics.has(id)) selectedTopics.delete(id)
-  else selectedTopics.add(id)
-  renderTopicGraph()
 }
 
 function updateSelectedLabel(){
@@ -1609,7 +1500,7 @@ function updateSelectedLabel(){
 
 function clearTopicSelection(){
   selectedTopics.clear()
-  renderTopicGraph()
+  renderLiveMap()
 }
 
 function applyTopicSelection(){
