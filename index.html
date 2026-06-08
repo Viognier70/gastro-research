@@ -1579,6 +1579,7 @@ function getTopicRelevance(t){
 
 function renderLiveMap(){
   const container=document.getElementById('liveKnowledgeMap')
+  console.log('renderLiveMap called, container:', !!container, 'data:', mapTopicData.length)
   if(!container||!mapTopicData.length) return
 
   const w=(container.offsetWidth||860)-120
