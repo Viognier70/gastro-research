@@ -1826,6 +1826,8 @@ function renderLiveMap(){
   svg+='</svg>'
   container.innerHTML=svg
   container.style.height=h+'px'
+  container.style.background='#0C0B09'
+  container.style.borderRadius='8px'
   // Intersection Observer — animera när kartan scrollas in i vy
   const animateMap=()=>{
     // Edges — sätt synliga direkt
