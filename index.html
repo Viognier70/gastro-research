@@ -189,6 +189,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 
 /* HERO */
+.page-container{width:100%;max-width:1100px;margin:0 auto;box-sizing:border-box;padding:0 32px}
 .hero{padding:56px 32px 40px;max-width:900px}
 .hero-eyebrow{font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
 .hero-title{font-family:'Playfair Display',serif;font-size:48px;font-weight:400;line-height:1.1;margin-bottom:20px;color:var(--text-primary)}
@@ -2826,7 +2827,7 @@ function toggleCard(el){
   .academy-btn{font-size:11px;padding:6px 10px}
 
   /* TREND SECTION */
-  .trend-wrap{padding:10px 16px 12px}
+  .trend-wrap{padding:12px 0 14px}
   .trend-grid{grid-template-columns:1fr;gap:12px}
   .trend-grid{grid-template-columns:1fr;gap:0}
   .trend-col{border-bottom:0.5px solid rgba(255,255,255,.08);padding-bottom:10px;margin-bottom:10px}
@@ -2847,7 +2848,7 @@ function toggleCard(el){
   .topbar-lang{display:none}
 
   /* SPOTLIGHT */
-  .spotlight-section{padding:12px 16px 0}
+  .spotlight-section{padding:16px 0 0}
   .spotlight-grid{grid-template-columns:1fr;gap:10px}
   .spotlight-card{padding:16px}
 
@@ -2856,7 +2857,7 @@ function toggleCard(el){
   .triad-banner-items{flex-wrap:wrap;gap:12px}
 
   /* HERO */
-  .hero{padding:32px 16px 28px}
+  .hero{padding:28px 16px 24px}
   .hero-title{font-size:28px!important}
   .hero-sub{font-size:13px}
   .hero-stats{gap:16px;flex-wrap:wrap}
@@ -2871,8 +2872,9 @@ function toggleCard(el){
   [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
   [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr!important}
   /* DATABASE STATUS padding */
-  [style*="padding:24px 32px"]{padding:16px!important}
-  [style*="padding:28px 32px"]{padding:16px!important}
+  [style*="padding:24px 32px"]{padding:16px 16px!important}
+  [style*="padding:28px 32px"]{padding:16px 16px!important}
+  [style*="padding:32px 32px"]{padding:20px 16px!important}
 
   #knowledgeMapSection{overflow:hidden}
 
@@ -2899,6 +2901,7 @@ function toggleCard(el){
 
   /* MAIN LAYOUT */
   .main-layout{grid-template-columns:1fr;padding:12px 16px;gap:0}
+  .page-container{padding:0 16px}
   .feed-pane{order:1}
   .sidebar{display:none}
 
