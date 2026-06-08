@@ -1502,15 +1502,15 @@ function renderTopicGraph(){
   nodes.push({id:'center',label:roleNames[r],x:cx,y:cy,type:'center',size:52})
   
   // Core topics in inner ring
-  const coreR = Math.min(w,h)*0.18
+  const coreR = Math.min(w,h)*0.14
   data.core.forEach((t,i)=>{
     const angle = (i/data.core.length)*Math.PI*2 - Math.PI/2
     const td1=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36,_recent:td1?.recent||0})
   })
   
   // Related topics in outer ring
-  const outerR = Math.min(w,h)*0.30
-  data.related.forEach((t,i)=>{
+  const outerR = Math.min(w,h)*0.24
+  data.related.slice(0,6).forEach((t,i)=>{
     const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
     const td2=mapTopicData.find(x=>x.topic===t); const lbl=(TOPIC_LABELS[t]||t);nodes.push({id:t,label:lbl.length>14?lbl.slice(0,13)+'…':lbl,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
   })
@@ -1531,7 +1531,7 @@ function renderTopicGraph(){
   })
   
   // Lines from core to related (proximity based)
-  data.related.forEach(t=>{
+  data.related.slice(0,6).forEach(t=>{
     const n = nodes.find(n=>n.id===t)
     if(!n) return
     // Connect to nearest core node
