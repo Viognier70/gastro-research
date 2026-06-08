@@ -536,7 +536,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 <!-- PYRAMID + MAP GRID -->
-<div id="pyramidMapGrid" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid var(--border)">
+<div id="pyramidMapGrid" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:0.5px solid var(--border);max-width:1100px;margin:0 auto">
 <!-- KNOWLEDGE PYRAMID -->
 <div style="padding:32px 32px 28px;background:var(--white);border-right:0.5px solid var(--border)">
   <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:20px">Building the world&#39;s most comprehensive gastronomy research database</div>
@@ -1502,21 +1502,21 @@ function renderTopicGraph(){
   nodes.push({id:'center',label:roleNames[r],x:cx,y:cy,type:'center',size:52})
   
   // Core topics in inner ring
-  const coreR = Math.min(w,h)*0.28
+  const coreR = Math.min(w,h)*0.22
   data.core.forEach((t,i)=>{
     const angle = (i/data.core.length)*Math.PI*2 - Math.PI/2
     const td1=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*coreR,y:cy+Math.sin(angle)*coreR,type:'core',size:36,_recent:td1?.recent||0})
   })
   
   // Related topics in outer ring
-  const outerR = Math.min(w,h)*0.44
+  const outerR = Math.min(w,h)*0.36
   data.related.forEach((t,i)=>{
     const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
     const td2=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
   })
 
   // Build SVG
-  let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif">
+  let svg = `<svg width="${w}" height="${h}" viewBox="-20 -20 ${w+40} ${h+40}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;overflow:visible">
   <defs>
     <radialGradient id="pulseGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.4"/>
