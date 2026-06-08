@@ -465,6 +465,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div class="spotlight-header">
     <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
     <span class="spotlight-sub" id="spotlightDate">Latest high-impact findings for your profession</span>
+    <span style="font-size:10px;color:rgba(255,255,255,.3);font-style:italic" id="spotlightLastUpdate"></span>
   </div>
   <div class="spotlight-grid" id="spotlightGrid">
     <div class="spotlight-card" style="opacity:.3"><div class="spotlight-claim" style="font-size:12px">Loading latest findings...</div></div>
@@ -2486,13 +2487,27 @@ async function loadSpotlight(){
       </div>
       ${briefs.length?`<div class="nyt-briefs">${briefsHTML}</div>`:''}`
     const grid = document.getElementById('spotlightGrid')
-    // Sätt datum
+    // Sätt datum + senaste uppdatering
     const spotDate = document.getElementById('spotlightDate')
     if(spotDate){
       const now = new Date()
       const opts = {weekday:'long',month:'long',day:'numeric'}
       spotDate.textContent = now.toLocaleDateString('en-US', opts)
     }
+    // Hämta senaste fetch
+    try {
+      const lr = await fetch(`${SB_URL}/rest/v1/articles?select=fetched_at&order=fetched_at.desc&limit=1`,{headers:H})
+      const ld = await lr.json()
+      if(Array.isArray(ld) && ld[0]){
+        const lastFetch = new Date(ld[0].fetched_at)
+        const diffH = Math.round((Date.now()-lastFetch.getTime())/3600000)
+        const lastEl = document.getElementById('spotlightLastUpdate')
+        if(lastEl){
+          const label = diffH < 1 ? 'Updated just now' : diffH < 24 ? `Updated ${diffH}h ago` : `Updated ${Math.round(diffH/24)}d ago`
+          lastEl.textContent = label
+        }
+      }
+    } catch(e){}
     if(grid){
       grid.innerHTML = html
       // Animate cards in
