@@ -490,7 +490,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span style="font-size:10px;color:rgba(255,255,255,.25)">· Click node to filter</span>
     </div>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:300px;position:relative;overflow:visible;box-sizing:border-box">
+  <div id="liveKnowledgeMap" style="width:100%;height:280px;position:relative;overflow:hidden;box-sizing:border-box">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
   </div>
   <div style="margin-top:8px">
@@ -1691,7 +1691,7 @@ function renderLiveMap(){
   if(!container||!mapTopicData.length) return
 
   const w=(container.offsetWidth||860)-120
-  const h=520
+  const h=260
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',fbmanager:'F&B Manager',researcher:'Researcher',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
   const mapHint=document.getElementById('mapHint')
