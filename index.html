@@ -490,7 +490,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span style="font-size:10px;color:rgba(255,255,255,.25)">· Click node to filter</span>
     </div>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:340px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
+  <div id="liveKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
   </div>
   <div style="margin-top:8px">
@@ -1583,7 +1583,7 @@ function renderLiveMap(){
   if(!container||!mapTopicData.length) return
 
   const w=(container.offsetWidth||860)-120
-  const h=320
+  const h=460
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',creator:'Meal creator',waiter:'Service staff',educator:'Educator',fbmanager:'F&B Manager',researcher:'Researcher',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'Hospitality',educator_researcher:'Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
   const mapHint=document.getElementById('mapHint')
@@ -1600,8 +1600,8 @@ function renderLiveMap(){
   const cx=w/2, cy=h/2
 
   // Concentric rings: center role node, then topic rings
-  const RING1_R=100  // inner ring topics
-  const RING2_R=150  // outer ring topics
+  const RING1_R=140  // inner ring topics
+  const RING2_R=200  // outer ring topics
   const ROLE_R=52    // center node size
 
   // Top topics for each ring
@@ -1713,7 +1713,13 @@ function renderLiveMap(){
   })
 
   // Aristotle quote at bottom
-  svg+=`<text x="${cx}" y="${h-12}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.6)" font-style="italic">We are what we repeatedly do. Excellence, then, is not an act, but a habit. — Aristotle</text>`
+  svg+=`<text x="${cx}" y="${h-12}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.5)" font-style="italic">We are what we repeatedly do. Excellence, then, is not an act, but a habit. — Aristotle</text>`
+  svg+=`<circle cx="20" cy="${h-38}" r="6" fill="rgba(201,168,76,0.7)" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>`
+  svg+=`<text x="30" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Active topic</text>`
+  svg+=`<circle cx="110" cy="${h-38}" r="6" fill="rgba(201,168,76,0.25)" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>`
+  svg+=`<text x="120" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Research area</text>`
+  svg+=`<line x1="205" y1="${h-38}" x2="230" y2="${h-38}" stroke="rgba(201,168,76,0.4)" stroke-width="1.5"/>`
+  svg+=`<text x="235" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Connected fields</text>`
 
   svg+='</svg>'
   container.innerHTML=svg
