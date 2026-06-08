@@ -1512,7 +1512,7 @@ function renderTopicGraph(){
   const outerR = Math.min(w,h)*0.30
   data.related.forEach((t,i)=>{
     const angle = (i/data.related.length)*Math.PI*2 - Math.PI/2 + (Math.PI/data.related.length)
-    const td2=mapTopicData.find(x=>x.topic===t); nodes.push({id:t,label:TOPIC_LABELS[t]||t,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
+    const td2=mapTopicData.find(x=>x.topic===t); const lbl=(TOPIC_LABELS[t]||t);nodes.push({id:t,label:lbl.length>14?lbl.slice(0,13)+'…':lbl,x:cx+Math.cos(angle)*outerR,y:cy+Math.sin(angle)*outerR,type:'related',size:28,_recent:td2?.recent||0})
   })
 
   // Build SVG
