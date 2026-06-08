@@ -1883,6 +1883,7 @@ function countryFlags(c){if(!c||!c.length)return '';return(Array.isArray(c)?c:[c
 
 // Init
 initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600)})
+setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 </script>
 <!-- TRIAD MODAL — paste this block into index.html -->
 <!-- Add this CSS to the <style> section -->
