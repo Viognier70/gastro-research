@@ -1674,7 +1674,7 @@ function renderLiveMap(){
     const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
     edgeIdx++
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,0.4)" stroke-width="${sw}" opacity="0" ${dash} class="map-edge"/>`
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
   })
 
   // Center: profession node
@@ -1713,7 +1713,7 @@ function renderLiveMap(){
   })
 
   // Aristotle quote at bottom
-  svg+=`<text x="${cx}" y="${h-55}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.4)" font-style="italic">We are what we repeatedly do. Excellence, then, is not an act, but a habit. — Aristotle</text>`
+  svg+=`<text x="${cx}" y="${h-8}" text-anchor="middle" font-size="8" fill="rgba(201,168,76,0.3)" font-style="italic">Excellence, then, is not an act, but a habit. — Aristotle</text>`
   svg+=`<circle cx="20" cy="${h-38}" r="6" fill="rgba(201,168,76,0.7)" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>`
   svg+=`<text x="30" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Active topic</text>`
   svg+=`<circle cx="110" cy="${h-38}" r="6" fill="rgba(201,168,76,0.25)" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>`
