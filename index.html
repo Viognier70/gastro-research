@@ -2368,6 +2368,18 @@ async function loadHotProducts(){
     if(!el||!Array.isArray(data)) return
     el.innerHTML = '<button class="product-pill on" onclick="filterProduct(null,this)"><span class="product-pill-name">All products</span></button>' +
       data.map(p=>'<button class="product-pill" onclick="filterProduct(&quot;'+p.term+'&quot;,this)"><span class="product-pill-name">'+p.term+'</span><span class="product-pill-count">'+p.count.toLocaleString()+' studies</span></button>').join("")
+    const topicSel = document.getElementById('topicSel')
+    if(topicSel && !topicSel.querySelector('optgroup[label="Products"]')){
+      const grp = document.createElement('optgroup')
+      grp.label = 'Products'
+      data.slice(0,15).forEach(p=>{
+        const opt = document.createElement('option')
+        opt.value = p.term
+        opt.textContent = p.term.charAt(0).toUpperCase()+p.term.slice(1)+' ('+p.count.toLocaleString()+')'
+        grp.appendChild(opt)
+      })
+      topicSel.appendChild(grp)
+    }
   } catch(e){ console.log('loadHotProducts error:', e.message) }
 }
 function filterProduct(term, btn){
