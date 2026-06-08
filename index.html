@@ -2386,11 +2386,9 @@ function filterProduct(term, btn){
   document.querySelectorAll('.product-pill').forEach(b=>b.classList.remove('on'))
   btn.classList.add('on')
   const topicSel = document.getElementById('topicSel')
-  if(topicSel){
-    topicSel.value = term||'all'
-    if(typeof loadArticles==='function') loadArticles()
-    if(term && typeof loadSynthesis==='function') loadSynthesis(role, term)
-  }
+  if(topicSel) topicSel.value = 'all'
+  const si = document.getElementById('searchInput')
+  if(si){ si.value = term||''; if(typeof loadArticles==='function') loadArticles() }
   setTimeout(()=>{
     const feed = document.getElementById('feedPane')||document.querySelector('.main-layout')
     if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
