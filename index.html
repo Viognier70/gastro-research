@@ -560,58 +560,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 <!-- PYRAMID + MAP GRID -->
-<div id="pyramidMapGrid" style="display:grid;grid-template-columns:1fr;border-bottom:0.5px solid var(--border);max-width:1100px;margin:0 auto">
-<!-- KNOWLEDGE PYRAMID -->
-<div style="padding:32px 32px 28px;background:var(--white)">
-  <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:20px">Building the world&#39;s most comprehensive gastronomy research database</div>
-  <div style="display:grid;grid-template-columns:1fr;gap:20px">
-    <svg width="100%" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg" style="display:block;min-height:280px">
-      <!-- Base: all articles -->
-      <polygon points="20,290 380,290 320,220 80,220" fill="rgba(136,135,128,0.15)" stroke="rgba(136,135,128,0.4)" stroke-width="0.5"/>
-      <text x="200" y="250" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="500" fill="var(--text-primary)" id="pyTotal">—</text>
-      <text x="200" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="var(--text-tertiary)">articles in database</text>
-      <!-- Level 2: analysed -->
-      <polygon points="80,220 320,220 270,155 130,155" fill="rgba(29,158,117,0.15)" stroke="rgba(29,158,117,0.4)" stroke-width="0.5"/>
-      <text x="200" y="182" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="500" fill="var(--text-primary)" id="pyAnalysed">—</text>
-      <text x="200" y="198" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="var(--text-tertiary)">relevance analysed</text>
-      <!-- Level 3: TRIAD -->
-      <polygon points="130,155 270,155 230,90 170,90" fill="rgba(186,117,23,0.2)" stroke="rgba(186,117,23,0.4)" stroke-width="0.5"/>
-      <text x="200" y="118" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="500" fill="var(--text-primary)" id="pyTriad">—</text>
-      <text x="200" y="133" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="var(--text-tertiary)">TRIAD + IMRaD</text>
-      <!-- Apex: scenarios -->
-      <polygon points="170,90 230,90 200,40" fill="rgba(216,90,48,0.25)" stroke="rgba(216,90,48,0.5)" stroke-width="0.5"/>
-      <text x="200" y="72" text-anchor="middle" font-family="Outfit,sans-serif" font-size="11" font-weight="500" fill="var(--text-primary)" id="pyScenario">—</text>
-      <!-- Pipeline arrow -->
-      <line x1="392" y1="285" x2="392" y2="45" stroke="rgba(201,168,76,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
-
-    </svg>
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="width:12px;height:12px;border-radius:2px;background:rgba(216,90,48,0.4);flex-shrink:0;margin-top:2px"></div>
-        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Scenario analysis</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Gastronomic application · situated judgment · Phronesis</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="width:12px;height:12px;border-radius:2px;background:rgba(186,117,23,0.35);flex-shrink:0;margin-top:2px"></div>
-        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">TRIAD analysis + IMRaD</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Episteme · Techne · Phronesis · full scientific structure</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="width:12px;height:12px;border-radius:2px;background:rgba(29,158,117,0.3);flex-shrink:0;margin-top:2px"></div>
-        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Relevance analysed</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Core claim · keywords · study type · scored per profession</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="width:12px;height:12px;border-radius:2px;background:rgba(136,135,128,0.3);flex-shrink:0;margin-top:2px"></div>
-        <div><div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Articles in database</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.5">Peer-reviewed research relevant to gastronomy · updated daily</div></div>
-      </div>
-      <div style="margin-top:8px;padding:12px 16px;background:var(--warm-100);border-radius:8px;border-left:2px solid var(--gold)">
-        <div style="font-size:10px;color:var(--gold);font-weight:600;margin-bottom:4px">You are part of the journey</div>
-        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.6">Every day our pipeline analyses new research. The database grows — and so does your professional knowledge.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</div><!-- end pyramidMapGrid -->
-
 <!-- TRIAD BAR -->
 <div class="filter-bar">
   <span class="triad-label">TRIAD</span>
