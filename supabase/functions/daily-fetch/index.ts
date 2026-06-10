@@ -3,6 +3,36 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') || ''
+
+const BLOCKED_JOURNALS = new Set([
+  'environment development and sustainability','discover psychology',
+  'educational psychology review','consciousness and cognition',
+  'discover sustainability','acta psychologica','ai and society',
+  'attention perception and psychophysics','animals','agronomy',
+  'bmj open quality','brain research','brain research bulletin',
+  'cancer cell international','cell and bioscience','cell death discovery',
+  'cell reports','cells','behavioural brain research','experimental brain research',
+  'heliyon','plos one','scientific reports',
+  'international journal of environmental research and public health',
+  'frontiers in public health','medicine','journal of clinical medicine',
+  'biomedicines','pharmaceuticals','cancers','microorganisms',
+  'acta psychologica sinica','bmc public health',
+  'american journal of clinical nutrition','current opinion in food science',
+  'dictionary of ecological economics terms for the new millennium',
+  'encyclopedia of tourism management and marketing volume 1 4',
+])
+
+const FOOD_KEYWORDS = /wine|sommelier|tasting|flavor|flavour|aroma|taste|sensory|crossmodal|multisensory|gastronom|culinar|pairing|olfact|umami|ferment|beverage|hospitality|restaurant|chef|cuisine|eating|food quality|food science|food technol/i
+
+function isBlockedJournal(journal: string, title: string, abstract: string): boolean {
+  if(!journal) return false
+  const j = journal.toLowerCase().trim()
+  if(BLOCKED_JOURNALS.has(j)) return true
+  // Breda journaler kräver mat/gastronomi-sökord
+  const BROAD = ['frontiers in psychology','frontiers in neuroscience','sustainability','molecules','nutrients','antioxidants','foods']
+  if(BROAD.includes(j) && !FOOD_KEYWORDS.test(title + ' ' + (abstract||''))) return true
+  return false
+}
 const SCOPUS_KEY = '394f43f3b56c0271865da601cbe7e786'
 const MIN_YEAR = 0
 
@@ -256,7 +286,7 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
       institution_coords: (w.authorships || []).flatMap((a: any) => (a.institutions || []).filter((i: any) => i.geo?.latitude).map((i: any) => ({name: i.display_name, lat: i.geo.latitude, lng: i.geo.longitude, country: i.country_code}))).filter((v,i,a) => a.findIndex(x=>x.name===v.name)===i),
       countries: [...new Set((w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.country_code)).filter(Boolean))],
       source: 'openalex', source_label: 'OpenAlex'
-    })).filter((a: any) => a.title.length > 5)
+    })).filter((a: any) => a.title.length > 5 && !isBlockedJournal(a.journal||'', a.title||'', a.abstract||''))
 
     console.log(`OpenAlex ${query} ${year} p${page}: ${articles.length}/${total}`)
     return { articles, hasMore }
