@@ -2080,8 +2080,9 @@ window.renderWorldDots = function() {
   const rScale = d3.scaleSqrt([1, maxCount], [3, 16])
   const tooltip = document.getElementById('worldMapTooltip')
   
-  worldMapSvg.selectAll('.winst').remove()
-  worldMapSvg.selectAll('.winst')
+  const zg = worldMapSvg._zoomGroup || worldMapSvg
+  zg.selectAll('.winst').remove()
+  zg.selectAll('.winst')
     .data(data)
     .join('circle')
     .attr('class', 'winst')
@@ -2121,18 +2122,29 @@ window.initWorldMap = async function() {
   worldMapProjection = d3.geoNaturalEarth1().scale(w/6.3).translate([w/2, h/2])
   const path = d3.geoPath(worldMapProjection)
   
+  const zoom = d3.zoom()
+    .scaleExtent([1, 8])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform)
+    })
+
   worldMapSvg = d3.select('#worldMapContainer').append('svg')
     .attr('viewBox', `0 0 ${w} ${h}`)
     .attr('width', '100%')
     .style('background', '#0C0B09')
     .style('border-radius', '8px')
+    .style('cursor', 'grab')
+    .call(zoom)
+
+  const g = worldMapSvg.append('g')
+  worldMapSvg._zoomGroup = g
   
   worldMapSvg.append('path')
     .datum({type:'Sphere'})
     .attr('d', path)
     .attr('fill', '#0C0B09')
   
-  worldMapSvg.selectAll('.wcountry')
+  g.selectAll('.wcountry')
     .data(topojson.feature(world, world.objects.countries).features)
     .join('path')
     .attr('class', 'wcountry')
@@ -2158,7 +2170,7 @@ window.initWorldMap = async function() {
 }
 
 // Init world map after page load
-setTimeout(window.initWorldMap, 2500)
+
 </script>
 
 <script>
