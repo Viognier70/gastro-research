@@ -2003,16 +2003,41 @@ window.loadWorldMapData = async function() {
         }
       }
     }
+    const collabMap: Record<string, any> = {}
+    for(const a of articles) {
+      if(!Array.isArray(a.institution_coords) || a.institution_coords.length < 2) continue
+      const coords = a.institution_coords.filter((i: any) => i.lat && i.lng)
+      for(let i = 0; i < coords.length; i++) {
+        for(let j = i+1; j < coords.length; j++) {
+          if(coords[i].country === coords[j].country) continue
+          const key = [coords[i].name, coords[j].name].sort().join('||')
+          if(!collabMap[key]) {
+            collabMap[key] = {
+              lat1: coords[i].lat, lng1: coords[i].lng,
+              lat2: coords[j].lat, lng2: coords[j].lng,
+              count: 0
+            }
+          }
+          collabMap[key].count++
+        }
+      }
+    }
+    window.worldMapCollabs = Object.values(collabMap)
+    console.log('Collabs:', window.worldMapCollabs.length)
     return Object.values(instMap).filter(i => i.count > 0).sort((a,b) => b.count - a.count)
   } catch(e) { console.log('World map error:', e); return [] }
 }
 
-window.getNodeColor = function(rank) {
-  if(!rank || rank >= 999) return 'rgba(255,255,255,0.25)'
-  if(rank <= 50) return '#FFD700'
-  if(rank <= 200) return '#c9a84c'
-  if(rank <= 500) return 'rgba(201,168,76,0.6)'
-  return 'rgba(255,255,255,0.3)'
+window.getNodeColor = function(rank, count) {
+  if(count !== undefined) {
+    if(count >= 20) return '#e05252'
+    if(count >= 8) return '#e8963c'
+    return '#c9a84c'
+  }
+  if(!rank || rank >= 999) return '#c9a84c'
+  if(rank <= 100) return '#e05252'
+  if(rank <= 300) return '#e8963c'
+  return '#c9a84c'
 }
 
 function setWorldFilter(f) {
@@ -2083,6 +2108,20 @@ window.renderWorldDots = function() {
   
   const zg = window.worldMapG || window.worldMapSvg
   if(!zg) return
+  zg.selectAll('.collab').remove()
+  if(window.worldMapCollabs && window.worldMapCollabs.length) {
+    zg.selectAll('.collab')
+      .data(window.worldMapCollabs)
+      .join('line')
+      .attr('class', 'collab')
+      .attr('x1', d => window.worldMapProjection([d.lng1, d.lat1])?.[0])
+      .attr('y1', d => window.worldMapProjection([d.lng1, d.lat1])?.[1])
+      .attr('x2', d => window.worldMapProjection([d.lng2, d.lat2])?.[0])
+      .attr('y2', d => window.worldMapProjection([d.lng2, d.lat2])?.[1])
+      .attr('stroke', 'rgba(255,255,255,0.12)')
+      .attr('stroke-width', d => Math.min(d.count * 0.4, 2.5))
+      .style('pointer-events', 'none')
+  }
   zg.selectAll('.winst').remove()
   zg.selectAll('.winst')
     .data(data)
@@ -2091,7 +2130,7 @@ window.renderWorldDots = function() {
     .attr('cx', d => worldMapProjection([d.lng, d.lat])?.[0])
     .attr('cy', d => worldMapProjection([d.lng, d.lat])?.[1])
     .attr('r', d => rScale(d.count))
-    .attr('fill', d => getNodeColor(d.rank))
+    .attr('fill', d => getNodeColor(d.rank, d.count))
     .attr('stroke', 'rgba(0,0,0,0.3)')
     .attr('stroke-width', 0.5)
     .style('cursor', 'pointer')
