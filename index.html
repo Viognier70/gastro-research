@@ -2161,6 +2161,8 @@ window.initWorldMap = async function() {
 
   window.renderWorldDots()
   document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
+  // Återställ zoom
+  window.worldMapSvg.call(zoom.transform, d3.zoomIdentity)
 }
 
 
