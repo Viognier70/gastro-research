@@ -2078,7 +2078,7 @@ window.renderWorldDots = function() {
   document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
   
   const maxCount = d3.max(data, d => d.count) || 1
-  const rScale = () => 6  // Fast storlek
+  const rScale = () => 5  // Fast storlek, skalas vid zoom
   const tooltip = document.getElementById('worldMapTooltip')
   
   const zg = window.worldMapG || window.worldMapSvg
@@ -2134,9 +2134,15 @@ window.initWorldMap = async function() {
   const g = window.worldMapSvg.append('g')
   window.worldMapG = g
 
+  window.worldMapZoomLevel = 1
   const zoom = d3.zoom()
     .scaleExtent([1, 8])
-    .on('zoom', (event) => { g.attr('transform', event.transform) })
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform)
+      window.worldMapZoomLevel = event.transform.k
+      // Skala om noder vid zoom
+      g.selectAll('.winst').attr('r', 5 / event.transform.k)
+    })
   window.worldMapSvg.call(zoom)
 
   g.selectAll('.wcountry')
