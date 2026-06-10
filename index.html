@@ -2111,14 +2111,14 @@ window.renderWorldDots = function() {
   zg.selectAll('.collab').remove()
   if(window.worldMapCollabs && window.worldMapCollabs.length) {
     zg.selectAll('.collab')
-      .data(window.worldMapCollabs)
+      .data(window.worldMapCollabs.filter(c => c.count >= 2).slice(0, 200))
       .join('line')
       .attr('class', 'collab')
       .attr('x1', d => window.worldMapProjection([d.lng1, d.lat1])?.[0])
       .attr('y1', d => window.worldMapProjection([d.lng1, d.lat1])?.[1])
       .attr('x2', d => window.worldMapProjection([d.lng2, d.lat2])?.[0])
       .attr('y2', d => window.worldMapProjection([d.lng2, d.lat2])?.[1])
-      .attr('stroke', 'rgba(255,255,255,0.12)')
+      .attr('stroke', 'rgba(255,255,255,0.25)')
       .attr('stroke-width', d => Math.min(d.count * 0.4, 2.5))
       .style('pointer-events', 'none')
   }
