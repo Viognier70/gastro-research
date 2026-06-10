@@ -1325,6 +1325,12 @@ async function handleAuth(){
   if(authIsSignup){await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}})}
   else{await sb.auth.signInWithPassword({email,password})}
   closeModal('authModal')
+  const {data:{session}}=await sb.auth.getSession()
+  if(session){
+    const btn=document.getElementById('authBtn')
+    if(btn){btn.textContent=session.user.email.slice(0,1).toUpperCase();btn.style.background='var(--gold)';btn.style.color='#000'}
+    loadSavedArticles()
+  }
 }
 function handleUpgrade(){openModal('authModal')}
 
