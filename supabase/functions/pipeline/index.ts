@@ -140,7 +140,7 @@ Deno.serve(async (_req) => {
       {headers:{'Content-Type':'application/json'}})
   }
 
-  const batch = await claimBatch(5)
+  const batch = await claimBatch(10)
   if(!batch.length) {
     const {count:remaining} = await supabase.from('processing_queue')
       .select('id',{count:'exact',head:true}).eq('status','pending')
