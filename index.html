@@ -2080,7 +2080,7 @@ window.renderWorldDots = function() {
   const rScale = d3.scaleSqrt([1, maxCount], [3, 16])
   const tooltip = document.getElementById('worldMapTooltip')
   
-  const zg = window.worldMapSvg?._zoomGroup || window.worldMapSvg
+  const zg = window.worldMapG || window.worldMapSvg
   if(!zg) return
   zg.selectAll('.winst').remove()
   zg.selectAll('.winst')
