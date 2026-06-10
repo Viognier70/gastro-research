@@ -1976,7 +1976,7 @@ window.selectedCountry = null
 
 window.loadWorldMapData = async function() {
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank&institution_coords=not.is.null&limit=3000`, {
+    const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&limit=3000`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const articles = await r.json()
