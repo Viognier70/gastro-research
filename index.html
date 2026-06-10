@@ -2003,7 +2003,7 @@ window.loadWorldMapData = async function() {
         }
       }
     }
-    const collabMap: Record<string, any> = {}
+    const collabMap = {}
     for(const a of articles) {
       if(!Array.isArray(a.institution_coords) || a.institution_coords.length < 2) continue
       const coords = a.institution_coords.filter((i: any) => i.lat && i.lng)
