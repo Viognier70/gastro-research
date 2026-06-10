@@ -252,6 +252,7 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
       url: w.doi || w.id || '',
       authors: (w.authorships || []).map((a: any) => a.author?.display_name || '').filter(Boolean).join(', '),
       country: (w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.country_code)).filter(Boolean)[0] || '',
+      institutions: [...new Set((w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.display_name)).filter(Boolean))],
       countries: [...new Set((w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.country_code)).filter(Boolean))],
       source: 'openalex', source_label: 'OpenAlex'
     })).filter((a: any) => a.title.length > 5)
