@@ -1973,7 +1973,7 @@ window.worldMapProjection = null
 window.currentWorldFilter = 'all'
 window.selectedCountry = null
 
-async function loadWorldMapData() {
+window.loadWorldMapData = async function() {
   try {
     const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank&institution_coords=not.is.null&limit=3000`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
@@ -2006,7 +2006,7 @@ async function loadWorldMapData() {
   } catch(e) { console.log('World map error:', e); return [] }
 }
 
-function getNodeColor(rank) {
+window.getNodeColor = function(rank) {
   if(!rank || rank >= 999) return 'rgba(201,168,76,0.35)'
   if(rank <= 100) return '#FFD700'
   if(rank <= 500) return '#c9a84c'
@@ -2065,7 +2065,7 @@ function filterByInstitution(name, event) {
   if(searchEl) { searchEl.value = name; searchEl.dispatchEvent(new Event('input')) }
 }
 
-function renderWorldDots() {
+window.renderWorldDots = function() {
   if(!worldMapSvg || !worldMapData.length) return
   
   let data = worldMapData
@@ -2103,7 +2103,7 @@ function renderWorldDots() {
     })
 }
 
-async function initWorldMap() {
+window.initWorldMap = async function() {
   const container = document.getElementById('worldMapContainer')
   if(!container) return
   
