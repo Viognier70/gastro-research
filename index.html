@@ -2077,7 +2077,7 @@ window.renderWorldDots = function() {
   document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
   
   const maxCount = d3.max(data, d => d.count) || 1
-  const rScale = d3.scaleSqrt([1, maxCount], [3, 16])
+  const rScale = d3.scaleSqrt([1, maxCount], [2, 10])
   const tooltip = document.getElementById('worldMapTooltip')
   
   const zg = window.worldMapG || window.worldMapSvg
