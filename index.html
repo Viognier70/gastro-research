@@ -2006,7 +2006,7 @@ window.loadWorldMapData = async function() {
     const collabMap = {}
     for(const a of articles) {
       if(!Array.isArray(a.institution_coords) || a.institution_coords.length < 2) continue
-      const coords = a.institution_coords.filter((i: any) => i.lat && i.lng)
+      const coords = a.institution_coords.filter(i => i.lat && i.lng)
       for(let i = 0; i < coords.length; i++) {
         for(let j = i+1; j < coords.length; j++) {
           if(coords[i].country === coords[j].country) continue
