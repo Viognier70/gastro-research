@@ -2,8 +2,6 @@
 <html lang="en">
 <head>
 <link rel="manifest" href="/manifest.json">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gusto Science">
@@ -259,9 +257,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .gusto-headline::before{content:'';width:16px;height:1px;background:var(--gold);flex-shrink:0}
 .headline-text{font-family:'Playfair Display',serif;font-size:18px;font-weight:500;line-height:1.3;color:var(--text-primary);margin-bottom:6px}
 .original-title{font-size:12px;color:var(--text-tertiary);font-style:italic;margin-bottom:8px;line-height:1.4}
-.article-origin{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.35);margin-top:4px;cursor:pointer;transition:color .15s}
-.article-origin:hover{color:var(--gold)}
-.article-origin svg{opacity:.5}
 
 /* TRIAD BLOCKS */
 .triad-section{margin-top:12px;display:grid;gap:8px}
@@ -514,40 +509,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 </div>
-<!-- WORLD MAP SECTION -->
-<div style="background:#0C0B09;width:100%;border-bottom:0.5px solid rgba(201,168,76,.15)">
-<div style="max-width:1100px;margin:0 auto;padding:20px 32px 24px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div style="display:flex;align-items:center;gap:16px">
-      <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Global Research Origins</span>
-      <span style="font-size:11px;color:rgba(255,255,255,.4)" id="worldMapSubtitle">Where gastronomy science is made</span>
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
-      <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All</button>
-      <button onclick="setWorldFilter('top100')" data-wf="top100" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Top 100</button>
-      <button onclick="setWorldFilter('top500')" data-wf="top500" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Top 500</button>
-    </div>
-  </div>
-  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-    <div style="flex:1;min-width:280px">
-      <div id="worldMapContainer" style="width:100%;position:relative"></div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <span style="font-size:10px;color:rgba(255,255,255,.3)">Ranking tier:</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:#FFD700;display:inline-block"></span>Top 100</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:#c9a84c;display:inline-block"></span>Top 500</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:rgba(201,168,76,.4);display:inline-block"></span>Unranked</span>
-      </div>
-    </div>
-    <div id="worldMapSidebar" style="width:240px;flex-shrink:0;display:none">
-      <div id="worldMapCountryTitle" style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px"></div>
-      <div id="worldMapInstitutions" style="background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;max-height:280px;overflow-y:auto"></div>
-      <button onclick="filterByCountry(null)" style="margin-top:8px;font-size:11px;color:rgba(201,168,76,.7);background:none;border:none;cursor:pointer;padding:0">← Back to all</button>
-    </div>
-  </div>
-</div>
-</div>
-<div id="worldMapTooltip" style="position:fixed;display:none;background:#1a1a18;border:0.5px solid rgba(201,168,76,.3);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:9999;max-width:220px"></div>
-
 <div class="mini-ticker" id="miniTicker">
   <div style="flex-shrink:0;padding:0 20px 0 24px;border-right:0.5px solid rgba(201,168,76,.2);height:100%;display:flex;align-items:center;gap:6px;min-width:fit-content">
     <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:mapPulse 1.8s ease-in-out infinite;flex-shrink:0"></span>
@@ -978,7 +939,7 @@ function cardHTML(a,idx){
       ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 · ${roleName}</span>`:''}
       ${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
     </div>
-    ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gusto Science</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${a.primary_institution.replace(/'/g,"\'")}',event)" title="Filter by institution"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
+    ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gusto Science</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}
     ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''}
     ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
@@ -1364,12 +1325,6 @@ async function handleAuth(){
   if(authIsSignup){await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}})}
   else{await sb.auth.signInWithPassword({email,password})}
   closeModal('authModal')
-  const {data:{session}}=await sb.auth.getSession()
-  if(session){
-    const btn=document.getElementById('authBtn')
-    if(btn){btn.textContent=session.user.email.slice(0,1).toUpperCase();btn.style.background='var(--gold)';btn.style.color='#000'}
-    loadSavedArticles()
-  }
 }
 function handleUpgrade(){openModal('authModal')}
 
@@ -1964,203 +1919,6 @@ function saveObRoleAndExplore(){
 </style>
 
 <!-- HTML — paste before <script>
-// ═══════════════════════════════════════════════
-// WORLD MAP — Global Research Origins
-// ═══════════════════════════════════════════════
-let worldMapData = []
-let worldMapSvg = null
-let worldMapProjection = null
-let currentWorldFilter = 'all'
-let selectedCountry = null
-
-async function loadWorldMapData() {
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank&institution_coords=not.is.null&limit=3000`, {
-      headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
-    })
-    const articles = await r.json()
-    if(!Array.isArray(articles)) return []
-    
-    const instMap = {}
-    for(const a of articles) {
-      if(!Array.isArray(a.institution_coords)) continue
-      for(const inst of a.institution_coords) {
-        if(!inst.name || !inst.lat || !inst.lng) continue
-        const key = inst.name
-        if(!instMap[key]) {
-          instMap[key] = {
-            name: inst.name, lat: inst.lat, lng: inst.lng,
-            country: inst.country||'', count: 0,
-            rank: null
-          }
-        }
-        instMap[key].count++
-      }
-      if(a.primary_institution && a.institution_rank) {
-        if(instMap[a.primary_institution]) {
-          instMap[a.primary_institution].rank = a.institution_rank
-        }
-      }
-    }
-    return Object.values(instMap).filter(i => i.count > 0).sort((a,b) => b.count - a.count)
-  } catch(e) { console.log('World map error:', e); return [] }
-}
-
-function getNodeColor(rank) {
-  if(!rank || rank >= 999) return 'rgba(201,168,76,0.35)'
-  if(rank <= 100) return '#FFD700'
-  if(rank <= 500) return '#c9a84c'
-  return 'rgba(201,168,76,0.6)'
-}
-
-function setWorldFilter(f) {
-  currentWorldFilter = f
-  document.querySelectorAll('[data-wf]').forEach(b => {
-    const active = b.dataset.wf === f
-    b.style.background = active ? 'var(--gold)' : 'none'
-    b.style.color = active ? '#000' : 'rgba(255,255,255,.5)'
-    b.style.border = active ? '0.5px solid rgba(201,168,76,.4)' : '0.5px solid rgba(255,255,255,.15)'
-  })
-  renderWorldDots()
-}
-
-function filterByCountry(countryCode) {
-  selectedCountry = countryCode
-  const sidebar = document.getElementById('worldMapSidebar')
-  if(!countryCode) {
-    sidebar.style.display = 'none'
-    renderWorldDots()
-    return
-  }
-  const insts = worldMapData.filter(i => i.country === countryCode)
-    .sort((a,b) => {
-      if(a.rank && b.rank) return a.rank - b.rank
-      if(a.rank) return -1
-      if(b.rank) return 1
-      return b.count - a.count
-    })
-  
-  const countryName = insts[0]?.country || countryCode
-  document.getElementById('worldMapCountryTitle').innerHTML = 
-    `<span style="color:var(--gold)">${countryCode}</span> · ${insts.length} institutions · ${insts.reduce((s,i)=>s+i.count,0)} articles`
-  
-  document.getElementById('worldMapInstitutions').innerHTML = insts.slice(0,20).map(i => `
-    <div style="padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer" onclick="filterByInstitution('${i.name.replace(/'/g,"\'")}',null)">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.3">${i.name}</span>
-        <span style="font-size:11px;color:${getNodeColor(i.rank)};font-weight:500;flex-shrink:0;margin-left:8px">${i.rank&&i.rank<999?'#'+i.rank:''}</span>
-      </div>
-      <span style="font-size:10px;color:rgba(255,255,255,.3)">${i.count} article${i.count>1?'s':''}</span>
-    </div>
-  `).join('')
-  
-  sidebar.style.display = 'block'
-  renderWorldDots()
-}
-
-function filterByInstitution(name, event) {
-  if(event) event.stopPropagation()
-  // Set search to institution name
-  const searchEl = document.getElementById('searchInput')
-  if(searchEl) { searchEl.value = name; searchEl.dispatchEvent(new Event('input')) }
-}
-
-function renderWorldDots() {
-  if(!worldMapSvg || !worldMapData.length) return
-  
-  let data = worldMapData
-  if(currentWorldFilter === 'top100') data = data.filter(i => i.rank && i.rank <= 100)
-  if(currentWorldFilter === 'top500') data = data.filter(i => i.rank && i.rank <= 500)
-  if(selectedCountry) data = data.filter(i => i.country === selectedCountry)
-  
-  document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
-  
-  const maxCount = d3.max(data, d => d.count) || 1
-  const rScale = d3.scaleSqrt([1, maxCount], [3, 16])
-  const tooltip = document.getElementById('worldMapTooltip')
-  
-  worldMapSvg.selectAll('.winst').remove()
-  worldMapSvg.selectAll('.winst')
-    .data(data)
-    .join('circle')
-    .attr('class', 'winst')
-    .attr('cx', d => worldMapProjection([d.lng, d.lat])?.[0])
-    .attr('cy', d => worldMapProjection([d.lng, d.lat])?.[1])
-    .attr('r', d => rScale(d.count))
-    .attr('fill', d => getNodeColor(d.rank))
-    .attr('stroke', 'rgba(0,0,0,0.3)')
-    .attr('stroke-width', 0.5)
-    .style('cursor', 'pointer')
-    .on('mousemove', function(event, d) {
-      tooltip.style.display = 'block'
-      tooltip.style.left = (event.clientX + 12) + 'px'
-      tooltip.style.top = (event.clientY - 10) + 'px'
-      tooltip.innerHTML = `<strong style="color:#fff;font-size:12px">${d.name}</strong><br><span style="color:rgba(255,255,255,.5);font-size:11px">${d.country}</span>${d.rank&&d.rank<999?`<br><span style="color:${getNodeColor(d.rank)};font-size:11px">QS #${d.rank}</span>`:''}<br><span style="color:var(--gold);font-size:11px">${d.count} article${d.count>1?'s':''}</span>`
-    })
-    .on('mouseleave', () => { tooltip.style.display = 'none' })
-    .on('click', (event, d) => {
-      filterByCountry(d.country)
-    })
-}
-
-async function initWorldMap() {
-  const container = document.getElementById('worldMapContainer')
-  if(!container) return
-  
-  const [world, data] = await Promise.all([
-    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
-    loadWorldMapData()
-  ])
-  
-  worldMapData = data
-  
-  const w = container.offsetWidth || 700
-  const h = Math.round(w * 0.48)
-  
-  worldMapProjection = d3.geoNaturalEarth1().scale(w/6.3).translate([w/2, h/2])
-  const path = d3.geoPath(worldMapProjection)
-  
-  worldMapSvg = d3.select('#worldMapContainer').append('svg')
-    .attr('viewBox', `0 0 ${w} ${h}`)
-    .attr('width', '100%')
-    .style('background', '#0C0B09')
-    .style('border-radius', '8px')
-  
-  worldMapSvg.append('path')
-    .datum({type:'Sphere'})
-    .attr('d', path)
-    .attr('fill', '#0C0B09')
-  
-  worldMapSvg.selectAll('.wcountry')
-    .data(topojson.feature(world, world.objects.countries).features)
-    .join('path')
-    .attr('class', 'wcountry')
-    .attr('d', path)
-    .attr('fill', '#1e1e1a')
-    .attr('stroke', 'rgba(255,255,255,0.06)')
-    .attr('stroke-width', 0.4)
-    .style('cursor', 'pointer')
-    .on('click', function(event, d) {
-      // Find country code from institutions near this country
-      const centroid = worldMapProjection(d3.geoCentroid(d))
-      if(!centroid) return
-      const nearest = worldMapData.reduce((best, inst) => {
-        const pos = worldMapProjection([inst.lng, inst.lat])
-        if(!pos) return best
-        const dist = Math.hypot(pos[0]-centroid[0], pos[1]-centroid[1])
-        return dist < best.dist ? {inst, dist} : best
-      }, {inst:null, dist:200})
-      if(nearest.inst) filterByCountry(nearest.inst.country)
-    })
-  
-  renderWorldDots()
-}
-
-// Init world map after page load
-setTimeout(initWorldMap, 1000)
-</script>
-
-<script>
 // Register service worker
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
