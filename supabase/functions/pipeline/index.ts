@@ -189,7 +189,10 @@ Deno.serve(async (_req) => {
         educator_researcher: article.relevance_sci_educator_researcher||0
       }
       const effectiveScores = Object.keys(sciScores).length ? sciScores : dbScores
-      const maxRelevance = Math.max(...Object.values(effectiveScores).map((v:any) => Number(v)||0))
+      // Om sci redan är klar och inga scores finns — anta relevans 5 (annars skippas TRIAD felaktigt)
+      const maxRelevance = item.sci_done && !Object.keys(sciScores).length && Math.max(...Object.values(dbScores).map((v:any) => Number(v)||0)) === 0
+        ? 5
+        : Math.max(...Object.values(effectiveScores).map((v:any) => Number(v)||0))
 
       // Step 3: TRIAD (Sonnet) — only if relevant and not done
       const hasAbstract = article.abstract && article.abstract !== '[unavailable]' && article.abstract.length > 50
