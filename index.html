@@ -149,6 +149,31 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .product-pill.on .product-pill-name{color:var(--white)}
 .product-pill-count{font-size:9px;color:var(--text-tertiary)}
 .product-pill.on .product-pill-count{color:rgba(255,255,255,.5)}
+.gs-spotlight{background:#F8F5EF;padding:24px 28px;font-family:Georgia,serif}
+.gs-sp-header{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #1A1A1A;border-bottom:0.5px solid #1A1A1A;padding:8px 0;margin-bottom:20px}
+.gs-sp-section{font-size:10px;font-weight:700;letter-spacing:.15em;color:#1A1A1A;font-family:'Outfit',sans-serif}
+.gs-sp-date{font-size:10px;color:#666;font-family:'Outfit',sans-serif}
+.gs-sp-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:0}
+.gs-sp-lead{padding-right:20px;border-right:0.5px solid #C8C0B0}
+.gs-sp-side{display:flex;flex-direction:column;gap:0}
+.gs-sp-mid{padding:0 16px;border-right:0.5px solid #C8C0B0;border-bottom:0.5px solid #C8C0B0;padding-bottom:16px;margin-bottom:16px}
+.gs-sp-sm{padding-left:16px;border-bottom:0.5px solid #C8C0B0;padding-bottom:12px;margin-bottom:12px}
+.gs-sp-journal{font-size:9px;font-weight:700;letter-spacing:.1em;color:#8B6914;text-transform:uppercase;margin-bottom:4px;font-family:'Outfit',sans-serif}
+.gs-sp-rel{display:inline-block;font-size:9px;font-weight:700;background:#1A3A5C;color:#fff;padding:2px 6px;border-radius:2px;font-family:'Outfit',sans-serif;margin-bottom:6px}
+.gs-sp-title-lg{font-size:21px;line-height:1.25;color:#1A1A1A;margin-bottom:10px;font-weight:700}
+.gs-sp-title-md{font-size:14px;line-height:1.3;color:#1A1A1A;margin-bottom:6px;font-weight:700}
+.gs-sp-title-sm{font-size:12px;line-height:1.3;color:#1A1A1A;margin-bottom:5px;font-weight:700}
+.gs-sp-claim{font-size:12px;color:#444;line-height:1.6;margin-bottom:12px;font-style:italic;font-family:'Outfit',sans-serif}
+.gs-sp-claim-sm{font-size:10px;color:#555;line-height:1.5;font-style:italic;font-family:'Outfit',sans-serif;margin-bottom:6px}
+.gs-sp-triad{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.gs-sp-e{background:#E8EFF6;border-left:2px solid #1A3A5C;padding:7px 10px}
+.gs-sp-t{background:#EAF0E5;border-left:2px solid #2D5016;padding:7px 10px}
+.gs-sp-p{background:#F5EDE3;border-left:2px solid #7A3D00;padding:7px 10px}
+.gs-sp-tl{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;font-family:'Outfit',sans-serif}
+.gs-sp-e .gs-sp-tl{color:#1A3A5C}.gs-sp-t .gs-sp-tl{color:#2D5016}.gs-sp-p .gs-sp-tl{color:#7A3D00}
+.gs-sp-tx{font-size:11px;line-height:1.5;color:#333;font-family:'Outfit',sans-serif}
+.gs-sp-tx-sm{font-size:10px;line-height:1.4;color:#444;font-family:'Outfit',sans-serif}
+.gs-sp-meta{font-size:9px;color:#888;font-family:'Outfit',sans-serif;margin-top:8px}
 .spotlight-wrap{background:transparent;padding:24px 32px 0;display:block;width:100%;box-sizing:border-box;max-width:1100px;margin:0 auto}
 .spotlight-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .spotlight-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
@@ -1872,31 +1897,59 @@ window.loadHotProducts = async function() {
 window.loadSpotlight = async function() {
   const el = document.getElementById('spotlightGrid')
   if(!el) return
-  el.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px;padding:16px 0">Loading...</div>'
+  el.innerHTML = '<div style="color:#888;font-size:12px;padding:16px 0;font-family:Outfit,sans-serif">Loading latest findings...</div>'
   try {
     const r = window.role && window.role !== 'all' ? window.role : 'sensory_pro'
     const epCol = `episteme_${r}`
     const tcCol = `techne_${r}`
     const phCol = `phronesis_${r}`
     const relCol = `relevance_sci_${r}`
-    const resp = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,${epCol},${tcCol},${phCol},citation_count,${relCol}&${epCol}=not.is.null&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=3`, {
+    const resp = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,${epCol},${tcCol},${phCol},${relCol},citation_count&${epCol}=not.is.null&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=5`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const arts = await resp.json()
-    if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;padding:16px 0">No findings yet.</p>'; return }
-    el.innerHTML = arts.map(a => {
-      const ep = a[epCol]||''
-      const tc = a[tcCol]||''
-      const ph = a[phCol]||''
-      return `<div style="padding:20px 0;border-bottom:0.5px solid rgba(255,255,255,.08)">
-        <div style="font-size:10px;color:var(--gold);margin-bottom:6px">${a.journal||''} · ${a.year||''}${a.citation_count>0?' · '+a.citation_count+' citations':''}</div>
-        <div style="font-size:14px;color:#fff;font-weight:500;margin-bottom:8px;line-height:1.4">${a.title?.slice(0,140)||''}</div>
-        ${a.core_claim?`<div style="font-size:12px;color:rgba(255,255,255,.4);line-height:1.6;margin-bottom:12px;font-style:italic">${a.core_claim.slice(0,180)}</div>`:''}
-        ${ep?`<div style="background:rgba(26,58,92,.3);border-left:2px solid var(--episteme);padding:10px 12px;margin-bottom:6px;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--episteme);text-transform:uppercase;margin-bottom:4px">ε Episteme</div><div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.6">${ep.slice(0,200)}</div></div>`:''}
-        ${tc?`<div style="background:rgba(45,80,22,.3);border-left:2px solid var(--techne);padding:10px 12px;margin-bottom:6px;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--techne);text-transform:uppercase;margin-bottom:4px">τ Techne</div><div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.6">${tc.slice(0,200)}</div></div>`:''}
-        ${ph?`<div style="background:rgba(92,45,0,.3);border-left:2px solid var(--phronesis);padding:10px 12px;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--phronesis);text-transform:uppercase;margin-bottom:4px">φ Phronesis</div><div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.6">${ph.slice(0,200)}</div></div>`:''}
-      </div>`
-    }).join('')
+    if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet.</p>'; return }
+    const roleLabels = {sensory_pro:'Sensory scientist',culinary_pro:'Chef & culinary',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator',sommelier:'Sommelier',chef:'Chef',fb_manager:'F&B Manager',food_researcher:'Food researcher',gastronomy:'Gastronomy'}
+    const roleLabel = roleLabels[r] || r
+    const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
+    const lead = arts[0]
+    const rest = arts.slice(1)
+    const ep0 = lead[epCol]||'', tc0 = lead[tcCol]||'', ph0 = lead[phCol]||''
+    const rel0 = lead[relCol]||0
+    el.closest('.gs-spotlight') ? null : el.parentElement.classList.add('gs-spotlight')
+    el.innerHTML = `<div class="gs-spotlight">
+      <div class="gs-sp-header">
+        <span class="gs-sp-section">Research Spotlight</span>
+        <span class="gs-sp-date">${today} · ${roleLabel}</span>
+      </div>
+      <div class="gs-sp-grid">
+        <div class="gs-sp-lead">
+          <div class="gs-sp-journal">${lead.journal||''} · ${lead.year||''}</div>
+          ${rel0>=5?`<span class="gs-sp-rel">Relevance ${rel0}/10</span>`:''}
+          <div class="gs-sp-title-lg">${lead.title?.slice(0,160)||''}</div>
+          ${lead.core_claim?`<div class="gs-sp-claim">${lead.core_claim.slice(0,220)}</div>`:''}
+          <div class="gs-sp-triad">
+            ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.slice(0,280)}</div></div>`:''}
+            ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.slice(0,280)}</div></div>`:''}
+            ${ph0?`<div class="gs-sp-p"><div class="gs-sp-tl">φ Phronesis — the situated judgment</div><div class="gs-sp-tx">${ph0.slice(0,280)}</div></div>`:''}
+          </div>
+          ${lead.citation_count>0?`<div class="gs-sp-meta">${lead.citation_count} citations</div>`:''}
+        </div>
+        <div class="gs-sp-side">
+          ${rest.map((a,i) => {
+            const ep = a[epCol]||'', rel = a[relCol]||0
+            return `<div class="${i<rest.length-1?'gs-sp-mid':'gs-sp-sm'}">
+              <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
+              ${rel>=5?`<span class="gs-sp-rel" style="margin-bottom:4px">Relevance ${rel}/10</span><br>`:''}
+              <div class="gs-sp-title-${i===0?'md':'sm'}">${a.title?.slice(0,120)||''}</div>
+              ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.slice(0,140)}</div>`:''}
+              ${ep&&i===0?`<div class="gs-sp-triad"><div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.slice(0,160)}</div></div></div>`:''}
+              ${a.citation_count>0?`<div class="gs-sp-meta">${a.citation_count} citations</div>`:''}
+            </div>`
+          }).join('')}
+        </div>
+      </div>
+    </div>`
   } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
 
