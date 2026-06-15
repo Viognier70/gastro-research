@@ -1833,6 +1833,8 @@ window.selectObRole = function(el, r) {
   window._obSelectedRole = r
   const btn = document.getElementById('obBtn')
   if(btn) { btn.removeAttribute('disabled'); btn.style.opacity='1'; btn.style.cursor='pointer' }
+  const exploreBtn = document.getElementById('obExploreBtn')
+  if(exploreBtn) { exploreBtn.removeAttribute('disabled'); exploreBtn.style.opacity='1'; exploreBtn.style.cursor='pointer' }
 }
 
 window.checkOnboarding = function() {
