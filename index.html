@@ -1828,8 +1828,9 @@ window.toggleImrad = function(id) {
 }
 
 window.selectObRole = function(r) {
-  document.querySelectorAll('.ob-role-btn').forEach(b => b.classList.toggle('on', b.dataset.role === r))
+  document.querySelectorAll('.ob-role').forEach(b => b.classList.toggle('selected', b.dataset.role === r))
   window._obSelectedRole = r
+  document.getElementById('obBtn')?.removeAttribute('disabled')
 }
 
 window.checkOnboarding = function() {
