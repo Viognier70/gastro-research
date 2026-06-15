@@ -1872,20 +1872,31 @@ window.loadHotProducts = async function() {
 window.loadSpotlight = async function() {
   const el = document.getElementById('spotlightGrid')
   if(!el) return
+  el.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px;padding:16px 0">Loading...</div>'
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,episteme_sensory_pro,relevance_sci_sensory_pro&episteme_sensory_pro=not.is.null&order=relevance_sci_sensory_pro.desc.nullslast&limit=3`, {
+    const r = window.role && window.role !== 'all' ? window.role : 'sensory_pro'
+    const epCol = `episteme_${r}`
+    const tcCol = `techne_${r}`
+    const phCol = `phronesis_${r}`
+    const resp = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,${epCol},${tcCol},${phCol},citation_count&${epCol}=not.is.null&order=fetched_at.desc&limit=3`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
-    const articles = await r.json()
-    if(!Array.isArray(articles) || !articles.length) { el.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px">No findings yet.</p>'; return }
-    el.innerHTML = articles.map(a => `
-      <div style="padding:16px 0;border-bottom:0.5px solid rgba(255,255,255,.08)">
-        <div style="font-size:11px;color:var(--gold);margin-bottom:4px">${a.journal||''} · ${a.year||''}</div>
-        <div style="font-size:14px;color:#fff;font-weight:500;margin-bottom:6px;line-height:1.4">${a.title?.slice(0,120)||''}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">${a.core_claim?.slice(0,200)||''}</div>
-      </div>
-    `).join('')
-  } catch(e) { console.log('Spotlight error:', e) }
+    const arts = await resp.json()
+    if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;padding:16px 0">No findings yet.</p>'; return }
+    el.innerHTML = arts.map(a => {
+      const ep = a[epCol]||''
+      const tc = a[tcCol]||''
+      const ph = a[phCol]||''
+      return `<div style="padding:20px 0;border-bottom:0.5px solid rgba(255,255,255,.08)">
+        <div style="font-size:10px;color:var(--gold);margin-bottom:6px">${a.journal||''} · ${a.year||''}${a.citation_count>0?' · '+a.citation_count+' citations':''}</div>
+        <div style="font-size:14px;color:#fff;font-weight:500;margin-bottom:8px;line-height:1.4">${a.title?.slice(0,140)||''}</div>
+        ${a.core_claim?`<div style="font-size:12px;color:rgba(255,255,255,.4);line-height:1.6;margin-bottom:12px;font-style:italic">${a.core_claim.slice(0,180)}</div>`:''}
+        ${ep?`<div style="background:rgba(26,58,92,.3);border-left:2px solid var(--episteme);padding:10px 12px;margin-bottom:6px;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--episteme);text-transform:uppercase;margin-bottom:4px">ε Episteme</div><div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.6">${ep.slice(0,200)}</div></div>`:''}
+        ${tc?`<div style="background:rgba(45,80,22,.3);border-left:2px solid var(--techne);padding:10px 12px;margin-bottom:6px;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--techne);text-transform:uppercase;margin-bottom:4px">τ Techne</div><div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.6">${tc.slice(0,200)}</div></div>`:''}
+        ${ph?`<div style="background:rgba(92,45,0,.3);border-left:2px solid var(--phronesis);padding:10px 12px;border-radius:0 4px 4px 0"><div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--phronesis);text-transform:uppercase;margin-bottom:4px">φ Phronesis</div><div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.6">${ph.slice(0,200)}</div></div>`:''}
+      </div>`
+    }).join('')
+  } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
 
 initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600)})
