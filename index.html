@@ -1979,7 +1979,12 @@ function checkObReady(){
   if(b) b.disabled=!(_obRole&&e&&e.includes('@'))
   if(eb) eb.disabled=!_obRole
 }
+window.confirmObRole = function() {
+  saveObRoleAndExplore()
+}
+
 function saveObRoleAndExplore(){
+  const _obRole = window._obSelectedRole
   if(!_obRole) return
   const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
   const feedRole=roleMap[_obRole]||_obRole
