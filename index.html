@@ -1927,7 +1927,7 @@ window.loadSpotlight = async function() {
           <div class="gs-sp-journal">${lead.journal||''} · ${lead.year||''}</div>
           ${rel0>=5?`<span class="gs-sp-rel">Relevance ${rel0}/10</span>`:''}
           ${lead.headline_en?`<div class="gs-sp-title-lg">${lead.headline_en}</div><div style="font-size:10px;color:#999;font-family:'Outfit',sans-serif;margin-bottom:8px;border-left:2px solid #C8C0B0;padding-left:8px;margin-top:4px">${lead.title?.slice(0,120)}</div>`:`<div class="gs-sp-title-lg">${lead.title?.slice(0,160)||''}</div>`}
-          ${lead.core_claim?`<div class="gs-sp-claim">${lead.core_claim.slice(0,220)}</div>`:''}
+          ${lead.core_claim?`<div class="gs-sp-claim">${lead.core_claim.length>220?lead.core_claim.slice(0,220)+'…':lead.core_claim}</div>`:''}
           <div class="gs-sp-triad">
             ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.slice(0,400)}</div></div>`:''}
             ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.slice(0,400)}</div></div>`:''}
@@ -1946,8 +1946,8 @@ window.loadSpotlight = async function() {
               <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
               ${rel>=5?`<span class="gs-sp-rel" style="margin-bottom:4px">Relevance ${rel}/10</span><br>`:''}
               ${a.headline_en?`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.headline_en}</div><div style="font-size:9px;color:#aaa;font-family:'Outfit',sans-serif;margin-bottom:4px;border-left:2px solid #C8C0B0;padding-left:6px">${a.title?.slice(0,100)}</div>`:`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.title?.slice(0,120)||''}</div>`}
-              ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.slice(0,140)}</div>`:''}
-              ${ep&&i===0?`<div class="gs-sp-triad"><div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.slice(0,160)}</div></div></div>`:''}
+              ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.length>140?a.core_claim.slice(0,140)+'…':a.core_claim}</div>`:''}
+              ${ep&&i===0?`<div class="gs-sp-triad"><div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.length>160?ep.slice(0,160)+'…':ep}</div></div></div>`:''}
               ${a.citation_count>0?`<div class="gs-sp-meta">${a.citation_count} citations</div>`:''}
             </div>`
           }).join('')}
