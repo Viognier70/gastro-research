@@ -1912,7 +1912,10 @@ window.loadSpotlight = async function() {
       fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,year,url,fetched_at,${epCol},${tcCol},${phCol},${relCol},citation_count&${epCol}=not.is.null&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
         headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
       }),
-      fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${r}&order=updated_at.desc&limit=4`, {
+      // Mappa spotlight-roll till syntes-roll
+      const synthRoleMap = {sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'}
+      const synthRole = synthRoleMap[r] || 'sommelier'
+      fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${synthRole}&order=updated_at.desc&limit=4`, {
         headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
       })
     ])
