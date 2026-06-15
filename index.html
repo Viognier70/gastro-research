@@ -938,7 +938,8 @@ function setRole(r,btn){
   role=r
   roleManuallySet=true
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.remove('on'))
-  btn.classList.add('on')
+  if(btn) btn.classList.add('on')
+  document.querySelector(`.role-chip[data-role='${r}']`)?.classList.add('on')
   loadArticles()
   loadSpotlight()
 }
