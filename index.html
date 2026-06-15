@@ -1967,7 +1967,7 @@ window.loadSpotlight = async function() {
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
           ${synths.map(s => `
-            <div style="background:#fff;border:0.5px solid #C8C0B0;padding:14px;cursor:pointer" onclick="this.querySelector('.synth-body').style.display=this.querySelector('.synth-body').style.display==='none'?'block':'none'">
+            <div style="background:#fff;border:0.5px solid #C8C0B0;padding:14px;cursor:pointer" onclick="var b=this.querySelector('.synth-body');b.style.display=b.style.display==='none'?'block':'none'">
               <div class="gs-sp-journal">${(s.topic||'').replace(/_/g,' ')}</div>
               <div class="gs-sp-title-sm" style="margin-bottom:6px">${s.title||''}</div>
               <div class="gs-sp-meta">${s.article_count||0} articles · Updated ${formatDate(s.updated_at)}</div>
