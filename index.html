@@ -1827,10 +1827,12 @@ window.toggleImrad = function(id) {
   if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none'
 }
 
-window.selectObRole = function(r) {
-  document.querySelectorAll('.ob-role').forEach(b => b.classList.toggle('selected', b.dataset.role === r))
+window.selectObRole = function(el, r) {
+  document.querySelectorAll('.ob-role').forEach(b => b.classList.remove('selected'))
+  if(el) el.classList.add('selected')
   window._obSelectedRole = r
-  document.getElementById('obBtn')?.removeAttribute('disabled')
+  const btn = document.getElementById('obBtn')
+  if(btn) { btn.removeAttribute('disabled'); btn.style.opacity='1'; btn.style.cursor='pointer' }
 }
 
 window.checkOnboarding = function() {
