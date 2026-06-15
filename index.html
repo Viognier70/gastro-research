@@ -1870,7 +1870,7 @@ window.loadHotProducts = async function() {
 }
 
 window.loadSpotlight = async function() {
-  const el = document.getElementById('spotlightContent')
+  const el = document.getElementById('spotlightGrid')
   if(!el) return
   try {
     const r = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,core_claim,journal,year,episteme_sensory_pro,relevance_sci_sensory_pro&episteme_sensory_pro=not.is.null&order=relevance_sci_sensory_pro.desc.nullslast&limit=3`, {
