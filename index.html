@@ -1904,19 +1904,80 @@ window.loadSpotlight = async function() {
     const tcCol = `techne_${r}`
     const phCol = `phronesis_${r}`
     const relCol = `relevance_sci_${r}`
-    const resp = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,year,url,${epCol},${tcCol},${phCol},${relCol},citation_count&${epCol}=not.is.null&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=5`, {
-      headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
-    })
-    const arts = await resp.json()
-    if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet.</p>'; return }
     const roleLabels = {sensory_pro:'Sensory scientist',culinary_pro:'Chef & culinary',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator',sommelier:'Sommelier',chef:'Chef',fb_manager:'F&B Manager',food_researcher:'Food researcher',gastronomy:'Gastronomy'}
     const roleLabel = roleLabels[r] || r
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
-    const lead = arts[0]
-    const rest = arts.slice(1)
+
+    const [artResp, synthResp] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,year,url,fetched_at,${epCol},${tcCol},${phCol},${relCol},citation_count&${epCol}=not.is.null&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
+        headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+      }),
+      fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${r}&order=updated_at.desc&limit=4`, {
+        headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+      })
+    ])
+
+    const arts = await artResp.json()
+    const synths = await synthResp.json()
+    if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet for this role.</p>'; return }
+
+    const big = arts.filter(a => (a[relCol]||0) >= 8)
+    const mid = arts.filter(a => (a[relCol]||0) >= 6 && (a[relCol]||0) < 8)
+    const small = arts.filter(a => (a[relCol]||0) >= 5 && (a[relCol]||0) < 6)
+
+    const lead = big[0] || mid[0] || arts[0]
     const ep0 = lead[epCol]||'', tc0 = lead[tcCol]||'', ph0 = lead[phCol]||''
     const rel0 = lead[relCol]||0
-    el.closest('.gs-spotlight') ? null : el.parentElement.classList.add('gs-spotlight')
+
+    const formatDate = (d) => {
+      if(!d) return ''
+      const dt = new Date(d)
+      return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+    }
+
+    const midCards = [...big.slice(1), ...mid].slice(0,4).map(a => {
+      const ep = a[epCol]||''
+      const rel = a[relCol]||0
+      return `<div style="border-bottom:0.5px solid #C8C0B0;padding-bottom:14px;margin-bottom:14px">
+        <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
+        <span class="gs-sp-rel">Relevance ${rel}/10</span>
+        <div class="gs-sp-title-md">${a.headline_en||a.title?.slice(0,80)||''}</div>
+        ${a.headline_en?`<div style="font-size:9px;color:#aaa;font-family:'Outfit',sans-serif;border-left:2px solid #C8C0B0;padding-left:6px;margin-bottom:4px">${a.title?.slice(0,90)}</div>`:''}
+        ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.length>120?a.core_claim.slice(0,120)+'…':a.core_claim}</div>`:''}
+        ${ep?`<div class="gs-sp-e" style="margin-top:6px"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.length>150?ep.slice(0,150)+'…':ep}</div></div>`:''}
+        <div class="gs-sp-meta">Added ${formatDate(a.fetched_at)}${a.citation_count>0?' · '+a.citation_count+' citations':''} · <a href="${a.url||'#'}" target="_blank" style="color:#1A3A5C;text-decoration:none">Full paper ↗</a></div>
+      </div>`
+    }).join('')
+
+    const smallCards = small.slice(0,3).map(a => {
+      const rel = a[relCol]||0
+      return `<div style="border-bottom:0.5px solid #C8C0B0;padding-bottom:10px;margin-bottom:10px">
+        <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
+        <div class="gs-sp-title-sm">${a.headline_en||a.title?.slice(0,70)||''}</div>
+        ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.length>90?a.core_claim.slice(0,90)+'…':a.core_claim}</div>`:''}
+        <div class="gs-sp-meta">Added ${formatDate(a.fetched_at)}</div>
+      </div>`
+    }).join('')
+
+    const synthHTML = Array.isArray(synths) && synths.length ? `
+      <div style="margin-top:28px;border-top:2px solid #1A1A1A;padding-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
+          <span class="gs-sp-section">Research Synthesis · ${roleLabel}</span>
+          <span class="gs-sp-date">Synthesised from peer-reviewed research</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+          ${synths.map(s => `
+            <div style="background:#fff;border:0.5px solid #C8C0B0;padding:14px;cursor:pointer" onclick="this.querySelector('.synth-body').style.display=this.querySelector('.synth-body').style.display==='none'?'block':'none'">
+              <div class="gs-sp-journal">${(s.topic||'').replace(/_/g,' ')}</div>
+              <div class="gs-sp-title-sm" style="margin-bottom:6px">${s.title||''}</div>
+              <div class="gs-sp-meta">${s.article_count||0} articles · Updated ${formatDate(s.updated_at)}</div>
+              <div class="synth-body" style="display:none;margin-top:10px;font-size:11px;color:#333;line-height:1.6;font-family:'Outfit',sans-serif">${s.synthesis?.slice(0,500)||''}</div>
+              <div style="font-size:10px;color:#1A3A5C;margin-top:8px;font-family:'Outfit',sans-serif">Read synthesis ↓</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : ''
+
     el.innerHTML = `<div class="gs-spotlight">
       <div class="gs-sp-header">
         <span class="gs-sp-section">Research Spotlight</span>
@@ -1925,34 +1986,25 @@ window.loadSpotlight = async function() {
       <div class="gs-sp-grid">
         <div class="gs-sp-lead">
           <div class="gs-sp-journal">${lead.journal||''} · ${lead.year||''}</div>
-          ${rel0>=5?`<span class="gs-sp-rel">Relevance ${rel0}/10</span>`:''}
+          <span class="gs-sp-rel">Relevance ${rel0}/10</span>
           ${lead.headline_en?`<div class="gs-sp-title-lg">${lead.headline_en}</div><div style="font-size:10px;color:#999;font-family:'Outfit',sans-serif;margin-bottom:8px;border-left:2px solid #C8C0B0;padding-left:8px;margin-top:4px">${lead.title?.slice(0,120)}</div>`:`<div class="gs-sp-title-lg">${lead.title?.slice(0,160)||''}</div>`}
           ${lead.core_claim?`<div class="gs-sp-claim">${lead.core_claim.length>220?lead.core_claim.slice(0,220)+'…':lead.core_claim}</div>`:''}
           <div class="gs-sp-triad">
-            ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.slice(0,400)}</div></div>`:''}
-            ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.slice(0,400)}</div></div>`:''}
-            ${ph0?`<div class="gs-sp-p"><div class="gs-sp-tl">φ Phronesis — the situated judgment</div><div class="gs-sp-tx">${ph0.slice(0,400)}</div></div>`:''}
+            ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.length>400?ep0.slice(0,400)+'…':ep0}</div></div>`:''}
+            ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.length>400?tc0.slice(0,400)+'…':tc0}</div></div>`:''}
+            ${ph0?`<div class="gs-sp-p"><div class="gs-sp-tl">φ Phronesis — the situated judgment</div><div class="gs-sp-tx">${ph0.length>400?ph0.slice(0,400)+'…':ph0}</div></div>`:''}
           </div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-            <a href="/article/${lead.id}" style="font-size:10px;font-weight:700;color:#1A3A5C;border:1px solid #1A3A5C;padding:4px 12px;text-decoration:none;font-family:'Outfit',sans-serif">Read in Gusto Science →</a>
-            ${lead.url?`<a href="${lead.url}" target="_blank" rel="noopener" style="font-size:10px;color:#666;border:0.5px solid #C8C0B0;padding:4px 12px;text-decoration:none;font-family:'Outfit',sans-serif">Full paper ↗</a>`:''}
-            ${lead.citation_count>0?`<span style="font-size:10px;color:#888;font-family:'Outfit',sans-serif;padding:4px 0">${lead.citation_count} citations</span>`:''}
+            <a href="${lead.url||'#'}" target="_blank" style="font-size:10px;font-weight:700;color:#1A3A5C;border:1px solid #1A3A5C;padding:4px 12px;text-decoration:none;font-family:'Outfit',sans-serif">Full paper ↗</a>
+            <span style="font-size:10px;color:#888;font-family:'Outfit',sans-serif;padding:4px 0">Added ${formatDate(lead.fetched_at)}${lead.citation_count>0?' · '+lead.citation_count+' citations':''}</span>
           </div>
         </div>
         <div class="gs-sp-side">
-          ${rest.map((a,i) => {
-            const ep = a[epCol]||'', rel = a[relCol]||0
-            return `<div class="${i<rest.length-1?'gs-sp-mid':'gs-sp-sm'}">
-              <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
-              ${rel>=5?`<span class="gs-sp-rel" style="margin-bottom:4px">Relevance ${rel}/10</span><br>`:''}
-              ${a.headline_en?`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.headline_en}</div><div style="font-size:9px;color:#aaa;font-family:'Outfit',sans-serif;margin-bottom:4px;border-left:2px solid #C8C0B0;padding-left:6px">${a.title?.slice(0,100)}</div>`:`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.title?.slice(0,120)||''}</div>`}
-              ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.length>140?a.core_claim.slice(0,140)+'…':a.core_claim}</div>`:''}
-              ${ep&&i===0?`<div class="gs-sp-triad"><div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.length>160?ep.slice(0,160)+'…':ep}</div></div></div>`:''}
-              ${a.citation_count>0?`<div class="gs-sp-meta">${a.citation_count} citations</div>`:''}
-            </div>`
-          }).join('')}
+          ${midCards}
+          ${smallCards}
         </div>
       </div>
+      ${synthHTML}
     </div>`
   } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
