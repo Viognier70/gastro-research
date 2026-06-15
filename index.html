@@ -507,7 +507,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
-<div style="background:var(--black);width:100%;padding-bottom:0"><div class="spotlight-wrap" id="spotlightWrap">
+<div style="background:#F8F5EF;width:100%;padding-bottom:0"><div class="spotlight-wrap" id="spotlightWrap">
   <div class="spotlight-header">
     <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
     <span class="spotlight-sub" id="spotlightDate">Latest high-impact findings for your profession</span>
@@ -1926,12 +1926,12 @@ window.loadSpotlight = async function() {
         <div class="gs-sp-lead">
           <div class="gs-sp-journal">${lead.journal||''} · ${lead.year||''}</div>
           ${rel0>=5?`<span class="gs-sp-rel">Relevance ${rel0}/10</span>`:''}
-          ${lead.headline_en?`<div class="gs-sp-title-lg">${lead.headline_en}</div><div style="font-size:10px;color:#888;font-family:'Outfit',sans-serif;margin-bottom:8px;font-style:italic">AI headline · Original: ${lead.title?.slice(0,100)}</div>`:`<div class="gs-sp-title-lg">${lead.title?.slice(0,160)||''}</div>`}
+          ${lead.headline_en?`<div class="gs-sp-title-lg">${lead.headline_en}</div><div style="font-size:10px;color:#999;font-family:'Outfit',sans-serif;margin-bottom:8px;border-left:2px solid #C8C0B0;padding-left:8px;margin-top:4px">${lead.title?.slice(0,120)}</div>`:`<div class="gs-sp-title-lg">${lead.title?.slice(0,160)||''}</div>`}
           ${lead.core_claim?`<div class="gs-sp-claim">${lead.core_claim.slice(0,220)}</div>`:''}
           <div class="gs-sp-triad">
-            ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.slice(0,280)}</div></div>`:''}
-            ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.slice(0,280)}</div></div>`:''}
-            ${ph0?`<div class="gs-sp-p"><div class="gs-sp-tl">φ Phronesis — the situated judgment</div><div class="gs-sp-tx">${ph0.slice(0,280)}</div></div>`:''}
+            ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.slice(0,400)}</div></div>`:''}
+            ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.slice(0,400)}</div></div>`:''}
+            ${ph0?`<div class="gs-sp-p"><div class="gs-sp-tl">φ Phronesis — the situated judgment</div><div class="gs-sp-tx">${ph0.slice(0,400)}</div></div>`:''}
           </div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
             <a href="/article/${lead.id}" style="font-size:10px;font-weight:700;color:#1A3A5C;border:1px solid #1A3A5C;padding:4px 12px;text-decoration:none;font-family:'Outfit',sans-serif">Read in Gusto Science →</a>
@@ -1945,7 +1945,7 @@ window.loadSpotlight = async function() {
             return `<div class="${i<rest.length-1?'gs-sp-mid':'gs-sp-sm'}">
               <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
               ${rel>=5?`<span class="gs-sp-rel" style="margin-bottom:4px">Relevance ${rel}/10</span><br>`:''}
-              ${a.headline_en?`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.headline_en}</div><div style="font-size:9px;color:#999;font-family:'Outfit',sans-serif;margin-bottom:4px;font-style:italic">AI · ${a.title?.slice(0,80)}</div>`:`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.title?.slice(0,120)||''}</div>`}
+              ${a.headline_en?`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.headline_en}</div><div style="font-size:9px;color:#aaa;font-family:'Outfit',sans-serif;margin-bottom:4px;border-left:2px solid #C8C0B0;padding-left:6px">${a.title?.slice(0,100)}</div>`:`<div class="gs-sp-title-${i===0?'md':'sm'}">${a.title?.slice(0,120)||''}</div>`}
               ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.slice(0,140)}</div>`:''}
               ${ep&&i===0?`<div class="gs-sp-triad"><div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.slice(0,160)}</div></div></div>`:''}
               ${a.citation_count>0?`<div class="gs-sp-meta">${a.citation_count} citations</div>`:''}
