@@ -911,7 +911,12 @@ function updateTexts(){
   document.getElementById('heroTitle').innerHTML=t('title')
   document.getElementById('heroSub').innerHTML=t('sub')
   document.getElementById('roleLabel').textContent=t('forRole')
-  document.querySelectorAll('.role-chip').forEach(b=>{b.textContent=t('roles')[b.dataset.role]||b.dataset.role})
+  document.querySelectorAll('.role-chip').forEach(b=>{
+    const label=t('roles')[b.dataset.role]||b.dataset.role
+    const sub=b.querySelector('.role-sub')
+    b.textContent=label
+    if(sub) b.appendChild(sub)
+  })
   updateFreeBar()
 }
 function updateFreeBar(){
