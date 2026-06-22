@@ -1651,7 +1651,7 @@ async function initAuth(){
     document.getElementById('authArea').innerHTML=`<div class="user-avatar" onclick="sb.auth.signOut().then(()=>location.reload())">${initial}</div>`
     // Verify Pro status from database
     try {
-      const {data:profile} = await sb.from('profiles').select('is_pro').eq('id',session.user.id).single()
+      const {data:profile} = await sb.from('profiles').select('is_pro').eq('id',session.user.id).maybeSingle()
       isPro = profile?.is_pro === true
     } catch(e) { isPro = false }
     await loadSavedArticles()
