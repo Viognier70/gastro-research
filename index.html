@@ -1248,8 +1248,13 @@ function renderFeed(){
     const roleName={all:'any profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator'}[role]||role
     let emptyMsg='',emptyHint=''
     if(showingSaved){
-      emptyMsg='No saved articles yet'
-      emptyHint='Star articles you want to revisit — they appear here.'
+      pane.innerHTML=`<div style="padding:48px 24px;text-align:center">
+        <div style="font-size:32px;margin-bottom:16px;color:var(--gold)">☆</div>
+        <div style="font-size:18px;font-weight:500;color:var(--text-primary);margin-bottom:8px;font-family:'Playfair Display',serif">Your library starts here</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;max-width:360px;margin:0 auto 24px">Save articles as you read — organised by topic, filterable by ε · τ · φ lens.</div>
+        <div style="font-size:11px;color:var(--text-tertiary);font-style:italic;margin-top:12px">Filterable by ε · τ · φ lens · Always tied to your role</div>
+      </div>`
+      return
     } else if(searchVal){
       emptyMsg=`No results for "${searchVal}"`
       emptyHint='Try a broader search term, or <a href="#" onclick="document.getElementById(&quot;searchInput&quot;).value=&quot;&quot;;loadArticles();return false" style="color:var(--gold)">clear the search</a> to browse all articles.'
