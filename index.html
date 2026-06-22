@@ -263,6 +263,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .rt-bar{height:3px;background:#C9A84C;border-radius:2px}
 .rt-footer{font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;font-family:'Outfit',sans-serif;font-style:italic}
 .rel-badge-wrap{position:relative;display:inline-block}
+.synth-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;font-family:'Outfit',sans-serif}
+.synth-tag.converging{background:#e8f5f0;color:#0a6647;border:0.5px solid #b5ddd0}
+.synth-tag.tension{background:#faeee0;color:#8a4a10;border:0.5px solid #e8c8a0}
 
 /* TOOLBAR */
 .toolbar{padding:12px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -2057,10 +2060,12 @@ window.loadSpotlight = async function() {
           ${synths.map(s => `
             <div style="background:#fff;border:0.5px solid #C8C0B0;padding:14px;cursor:pointer" onclick="var b=this.querySelector('.synth-body');b.style.display=b.style.display==='none'?'block':'none'">
               <div class="gs-sp-journal">${(s.topic||'').replace(/_/g,' ')}</div>
-              <div class="gs-sp-title-sm" style="margin-bottom:6px">${s.title||''}</div>
+              ${s.article_count>=5?'<span class="synth-tag converging">Converging</span>':'<span class="synth-tag tension">Emerging</span>'}
+              <div class="gs-sp-title-sm" style="margin-bottom:4px">${s.title||''}</div>
               <div class="gs-sp-meta">${s.article_count||0} articles · Updated ${formatDate(s.updated_at)}</div>
+              <div style="font-size:10px;color:#555;font-family:'Outfit',sans-serif;margin-top:4px;font-style:italic">${s.article_count>=5?'Studies align — consistent findings across '+s.article_count+' papers':'Emerging evidence — '+s.article_count+' studies building consensus'}</div>
               <div class="synth-body" style="display:none;margin-top:10px;font-size:11px;color:#333;line-height:1.6;font-family:'Outfit',sans-serif">${s.synthesis?.slice(0,500)||''}</div>
-              <div style="font-size:10px;color:#1A3A5C;margin-top:8px;font-family:'Outfit',sans-serif">Read synthesis ↓</div>
+              <div style="font-size:10px;color:#1A3A5C;margin-top:8px;font-family:'Outfit',sans-serif">Open synthesis →</div>
             </div>
           `).join('')}
         </div>
