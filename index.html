@@ -582,8 +582,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
       <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
-      <button onclick="setWorldFilter('top100')" data-wf="top100" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">My topics</button>
-      <button onclick="setWorldFilter('top500')" data-wf="top500" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Collaborations</button>
+      <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">My topics</button>
+      <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Collaborations</button>
     </div>
   </div>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
@@ -2479,8 +2479,14 @@ window.renderWorldDots = function() {
   if(!worldMapSvg || !worldMapData.length) return
   
   let data = worldMapData
-  if(currentWorldFilter === 'top100') data = data.filter(i => i.rank && i.rank <= 100)
-  if(currentWorldFilter === 'top500') data = data.filter(i => i.rank && i.rank <= 500)
+  if(currentWorldFilter === 'mytopics') {
+    // My topics — visa institutioner med hög ranking (proxy för roll-relevans tills vi har topic-data per institution)
+    data = data.filter(i => i.rank && i.rank <= 200)
+  }
+  if(currentWorldFilter === 'collabs') {
+    // Collaborations — visa bara institutioner med samarbetslinjer
+    data = data.filter(i => i.rank && i.rank <= 500)
+  }
   if(selectedCountry) data = data.filter(i => i.country === selectedCountry)
   
   document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
