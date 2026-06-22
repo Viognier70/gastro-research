@@ -254,6 +254,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .role-chip.on{background:var(--black);color:var(--white);border-color:var(--black)}
 .role-chip:hover:not(.on){border-color:var(--text-secondary)}
 .role-sub{display:none}
+.rel-tooltip{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:999;background:#1a1914;border:0.5px solid rgba(255,255,255,.15);border-radius:8px;padding:12px 14px;width:220px;pointer-events:none}
+.rel-tooltip.show{display:block}
+.rt-title{font-size:10px;font-weight:700;letter-spacing:.08em;color:#C9A84C;text-transform:uppercase;margin-bottom:8px;font-family:'Outfit',sans-serif}
+.rt-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px}
+.rt-row span{font-size:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;white-space:nowrap}
+.rt-bar-wrap{flex:1;background:rgba(255,255,255,.1);border-radius:2px;height:3px}
+.rt-bar{height:3px;background:#C9A84C;border-radius:2px}
+.rt-footer{font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;font-family:'Outfit',sans-serif;font-style:italic}
+.rel-badge-wrap{position:relative;display:inline-block}
 
 /* TOOLBAR */
 .toolbar{padding:12px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1042,7 +1051,17 @@ function cardHTML(a,idx){
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
-      ${role!=='all'&&relevance>0?`<span class="relevance-badge">${relevance}/10 · ${roleName}</span>`:''}
+      ${role!=='all'&&relevance>0?`<div class="rel-badge-wrap" onmouseenter="this.querySelector('.rel-tooltip').classList.add('show')" onmouseleave="this.querySelector('.rel-tooltip').classList.remove('show')">
+        <span class="relevance-badge">${relevance}/10 · ${roleName}</span>
+        <div class="rel-tooltip">
+          <div class="rt-title">How relevance is scored</div>
+          <div class="rt-row"><span>Role match</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,relevance*10)}%"></div></div></div>
+          <div class="rt-row"><span>TRIAD coverage</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:30}%"></div></div></div>
+          <div class="rt-row"><span>Recency</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${a.year>=2024?90:a.year>=2022?70:50}%"></div></div></div>
+          <div class="rt-row"><span>Citations</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,(a.citation_count||0)/10*100)}%"></div></div></div>
+          <div class="rt-footer">Scored for ${roleName}</div>
+        </div>
+      </div>`:''}`
       ${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
     </div>
     ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gusto Science</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${a.primary_institution.replace(/'/g,"\'")}',event)" title="Filter by institution"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
