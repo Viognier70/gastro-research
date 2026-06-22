@@ -995,6 +995,13 @@ function setRole(r,btn){
   loadArticles()
   loadSpotlight()
   updateRoleNavBadge(r)
+  // Uppdatera hero-eyebrow med roll
+  const heroEyebrow = document.getElementById('heroEyebrow')
+  if(heroEyebrow && r !== 'all') {
+    const roleNames = {sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy professional',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Gastronomy professional',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
+    const rn = roleNames[r] || r
+    heroEyebrow.textContent = `Research intelligence for the ${rn} — through three lenses of knowledge`
+  }
 }
 
 function getRelevanceScore(a){
