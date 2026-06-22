@@ -263,6 +263,17 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .rt-bar{height:3px;background:#C9A84C;border-radius:2px}
 .rt-footer{font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;font-family:'Outfit',sans-serif;font-style:italic}
 .rel-badge-wrap{position:relative;display:inline-block}
+.triad-micro{display:flex;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;float:right;margin-top:-2px}
+.triad-micro:hover{background:var(--warm-100)}
+.tl-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.tl-lbl{font-size:9px;font-weight:600;color:var(--text-tertiary);font-family:'Outfit',sans-serif;letter-spacing:.06em}
+.triad-legend-popup{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:999;background:var(--black);border:0.5px solid rgba(255,255,255,.15);border-radius:8px;padding:14px 16px;width:280px}
+.triad-legend-popup.show{display:block}
+.tlp-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.tlp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.tlp-label{font-size:10px;font-weight:700;margin-bottom:2px;font-family:'Outfit',sans-serif}
+.tlp-desc{font-size:10px;color:rgba(255,255,255,.5);line-height:1.5;font-family:'Outfit',sans-serif}
+.tlp-footer{font-size:9px;color:rgba(255,255,255,.25);margin-top:8px;padding-top:8px;border-top:0.5px solid rgba(255,255,255,.08);font-style:italic;font-family:'Outfit',sans-serif}
 .synth-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;font-family:'Outfit',sans-serif}
 .synth-tag.converging{background:#e8f5f0;color:#0a6647;border:0.5px solid #b5ddd0}
 .synth-tag.tension{background:#faeee0;color:#8a4a10;border:0.5px solid #e8c8a0}
@@ -1053,6 +1064,18 @@ function cardHTML(a,idx){
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
+      ${hasTriad?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()">
+        <span class="tl-dot" style="background:#2a6fad"></span>
+        <span class="tl-dot" style="background:#0f6e56"></span>
+        <span class="tl-dot" style="background:#5349b5"></span>
+        <span class="tl-lbl">ε τ φ</span>
+        <div class="triad-legend-popup">
+          <div class="tlp-row"><div class="tlp-dot" style="background:#2a6fad"></div><div><div class="tlp-label" style="color:#7BA7D4">ε Episteme</div><div class="tlp-desc">What the research actually establishes — the scientific finding</div></div></div>
+          <div class="tlp-row"><div class="tlp-dot" style="background:#0f6e56"></div><div><div class="tlp-label" style="color:#7BC47B">τ Techne</div><div class="tlp-desc">How to apply it in your professional practice</div></div></div>
+          <div class="tlp-row"><div class="tlp-dot" style="background:#5349b5"></div><div><div class="tlp-label" style="color:#B8B0F0">φ Phronesis</div><div class="tlp-desc">Your situated judgment in this specific moment</div></div></div>
+          <div class="tlp-footer">Based on Aristotle · Developed for gastronomy by Crichton-Fock (2024)</div>
+        </div>
+      </div>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
       ${role!=='all'&&relevance>0?`<div class="rel-badge-wrap" onmouseenter="this.querySelector('.rel-tooltip').classList.add('show')" onmouseleave="this.querySelector('.rel-tooltip').classList.remove('show')">
         <span class="relevance-badge">${relevance}/10 · ${roleName}</span>
