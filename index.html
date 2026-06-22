@@ -317,6 +317,25 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .rt-bar{height:3px;background:#C9A84C;border-radius:2px}
 .rt-footer{font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;font-family:'Outfit',sans-serif;font-style:italic}
 .rel-badge-wrap{position:relative;display:inline-block}
+.my-library-wrap{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.library-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.library-title{font-size:14px;font-weight:500;color:var(--text-primary);font-family:'Playfair Display',serif}
+.library-filters{display:flex;gap:6px;flex-wrap:wrap}
+.library-filter-btn{font-size:10px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-tertiary);transition:all .15s}
+.library-filter-btn.on{background:var(--black);color:var(--white);border-color:var(--black)}
+.library-filter-btn.e-on{background:var(--episteme);color:#fff;border-color:var(--episteme)}
+.library-filter-btn.t-on{background:var(--techne);color:#fff;border-color:var(--techne)}
+.library-filter-btn.p-on{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
+.library-topic-group{margin-bottom:20px}
+.library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
+.library-article-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer}
+.library-article-row:last-child{border-bottom:none}
+.library-triad-dots{display:flex;gap:3px;flex-shrink:0;padding-top:3px}
+.library-triad-dot{width:7px;height:7px;border-radius:50%}
+.library-article-title{font-size:13px;font-weight:500;color:var(--text-primary);line-height:1.4;flex:1}
+.library-article-meta{font-size:10px;color:var(--text-tertiary);margin-top:3px}
+.library-unsave{font-size:10px;color:var(--text-tertiary);cursor:pointer;flex-shrink:0;padding:2px 6px;border-radius:10px;border:0.5px solid var(--border)}
+.library-unsave:hover{color:var(--text-primary);border-color:var(--border-mid)}
 .semantic-search-wrap{background:linear-gradient(135deg,rgba(26,58,92,.08),rgba(45,80,22,.05));border:0.5px solid rgba(201,168,76,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px}
 .semantic-search-label{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .semantic-search-input{width:100%;border:0.5px solid var(--border-mid);border-radius:6px;padding:10px 14px;font-size:13px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);outline:none;box-sizing:border-box}
@@ -1540,7 +1559,7 @@ function doShare(type){
   closeModal('shareModal')
 }
 
-function toggleSaved(){showingSaved=!showingSaved;document.getElementById('savedBtn').classList.toggle('on',showingSaved);renderFeed()}
+function toggleSaved(){showingSaved=!showingSaved;document.getElementById('savedBtn').classList.toggle('on',showingSaved);if(showingSaved)renderMyLibrary();else renderFeed()}
 function updateAlertBtn(topic){
   const btn=document.getElementById('alertBtn')
   if(!btn)return
@@ -2149,6 +2168,81 @@ window.doSemanticSearch = async function() {
     results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Search unavailable. Try again.</div>'
     console.log('Semantic search error:', e)
   }
+}
+
+window.renderMyLibrary = async function() {
+  const pane = document.getElementById('feedPane')
+  if(!pane) return
+  pane.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-tertiary);font-size:12px">Loading your library...</div>'
+
+  if(savedArticleIds.size === 0) {
+    pane.innerHTML = `<div style="padding:48px 24px;text-align:center">
+      <div style="font-size:32px;margin-bottom:16px;color:var(--gold)">☆</div>
+      <div style="font-size:18px;font-weight:500;color:var(--text-primary);margin-bottom:8px;font-family:'Playfair Display',serif">Your library starts here</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;max-width:360px;margin:0 auto 24px">Save articles as you read — organised by topic, filterable by ε · τ · φ lens.</div>
+      <div style="font-size:11px;color:var(--text-tertiary);font-style:italic">Always tied to your role</div>
+    </div>`
+    return
+  }
+
+  // Hämta sparade artiklar med full data
+  const ids = [...savedArticleIds]
+  const r = window.role && window.role !== 'all' ? window.role : 'sensory_pro'
+  const epCol = 'episteme_'+r, tcCol = 'techne_'+r, phCol = 'phronesis_'+r
+
+  const resp = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,topic,journal,year,${epCol},${tcCol},${phCol}&id=in.(${ids.join(',')})`, {
+    headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+  })
+  const arts = await resp.json()
+  if(!Array.isArray(arts)) return
+
+  // Gruppera per topic
+  const groups = {}
+  arts.forEach(a => {
+    const t = (a.topic||'general').replace(/_/g,' ')
+    if(!groups[t]) groups[t] = []
+    groups[t].push(a)
+  })
+
+  // Render
+  const libraryLens = window._libraryLens || 'all'
+
+  pane.innerHTML = `<div class="my-library-wrap">
+    <div class="library-header">
+      <div class="library-title">My Library · ${arts.length} articles</div>
+      <div class="library-filters">
+        <button class="library-filter-btn${libraryLens==='all'?' on':''}" onclick="window._libraryLens='all';renderMyLibrary()">All</button>
+        <button class="library-filter-btn${libraryLens==='e'?' e-on':''}" onclick="window._libraryLens='e';renderMyLibrary()">ε Episteme</button>
+        <button class="library-filter-btn${libraryLens==='t'?' t-on':''}" onclick="window._libraryLens='t';renderMyLibrary()">τ Techne</button>
+        <button class="library-filter-btn${libraryLens==='p'?' p-on':''}" onclick="window._libraryLens='p';renderMyLibrary()">φ Phronesis</button>
+      </div>
+    </div>
+    ${Object.entries(groups).map(([topic, topicArts]) => `
+      <div class="library-topic-group">
+        <div class="library-topic-label">${topic}</div>
+        ${topicArts.map(a => {
+          const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
+          if(libraryLens==='e'&&!ep) return ''
+          if(libraryLens==='t'&&!tc) return ''
+          if(libraryLens==='p'&&!ph) return ''
+          const preview = libraryLens==='e'?ep:libraryLens==='t'?tc:libraryLens==='p'?ph:''
+          return `<div class="library-article-row">
+            <div class="library-triad-dots">
+              <div class="library-triad-dot" style="background:${ep?'var(--episteme)':'var(--border)'}"></div>
+              <div class="library-triad-dot" style="background:${tc?'var(--techne)':'var(--border)'}"></div>
+              <div class="library-triad-dot" style="background:${ph?'#2d6a4f':'var(--border)'}"></div>
+            </div>
+            <div style="flex:1">
+              <div class="library-article-title">${a.headline_en||a.title?.slice(0,100)||''}</div>
+              <div class="library-article-meta">${a.journal||''} · ${a.year||''}</div>
+              ${preview?`<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.5;font-style:italic">${preview.slice(0,150)}…</div>`:''}
+            </div>
+            <button class="library-unsave" onclick="toggleSaveArticle('${a.id}',null).then(()=>renderMyLibrary())">× Remove</button>
+          </div>`
+        }).join('')}
+      </div>
+    `).join('')}
+  </div>`
 }
 
 window.checkOnboarding = function() {
