@@ -1050,9 +1050,14 @@ function cardHTML(a,idx){
     ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
     ${!locked&&hasTriad?`
-    <div style="display:flex;flex-direction:column;gap:0;margin-top:12px">
+    <div class="triad-nav" id="triad-nav-${cid}">
+      <button class="triad-nav-btn e-active" onclick="switchTriad('${cid}','e',this)">ε Episteme</button>
+      <button class="triad-nav-btn" onclick="switchTriad('${cid}','t',this)">τ Techne</button>
+      <button class="triad-nav-btn" onclick="switchTriad('${cid}','p',this)">φ Phronesis</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0;margin-top:0" id="triad-blocks-${cid}">
       ${ep.length>10?`
-      <div style="background:var(--episteme-light);border-left:3px solid var(--episteme);border-radius:0 6px 0 0;padding:12px 14px">
+      <div id="triad-e-${cid}" style="background:var(--episteme-light);border-left:3px solid var(--episteme);border-radius:0 6px 0 0;padding:12px 14px">
         <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--episteme);text-transform:uppercase;margin-bottom:4px">ε Episteme — what the research establishes</div>
         <div style="font-size:12px;color:#2A4A6C;line-height:1.7">${ep}</div>
         ${hasIMRaD?`<div style="margin-top:8px;cursor:pointer;font-size:10px;color:var(--episteme);border:0.5px solid rgba(26,58,92,.2);padding:3px 10px;border-radius:20px;display:inline-block" onclick="document.getElementById('im-${cid}').style.display=document.getElementById('im-${cid}').style.display==='none'?'block':'none'">▸ IMRaD</div>
@@ -1068,7 +1073,7 @@ function cardHTML(a,idx){
         <span style="font-size:11px;font-style:italic;color:var(--text-secondary);line-height:1.5">${bridgeET||'Applied to professional practice:'}</span>
       </div>`:''}
       ${tc.length>10?`
-      <div style="background:var(--techne-light);border-left:3px solid var(--techne);padding:12px 14px">
+      <div id="triad-t-${cid}" style="background:var(--techne-light);border-left:3px solid var(--techne);padding:12px 14px">
         <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--techne);text-transform:uppercase;margin-bottom:4px">τ Techne — how to apply in practice</div>
         <div style="font-size:12px;color:#3A6020;line-height:1.7">${tc}</div>
       </div>
@@ -1077,7 +1082,7 @@ function cardHTML(a,idx){
         <span style="font-size:11px;font-style:italic;color:var(--text-secondary);line-height:1.5">${bridgeTP||'In the moment of professional judgment:'}</span>
       </div>`:''}
       ${ph.length>10?`
-      <div style="background:var(--phronesis-light);border-left:3px solid var(--phronesis);border-radius:0 0 6px 0;padding:12px 14px">
+      <div id="triad-p-${cid}" style="background:var(--phronesis-light);border-left:3px solid var(--phronesis);border-radius:0 0 6px 0;padding:12px 14px">
         <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--phronesis);text-transform:uppercase;margin-bottom:4px">φ Phronesis — the situated judgment</div>
         <div style="font-size:12px;color:#7A3D00;line-height:1.7">${ph}</div>
       </div>`:''}
@@ -1126,6 +1131,27 @@ function cardHTML(a,idx){
     return`<div class="article-card locked">${inner}${lockedExtra}</div>`
   }
   return`<div class="article-card${isSaved?' saved-card':''}">${triadGuide}${inner}</div>`
+}
+
+window.switchTriad = function(cid, key, btn) {
+  const blocks = document.getElementById('triad-blocks-'+cid)
+  if(!blocks) return
+  // Visa/dölj block
+  const e = document.getElementById('triad-e-'+cid)
+  const t = document.getElementById('triad-t-'+cid)
+  const p = document.getElementById('triad-p-'+cid)
+  const bAll = [e,t,p].filter(Boolean)
+  // Hitta bridge-divs (mellanliggande pilar)
+  blocks.querySelectorAll('div[style*="warm-100"]').forEach(d => d.style.display = 'none')
+  bAll.forEach(b => b.style.display = 'none')
+  const target = key==='e'?e:key==='t'?t:p
+  if(target) target.style.display = 'block'
+  // Uppdatera knappar
+  const nav = document.getElementById('triad-nav-'+cid)
+  if(nav) nav.querySelectorAll('.triad-nav-btn').forEach(b => {
+    b.className = 'triad-nav-btn'
+  })
+  if(btn) btn.className = 'triad-nav-btn '+(key==='e'?'e-active':key==='t'?'t-active':'p-active')
 }
 
 function setTriadPerspective(cid, key){
