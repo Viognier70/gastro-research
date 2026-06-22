@@ -1453,32 +1453,39 @@ async function toggleAlert(){
 }
 
 async function toggleSaveArticle(id,btn){
-  if(!sb.auth.getSession){return openModal('authModal')}
-  const {data:{session}}=await sb.auth.getSession()
-  if(!session) return openModal('authModal')
-  if(savedArticleIds.has(id)){
-    await fetch(`${SB_URL}/rest/v1/saved_articles?article_id=eq.${id}&user_id=eq.${session.user.id}`,{method:'DELETE',headers:{...H,'Authorization':'Bearer '+session.access_token}})
+  const user = supabase?.auth?.getUser ? (await supabase.auth.getUser()).data?.user : null
+  const isSaved = savedArticleIds.has(id)
+  if(isSaved) {
     savedArticleIds.delete(id)
-    btn.className='save-btn'
-    btn.textContent='☆ Save'
+    if(user) await supabase.from('saved_articles').delete().eq('user_id',user.id).eq('article_id',id)
+    else { const ls=JSON.parse(localStorage.getItem('gs_saved')||'[]'); localStorage.setItem('gs_saved',JSON.stringify(ls.filter(x=>x!==id))) }
   } else {
-    await fetch(`${SB_URL}/rest/v1/saved_articles`,{method:'POST',headers:{...H,'Authorization':'Bearer '+session.access_token,'Prefer':'return=minimal'},body:JSON.stringify({article_id:id,user_id:session.user.id})})
     savedArticleIds.add(id)
-    btn.className='save-btn saved'
-    btn.textContent='★ Saved'
+    if(user) await supabase.from('saved_articles').upsert({user_id:user.id,article_id:id,saved_at:new Date().toISOString()})
+    else { const ls=JSON.parse(localStorage.getItem('gs_saved')||'[]'); localStorage.setItem('gs_saved',JSON.stringify([...ls,id])) }
   }
+  if(btn) { btn.textContent=savedArticleIds.has(id)?'★ Saved':'☆ Save'; btn.classList.toggle('saved',savedArticleIds.has(id)) }
+  if(showingSaved) renderFeed()
 }
+
 
 async function loadSavedArticles(){
-  const {data:{session}}=await sb.auth.getSession()
-  if(!session) return
-  const r=await fetch(`${SB_URL}/rest/v1/saved_articles?user_id=eq.${session.user.id}&select=article_id`,{headers:{...H,'Authorization':'Bearer '+session.access_token}})
-  const data=await r.json()
-  if(Array.isArray(data)) data.forEach(d=>savedArticleIds.add(d.article_id))
+  savedArticleIds.clear()
+  // Försök hämta från Supabase om inloggad
+  const user = supabase?.auth?.getUser ? (await supabase.auth.getUser()).data?.user : null
+  if(user) {
+    try {
+      const {data} = await supabase.from('saved_articles').select('article_id').eq('user_id', user.id)
+      if(Array.isArray(data)) data.forEach(r => savedArticleIds.add(r.article_id))
+      return
+    } catch(e) { console.log('Supabase saved error:', e) }
+  }
+  // Fallback till localStorage
+  const ls = JSON.parse(localStorage.getItem('gs_saved')||'[]')
+  ls.forEach(id => savedArticleIds.add(id))
 }
 
-let authIsSignup=false
-function toggleAuthMode(){authIsSignup=!authIsSignup;document.getElementById('authTitle').textContent=authIsSignup?'Create account':'Sign in';document.getElementById('authSwitch').innerHTML=authIsSignup?'Have an account? <span onclick="toggleAuthMode()">Sign in</span>':'No account? <span onclick="toggleAuthMode()">Create one</span>'}
+
 async function handleAuth(){
   const email=document.getElementById('authEmail').value
   const password=document.getElementById('authPassword').value
