@@ -263,6 +263,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .rt-bar{height:3px;background:#C9A84C;border-radius:2px}
 .rt-footer{font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;font-family:'Outfit',sans-serif;font-style:italic}
 .rel-badge-wrap{position:relative;display:inline-block}
+.return-bar{background:linear-gradient(90deg,rgba(26,58,92,.15),rgba(45,80,22,.1));border-bottom:0.5px solid rgba(201,168,76,.2);padding:10px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;box-sizing:border-box}
+.return-streak{display:flex;flex-direction:column;align-items:center;padding:6px 16px;border-right:0.5px solid rgba(255,255,255,.1);flex-shrink:0}
+.return-streak-num{font-size:22px;font-weight:700;color:var(--gold);line-height:1;font-family:'Playfair Display',serif}
+.return-streak-label{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;font-family:'Outfit',sans-serif}
+.return-msg{flex:1;min-width:200px}
+.return-msg-main{font-size:13px;color:rgba(255,255,255,.8);margin-bottom:2px;font-family:'Outfit',sans-serif}
+.return-msg-sub{font-size:11px;color:rgba(255,255,255,.35);font-family:'Outfit',sans-serif}
+.return-cta{font-size:11px;font-weight:600;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.4);padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap}
 .triad-micro{display:flex;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;float:right;margin-top:-2px}
 .triad-micro:hover{background:var(--warm-100)}
 .tl-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
@@ -533,6 +541,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
+<div id="returnBar" style="display:none"></div>
 <div style="background:#F8F5EF;width:100%;padding-bottom:0"><div class="spotlight-wrap" id="spotlightWrap">
   <div class="spotlight-header">
     <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
@@ -2013,6 +2022,29 @@ window.clearWorldMapFilter = function() {
   loadArticles()
 }
 
+window.showReturnSignal = async function(user) {
+  const bar = document.getElementById('returnBar')
+  if(!bar || !user) return
+  try {
+    const {data: profile} = await supabase.from('profiles').select('last_visit,visit_streak,weekly_reads').eq('id',user.id).single()
+    if(!profile || !profile.last_visit) {
+      await supabase.from('profiles').update({last_visit:new Date().toISOString(),visit_streak:1}).eq('id',user.id)
+      return
+    }
+    const lastVisit = new Date(profile.last_visit)
+    const now = new Date()
+    const daysSince = Math.floor((now - lastVisit) / (1000*60*60*24))
+    const streak = profile.visit_streak || 1
+    const newStreak = daysSince <= 1 ? streak + (daysSince===1?1:0) : 1
+    await supabase.from('profiles').update({last_visit:now.toISOString(),visit_streak:newStreak}).eq('id',user.id)
+    if(daysSince < 1) return
+    const {count} = await supabase.from('articles').select('*',{count:'exact',head:true}).gt('fetched_at',profile.last_visit)
+    const rn = ({all:'gastronomy',sommelier:'sommelier',chef:'chef',gastronomy:'gastronomy',fb_manager:'F&B management',food_researcher:'food research',sensory_pro:'sensory science'})[window.role||'all'] || 'gastronomy'
+    const dayLabel = daysSince===1?'yesterday':daysSince+' days ago'
+    bar.innerHTML = '<div class="return-bar"><div class="return-streak"><div class="return-streak-num">'+newStreak+'</div><div class="return-streak-label">day streak</div></div><div class="return-msg"><div class="return-msg-main">'+(count||'New')+' articles added in '+rn+' since your last visit</div><div class="return-msg-sub">Last visited '+dayLabel+' &middot; '+(profile.weekly_reads||0)+' articles read this week</div></div><button class="return-cta" onclick="document.getElementById(\'feedPane\').scrollIntoView({behavior:\'smooth\'})">See what\'s new &rarr;</button></div>'
+    bar.style.display = 'block'
+  } catch(e) { console.log('Return signal error:', e) }
+}
 window.checkOnboarding = function() {
   const seen = localStorage.getItem('gs_onboarding_seen')
   const savedRole = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole')
@@ -2169,7 +2201,7 @@ window.loadSpotlight = async function() {
   } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
 
-initAuth().then(()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600)})
+initAuth().then(async ()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600);const u=(await supabase.auth.getUser()).data?.user;if(u) showReturnSignal(u)})
 setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 setTimeout(()=>{if(typeof window.initWorldMap==='function') window.initWorldMap()}, 2500)
 </script>
