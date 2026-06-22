@@ -503,6 +503,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </button>
     <button class="academy-btn" id="navSubscribeBtn" onclick="openNewsletter()">Subscribe →</button>
     <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
+    <div id="roleNavBadge" onclick="localStorage.removeItem('gs_onboarding_seen');checkOnboarding()" style="display:none;cursor:pointer;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;font-family:Outfit,sans-serif;border:0.5px solid;transition:all .2s"></div>
     <div id="authArea"><button class="auth-btn" onclick="openModal('authModal')" id="authBtn">A</button></div>
   </div>
 </div>
@@ -959,6 +960,30 @@ function closeModal(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
 function selectPlan(el,plan){selectedPlan=plan;document.querySelectorAll('.price-card').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
 
+function updateRoleNavBadge(r) {
+  const badge = document.getElementById('roleNavBadge')
+  if(!badge) return
+  const labels = {all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Researcher & Educator',sensory_pro:'Sensory scientist',culinary_pro:'Culinary pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher'}
+  const colors = {
+    sommelier:  {bg:'#e8f5f0',color:'#0d6e56',border:'#b5ddd0'},
+    chef:       {bg:'#faf0e8',color:'#9a4e1a',border:'#e8c8a8'},
+    gastronomy: {bg:'#f0eefa',color:'#4a3aa0',border:'#c8c0f0'},
+    fb_manager: {bg:'#faeee8',color:'#8a3a1a',border:'#e8b8a0'},
+    food_researcher:{bg:'#e8eef8',color:'#1a3a8a',border:'#a0b8e0'},
+    sensory_pro:{bg:'#e8f5f0',color:'#0d6e56',border:'#b5ddd0'},
+    culinary_pro:{bg:'#faf0e8',color:'#9a4e1a',border:'#e8c8a8'},
+    gastronomy_culture:{bg:'#f0eefa',color:'#4a3aa0',border:'#c8c0f0'},
+    hospitality_mgmt:{bg:'#faeee8',color:'#8a3a1a',border:'#e8b8a0'},
+    educator_researcher:{bg:'#e8eef8',color:'#1a3a8a',border:'#a0b8e0'},
+  }
+  const c = colors[r] || {bg:'rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',border:'rgba(255,255,255,.2)'}
+  badge.textContent = labels[r] || 'All professions'
+  badge.style.background = c.bg
+  badge.style.color = c.color
+  badge.style.borderColor = c.border
+  badge.style.display = 'block'
+}
+
 function setRole(r,btn){
   role=r
   roleManuallySet=true
@@ -967,6 +992,7 @@ function setRole(r,btn){
   document.querySelector(`.role-chip[data-role='${r}']`)?.classList.add('on')
   loadArticles()
   loadSpotlight()
+  updateRoleNavBadge(r)
 }
 
 function getRelevanceScore(a){
