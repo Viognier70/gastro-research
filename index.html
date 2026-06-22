@@ -1893,9 +1893,17 @@ window.selectObRole = function(el, r) {
 
 window.checkOnboarding = function() {
   const seen = localStorage.getItem('gs_onboarding_seen')
-  if(!seen) {
+  const savedRole = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole')
+  if(!seen || !savedRole) {
     const ob = document.getElementById('obOverlay')
     if(ob) ob.style.display = 'flex'
+  } else {
+    // Återställ roll från localStorage
+    const r = savedRole
+    if(r && r !== role) {
+      role = r
+      updateRoleNavBadge(r)
+    }
   }
 }
 
@@ -1927,7 +1935,7 @@ window.loadSpotlight = async function() {
   if(!el) return
   el.innerHTML = '<div style="color:#888;font-size:12px;padding:16px 0;font-family:Outfit,sans-serif">Loading latest findings...</div>'
   try {
-    const r = window.role && window.role !== 'all' ? window.role : 'sensory_pro'
+    const r = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
     const epCol = `episteme_${r}`
     const tcCol = `techne_${r}`
     const phCol = `phronesis_${r}`
