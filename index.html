@@ -317,6 +317,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .rt-bar{height:3px;background:#C9A84C;border-radius:2px}
 .rt-footer{font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;font-family:'Outfit',sans-serif;font-style:italic}
 .rel-badge-wrap{position:relative;display:inline-block}
+.semantic-search-wrap{background:linear-gradient(135deg,rgba(26,58,92,.08),rgba(45,80,22,.05));border:0.5px solid rgba(201,168,76,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.semantic-search-label{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.semantic-search-input{width:100%;border:0.5px solid var(--border-mid);border-radius:6px;padding:10px 14px;font-size:13px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);outline:none;box-sizing:border-box}
+.semantic-search-input:focus{border-color:rgba(201,168,76,.5)}
+.semantic-search-btn{margin-top:8px;font-size:11px;font-weight:600;color:var(--white);background:var(--black);border:none;padding:7px 16px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif}
+.semantic-results{margin-top:12px;display:none}
 .return-bar{background:linear-gradient(90deg,rgba(26,58,92,.15),rgba(45,80,22,.1));border-bottom:0.5px solid rgba(201,168,76,.2);padding:10px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;box-sizing:border-box}
 .return-streak{display:flex;flex-direction:column;align-items:center;padding:6px 16px;border-right:0.5px solid rgba(255,255,255,.1);flex-shrink:0}
 .return-streak-num{font-size:22px;font-weight:700;color:var(--gold);line-height:1;font-family:'Playfair Display',serif}
@@ -821,6 +827,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- MAIN LAYOUT -->
 <div class="main-layout">
   <div class="feed-pane">
+    <div class="semantic-search-wrap" id="semanticSearchWrap">
+      <div class="semantic-search-label">◈ Ask the research</div>
+      <input class="semantic-search-input" id="semanticInput" placeholder="e.g. How does music affect taste perception?" onkeydown="if(event.key==='Enter')doSemanticSearch()">
+      <button class="semantic-search-btn" onclick="doSemanticSearch()">Search →</button>
+      <div class="semantic-results" id="semanticResults"></div>
+    </div>
     <div class="free-bar" id="freeBar">
       <div class="free-progress"><div class="free-fill" id="freeFill" style="width:0%"></div></div>
       <span class="free-text" id="freeText"></span>
@@ -2099,6 +2111,46 @@ window.showReturnSignal = async function(user) {
     bar.style.display = 'block'
   } catch(e) { console.log('Return signal error:', e) }
 }
+window.doSemanticSearch = async function() {
+  const input = document.getElementById('semanticInput')
+  const results = document.getElementById('semanticResults')
+  const query = input?.value?.trim()
+  if(!query || query.length < 3) return
+
+  results.style.display = 'block'
+  results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Searching research...</div>'
+
+  try {
+    // Anropa Anthropic API för att generera embedding via Claude artifact
+    const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/semantic-search', {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${SB_ANON}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query, role: window.role || 'all', limit: 5 })
+    })
+
+    const data = await resp.json()
+    if(!Array.isArray(data) || !data.length) {
+      results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">No results found. Try different search terms.</div>'
+      return
+    }
+
+    results.innerHTML = data.map(a => `
+      <div style="padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="document.getElementById('searchInput').value='';loadArticles()">
+        <div style="font-size:10px;color:var(--gold);margin-bottom:3px">${a.journal||''} · ${a.year||''} · <span style="color:var(--episteme)">Match: ${Math.round((a.similarity||0)*100)}%</span></div>
+        <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">${a.title?.slice(0,120)||''}</div>
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic">${a.core_claim?.slice(0,150)||''}</div>
+      </div>
+    `).join('')
+  } catch(e) {
+    results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Search unavailable. Try again.</div>'
+    console.log('Semantic search error:', e)
+  }
+}
+
 window.checkOnboarding = function() {
   const seen = localStorage.getItem('gs_onboarding_seen')
   const savedRole = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole')
