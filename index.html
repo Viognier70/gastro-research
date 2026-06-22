@@ -449,7 +449,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .ob-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
 .ob-role{display:flex;align-items:center;gap:12px;padding:12px 16px;border:0.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--white)}
 .ob-role:hover{border-color:var(--gold);background:var(--warm-100)}
-.ob-role.selected{border-color:var(--gold);background:rgba(201,168,76,.08)}
+.ob-role.selected{border-color:var(--gold);background:rgba(201,168,76,.15);box-shadow:0 0 0 2px var(--gold)}
+.ob-role.selected .ob-role-name{color:#8B6914;font-weight:700}
+.ob-role.selected .ob-role-emoji{transform:scale(1.2)}
 .ob-role-emoji{font-size:20px;flex-shrink:0}
 .ob-role-name{font-size:13px;font-weight:500;color:var(--text-primary)}
 .ob-role-desc{font-size:11px;color:var(--text-tertiary);margin-top:1px}
