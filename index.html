@@ -581,9 +581,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span style="font-size:11px;color:rgba(255,255,255,.4)" id="worldMapSubtitle">Where gastronomy science is made</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
-      <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All</button>
-      <button onclick="setWorldFilter('top100')" data-wf="top100" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Top 100</button>
-      <button onclick="setWorldFilter('top500')" data-wf="top500" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Top 500</button>
+      <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
+      <button onclick="setWorldFilter('top100')" data-wf="top100" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">My topics</button>
+      <button onclick="setWorldFilter('top500')" data-wf="top500" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Collaborations</button>
     </div>
   </div>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
@@ -595,6 +595,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:#c9a84c;display:inline-block"></span>Top 500</span>
         <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:rgba(201,168,76,.4);display:inline-block"></span>Unranked</span>
       </div>
+    </div>
+    <div id="worldMapFilterBanner" style="display:none;background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.3);border-radius:6px;padding:8px 14px;margin-top:8px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span id="worldMapFilterText" style="font-size:12px;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif"></span>
+      <button onclick="clearWorldMapFilter()" style="font-size:11px;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.4);padding:3px 10px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">× Clear filter</button>
     </div>
     <div id="worldMapSidebar" style="width:240px;flex-shrink:0;display:none">
       <div id="worldMapCountryTitle" style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px"></div>
@@ -1985,6 +1989,28 @@ window.selectObRole = function(el, r) {
   if(btn) { btn.removeAttribute('disabled'); btn.style.opacity='1'; btn.style.cursor='pointer' }
   const exploreBtn = document.getElementById('obExploreBtn')
   if(exploreBtn) { exploreBtn.removeAttribute('disabled'); exploreBtn.style.opacity='1'; exploreBtn.style.cursor='pointer' }
+}
+
+window.filterByCountry = function(countryName, articleCount) {
+  const banner = document.getElementById('worldMapFilterBanner')
+  const text = document.getElementById('worldMapFilterText')
+  if(banner && text) {
+    text.textContent = `Showing ${articleCount||'some'} articles from ${countryName}`
+    banner.style.display = 'flex'
+  }
+  // Scrolla till feed
+  const feed = document.getElementById('feedPane')
+  if(feed) feed.scrollIntoView({behavior:'smooth', block:'start'})
+  // Sätt country-filter
+  window._countryFilter = countryName
+  loadArticles()
+}
+
+window.clearWorldMapFilter = function() {
+  window._countryFilter = null
+  const banner = document.getElementById('worldMapFilterBanner')
+  if(banner) banner.style.display = 'none'
+  loadArticles()
 }
 
 window.checkOnboarding = function() {
