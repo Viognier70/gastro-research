@@ -2778,6 +2778,15 @@ window.renderWorldDots = function() {
     })
     .on('mouseleave', () => { tooltip.style.display = 'none' })
     .on('click', (event, d) => {
+      event.stopPropagation()
+      const instName = d.name
+      // Highlight samarbetslinjer
+      window.worldMapSvg.selectAll('.collab')
+        .attr('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0.05)
+        .attr('stroke-width', c => (c.inst_a === instName || c.inst_b === instName) ? Math.max(1.5, c.count >= 10 ? 3 : c.count >= 5 ? 2 : 1.5) : 0.3)
+      // Highlight noder
+      window.worldMapSvg.selectAll('.winst')
+        .attr('opacity', n => n.name === instName || window.worldMapCollabs.some(c => (c.inst_a===instName||c.inst_b===instName)&&(c.inst_a===n.name||c.inst_b===n.name)) ? 1 : 0.2)
       filterByCountry(d.country)
     })
 }
