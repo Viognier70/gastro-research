@@ -2746,7 +2746,7 @@ window.renderWorldDots = function() {
   if(window.worldMapCollabs && window.worldMapCollabs.length) {
     const maxCount = Math.max(...window.worldMapCollabs.map(c => c.count))
     zg.selectAll('.collab')
-      .data(window.worldMapCollabs.filter(c => c.count >= 1).sort((a,b) => a.count-b.count).slice(0, 300))
+      .data(window.worldMapCollabs.filter(c => c.count >= 3).sort((a,b) => b.count-a.count).slice(0, 200))
       .join('line')
       .attr('class', 'collab')
       .attr('x1', d => window.worldMapProjection([d.lng1, d.lat1])?.[0])
