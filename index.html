@@ -2753,9 +2753,9 @@ window.renderWorldDots = function() {
       .attr('y1', d => window.worldMapProjection([d.lng1, d.lat1])?.[1])
       .attr('x2', d => window.worldMapProjection([d.lng2, d.lat2])?.[0])
       .attr('y2', d => window.worldMapProjection([d.lng2, d.lat2])?.[1])
-      .attr('stroke', d => d.count >= 10 ? 'rgba(201,168,76,0.9)' : d.count >= 3 ? 'rgba(201,168,76,0.5)' : 'rgba(201,168,76,0.2)')
-      .attr('stroke-width', d => d.count >= 10 ? 2.5 : d.count >= 3 ? 1.5 : 0.8)
-      .attr('stroke-dasharray', d => d.count >= 3 ? 'none' : '4,4')
+      .attr('stroke', d => d.count >= 20 ? '#e05252' : d.count >= 10 ? '#e8963c' : d.count >= 5 ? 'rgba(201,168,76,0.7)' : 'rgba(201,168,76,0.25)')
+      .attr('stroke-width', d => d.count >= 20 ? 2.5 : d.count >= 10 ? 1.8 : d.count >= 5 ? 1.2 : 0.7)
+      .attr('stroke-dasharray', d => d.count >= 10 ? 'none' : d.count >= 5 ? '6,3' : '3,5')
       .style('pointer-events', 'none')
   }
   zg.selectAll('.winst').remove()
