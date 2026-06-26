@@ -1858,10 +1858,10 @@ function renderLiveMap(){
   console.log('renderLiveMap called, container:', !!container, 'data:', mapTopicData.length)
   if(!container||!mapTopicData.length) return
 
-  const w=(container.offsetWidth||860)-120
-  const isMob = w < 400
+  const w=container.offsetWidth||860
+  const isMob = w < 500
   const isMobile = isMob
-  const h=isMob ? Math.min(320, w*0.9) : 460
+  const h=isMob ? Math.min(300, w*0.85) : 460
   const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',fbmanager:'F&B Manager',researcher:'Food Researcher & Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
   const mapHint=document.getElementById('mapHint')
