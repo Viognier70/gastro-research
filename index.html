@@ -847,6 +847,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Research pulse</div>
+      <div id="trendingMeta" style="font-size:9px;color:var(--text-tertiary);line-height:1.5;margin-bottom:8px;font-style:italic">Keyword frequency in TRIAD-analysed articles · trend vs previous year</div>
       <div id="trendingList"></div>
     </div>
     <div class="sidebar-section">
@@ -1471,6 +1472,9 @@ async function loadTrending(){
     const data=await r.json()
     if(!Array.isArray(data)||!data.length) return
     const maxCount = Math.max(...data.map(k => k.total_count||0))
+    const totalArticles = window._triadCount || 1809
+    const metaEl = document.getElementById('trendingMeta')
+    if(metaEl) metaEl.textContent = `Top keywords by frequency · ${totalArticles.toLocaleString()} TRIAD-analysed articles · 2025 vs 2024`
     const di={rising:'↑',stable:'→',declining:'↓',new:'✦'}
     const dc={rising:'#3B6D11',stable:'var(--text-tertiary)',declining:'#A32D2D',new:'#185FA5'}
     document.getElementById('trendingList').innerHTML = data.map(k => {
