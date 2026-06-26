@@ -2037,12 +2037,10 @@ function toggleMapTopic(topic){
   if(activeMapTopics.has(topic)){
     activeMapTopics.clear()
     document.getElementById('topicSel').value='all'
-    hideMapPopup()
   } else {
     activeMapTopics.clear()
     activeMapTopics.add(topic)
     document.getElementById('topicSel').value=topic
-    showMapTopicPopup(topic)
     setTimeout(()=>{
       const feed=document.getElementById('freeBar')||document.getElementById('feedPane')
       if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
