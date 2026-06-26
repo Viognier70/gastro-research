@@ -1185,11 +1185,11 @@ function cardHTML(a,idx){
         <span class="relevance-badge">${relevance}/10 · ${roleName}</span>
         <div class="rel-tooltip">
           <div class="rt-title">How relevance is scored</div>
-          <div class="rt-row"><span>Role match</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,relevance*10)}%"></div></div></div>
-          <div class="rt-row"><span>TRIAD coverage</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:30}%"></div></div></div>
-          <div class="rt-row"><span>Recency</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${a.year>=2024?90:a.year>=2022?70:50}%"></div></div></div>
-          <div class="rt-row"><span>Citations</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,(a.citation_count||0)/10*100)}%"></div></div></div>
-          <div class="rt-footer">Based on citations · keywords · recency · AI role match</div>
+          <div class="rt-row"><span>Role match</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,relevance*10)}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${relevance}/10</span></div>
+          <div class="rt-row"><span>Citations</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,Math.log10((a.citation_count||0)+1)/Math.log10(1000)*100)}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${(a.citation_count||0).toLocaleString()}</span></div>
+          <div class="rt-row"><span>Recency</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${a.year>=2024?95:a.year>=2022?80:a.year>=2020?65:a.year>=2015?45:25}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${a.year||'?'}</span></div>
+          <div class="rt-row"><span>TRIAD depth</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:30}%"></div></div></div>
+          <div class="rt-footer">Citations · recency · AI role match · peer sources only</div>
         </div>
       </div>`:''
       }${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
