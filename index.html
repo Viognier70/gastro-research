@@ -2809,7 +2809,6 @@ window.renderWorldDots = function() {
   const zg = window.worldMapG || window.worldMapSvg
   if(!zg) return
   zg.selectAll('.collab').remove()
-  window.worldMapSvg.selectAll('.collab').attr('opacity',0)
   if(window.worldMapCollabs && window.worldMapCollabs.length) {
     const maxCount = Math.max(...window.worldMapCollabs.map(c => c.count))
     zg.selectAll('.collab')
@@ -2825,6 +2824,7 @@ window.renderWorldDots = function() {
       .attr('stroke-dasharray', d => d.count >= 10 ? 'none' : d.count >= 5 ? '6,3' : '3,5')
       .style('pointer-events', 'none')
   }
+  zg.selectAll('.collab').attr('opacity', 0)
   zg.selectAll('.winst').remove()
   zg.selectAll('.winst')
     .data(data)
