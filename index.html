@@ -1510,6 +1510,9 @@ async function loadTrending(){
         </div>
         <div style="font-size:9px;color:var(--text-tertiary)">${k.total_count||0} articles</div>
       </div>`
+    }).join('')
+  }catch(e){}
+}
 async function loadMostCited(){
   try{
     const body={limit_n:5}
