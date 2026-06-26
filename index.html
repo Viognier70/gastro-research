@@ -1490,9 +1490,24 @@ async function loadTrending(){
     const r=await fetch(`${SB_URL}/rest/v1/rpc/get_trending_keywords`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({limit_n:8})})
     const data=await r.json()
     if(!Array.isArray(data)||!data.length) return
+    const maxCount = Math.max(...data.map(k => k.total_count||0))
     const di={rising:'↑',stable:'→',declining:'↓',new:'✦'}
     const dc={rising:'#3B6D11',stable:'var(--text-tertiary)',declining:'#A32D2D',new:'#185FA5'}
-    document.getElementById('trendingList').innerHTML=data.map(k=>`<div class="topic-item" onclick="document.getElementById('searchInput').value='${k.keyword}';debounceSearch()"><span style="font-size:12px;font-weight:500;color:${dc[k.trend_direction]||'var(--text-tertiary)'}">${di[k.trend_direction]||'→'}</span><span class="topic-name">${(k.keyword||'').replace(/_/g,' ')}</span><span class="topic-count">${k.last_30d||0}</span></div>`).join('')
+    document.getElementById('trendingList').innerHTML = data.map(k => {
+      const pct = Math.round(((k.total_count||0)/maxCount)*100)
+      const dir = k.trend_direction||'stable'
+      const color = dc[dir]||'var(--text-tertiary)'
+      const barColor = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':'#1A3A5C'
+      return `<div style="margin-bottom:8px;cursor:pointer" onclick="document.getElementById('searchInput').value='${k.keyword}';debounceSearch()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:11px;color:var(--text-primary);font-weight:500">${(k.keyword||'').replace(/_/g,' ')}</span>
+          <span style="font-size:10px;color:${color};font-weight:600">${di[dir]||'→'} ${k.total_count||0}</span>
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width .3s"></div>
+        </div>
+      </div>`
+    }).join('')
   }catch(e){}
 }
 async function loadMostCited(){
