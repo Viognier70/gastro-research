@@ -1945,16 +1945,20 @@ function renderLiveMap(){
   svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
   svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
 
-  // Edges
-  let edgeIdx=0
-  edges.forEach(e=>{
-    const s=e.sim
-    const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
-    const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
-    const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
-    edgeIdx++
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
-  })
+  // Edges hidden — klick på nod visar sampubliceringar
+  // Topic färgkarta efter ämnesgrupp
+  const topicColors = {
+    gastronomy:'#C9A84C', sommellerie:'#9B6B9B', multisensory:'#4A7BC4',
+    hospitality:'#3A8A5A', flavor_science:'#C9A84C', sensory_evaluation:'#4A7BC4',
+    appetite_research:'#E07A4A', food_science:'#3A8A5A', culinary_science:'#C9A84C',
+    food_psychology:'#9B6B9B', fermentation_science:'#3A8A5A', nutrition_science:'#4A7BC4',
+    neurogastronomy:'#9B6B9B', novel_foods:'#E07A4A', sensory_training:'#4A7BC4',
+    food_behavior:'#9B6B9B', food_technology:'#3A8A5A', culinary_education:'#C9A84C',
+    food_anthropology:'#E07A4A', food_pairing:'#C9A84C', atmospherics:'#9B6B9B',
+    servicescape:'#3A8A5A', art_food:'#E07A4A', experiential_dining:'#9B6B9B',
+    molecular_gastronomy:'#4A7BC4', crossmodal:'#4A7BC4'
+  }
+  const getTopicColor = t => topicColors[t] || '#C9A84C'
 
   // Center: profession node
   const rname=roleNames[role]
@@ -1968,9 +1972,10 @@ function renderLiveMap(){
     const int=Math.min(n._rel/10,1)
     // Color: gold intensity = relevance, opacity = article count proportion
     const baseOpacity=0.15+0.75*(n.count/maxCount)
-    const fill=sel?'#C9A84C':int>0.6?'rgba(201,168,76,0.7)':'rgba(201,168,76,0.25)'
-    const stroke=sel?'#C9A84C':int>0.4?'rgba(201,168,76,0.6)':'rgba(201,168,76,0.3)'
-    const sw=sel?2.5:1.2
+    const tc=getTopicColor(n.topic)
+    const fill=sel?tc:tc.replace(')',`,${0.15+0.75*(n.count/maxCount)})`).replace('rgb(','rgba(')
+    const stroke=sel?tc:'rgba(255,255,255,0.2)'
+    const sw=sel?2.5:1
     const textCol=sel?'#0C0B09':'rgba(255,255,255,0.85)'
 
     svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer" class="map-node" data-idx="${allNodes.indexOf(n)}">`
@@ -2030,14 +2035,14 @@ function renderLiveMap(){
 
 function toggleMapTopic(topic){
   if(activeMapTopics.has(topic)){
-    // Avmarkera — visa allt
     activeMapTopics.clear()
     document.getElementById('topicSel').value='all'
+    hideMapPopup()
   } else {
-    // Radio-beteende: byt direkt till ny nod
     activeMapTopics.clear()
     activeMapTopics.add(topic)
     document.getElementById('topicSel').value=topic
+    showMapTopicPopup(topic)
     setTimeout(()=>{
       const feed=document.getElementById('freeBar')||document.getElementById('feedPane')
       if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
@@ -2045,7 +2050,50 @@ function toggleMapTopic(topic){
   }
   renderLiveMap()
   loadArticles()
-  loadArticles()
+}
+
+function hideMapPopup(){
+  const el=document.getElementById('mapTopicPopup')
+  if(el) el.remove()
+}
+
+async function showMapTopicPopup(topic){
+  hideMapPopup()
+  const node = mapTopicData.find(t=>t.topic===topic)
+  if(!node) return
+
+  // Hämta keywords för detta topic
+  const kwRes = await fetch(`${SB_URL}/rest/v1/rpc/get_trending_keywords`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({limit_n:30})})
+  const kwData = await kwRes.json()
+  const topicKw = Array.isArray(kwData) ? kwData.filter(k=>k.keyword).slice(0,10) : []
+
+  const popup = document.createElement('div')
+  popup.id = 'mapTopicPopup'
+  popup.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:1000;background:#1a1914;border:0.5px solid rgba(201,168,76,0.4);border-radius:12px;padding:16px;width:280px;max-height:60vh;overflow-y:auto;box-shadow:0 4px 24px rgba(0,0,0,0.5)'
+  popup.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;color:#C9A84C">${topic.replace(/_/g,' ')}</div>
+      <button onclick="activeMapTopics.clear();renderLiveMap();loadArticles();hideMapPopup()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:16px">×</button>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px">${node.count} articles · click to filter feed</div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.6);text-transform:uppercase;margin-bottom:6px">Top keywords</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${topicKw.map(k=>`<span style="font-size:10px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);padding:2px 8px;border-radius:10px">${k.keyword}</span>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('topicSel').value='${topic}';loadArticles();hideMapPopup()" style="flex:1;font-size:11px;background:#C9A84C;color:#0C0B09;border:none;padding:6px;border-radius:6px;cursor:pointer;font-weight:500">View articles</button>
+      <button onclick="showTopicCollabs('${topic}')" style="flex:1;font-size:11px;background:rgba(201,168,76,.15);color:#C9A84C;border:0.5px solid rgba(201,168,76,.4);padding:6px;border-radius:6px;cursor:pointer">Show links</button>
+    </div>
+  `
+  document.body.appendChild(popup)
+}
+
+function showTopicCollabs(topic){
+  // Visa sampubliceringslinjer för detta topic i kartan
+  window._showCollabsForTopic = topic
+  renderLiveMap()
 }
 
 // setRole is defined above, patch it to also re-render map
