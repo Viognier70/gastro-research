@@ -1492,6 +1492,9 @@ async function loadTrending(){
           <span>2025: ${k.this_year||0} · 2024: ${k.last_year||0} · 5yr avg: ${k.five_year_avg||0}</span>
         </div>
       </div>`
+    }).join('')
+  }catch(e){}
+}
 async function loadMostCited(){
   try{
     const body={limit_n:5}
