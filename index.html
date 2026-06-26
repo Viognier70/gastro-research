@@ -1476,22 +1476,22 @@ async function loadTrending(){
     document.getElementById('trendingList').innerHTML = data.map(k => {
       const pct = Math.round(((k.total_count||0)/maxCount)*100)
       const dir = k.trend_direction||'stable'
-      const color = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':'var(--text-tertiary)'
-      const barColor = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':'#1A3A5C'
-      const dirLabel = dir==='rising'?'↑ rising':dir==='declining'?'↓ declining':dir==='new'?'✦ new':'→ stable'
+      const color = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':dir==='new'?'#185FA5':'var(--text-tertiary)'
+      const barColor = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':dir==='new'?'#185FA5':'#1A3A5C'
+      const dirLabel = dir==='rising'?`↑ +${k.trend_pct||0}% vs 2024`:dir==='declining'?`↓ ${k.trend_pct||0}% vs 2024`:dir==='new'?'✦ new 2025':'→ stable'
       return `<div style="margin-bottom:10px;cursor:pointer" onclick="document.getElementById('searchInput').value='${k.keyword}';debounceSearch()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
           <span style="font-size:11px;color:var(--text-primary);font-weight:500">${(k.keyword||'').replace(/_/g,' ')}</span>
           <span style="font-size:9px;color:${color};font-weight:600">${dirLabel}</span>
         </div>
         <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:2px">
-          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width .3s"></div>
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px"></div>
         </div>
-        <div style="font-size:9px;color:var(--text-tertiary)">${k.total_count||0} articles</div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary)">
+          <span>${k.total_count||0} articles total</span>
+          <span>2025: ${k.this_year||0} · 2024: ${k.last_year||0} · 5yr avg: ${k.five_year_avg||0}</span>
+        </div>
       </div>`
-    }).join('')
-  }catch(e){}
-}
 async function loadMostCited(){
   try{
     const body={limit_n:5}
