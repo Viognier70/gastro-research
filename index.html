@@ -1497,7 +1497,6 @@ async function loadTrending(){
     document.getElementById('trendingList').innerHTML = data.map(k => {
       const pct = Math.round(((k.total_count||0)/maxCount)*100)
       const dir = k.trend_direction||'stable'
-      const dir = k.trend_direction||'stable'
       const color = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':'var(--text-tertiary)'
       const barColor = dir==='rising'?'#3B6D11':dir==='declining'?'#A32D2D':'#1A3A5C'
       const dirLabel = dir==='rising'?'↑ rising':dir==='declining'?'↓ declining':dir==='new'?'✦ new':'→ stable'
