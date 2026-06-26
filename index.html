@@ -2836,9 +2836,10 @@ window.renderWorldDots = function() {
     .attr('cy', d => worldMapProjection([d.lng, d.lat])?.[1])
     .attr('r', d => rScale(d.count))
     .attr('fill', d => {
-      const topicColors = {gastronomy:'#C9A84C',sommellerie:'#9B6B9B',multisensory:'#4A7BC4',hospitality:'#3A8A5A',flavor_science:'#C9A84C',sensory_evaluation:'#4A7BC4',appetite_research:'#E07A4A',food_science:'#3A8A5A',culinary_science:'#C9A84C',food_psychology:'#9B6B9B',fermentation_science:'#3A8A5A',nutrition_science:'#4A7BC4',neurogastronomy:'#9B6B9B',novel_foods:'#E07A4A',crossmodal:'#4A7BC4'}
-      return topicColors[d.dominant_topic] || '#C9A84C'
+      const topicColors = {gastronomy:'#E8A020',sommellerie:'#B87CC8',multisensory:'#5A9AE8',hospitality:'#4AAA6A',flavor_science:'#E8A020',sensory_evaluation:'#5A9AE8',appetite_research:'#E87040',food_science:'#4AAA6A',culinary_science:'#E8A020',food_psychology:'#B87CC8',fermentation_science:'#4AAA6A',nutrition_science:'#5A9AE8',neurogastronomy:'#B87CC8',novel_foods:'#E87040',crossmodal:'#5A9AE8'}
+      return topicColors[d.dominant_topic] || '#E8A020'
     })
+    .attr('fill-opacity', d => 0.6 + 0.4 * Math.min(d.count / 20, 1))
     .attr('stroke', 'rgba(0,0,0,0.3)')
     .attr('stroke-width', 0.5)
     .style('cursor', 'pointer')
