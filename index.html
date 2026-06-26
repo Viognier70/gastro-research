@@ -2657,7 +2657,7 @@ window.selectedCountry = null
 
 window.loadWorldMapData = async function() {
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&limit=3000`, {
+    const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank,topic&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&limit=3000`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const articles = await r.json()
@@ -2673,16 +2673,22 @@ window.loadWorldMapData = async function() {
           instMap[key] = {
             name: inst.name, lat: inst.lat, lng: inst.lng,
             country: inst.country||'', count: 0,
-            rank: null
+            rank: null, topics: {}
           }
         }
         instMap[key].count++
+        if(a.topic) instMap[key].topics[a.topic] = (instMap[key].topics[a.topic]||0) + 1
       }
       if(a.primary_institution && a.institution_rank) {
         if(instMap[a.primary_institution]) {
           instMap[a.primary_institution].rank = a.institution_rank
         }
       }
+    }
+    // Beräkna dominerande topic per institution
+    for(const key of Object.keys(instMap)){
+      const t = instMap[key].topics
+      instMap[key].dominant_topic = Object.keys(t).sort((a,b)=>t[b]-t[a])[0] || 'gastronomy'
     }
     const collabMap = {}
     for(const a of articles) {
@@ -2796,6 +2802,7 @@ window.renderWorldDots = function() {
   const zg = window.worldMapG || window.worldMapSvg
   if(!zg) return
   zg.selectAll('.collab').remove()
+  window.worldMapSvg.selectAll('.collab').attr('opacity',0)
   if(window.worldMapCollabs && window.worldMapCollabs.length) {
     const maxCount = Math.max(...window.worldMapCollabs.map(c => c.count))
     zg.selectAll('.collab')
@@ -2819,7 +2826,10 @@ window.renderWorldDots = function() {
     .attr('cx', d => worldMapProjection([d.lng, d.lat])?.[0])
     .attr('cy', d => worldMapProjection([d.lng, d.lat])?.[1])
     .attr('r', d => rScale(d.count))
-    .attr('fill', d => getNodeColor(d.rank, d.count))
+    .attr('fill', d => {
+      const topicColors = {gastronomy:'#C9A84C',sommellerie:'#9B6B9B',multisensory:'#4A7BC4',hospitality:'#3A8A5A',flavor_science:'#C9A84C',sensory_evaluation:'#4A7BC4',appetite_research:'#E07A4A',food_science:'#3A8A5A',culinary_science:'#C9A84C',food_psychology:'#9B6B9B',fermentation_science:'#3A8A5A',nutrition_science:'#4A7BC4',neurogastronomy:'#9B6B9B',novel_foods:'#E07A4A',crossmodal:'#4A7BC4'}
+      return topicColors[d.dominant_topic] || '#C9A84C'
+    })
     .attr('stroke', 'rgba(0,0,0,0.3)')
     .attr('stroke-width', 0.5)
     .style('cursor', 'pointer')
@@ -2832,16 +2842,52 @@ window.renderWorldDots = function() {
     .on('mouseleave', () => { tooltip.style.display = 'none' })
     .on('click', (event, d) => {
       event.stopPropagation()
-      const instName = d.name
-      // Highlight samarbetslinjer
-      window.worldMapSvg.selectAll('.collab')
-        .attr('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0.05)
-        .attr('stroke-width', c => (c.inst_a === instName || c.inst_b === instName) ? Math.max(1.5, c.count >= 10 ? 3 : c.count >= 5 ? 2 : 1.5) : 0.3)
-      // Highlight noder
-      window.worldMapSvg.selectAll('.winst')
-        .attr('opacity', n => n.name === instName || window.worldMapCollabs.some(c => (c.inst_a===instName||c.inst_b===instName)&&(c.inst_a===n.name||c.inst_b===n.name)) ? 1 : 0.2)
-      filterByCountry(d.country)
+      tooltip.style.display = 'none'
+      showInstPopup(d, event)
     })
+}
+
+window.showInstPopup = function(d, event) {
+  document.getElementById('instPopup')?.remove()
+  const topics = d.topics || {}
+  const sortedTopics = Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,6)
+  const topicColors = {gastronomy:'#C9A84C',sommellerie:'#9B6B9B',multisensory:'#4A7BC4',hospitality:'#3A8A5A',flavor_science:'#C9A84C',sensory_evaluation:'#4A7BC4',appetite_research:'#E07A4A',food_science:'#3A8A5A',fermentation_science:'#3A8A5A',neurogastronomy:'#9B6B9B',novel_foods:'#E07A4A',crossmodal:'#4A7BC4'}
+
+  const popup = document.createElement('div')
+  popup.id = 'instPopup'
+  popup.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:1000;background:#1a1914;border:0.5px solid rgba(201,168,76,0.4);border-radius:12px;padding:16px;width:280px;max-height:70vh;overflow-y:auto;box-shadow:0 4px 24px rgba(0,0,0,0.6)'
+  popup.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:500;color:#C9A84C;line-height:1.3">${d.name}</div>
+      <button onclick="document.getElementById('instPopup').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;padding:0 0 0 8px">×</button>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:12px">${d.country} · ${d.count} articles${d.rank&&d.rank<999?' · QS #'+d.rank:''}</div>
+    ${sortedTopics.length ? `
+    <div style="margin-bottom:12px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.6);text-transform:uppercase;margin-bottom:8px">Research areas</div>
+      ${sortedTopics.map(([t,n])=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${topicColors[t]||'#C9A84C'};flex-shrink:0"></div>
+          <div style="flex:1;font-size:11px;color:rgba(255,255,255,.8)">${t.replace(/_/g,' ')}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4)">${n}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+    <div style="display:flex;gap:8px">
+      <button onclick="filterByInstitution('${d.name.replace(/'/g,"\'")}',null);document.getElementById('instPopup').remove()" style="flex:1;font-size:11px;background:#C9A84C;color:#0C0B09;border:none;padding:7px;border-radius:6px;cursor:pointer;font-weight:500">View articles</button>
+      <button onclick="showInstCollabs('${d.name.replace(/'/g,"\'")}');document.getElementById('instPopup').remove()" style="flex:1;font-size:11px;background:rgba(201,168,76,.12);color:#C9A84C;border:0.5px solid rgba(201,168,76,.4);padding:7px;border-radius:6px;cursor:pointer">Show links</button>
+    </div>
+  `
+  document.body.appendChild(popup)
+}
+
+window.showInstCollabs = function(instName) {
+  if(!window.worldMapSvg) return
+  window.worldMapSvg.selectAll('.collab')
+    .attr('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0.03)
+    .attr('stroke-width', c => (c.inst_a === instName || c.inst_b === instName) ? Math.max(1.5, c.count >= 10 ? 3 : c.count >= 5 ? 2 : 1.5) : 0.3)
+  window.worldMapSvg.selectAll('.winst')
+    .attr('opacity', n => n.name === instName || window.worldMapCollabs?.some(c => (c.inst_a===instName||c.inst_b===instName)&&(c.inst_a===n.name||c.inst_b===n.name)) ? 1 : 0.15)
 }
 
 window.initWorldMap = async function() {
