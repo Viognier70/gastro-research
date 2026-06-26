@@ -1945,7 +1945,14 @@ function renderLiveMap(){
   svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
   svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
 
-  // Edges hidden — klick på nod visar sampubliceringar
+  // Edges — visas i research landscape
+  edges.forEach(e=>{
+    const s=e.sim
+    const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
+    const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
+    const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
+    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
+  })
   // Topic färgkarta efter ämnesgrupp
   const topicColors = {
     gastronomy:'#C9A84C', sommellerie:'#9B6B9B', multisensory:'#4A7BC4',
