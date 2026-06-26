@@ -2414,7 +2414,7 @@ window.loadSpotlight = async function() {
   } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
 
-initAuth().then(async ()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600);const u=(await supabase.auth.getUser()).data?.user;if(u) showReturnSignal(u)})
+initAuth().then(async ()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600);const u=supabase?.auth?.getUser?(await supabase.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
 setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 setTimeout(()=>{if(typeof window.initWorldMap==='function') window.initWorldMap()}, 2500)
 </script>
