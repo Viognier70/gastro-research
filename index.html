@@ -2711,6 +2711,7 @@ window.loadWorldMapData = async function() {
             collabMap[key] = {
               lat1: coords[i].lat, lng1: coords[i].lng,
               lat2: coords[j].lat, lng2: coords[j].lng,
+              inst_a: coords[i].name, inst_b: coords[j].name,
               count: 0
             }
           }
