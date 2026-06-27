@@ -2827,7 +2827,7 @@ window.renderWorldDots = function() {
       .attr('stroke-dasharray', d => d.count >= 10 ? 'none' : d.count >= 5 ? '6,3' : '3,5')
       .style('pointer-events', 'none')
   }
-  zg.selectAll('.collab').attr('opacity', 0)
+  zg.selectAll('.collab').style('opacity', 0)
   zg.selectAll('.winst').remove()
   zg.selectAll('.winst')
     .data(data)
@@ -2897,7 +2897,7 @@ window.showInstCollabs = function(instName) {
   if(!window.worldMapSvg) return
   // Visa samarbetslinjer med tjocklek och stil baserad på samproduktion
   window.worldMapSvg.selectAll('.collab')
-    .attr('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0)
+    .style('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0)
     .attr('stroke-width', c => {
       if(c.inst_a !== instName && c.inst_b !== instName) return 0
       return c.count >= 20 ? 4 : c.count >= 10 ? 2.5 : c.count >= 3 ? 1.5 : 0.8
