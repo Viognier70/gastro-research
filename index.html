@@ -614,6 +614,51 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 }
 .dp-info:hover { color: #c9a84c; }
 </style>
+
+<!-- A2: Section intro styles -->
+<style id="section-intro-styles">
+.section-intro {
+  font-size: 11px;
+  color: rgba(0,0,0,.45);
+  font-family: Outfit, sans-serif;
+  padding: 6px 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
+  border-bottom: 0.5px solid rgba(0,0,0,.06);
+  margin-bottom: 12px;
+}
+.section-intro.si-dark {
+  color: rgba(255,255,255,.35);
+  border-bottom-color: rgba(255,255,255,.06);
+}
+.si-sep { color: rgba(0,0,0,.2); }
+.si-dark .si-sep { color: rgba(255,255,255,.15); }
+.si-ai-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(0,0,0,.06);
+  color: rgba(0,0,0,.4);
+  border: 0.5px solid rgba(0,0,0,.1);
+  font-weight: 600;
+}
+.si-dark .si-ai-badge {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.35);
+  border-color: rgba(255,255,255,.1);
+}
+.si-link {
+  color: #c9a84c;
+  text-decoration: none;
+  font-size: 11px;
+}
+.si-link:hover { text-decoration: underline; }
+.section-intro strong { color: rgba(0,0,0,.7); font-weight: 500; }
+.si-dark strong { color: rgba(255,255,255,.65); }
+</style>
 </head>
 <body>
 
@@ -716,6 +761,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <span class="spotlight-sub" id="spotlightDate">Latest high-impact findings for your profession</span>
     <span style="font-size:10px;color:rgba(255,255,255,.3);font-style:italic" id="spotlightLastUpdate"></span>
   </div>
+  <div class="section-intro">
+    <span class="si-what">Latest high-relevance articles for <strong id="siSpotlightRole">your profession</strong> — updated daily.</span>
+    <span class="si-sep">·</span>
+    <span class="si-ai">TRIAD: <span class="si-ai-badge">AI</span> ε close to source · τ and φ interpretive</span>
+    <span class="si-sep">·</span>
+    <span class="si-not">Not shown: preprints · non-English · articles without abstracts</span>
+  </div>
   <div class="spotlight-grid" id="spotlightGrid">
     <div class="spotlight-card" style="opacity:.3"><div class="spotlight-claim" style="font-size:12px">Loading latest findings...</div></div>
   </div>
@@ -734,6 +786,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="rgba(255,255,255,.25)"/></svg><span style="font-size:10px;color:rgba(255,255,255,.4)">Established</span></div>
       <span style="font-size:10px;color:rgba(255,255,255,.25)">· Click node to filter</span>
     </div>
+  </div>
+  <div class="section-intro si-dark">
+    <span class="si-what">How gastronomy research areas connect — node size = study count · lines = shared focus.</span>
+    <span class="si-sep">·</span>
+    <span class="si-not">Not shown: areas with fewer than 5 studies · unclassified articles</span>
   </div>
   <div id="liveKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
@@ -762,6 +819,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">My topics</button>
       <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Collaborations</button>
     </div>
+  </div>
+  <div class="section-intro si-dark">
+    <span class="si-what">Where gastronomy research is produced.</span>
+    <span class="si-sep">·</span>
+    <span class="si-coverage">Institution coordinates: <strong>89 of 1,809 articles</strong> — backfilling ongoing.</span>
+    <span class="si-sep">·</span>
+    <span class="si-not">Source: OpenAlex institution data</span>
   </div>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
     <div style="flex:1;min-width:280px">
@@ -927,6 +991,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div class="feed-count" id="feedCount"></div>
     <div id="synthContainer"></div>
+  <div class="section-intro">
+    <span class="si-what"><span id="siFeedCount">—</span> articles filtered for <strong id="siFeedRole">your role</strong>.</span>
+    <span class="si-sep">·</span>
+    <span class="si-ai">TRIAD analyses: <span class="si-ai-badge">AI</span> — not peer-reviewed</span>
+    <span class="si-sep">·</span>
+    <a href="/foundation#methodology" class="si-link">How analyses are generated →</a>
+  </div>
   <div id="feedPane"><div class="loading-state"><div class="spinner"></div><span>Loading research...</span></div></div>
   </div>
   <div class="sidebar">
@@ -1185,6 +1256,18 @@ document.addEventListener('mouseout', e => {
     if (tip) tip.style.display = 'none'
   }
 })
+
+// A2: Section intros — role + feed count
+function updateSectionIntros(r){
+  const labels = {all:'your profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy professional',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Gastronomy professional',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
+  const name = labels[r] || r || 'your profession'
+  const sp = document.getElementById('siSpotlightRole'); if(sp) sp.textContent = name
+  const fr = document.getElementById('siFeedRole'); if(fr) fr.textContent = name
+}
+function updateFeedIntro(count){
+  const el = document.getElementById('siFeedCount')
+  if(el && typeof count === 'number') el.textContent = count.toLocaleString()
+}
 function updateTexts(){
   document.getElementById('heroEyebrow').textContent=t('eyebrow')
   document.getElementById('heroTitle').innerHTML=t('title')
@@ -1252,6 +1335,7 @@ function setRole(r,btn){
     const rn = roleNames[r] || r
     heroEyebrow.textContent = `Research intelligence for the ${rn} — through three lenses of knowledge`
   }
+  updateSectionIntros(r)
 }
 
 function getRelevanceScore(a){
@@ -1493,6 +1577,7 @@ function renderFeed(){
 
   freeCount=0
   document.getElementById('feedCount').textContent=source.length+' articles'+(showingSaved?' (saved)':'')
+  updateFeedIntro(source.length)
   if(source.length===0){
     const topicVal=document.getElementById('topicSel')?.value
     const searchVal=document.getElementById('searchInput')?.value?.trim()
@@ -1557,6 +1642,7 @@ async function loadArticles(){
       articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
       document.getElementById('feedCount').textContent=`${articles.length} results for "${search}"`
+      updateFeedIntro(articles.length)
     } else {
       // BROWSE MODE: show most relevant for current role
       let url
