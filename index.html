@@ -2894,24 +2894,32 @@ window.showInstPopup = function(d, event) {
 }
 
 window.showInstCollabs = function(instName) {
-  if(!window.worldMapSvg) return
-  // Visa samarbetslinjer med tjocklek och stil baserad på samproduktion
-  window.worldMapSvg.selectAll('.collab')
-    .attr('stroke', c => {
-      if(c.inst_a !== instName && c.inst_b !== instName) return 'transparent'
-      return c.count >= 20 ? '#e05252' : c.count >= 10 ? '#e8963c' : c.count >= 3 ? '#C9A84C' : 'rgba(201,168,76,0.5)'
-    })
-    .attr('stroke-width', c => {
-      if(c.inst_a !== instName && c.inst_b !== instName) return 0
-      return c.count >= 20 ? 4 : c.count >= 10 ? 2.5 : c.count >= 3 ? 1.5 : 0.8
-    })
-    .attr('stroke-dasharray', c => {
-      if(c.inst_a !== instName && c.inst_b !== instName) return 'none'
-      return c.count < 3 ? '4,4' : 'none'
-    })
-    .style('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0)
+  if(!window.worldMapSvg || !window.worldMapG) return
+  const zg = window.worldMapG
+
+  // Hämta ALLA samarbeten för denna institution
+  const instCollabs = (window.worldMapCollabs||[]).filter(c => c.inst_a === instName || c.inst_b === instName)
+
+  // Ta bort gamla inst-collabs
+  zg.selectAll('.inst-collab').remove()
+
+  // Rita nya linjer för denna institution
+  zg.selectAll('.inst-collab')
+    .data(instCollabs)
+    .join('line')
+    .attr('class', 'inst-collab')
+    .attr('x1', d => window.worldMapProjection([d.lng1, d.lat1])?.[0])
+    .attr('y1', d => window.worldMapProjection([d.lng1, d.lat1])?.[1])
+    .attr('x2', d => window.worldMapProjection([d.lng2, d.lat2])?.[0])
+    .attr('y2', d => window.worldMapProjection([d.lng2, d.lat2])?.[1])
+    .attr('stroke', d => d.count >= 20 ? '#e05252' : d.count >= 10 ? '#e8963c' : d.count >= 3 ? '#C9A84C' : 'rgba(201,168,76,0.6)')
+    .attr('stroke-width', d => d.count >= 20 ? 4 : d.count >= 10 ? 2.5 : d.count >= 3 ? 1.5 : 0.8)
+    .attr('stroke-dasharray', d => d.count < 3 ? '4,4' : 'none')
+    .style('pointer-events', 'none')
+
+  // Dimma övriga noder
   window.worldMapSvg.selectAll('.winst')
-    .attr('opacity', n => n.name === instName || window.worldMapCollabs?.some(c => (c.inst_a===instName||c.inst_b===instName)&&(c.inst_a===n.name||c.inst_b===n.name)) ? 1 : 0.1)
+    .attr('opacity', n => n.name === instName || instCollabs.some(c => c.inst_a===n.name||c.inst_b===n.name) ? 1 : 0.15)
 }
 
 window.initWorldMap = async function() {
