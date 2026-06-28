@@ -2897,7 +2897,10 @@ window.showInstCollabs = function(instName) {
   if(!window.worldMapSvg) return
   // Visa samarbetslinjer med tjocklek och stil baserad på samproduktion
   window.worldMapSvg.selectAll('.collab')
-    .style('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0)
+    .attr('stroke', c => {
+      if(c.inst_a !== instName && c.inst_b !== instName) return 'transparent'
+      return c.count >= 20 ? '#e05252' : c.count >= 10 ? '#e8963c' : c.count >= 3 ? '#C9A84C' : 'rgba(201,168,76,0.5)'
+    })
     .attr('stroke-width', c => {
       if(c.inst_a !== instName && c.inst_b !== instName) return 0
       return c.count >= 20 ? 4 : c.count >= 10 ? 2.5 : c.count >= 3 ? 1.5 : 0.8
@@ -2906,10 +2909,7 @@ window.showInstCollabs = function(instName) {
       if(c.inst_a !== instName && c.inst_b !== instName) return 'none'
       return c.count < 3 ? '4,4' : 'none'
     })
-    .attr('stroke', c => {
-      if(c.inst_a !== instName && c.inst_b !== instName) return 'none'
-      return c.count >= 20 ? '#e05252' : c.count >= 10 ? '#e8963c' : c.count >= 3 ? '#C9A84C' : 'rgba(201,168,76,0.5)'
-    })
+    .style('opacity', c => (c.inst_a === instName || c.inst_b === instName) ? 1 : 0)
   window.worldMapSvg.selectAll('.winst')
     .attr('opacity', n => n.name === instName || window.worldMapCollabs?.some(c => (c.inst_a===instName||c.inst_b===instName)&&(c.inst_a===n.name||c.inst_b===n.name)) ? 1 : 0.1)
 }
