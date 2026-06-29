@@ -1863,15 +1863,15 @@ async function toggleAlert(){
 }
 
 async function toggleSaveArticle(id,btn){
-  const user = supabase?.auth?.getUser ? (await supabase.auth.getUser()).data?.user : null
+  const user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null
   const isSaved = savedArticleIds.has(id)
   if(isSaved) {
     savedArticleIds.delete(id)
-    if(user) await supabase.from('saved_articles').delete().eq('user_id',user.id).eq('article_id',id)
+    if(user) await sb.from('saved_articles').delete().eq('user_id',user.id).eq('article_id',id)
     else { const ls=JSON.parse(localStorage.getItem('gs_saved')||'[]'); localStorage.setItem('gs_saved',JSON.stringify(ls.filter(x=>x!==id))) }
   } else {
     savedArticleIds.add(id)
-    if(user) await supabase.from('saved_articles').upsert({user_id:user.id,article_id:id,saved_at:new Date().toISOString()})
+    if(user) await sb.from('saved_articles').upsert({user_id:user.id,article_id:id,saved_at:new Date().toISOString()})
     else { const ls=JSON.parse(localStorage.getItem('gs_saved')||'[]'); localStorage.setItem('gs_saved',JSON.stringify([...ls,id])) }
   }
   if(btn) { btn.textContent=savedArticleIds.has(id)?'★ Saved':'☆ Save'; btn.classList.toggle('saved',savedArticleIds.has(id)) }
@@ -1882,10 +1882,10 @@ async function toggleSaveArticle(id,btn){
 async function loadSavedArticles(){
   savedArticleIds.clear()
   // Försök hämta från Supabase om inloggad
-  const user = supabase?.auth?.getUser ? (await supabase.auth.getUser()).data?.user : null
+  const user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null
   if(user) {
     try {
-      const {data} = await supabase.from('saved_articles').select('article_id').eq('user_id', user.id)
+      const {data} = await sb.from('saved_articles').select('article_id').eq('user_id', user.id)
       if(Array.isArray(data)) data.forEach(r => savedArticleIds.add(r.article_id))
       return
     } catch(e) { console.log('Supabase saved error:', e) }
@@ -2451,9 +2451,9 @@ window.showReturnSignal = async function(user) {
   const bar = document.getElementById('returnBar')
   if(!bar || !user) return
   try {
-    const {data: profile} = await supabase.from('profiles').select('last_visit,visit_streak,weekly_reads').eq('id',user.id).single()
+    const {data: profile} = await sb.from('profiles').select('last_visit,visit_streak,weekly_reads').eq('id',user.id).single()
     if(!profile || !profile.last_visit) {
-      await supabase.from('profiles').update({last_visit:new Date().toISOString(),visit_streak:1}).eq('id',user.id)
+      await sb.from('profiles').update({last_visit:new Date().toISOString(),visit_streak:1}).eq('id',user.id)
       return
     }
     const lastVisit = new Date(profile.last_visit)
@@ -2461,9 +2461,9 @@ window.showReturnSignal = async function(user) {
     const daysSince = Math.floor((now - lastVisit) / (1000*60*60*24))
     const streak = profile.visit_streak || 1
     const newStreak = daysSince <= 1 ? streak + (daysSince===1?1:0) : 1
-    await supabase.from('profiles').update({last_visit:now.toISOString(),visit_streak:newStreak}).eq('id',user.id)
+    await sb.from('profiles').update({last_visit:now.toISOString(),visit_streak:newStreak}).eq('id',user.id)
     if(daysSince < 1) return
-    const {count} = await supabase.from('articles').select('*',{count:'exact',head:true}).gt('fetched_at',profile.last_visit)
+    const {count} = await sb.from('articles').select('*',{count:'exact',head:true}).gt('fetched_at',profile.last_visit)
     const rn = ({all:'gastronomy',sommelier:'sommelier',chef:'chef',gastronomy:'gastronomy',fb_manager:'F&B management',food_researcher:'food research',sensory_pro:'sensory science'})[window.role||'all'] || 'gastronomy'
     const dayLabel = daysSince===1?'yesterday':daysSince+' days ago'
     bar.innerHTML = '<div class="return-bar"><div class="return-streak"><div class="return-streak-num">'+newStreak+'</div><div class="return-streak-label">day streak</div></div><div class="return-msg"><div class="return-msg-main">'+(count||'New')+' articles added in '+rn+' since your last visit</div><div class="return-msg-sub">Last visited '+dayLabel+' &middot; '+(profile.weekly_reads||0)+' articles read this week</div></div><button class="return-cta" onclick="document.getElementById(\'feedPane\').scrollIntoView({behavior:\'smooth\'})">See what\'s new &rarr;</button></div>'
@@ -2741,7 +2741,7 @@ window.loadSpotlight = async function() {
   } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
 
-initAuth().then(async ()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600);const u=supabase?.auth?.getUser?(await supabase.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
+initAuth().then(async ()=>{loadArticles();loadCounts();loadTrending();loadMostCited();loadKnowledgeMap().then(()=>renderLiveMap());setTimeout(()=>{if(typeof loadSpotlight==='function') loadSpotlight()},600);const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
 setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 setTimeout(()=>{if(typeof window.initWorldMap==='function') window.initWorldMap()}, 2500)
 </script>
