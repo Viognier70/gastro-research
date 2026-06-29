@@ -1788,7 +1788,7 @@ async function loadCounts(){
     const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
     // TRIAD count
-    const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+    const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal)}
     if(total>0){
@@ -1800,7 +1800,7 @@ async function loadCounts(){
     const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
     if(newCount>0&&document.getElementById('newCount')) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
-    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
+    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
     const synthResp=await fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const synthStats=await synthResp.json()
     const analyzed=parseInt(r4.headers.get("content-range")?.split("/")[1]||"0")
@@ -2601,7 +2601,7 @@ window.loadMiniTicker = async function() {
   const el = document.getElementById('miniTicker')
   if(!el) return
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=title,journal,year&episteme_sensory_pro=not.is.null&order=fetched_at.desc&limit=10`, {
+    const r = await fetch(`${SB_URL}/rest/v1/articles?select=title,journal,year&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)&order=year.desc.nullslast&limit=10`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const data = await r.json()
