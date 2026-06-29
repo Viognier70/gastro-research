@@ -45,9 +45,9 @@ Return ONLY JSON: {"role_scores":{"sensory_pro":0,"culinary_pro":0,"gastronomy_c
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-      body: JSON.stringify({model:'claude-haiku-4-5', max_tokens:500, messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:500, messages:[{role:'user',content:prompt}]})
     })
-    if(!resp.ok) { console.log('Haiku error:', resp.status); return null }
+    if(!resp.ok) { const err = await resp.json().catch(()=>{}); console.log('Haiku error:', resp.status, JSON.stringify(err)); return null }
     const d = await resp.json()
     let t = (d.content?.[0]?.text||'{}').trim()
     t = t.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```[\s\S]*$/,'').trim()
@@ -68,7 +68,7 @@ Return ONLY JSON: {"imrad_introduction":"...","imrad_methods":"...","imrad_resul
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-      body: JSON.stringify({model:'claude-sonnet-4-5', max_tokens:4000, messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:4000, messages:[{role:'user',content:prompt}]})
     })
     if(!resp.ok) { console.log('Sonnet error:', resp.status); return null }
     const d = await resp.json()
@@ -140,7 +140,7 @@ Deno.serve(async (_req) => {
       {headers:{'Content-Type':'application/json'}})
   }
 
-  const batch = await claimBatch(5)
+  const batch = await claimBatch(10)
   if(!batch.length) {
     const {count:remaining} = await supabase.from('processing_queue')
       .select('id',{count:'exact',head:true}).eq('status','pending')
