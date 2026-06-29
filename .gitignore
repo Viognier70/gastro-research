@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# macOS
+.DS_Store
+
+# Supabase local
+supabase/.temp/
+
+# Editor/OS junk
+*.swp
+*~
+
+# Loose backups (don't commit working backups)
+index_backup_*.html
