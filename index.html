@@ -837,12 +837,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
     <div style="display:flex;align-items:center;gap:16px">
       <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Global Research Origins</span>
-      <span style="font-size:11px;color:rgba(255,255,255,.4)" id="worldMapSubtitle">Where gastronomy science is made</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.7)" id="worldMapSubtitle">Where gastronomy science is made</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
       <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
-      <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">My topics</button>
-      <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);cursor:pointer">Collaborations</button>
+      <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">My topics</button>
+      <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">Collaborations</button>
     </div>
   </div>
   <div class="section-intro si-dark">
@@ -856,10 +856,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div style="flex:1;min-width:280px">
       <div id="worldMapContainer" style="width:100%;position:relative"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <span style="font-size:10px;color:rgba(255,255,255,.3)">Nodstorlek = antal artiklar &nbsp;·&nbsp; Linje = internationellt samarbete &nbsp;·&nbsp; Färg:</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:#FFD700;display:inline-block"></span>Top 100</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:#c9a84c;display:inline-block"></span>Top 500</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:50%;background:rgba(201,168,76,.4);display:inline-block"></span>Unranked</span>
+        <span style="font-size:10px;color:rgba(255,255,255,.5)">Each dot = an institution &nbsp;·&nbsp; brighter = more articles here &nbsp;·&nbsp; lines = international collaboration &nbsp;·&nbsp; hover for QS rank</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap">
+        <span style="font-size:10px;color:rgba(255,255,255,.4)">Colour = main research field:</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E8A020;display:inline-block"></span>Gastronomy &amp; flavour</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#5A9AE8;display:inline-block"></span>Sensory &amp; multisensory</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#4AAA6A;display:inline-block"></span>Hospitality &amp; food science</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#B87CC8;display:inline-block"></span>Sommellerie &amp; psychology</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E87040;display:inline-block"></span>Appetite &amp; novel foods</span>
       </div>
     </div>
     <div id="worldMapFilterBanner" style="display:none;background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.3);border-radius:6px;padding:8px 14px;margin-top:8px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -3002,8 +3007,8 @@ function setWorldFilter(f) {
   document.querySelectorAll('[data-wf]').forEach(b => {
     const active = b.dataset.wf === f
     b.style.background = active ? 'var(--gold)' : 'none'
-    b.style.color = active ? '#000' : 'rgba(255,255,255,.5)'
-    b.style.border = active ? '0.5px solid rgba(201,168,76,.4)' : '0.5px solid rgba(255,255,255,.15)'
+    b.style.color = active ? '#000' : 'rgba(255,255,255,.7)'
+    b.style.border = active ? '0.5px solid rgba(201,168,76,.4)' : '0.5px solid rgba(255,255,255,.28)'
   })
   renderWorldDots()
 }
@@ -3034,7 +3039,7 @@ function filterByCountry(countryCode) {
         <span style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.3">${i.name}</span>
         <span style="font-size:11px;color:${getNodeColor(i.rank)};font-weight:500;flex-shrink:0;margin-left:8px">${i.rank&&i.rank<999?'#'+i.rank:''}</span>
       </div>
-      <span style="font-size:10px;color:rgba(255,255,255,.3)">${i.count} article${i.count>1?'s':''}</span>
+      <span style="font-size:10px;color:rgba(255,255,255,.55)">${i.count} article${i.count>1?'s':''}</span>
     </div>
   `).join('')
   
@@ -3108,7 +3113,7 @@ window.renderWorldDots = function() {
       tooltip.style.display = 'block'
       tooltip.style.left = (event.clientX + 12) + 'px'
       tooltip.style.top = (event.clientY - 10) + 'px'
-      tooltip.innerHTML = `<strong style="color:#fff;font-size:12px">${d.name}</strong><br><span style="color:rgba(255,255,255,.5);font-size:11px">${d.country}</span>${d.rank&&d.rank<999?`<br><span style="color:${getNodeColor(d.rank)};font-size:11px">QS #${d.rank}</span>`:''}<br><span style="color:var(--gold);font-size:11px">${d.count} article${d.count>1?'s':''}</span>`
+      tooltip.innerHTML = `<strong style="color:#fff;font-size:12px">${d.name}</strong><br><span style="color:rgba(255,255,255,.72);font-size:11px">${d.country}</span>${d.rank&&d.rank<999?`<br><span style="color:${getNodeColor(d.rank)};font-size:11px">QS #${d.rank}</span>`:''}<br><span style="color:var(--gold);font-size:11px">${d.count} article${d.count>1?'s':''}</span>`
     })
     .on('mouseleave', () => { tooltip.style.display = 'none' })
     .on('click', (event, d) => {
@@ -3132,7 +3137,7 @@ window.showInstPopup = function(d, event) {
       <div style="font-size:13px;font-weight:500;color:#C9A84C;line-height:1.3">${d.name}</div>
       <button onclick="document.getElementById('instPopup').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;padding:0 0 0 8px">×</button>
     </div>
-    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:12px">${d.country}${d.rank&&d.rank<999?' · QS #'+d.rank:''}</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:12px">${d.country}${d.rank&&d.rank<999?' · QS #'+d.rank:''}</div>
     <div style="font-size:11px;color:rgba(201,168,76,.7);margin-bottom:12px">${d.count} gastronomy articles identified in Gusto Science database · may include co-authored works</div>
     ${sortedTopics.length ? `
     <div style="margin-bottom:12px">
@@ -3141,7 +3146,7 @@ window.showInstPopup = function(d, event) {
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
           <div style="width:8px;height:8px;border-radius:50%;background:${topicColors[t]||'#C9A84C'};flex-shrink:0"></div>
           <div style="flex:1;font-size:11px;color:rgba(255,255,255,.8)">${t.replace(/_/g,' ')}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.4)">${n}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.6)">${n}</div>
         </div>
       `).join('')}
     </div>` : ''}
