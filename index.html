@@ -1608,7 +1608,7 @@ function renderFeed(){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
     const isSearching=document.getElementById('searchInput').value.trim().length>1
-    if(!isSearching) source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_gastronomy||a.episteme_fb_manager||a.episteme_food_researcher||a.episteme_sensory_pro||a.episteme_culinary_pro)
+    if(!isSearching) source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_gastronomy||a.episteme_fb_manager||a.episteme_food_researcher)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
@@ -1690,7 +1690,7 @@ async function loadArticles(){
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
-       url=`${SB_URL}/rest/v1/articles?select=${fields}&episteme_sensory_pro=not.is.null&order=fetched_at.desc&limit=200`
+       url=`${SB_URL}/rest/v1/articles?select=${fields}&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)&order=fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       }
