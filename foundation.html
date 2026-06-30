@@ -439,7 +439,146 @@ footer a:hover { background: rgba(201,168,76,0.08); }
   50% { opacity: 1; }
 }
 
+/* MANIFESTO / WHY THIS EXISTS */
+.why-section {
+  background: var(--white);
+  padding: 120px 48px;
+  border-top: 0.5px solid var(--border);
+}
+.why-inner { max-width: 760px; margin: 0 auto; }
+.why-inner .section-label { text-align: center; }
+.why-inner .section-title { text-align: center; margin-bottom: 48px; }
+.why-lead {
+  font-family: 'Playfair Display', serif;
+  font-size: 23px;
+  line-height: 1.6;
+  color: var(--black);
+  text-align: center;
+  margin-bottom: 48px;
+  font-style: italic;
+}
+.why-section p {
+  font-size: 15px;
+  line-height: 1.95;
+  color: var(--text-mid);
+  margin-bottom: 24px;
+}
+.why-section p .emph { color: var(--black); font-weight: 500; }
+.why-triad-line {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin: 48px 0;
+  flex-wrap: wrap;
+}
+.why-triad-line span {
+  padding: 8px 22px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  border-right: 0.5px solid var(--border);
+}
+.why-triad-line span:last-child { border-right: none; }
+.why-triad-line .gw { color: var(--episteme); }
+.why-triad-line .tw { color: var(--techne); }
+.why-triad-line .pw { color: var(--phronesis); }
+.why-pull {
+  border-left: 2px solid var(--gold);
+  padding: 8px 0 8px 28px;
+  margin: 40px 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 19px;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--black);
+}
 @media (max-width: 768px) {
+  .why-section { padding: 80px 20px; }
+  .why-lead { font-size: 19px; }
+  .why-triad-line span { border-right: none; padding: 6px 14px; }
+}
+
+.method-section {
+  background: var(--warm);
+  padding: 120px 48px;
+  border-top: 0.5px solid var(--border);
+}
+.method-inner { max-width: 1100px; margin: 0 auto; }
+.method-inner .section-label { text-align: center; }
+.method-inner .section-title { text-align: center; margin-bottom: 24px; }
+.method-intro {
+  max-width: 680px;
+  margin: 0 auto 72px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--text-mid);
+  line-height: 1.9;
+}
+.method-steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  margin-bottom: 64px;
+}
+.method-step {
+  position: relative;
+  padding: 0 18px;
+  text-align: center;
+}
+.method-step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 22px;
+  right: -10px;
+  color: var(--gold);
+  font-size: 16px;
+  opacity: 0.6;
+}
+.method-num {
+  width: 46px; height: 46px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--gold);
+  background: var(--white);
+}
+.method-step h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--black);
+  margin-bottom: 12px;
+}
+.method-step p {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.method-honesty {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 40px;
+  background: var(--white);
+  border-left: 2px solid var(--gold);
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.9;
+  font-style: italic;
+}
+.method-honesty strong { color: var(--black); font-style: normal; font-weight: 500; }
+@media (max-width: 768px) {
+  .method-section { padding: 80px 20px; }
+  .method-steps { grid-template-columns: 1fr; gap: 32px; }
+  .method-step { padding: 0; }
+  .method-step:not(:last-child)::after { content: "↓"; top: auto; bottom: -24px; right: 50%; }
+
   nav { padding: 16px 20px; }
   .hero { padding: 100px 20px 60px; }
   .hero-triad { flex-wrap: wrap; gap: 10px; }
@@ -482,7 +621,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
   </h1>
   
   <p class="hero-sub">
-    From Socrates to Crichton-Fock — the intellectual genealogy behind the TRIAD model and its application to gastronomy and professional practice.
+    From Laozi to Crichton-Fock — the intellectual genealogy behind the TRIAD model: thinkers of knowledge and the artworks that disclosed rupture before science could codify it, woven together across two and a half millennia.
   </p>
 
   <div class="hero-triad">
@@ -507,6 +646,17 @@ footer a:hover { background: rgba(201,168,76,0.08); }
     <!-- ANTIQUITY -->
     <div class="timeline-era">
       <div class="era-label">Antiquity</div>
+
+      <div class="thinker all">
+        <div class="thinker-year">c. 600 BCE</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Laozi</div>
+          <div class="thinker-work">Daodejing</div>
+          <p class="thinker-text">"The Dao that can be told is not the eternal Dao." The oldest articulation of tacit knowing: the deepest understanding resists full articulation. Knowledge of practice — the cook's hand, the taster's discrimination — is shown, not stated. A founding intuition for techne and phronesis.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
 
       <div class="thinker all">
         <div class="thinker-year">470–399 BCE</div>
@@ -546,6 +696,17 @@ footer a:hover { background: rgba(201,168,76,0.08); }
     <div class="timeline-era">
       <div class="era-label">Enlightenment & Modernity</div>
 
+      <div class="thinker phronesis">
+        <div class="thinker-year">1265–1321</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Dante — Divina Commedia</div>
+          <div class="thinker-work">The Divine Comedy (1320)</div>
+          <p class="thinker-text">Dante's cosmos, and Giotto's frescoes that accompanied his age, fractured the flat hierarchies of medieval perception and disclosed the possibility of a decentred world — cultivating a sensibility to spatial relativity long before Copernicus codified it. Art disclosed the rupture; science arrived late.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span><span class="tag t">Techne</span></div>
+        </div>
+      </div>
+
       <div class="thinker episteme">
         <div class="thinker-year">1596–1650</div>
         <div class="thinker-dot"></div>
@@ -565,6 +726,50 @@ footer a:hover { background: rgba(201,168,76,0.08); }
           <div class="thinker-work">Paradoxe sur le comédien, c. 1773</div>
           <p class="thinker-text">The double grip in its purest form. The great actor must simultaneously feel and not feel — be inside the role and outside it, both technically precise and emotionally present. Diderot's paradox is the professional practitioner's paradox: the chef, the sommelier, the educator must be analytically rigorous and aesthetically responsive at the same moment. This is the origin of what Crichton-Fock develops as the double grip.</p>
           <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1724–1804</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Immanuel Kant</div>
+          <div class="thinker-work">Critique of Judgment (1790)</div>
+          <p class="thinker-text">Aesthetic judgment is reflective, not determinative: beauty is not deduced from rules but compels us to imagine a common world — the <em>sensus communis</em>, a shared capacity for feeling. To judge beauty is already to imagine how another might see. Aesthetic experience becomes the very condition for moral reasoning.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span><span class="tag e">Episteme</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1749–1832</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Goethe — Romantic poets</div>
+          <div class="thinker-work">Morphology; Faust (1808)</div>
+          <p class="thinker-text">Goethe's morphology and Romantic poetry rendered nature as process and flux — dramatising transformation and dynamic becoming, priming perception for a living, evolving world decades before Darwin gave it scientific form. The artist disclosed nature as <em>becoming</em>; science later codified it.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker all">
+        <div class="thinker-year">1755–1826</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Brillat-Savarin</div>
+          <div class="thinker-work">The Physiology of Taste (1825)</div>
+          <p class="thinker-text">"Tell me what you eat, and I will tell you what you are." The founding text of gastronomy treats taste as a genuine form of knowledge — sensory, reflective, and cultural at once. Eating is raised from appetite to discernment: the palate as an organ of judgment, the meal as a site of understanding. Gastronomy's own claim to the TRIAD.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1809–1882</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Charles Darwin</div>
+          <div class="thinker-work">On the Origin of Species (1859)</div>
+          <p class="thinker-text">Variation within species was noted long before Darwin, but it became <em>anomalous</em> — revolutionary — only once evolution supplied the categories. The case exemplifies Kuhn's retrospectivity problem: the flux that Goethe and the Romantics had already made perceptible, science codified into theory.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span></div>
         </div>
       </div>
 
@@ -629,6 +834,17 @@ footer a:hover { background: rgba(201,168,76,0.08); }
       </div>
 
       <div class="thinker phronesis">
+        <div class="thinker-year">1892–1940</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Walter Benjamin</div>
+          <div class="thinker-work">Illuminations (1969)</div>
+          <p class="thinker-text">Art offers insight not as syllogistic proof but as <em>constellation</em> — fragments aligning in nonlinear, affective recognition rather than rational sequence. Truth apprehended through pathos, not propositional logic. A theory of how the artwork knows: by configuration, not deduction.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
         <div class="thinker-year">1906–1943</div>
         <div class="thinker-dot"></div>
         <div class="thinker-content">
@@ -672,6 +888,50 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         </div>
       </div>
 
+      <div class="thinker techne">
+        <div class="thinker-year">1900–1976</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Gilbert Ryle</div>
+          <div class="thinker-work">The Concept of Mind (1949)</div>
+          <p class="thinker-text">The distinction between "knowing how" and "knowing that" gave techne its modern philosophical ground. Practical competence is not failed theory or hidden propositions — it is a distinct form of knowledge, irreducible to rules. The cook knows how before, and beyond, knowing that.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag e">Episteme</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1902–1994</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Karl Popper</div>
+          <div class="thinker-work">The Logic of Scientific Discovery (1934)</div>
+          <p class="thinker-text">Science advances not by proof but by falsification: a theory is scientific only if it can be refuted. Popper drew the boundary of episteme — its rigour and its limits — and set the stage for Kuhn's challenge. Together they frame the question of how the genuinely new enters knowledge at all.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1922–1996</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Thomas Kuhn</div>
+          <div class="thinker-work">The Structure of Scientific Revolutions (1962)</div>
+          <p class="thinker-text">Science advances not linearly but through paradigm shifts triggered by anomalies. Yet anomalies become visible only <em>after</em> a new paradigm supplies the categories — the retrospectivity problem. The TRIAD's resolution: art discloses the rupture in advance; science codifies it late. The double grip across history.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1906–1998</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Nelson Goodman</div>
+          <div class="thinker-work">Languages of Art (1968)</div>
+          <p class="thinker-text">Artworks are not passive objects but world-making symbols: they classify and reclassify, recasting perception itself. A Duchamp readymade does not describe the world — it rearranges the coordinates of what counts as knowledge. Art is not commentary but cognition.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
       <div class="thinker episteme">
         <div class="thinker-year">1916–2003</div>
         <div class="thinker-dot"></div>
@@ -705,6 +965,28 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         </div>
       </div>
 
+      <div class="thinker techne">
+        <div class="thinker-year">1929–2017</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Hubert Dreyfus</div>
+          <div class="thinker-work">Mind Over Machine (1986)</div>
+          <p class="thinker-text">Expertise is not accelerated rule-following. From novice to master, the skilled practitioner moves beyond explicit rules into intuitive, situation-responsive judgment — precisely what algorithms cannot reproduce. Dreyfus gave techne its phenomenology, and named the limit of artificial reasoning decades early.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker techne">
+        <div class="thinker-year">1943–</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Richard Sennett</div>
+          <div class="thinker-work">The Craftsman (2008)</div>
+          <p class="thinker-text">"Making is thinking." Sennett restores craftsmanship as a model of knowledge: the slow dialogue between hand and material through which skill, judgment, and ethics are formed together. The craftsman's knowing — embodied, developing, never fully articulable — is techne in its fullest contemporary defence.</p>
+          <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
       <div class="thinker phronesis">
         <div class="thinker-year">1946–</div>
         <div class="thinker-dot"></div>
@@ -713,6 +995,28 @@ footer a:hover { background: rgba(201,168,76,0.08); }
           <div class="thinker-work">The Artist is Present, MoMA 2010</div>
           <p class="thinker-text">"The hardest thing is to do something which is close to nothing." Pure presence as artistic form — the body as the instrument of knowledge. Abramović's performance art is phronesis made visible: complete attention, complete presence, complete responsibility for the unrepeatable moment. The practitioner who achieves this in service, in the kitchen, in the classroom, achieves excellence.</p>
           <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker phronesis">
+        <div class="thinker-year">1947–</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Martha Nussbaum</div>
+          <div class="thinker-work">Love's Knowledge (1990)</div>
+          <p class="thinker-text">Literature trains the moral imagination: through form, ambiguity, and narrative immersion we learn to perceive lives as lives, rather than as functions. The novel's knowledge is not propositional but cultivated — a felt understanding that a purely utilitarian framework erases. Art as a school for phronesis.</p>
+          <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
+        </div>
+      </div>
+
+      <div class="thinker episteme">
+        <div class="thinker-year">1956–</div>
+        <div class="thinker-dot"></div>
+        <div class="thinker-content">
+          <div class="thinker-name">Karen Barad</div>
+          <div class="thinker-work">Meeting the Universe Halfway (2007)</div>
+          <p class="thinker-text">Knowledge is not representation but intra-action — a becoming-with that destabilises the subject–object binary. We do not stand outside what we know; we are implicated in it. A contemporary grounding for knowledge that is embodied, situated, and relational rather than detached.</p>
+          <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span></div>
         </div>
       </div>
 
@@ -856,6 +1160,75 @@ footer a:hover { background: rgba(201,168,76,0.08); }
       <p class="cf-ref">von Wright, G. H. (1971). <em>Explanation and Understanding</em>. Cornell University Press.</p>
       <p class="cf-ref">Weil, S. (1947). <em>Gravity and Grace</em>. (E. Crawford, Trans.). Routledge.</p>
       <p class="cf-ref">Wittgenstein, L. (1953). <em>Philosophical Investigations</em>. (G. E. M. Anscombe, Trans.). Blackwell.</p>
+    </div>
+  </div>
+</section>
+
+<section class="why-section" id="why">
+  <div class="why-inner">
+    <div class="section-label">Why This Exists</div>
+    <h2 class="section-title">Knowledge that does not only <em>are</em>, but <em>becomes</em></h2>
+
+    <p class="why-lead">Research is undertaken to change the world. Yet too often it stays in the university, at a distance from the society it means to transform.</p>
+
+    <p>Citation counts and the h-index reward academic standing — not whether knowledge reaches the kitchen, the cellar, the dining room, or the producer, and changes how someone perceives, decides, and acts. This is not only a problem of communication. It is a problem of <span class="emph">what we let count as knowledge</span>.</p>
+
+    <p>Aristotle distinguished three forms of knowledge a reflective professional cannot do without:</p>
+
+    <div class="why-triad-line">
+      <span class="gw">Episteme · theory</span>
+      <span class="tw">Techne · practice</span>
+      <span class="pw">Phronesis · judgment</span>
+    </div>
+
+    <p>The metrics see only the first. Techne — the reflective knowledge of practice — and phronesis — the situated judgment that discerns the right action when no rule suffices — are precisely the forms that resist measurement. As Polanyi observed, <span class="emph">we know more than we can tell</span>. The taster's discrimination, the cook's hand, the host's read of a room: real, transmissible knowledge to which the strict demands of reliability and validity simply do not apply — yet which is often what matters most in judgment, in action.</p>
+
+    <p>This is Diderot's double grip: one must feel in order to reason well. Art knows in this register — holistically, analogically, with the whole sensorium — disclosing the complex knowledge of wholes before science can codify it. And gastronomy is this knowledge at its limit. It is the one art that engages not only sight, sound, and texture, but <span class="emph">smell and taste</span>. Its knowing cannot be gathered from reading alone; it becomes only when all the senses are present together, in the act, judged as a whole.</p>
+
+    <div class="why-pull">In a world losing contact with its senses, gastronomy makes the stakes legible: the need to align the knowledge research produces with how it can be lived and used.</div>
+
+    <p>The TRIAD is an infrastructure for that alignment. By reading research through episteme, techne, and phronesis for each profession, it creates contexts in which practitioners can take up important knowledge <span class="emph">without it losing scientific dignity</span> — and in which researchers can see the interdisciplinary connections that complex human situations demand. That is why the map of connections exists: not as ornament, but as an instrument for seeing where fields must meet.</p>
+  </div>
+</section>
+
+<section class="method-section" id="methodology">
+  <div class="method-inner">
+    <div class="section-label">The Method</div>
+    <h2 class="section-title">How the knowledge is curated</h2>
+    <p class="method-intro">
+      A research database is only as trustworthy as the process that builds it. Gusto Science is curated through a transparent, multi-stage pipeline that favours depth over breadth — selecting research where food and drink are studied as human sensory, cultural and service experience, and setting aside work where food is merely incidental.
+    </p>
+
+    <div class="method-steps">
+      <div class="method-step">
+        <div class="method-num">1</div>
+        <h3>Collection</h3>
+        <p>Articles are gathered from Scopus, OpenAlex and PubMed — drawn from curated gastronomy and sensory-science journals and from targeted keyword searches.</p>
+      </div>
+      <div class="method-step">
+        <div class="method-num">2</div>
+        <h3>Relevance Gate</h3>
+        <p>Every article must carry a traceable source (a DOI) and pass a gastronomy-relevance filter before it enters the database.</p>
+      </div>
+      <div class="method-step">
+        <div class="method-num">3</div>
+        <h3>Enrichment</h3>
+        <p>Abstracts and metadata are retrieved and completed, so each article carries enough substance to be judged on its content.</p>
+      </div>
+      <div class="method-step">
+        <div class="method-num">4</div>
+        <h3>Assessment</h3>
+        <p>Relevance is judged on content, not journal name. Keyword signals and AI context-analysis distinguish gastronomic research — taste, sensory science, service — from work where food is only mentioned in passing.</p>
+      </div>
+      <div class="method-step">
+        <div class="method-num">5</div>
+        <h3>TRIAD Analysis</h3>
+        <p>Qualified articles are read through the three epistemological lenses — Episteme, Techne, Phronesis — for each profession in gastronomy.</p>
+      </div>
+    </div>
+
+    <div class="method-honesty">
+      <strong>An honest note.</strong> This is a living, self-correcting process, not a perfect filter. Curation runs continuously: new research is assessed as it arrives, and earlier judgments are revisited as the method improves. Some relevant work is still missed, and some borderline work is still included. We show the method openly because the integrity of the knowledge base depends on the integrity of how it is built.
     </div>
   </div>
 </section>
