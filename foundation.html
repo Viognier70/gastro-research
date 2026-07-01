@@ -400,8 +400,33 @@ nav {
 
 .triad-figure {
   margin: 56px auto 8px;
-  max-width: 760px;
+  max-width: 820px;
   text-align: center;
+}
+.triad-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.triad-tab {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  letter-spacing: .03em;
+  padding: 9px 22px;
+  border: 0.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.triad-tab:hover { border-color: var(--gold); color: var(--black); }
+.triad-tab.active {
+  background: var(--gold);
+  color: var(--white);
+  border-color: var(--gold);
 }
 .triad-figure img {
   width: 100%;
@@ -410,6 +435,8 @@ nav {
   border: 0.5px solid var(--border);
   display: block;
 }
+.triad-panel { display: none; }
+.triad-panel.active { display: block; }
 .triad-figure figcaption {
   margin-top: 16px;
   font-size: 12.5px;
@@ -1218,8 +1245,21 @@ footer a:hover { background: rgba(201,168,76,0.08); }
     </p>
 
     <figure class="triad-figure">
-      <img src="assets/triad-model.png" alt="The Double Grip — an epistemological model of the sommelier. A triangle showing the three Aristotelian forms of knowledge: Sensory Realisation (Phronesis) at the top, Practical Orchestration (Techne) at the lower left, and Symbolic Framing (Episteme) at the lower right, with the double grip — analysis and experience — at the centre.">
-      <figcaption>The TRIAD model: the three Aristotelian forms of knowledge — episteme, techne, and phronesis — held together by the double grip, the movement between analysis ("what is in the glass?") and experience ("what does this evoke?").</figcaption>
+      <div class="triad-tabs">
+        <button class="triad-tab active" data-triad="sommelier">Sommelier</button>
+        <button class="triad-tab" data-triad="chef">Chef</button>
+        <button class="triad-tab" data-triad="researcher">Researcher &amp; Educator</button>
+      </div>
+      <div class="triad-panel active" data-panel="sommelier">
+        <img src="assets/triad-sommelier.png" alt="The Double Grip — an epistemological model of the sommelier. A triangle showing the three Aristotelian forms of knowledge: Sensory Realisation (Phronesis) at the top, Practical Orchestration (Techne) at the lower left, and Symbolic Framing (Episteme) at the lower right, with the double grip — analysis and experience — at the centre.">
+      </div>
+      <div class="triad-panel" data-panel="chef">
+        <img src="assets/triad-chef.png" alt="The Double Grip — an epistemological model of the chef. The same triad of episteme, techne, and phronesis, illustrated with culinary examples: mise en place, heat control, plating, and the judgment of a dish in the moment of service.">
+      </div>
+      <div class="triad-panel" data-panel="researcher">
+        <img src="assets/triad-researcher.png" alt="The Double Grip — an epistemological model of the food researcher and educator. The same triad of episteme, techne, and phronesis, illustrated with examples from study design, curriculum design, and situated judgment in pedagogy and inquiry.">
+      </div>
+      <figcaption>The TRIAD model, applied to each profession in gastronomy. The same three forms of knowledge — episteme, techne, and phronesis — take on the concrete texture of each role, held together by the double grip: the movement between analysis and experience. Select a profession to see how the model applies.</figcaption>
     </figure>
 
     <div class="cf-references">
@@ -1351,6 +1391,16 @@ document.querySelectorAll('.thinker').forEach((el, i) => {
   el.style.transitionDelay = (i % 3) * 0.1 + 's'
   observer.observe(el)
 })
+
+// TRIAD role switcher
+document.querySelectorAll('.triad-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const role = tab.dataset.triad
+    document.querySelectorAll('.triad-tab').forEach(t => t.classList.toggle('active', t === tab))
+    document.querySelectorAll('.triad-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === role))
+  })
+})
+
 </script>
 
 </body>
