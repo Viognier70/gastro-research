@@ -1584,8 +1584,10 @@ function renderFeed(){
   if(year!=='all') source=source.filter(a=>parseInt(a.year||0)>=parseInt(year))
   if(search) source=source.filter(a=>(a.title||'').toLowerCase().includes(search)||(a.authors||'').toLowerCase().includes(search)||(a.journal||'').toLowerCase().includes(search))
 
-  // When role selected: filter to articles WITH relevance data for that role, sort by relevance
-  if(role!=='all'){
+  // When role selected: filter to articles WITH relevance data for that role, sort by relevance.
+  // BUT: when searching, skip role filtering entirely — search spans the whole database
+  // regardless of selected role (author/title/journal search shows all matches).
+  if(role!=='all' && !search){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest
       const ecol = role==='all'?'sensory_pro':role
