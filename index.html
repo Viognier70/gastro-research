@@ -487,6 +487,30 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .spinner{width:20px;height:20px;border:2px solid var(--border-mid);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* LENS PANEL — the moment + selector (logo as knowledge navigator) */
+.lens-panel{display:none;max-width:900px;margin:0 auto;padding:22px 32px 4px}
+.lens-panel.show{display:block}
+.lens-stage{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center;background:var(--white);border:0.5px solid var(--border);border-radius:14px;padding:24px 30px}
+.lens-svg{width:132px;height:112px;flex-shrink:0;overflow:visible}
+.lens-seg-hit{cursor:pointer}
+.lens-info-col{min-height:112px}
+.lens-info-col .lens-intro{color:var(--text-secondary);font-size:13px;line-height:1.65}
+.lens-info-col .lens-intro b{color:var(--text-primary)}
+.lens-card2{display:none}.lens-card2.on{display:block;animation:lensfade .3s}
+@keyframes lensfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.lens-card2 .lc-tag{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding:4px 11px;border-radius:16px;margin-bottom:9px}
+.lens-card2 .lc-tag .lc-sw{width:8px;height:8px;border-radius:50%}
+.lens-card2.e .lc-tag{background:var(--episteme-light);color:var(--episteme)}.lens-card2.e .lc-tag .lc-sw{background:var(--episteme)}
+.lens-card2.t .lc-tag{background:var(--techne-light);color:var(--techne)}.lens-card2.t .lc-tag .lc-sw{background:var(--techne)}
+.lens-card2.p .lc-tag{background:var(--phronesis-light);color:var(--phronesis)}.lens-card2.p .lc-tag .lc-sw{background:var(--phronesis)}
+.lens-card2 h4{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:4px;font-variation-settings:'WONK' 1,'opsz' 40;color:var(--text-primary)}
+.lens-card2 p{font-size:12.5px;color:var(--text-secondary);line-height:1.6}
+.lens-hint2{font-size:11px;color:var(--text-tertiary);margin-top:13px;text-align:center;font-style:italic}
+@media(max-width:600px){.lens-stage{grid-template-columns:1fr;gap:16px;text-align:center}.lens-svg{margin:0 auto}}
+
+/* CARD SIGNATURE — honest mini-mark, lit per lens with analysis */
+.card-sig{flex-shrink:0;width:34px;height:29px;margin-top:2px}
+
 /* MODALS */
 .modal-bg{position:fixed;inset:0;background:rgba(12,11,9,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .modal-bg.open{display:flex}
@@ -932,6 +956,43 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 </div>
 
+<!-- LENS PANEL: the moment (animation) + selector (logo as knowledge navigator) -->
+<div class="lens-panel" id="lensPanel">
+  <div class="lens-stage">
+    <svg class="lens-svg" id="lensSvg" viewBox="0 0 120 100">
+      <path id="lensFillE" d="M46 22 L80 82 L12 82 Z" fill="#E8EFF6" opacity="0"/>
+      <path id="lensFillP" d="M74 22 L108 82 L40 82 Z" fill="#EAF0E5" opacity="0"/>
+      <path id="lensThird" d="M60 46.7 L80 82 L40 82 Z" fill="#F5EDE3" opacity="0"/>
+      <path id="lensSegE" d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3.4" stroke-linejoin="round"/>
+      <path id="lensSegP" d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3.4" stroke-linejoin="round"/>
+      <path class="lens-seg-hit" data-lens="e" d="M46 22 L61 52 L27 82 L12 82 Z" fill="transparent"/>
+      <path class="lens-seg-hit" data-lens="p" d="M74 22 L108 82 L79 82 L59 52 Z" fill="transparent"/>
+      <path class="lens-seg-hit" data-lens="t" d="M60 46.7 L80 82 L40 82 Z" fill="transparent"/>
+    </svg>
+    <div class="lens-info-col">
+      <div class="lens-card2 lens-intro-card on" id="lensIntro">
+        <p class="lens-intro">This is your lens — the <b id="lensRoleName">field's</b> TRIAD. Research seen through three forms of knowledge. <b>Tap a part of the mark</b> to explore each: analysis, judgment, and the double grip that binds them.</p>
+      </div>
+      <div class="lens-card2 e" data-lens-card="e">
+        <span class="lc-tag"><span class="lc-sw"></span>Episteme · Analysis</span>
+        <h4>The analytical grip</h4>
+        <p id="lensTxtE"></p>
+      </div>
+      <div class="lens-card2 p" data-lens-card="p">
+        <span class="lc-tag"><span class="lc-sw"></span>Phronesis · Judgment</span>
+        <h4>The analogical grip</h4>
+        <p id="lensTxtP"></p>
+      </div>
+      <div class="lens-card2 t" data-lens-card="t">
+        <span class="lc-tag"><span class="lc-sw"></span>Techne · The double grip</span>
+        <h4>Where the two meet</h4>
+        <p id="lensTxtT"></p>
+      </div>
+    </div>
+  </div>
+  <div class="lens-hint2">The two triangles — analysis and experience — form a third: the integration. Tap the mark's parts to read each grip.</div>
+</div>
+
 <!-- TOOLBAR -->
 <div class="toolbar">
   <select class="filter-select" id="topicSel" onchange="loadArticles();const _t=this.value;if(_t&&_t!=='all')loadSynthesis(role,_t)">
@@ -1351,7 +1412,72 @@ function setRole(r,btn){
     heroEyebrow.textContent = `Research intelligence for the ${rn} — through three lenses of knowledge`
   }
   updateSectionIntros(r)
+  updateLensPanel(r)
 }
+
+/* ===== LENS SYSTEM: the moment + selector ===== */
+const LENS_TRIAD={
+  sommelier:{name:"sommelier's",e:'The measurable — wine chemistry, acidity, tannin, aroma categories. "What is in the glass?"',p:'The situated — reading the table, the moment, the guest. "What does this evoke?"',t:'The craft that realises both — serving, blending, the double-grip analysis. Analysis and experience, at once.'},
+  chef:{name:"chef's",e:'The measurable — flavour compounds, Maillard reactions, food science. "What is on the plate?"',p:'The situated — judging a dish in the moment of service, the whole before the parts.',t:'The craft that realises both — mise en place, heat, timing. Analysis becomes a dish.'},
+  gastronomy:{name:"meal creator's",e:'The measurable — food science, culinary history, cultural and crossmodal theory.',p:'The situated — the gastronomic experience as a cultural whole; meaning, season, place.',t:'The craft that realises both — menu development, composing the meal as a whole.'},
+  fb_manager:{name:"F&B manager's",e:'The measurable — financial analysis, market intelligence, KPI frameworks, cost control.',p:'The situated — reading the room, balancing profit, guests and culture in the moment.',t:'The craft that realises both — operations, service design, team leadership, the floor in motion.'},
+  food_researcher:{name:"researcher's",e:'The measurable — theory, methodology, statistics, IMRaD structure.',p:'The situated — when a method fits a context, meaning beyond isolated variables.',t:'The craft that realises both — study design, protocol, teaching. Knowledge enacted in method.'},
+  all:{name:"field's",e:'Analytical, measurable knowledge that isolates and describes.',p:'Situated judgment that integrates analysis and experience.',t:'Craft and technique that turn knowledge into action — the double grip.'}
+};
+let lensActive=null;
+function updateLensPanel(r){
+  const panel=document.getElementById('lensPanel');
+  if(!panel) return;
+  const d=LENS_TRIAD[r]||LENS_TRIAD.all;
+  document.getElementById('lensRoleName').textContent=d.name;
+  document.getElementById('lensTxtE').textContent=d.e;
+  document.getElementById('lensTxtP').textContent=d.p;
+  document.getElementById('lensTxtT').textContent=d.t;
+  // show panel for a chosen role, hide for 'all'
+  if(r==='all'){ panel.classList.remove('show'); return; }
+  panel.classList.add('show');
+  // reset to intro card
+  lensActive=null;
+  document.querySelectorAll('#lensPanel .lens-card2').forEach(c=>c.classList.remove('on'));
+  document.getElementById('lensIntro').classList.add('on');
+  ['lensSegE','lensSegP','lensThird'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.opacity=(id==='lensThird')?'':'1'});
+  animateLensMark();
+}
+function animateLensMark(){
+  const e=document.getElementById('lensSegE'), p=document.getElementById('lensSegP');
+  const fE=document.getElementById('lensFillE'), fP=document.getElementById('lensFillP'), third=document.getElementById('lensThird');
+  if(!e||!p) return;
+  [fE,fP,third].forEach(el=>{el.style.transition='none';el.setAttribute('opacity','0')});
+  e.style.transition='none'; p.style.transition='none';
+  e.setAttribute('transform','translate(-22,0)'); p.setAttribute('transform','translate(22,0)');
+  void document.getElementById('lensSvg').getBBox();
+  requestAnimationFrame(()=>{
+    e.style.transition='transform 1.1s cubic-bezier(.33,0,.15,1)';
+    p.style.transition='transform 1.1s cubic-bezier(.33,0,.15,1)';
+    e.setAttribute('transform','translate(0,0)'); p.setAttribute('transform','translate(0,0)');
+    setTimeout(()=>{fE.style.transition='opacity .7s ease';fP.style.transition='opacity .7s ease';fE.setAttribute('opacity','1');fP.setAttribute('opacity','1');},700);
+    setTimeout(()=>{third.style.transition='opacity .8s ease';third.setAttribute('opacity','1');},1050);
+  });
+}
+function selectLens(l){
+  lensActive = lensActive===l ? null : l;
+  document.querySelectorAll('#lensPanel .lens-card2').forEach(c=>c.classList.remove('on'));
+  const segE=document.getElementById('lensSegE'), segP=document.getElementById('lensSegP'), third=document.getElementById('lensThird');
+  if(lensActive){
+    const card=document.querySelector('#lensPanel .lens-card2[data-lens-card="'+l+'"]');
+    if(card) card.classList.add('on');
+    if(segE) segE.style.opacity=(l==='e'||l==='t')?'1':'0.28';
+    if(segP) segP.style.opacity=(l==='p'||l==='t')?'1':'0.28';
+    if(third) third.style.opacity=(l==='t')?'1':'0.4';
+  } else {
+    document.getElementById('lensIntro').classList.add('on');
+    if(segE) segE.style.opacity='1'; if(segP) segP.style.opacity='1'; if(third) third.style.opacity='1';
+  }
+}
+document.addEventListener('click',function(ev){
+  const hit=ev.target.closest('.lens-seg-hit');
+  if(hit){ selectLens(hit.dataset.lens); }
+});
 
 function getRelevanceScore(a){
   if(role==='all') return 0
@@ -1366,6 +1492,16 @@ function triadBlock(text,label,bc,bg,lc){
   </div>`
 }
 
+function sigMark(ep,tc,ph){
+  const eOn=(ep||'').length>10, tOn=(tc||'').length>10, pOn=(ph||'').length>10;
+  return `<svg class="card-sig" viewBox="0 0 120 100" aria-label="TRIAD lenses">
+    <path d="M46 22 L80 82 L12 82 Z" fill="${eOn?'#E8EFF6':'#F2F0EA'}"/>
+    <path d="M74 22 L108 82 L40 82 Z" fill="${pOn?'#EAF0E5':'#F2F0EA'}"/>
+    <path d="M60 46.7 L80 82 L40 82 Z" fill="${tOn?'#F5EDE3':'#EDEAE1'}"/>
+    <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="${eOn?'#0C0B09':'#D8D2C6'}" stroke-width="3.4" stroke-linejoin="round"/>
+    <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="${pOn?'#C9A84C':'#E4DBC4'}" stroke-width="3.4" stroke-linejoin="round"/>
+  </svg>`;
+}
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
   if(!locked) freeCount=Math.max(freeCount,idx+1)
@@ -1390,16 +1526,13 @@ function cardHTML(a,idx){
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
-      ${hasTriad?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()">
-        <span class="tl-dot" style="background:#2a6fad"></span>
-        <span class="tl-dot" style="background:#0f6e56"></span>
-        <span class="tl-dot" style="background:#5349b5"></span>
-        <span class="tl-lbl">ε τ φ</span>
+      ${hasTriad?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()" title="TRIAD lenses with analysis">
+        ${sigMark(ep,tc,ph)}
         <div class="triad-legend-popup">
-          <div class="tlp-row"><div class="tlp-dot" style="background:#2a6fad"></div><div><div class="tlp-label" style="color:#7BA7D4">ε Episteme</div><div class="tlp-desc">What the research actually establishes — the scientific finding</div></div></div>
-          <div class="tlp-row"><div class="tlp-dot" style="background:#0f6e56"></div><div><div class="tlp-label" style="color:#7BC47B">τ Techne</div><div class="tlp-desc">How to apply it in your professional practice</div></div></div>
-          <div class="tlp-row"><div class="tlp-dot" style="background:#5349b5"></div><div><div class="tlp-label" style="color:#B8B0F0">φ Phronesis</div><div class="tlp-desc">Your situated judgment in this specific moment</div></div></div>
-          <div class="tlp-footer">Based on Aristotle · Developed for gastronomy by Crichton-Fock (2024)</div>
+          <div class="tlp-row"><div class="tlp-dot" style="background:#1A3A5C"></div><div><div class="tlp-label" style="color:#7BA7D4">ε Episteme</div><div class="tlp-desc">What the research actually establishes — the scientific finding</div></div></div>
+          <div class="tlp-row"><div class="tlp-dot" style="background:#2D5016"></div><div><div class="tlp-label" style="color:#7BC47B">τ Techne</div><div class="tlp-desc">How to apply it in your professional practice</div></div></div>
+          <div class="tlp-row"><div class="tlp-dot" style="background:#5C2D00"></div><div><div class="tlp-label" style="color:#C89478">φ Phronesis</div><div class="tlp-desc">Your situated judgment in this specific moment</div></div></div>
+          <div class="tlp-footer">Lit only for lenses with analysis · Based on Aristotle · Crichton-Fock (2024)</div>
         </div>
       </div>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
