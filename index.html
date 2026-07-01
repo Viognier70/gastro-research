@@ -941,7 +941,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All</button>
   <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)" title="Sommelier · Sensory scientist · Flavor technologist">Sommelier<span class="role-sub">Sommelier · Sensory scientist · Flavor technologist</span></button>
   <button class="role-chip" data-role="chef" onclick="setRole('chef',this)" title="Chef · Pastry chef · Fermentation specialist">Chef<span class="role-sub">Chef · Pastry chef · Fermentation specialist</span></button>
-  <button class="role-chip" data-role="gastronomy" onclick="setRole('gastronomy',this)" title="Food anthropologist · Food stylist · Photographer">Gastronomy<span class="role-sub">Food anthropologist · Food stylist · Photographer</span></button>
+  <button class="role-chip" data-role="gastronomy" onclick="setRole('gastronomy',this)" title="Culinary host · Food culture · Crossmodal experience">Meal creator<span class="role-sub">Culinary host · Food culture · Crossmodal experience</span></button>
   <button class="role-chip" data-role="fb_manager" onclick="setRole('fb_manager',this)" title="F&B Manager · Hotelier · Menu strategist">F&amp;B Manager<span class="role-sub">F&amp;B Manager · Hotelier · Menu strategist</span></button>
   <button class="role-chip" data-role="food_researcher" onclick="setRole('food_researcher',this)" title="Food researcher · Culinary educator · Sensory scientist">Food Researcher &amp; Educator<span class="role-sub">Food researcher · Culinary educator · Sensory scientist</span></button>
 
@@ -1218,7 +1218,7 @@ const T={
     sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',
     forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
     freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
-    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'F&B Manager',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
+    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'F&B Manager',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
   },
   sv:{
     eyebrow:'Forskningsintelligens för kulinariska proffs',
@@ -1226,7 +1226,7 @@ const T={
     sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen), Techne (praktisk tillämpning) och Phronesis (omdöme). Välj din yrkesroll för att börja.',
     forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
     freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
-    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Gastronomi',fb_manager:'F&B Manager',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'F&B Manager',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sensorisk Pro',culinary_pro:'Kulinarisk Pro',gastronomy_culture:'Gastronomi',hospitality_mgmt:'F&B Manager',educator_researcher:'Forskare & Utbildare'}
+    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Måltidsskapare',fb_manager:'F&B Manager',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'F&B Manager',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sensorisk Pro',culinary_pro:'Kulinarisk Pro',gastronomy_culture:'Måltidsskapare',hospitality_mgmt:'F&B Manager',educator_researcher:'Forskare & Utbildare'}
   }
 }
 
@@ -1289,7 +1289,7 @@ document.addEventListener('mouseout', e => {
 
 // A2: Section intros — role + feed count
 function updateSectionIntros(r){
-  const labels = {all:'your profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy professional',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Gastronomy professional',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
+  const labels = {all:'your profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
   const name = labels[r] || r || 'your profession'
   const sp = document.getElementById('siSpotlightRole'); if(sp) sp.textContent = name
   const fr = document.getElementById('siFeedRole'); if(fr) fr.textContent = name
@@ -1328,7 +1328,7 @@ function selectPlan(el,plan){selectedPlan=plan;document.querySelectorAll('.price
 function updateRoleNavBadge(r) {
   const badge = document.getElementById('roleNavBadge')
   if(!badge) return
-  const labels = {all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Researcher & Educator',sensory_pro:'Sensory scientist',culinary_pro:'Culinary pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher'}
+  const labels = {all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Researcher & Educator',sensory_pro:'Sensory scientist',culinary_pro:'Culinary pro',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher'}
   const colors = {
     sommelier:  {bg:'#e8f5f0',color:'#0d6e56',border:'#b5ddd0'},
     chef:       {bg:'#faf0e8',color:'#9a4e1a',border:'#e8c8a8'},
@@ -1361,7 +1361,7 @@ function setRole(r,btn){
   // Uppdatera hero-eyebrow med roll
   const heroEyebrow = document.getElementById('heroEyebrow')
   if(heroEyebrow && r !== 'all') {
-    const roleNames = {sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy professional',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Gastronomy professional',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
+    const roleNames = {sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
     const rn = roleNames[r] || r
     heroEyebrow.textContent = `Research intelligence for the ${rn} — through three lenses of knowledge`
   }
@@ -1620,7 +1620,7 @@ function renderFeed(){
   if(source.length===0){
     const topicVal=document.getElementById('topicSel')?.value
     const searchVal=document.getElementById('searchInput')?.value?.trim()
-    const roleName={all:'any profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator'}[role]||role
+    const roleName={all:'any profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator'}[role]||role
     let emptyMsg='',emptyHint=''
     if(showingSaved){
       pane.innerHTML=`<div style="padding:48px 24px;text-align:center">
@@ -2130,7 +2130,7 @@ function renderLiveMap(){
   const isMob = w < 500
   const isMobile = isMob
   const h=isMob ? Math.min(300, w*0.85) : 460
-  const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Gastronomy',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',fbmanager:'F&B Manager',researcher:'Food Researcher & Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
+  const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',fbmanager:'F&B Manager',researcher:'Food Researcher & Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
   document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
   const mapHint=document.getElementById('mapHint')
   if(mapHint&&!localStorage.getItem('gs_map_seen')){
@@ -2632,7 +2632,7 @@ window.loadSpotlight = async function() {
     const tcCol = `techne_${r}`
     const phCol = `phronesis_${r}`
     const relCol = `relevance_sci_${r}`
-    const roleLabels = {sensory_pro:'Sensory scientist',culinary_pro:'Chef & culinary',gastronomy_culture:'Gastronomy',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator',sommelier:'Sommelier',chef:'Chef',fb_manager:'F&B Manager',food_researcher:'Food researcher',gastronomy:'Gastronomy'}
+    const roleLabels = {sensory_pro:'Sensory scientist',culinary_pro:'Chef & culinary',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator',sommelier:'Sommelier',chef:'Chef',fb_manager:'F&B Manager',food_researcher:'Food researcher',gastronomy:'Meal creator'}
     const roleLabel = roleLabels[r] || r
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
 
