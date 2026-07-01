@@ -69,7 +69,7 @@
 }
 </script>
 
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%23C9A84C' stroke-width='0.8' opacity='0.4'/%3E%3Cpolygon points='16,4 5,26 27,26' fill='none' stroke='%23C9A84C' stroke-width='1.2'/%3E%3Ccircle cx='16' cy='4' r='3' fill='%237B3F5E'/%3E%3Ccircle cx='5' cy='26' r='3' fill='%232A7B7B'/%3E%3Ccircle cx='27' cy='26' r='3' fill='%238A7E6E'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Palatino Linotype,Georgia,serif' font-size='14' fill='%230C0B09'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230C0B09'/%3E%3Cpath d='M50 44 L66 74 L34 74 Z' fill='%23C9A84C' fill-opacity='0.35'/%3E%3Cpath d='M38 24 L66 74 L10 74 Z' fill='none' stroke='%23FDFCF8' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M62 24 L90 74 L34 74 Z' fill='none' stroke='%23C9A84C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -89,8 +89,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
-.logo-gusto{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--text-primary)}
-.logo-science{font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-left:10px;position:relative;top:-1px}
+.logo-gusto{font-family:'Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em}
+.logo-science{font-family:'Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--gold);letter-spacing:-.01em}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .academy-btn{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:flex;align-items:center;gap:4px}
 .lang-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
@@ -689,31 +689,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:12px">
-    <svg width="48" height="48" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-      <line x1="60" y1="10" x2="60" y2="2" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="91" y1="19" x2="97" y2="13" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="110" y1="60" x2="118" y2="60" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="91" y1="101" x2="97" y2="107" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="60" y1="110" x2="60" y2="118" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="29" y1="101" x2="23" y2="107" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="10" y1="60" x2="2" y2="60" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <line x1="29" y1="19" x2="23" y2="13" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
-      <circle cx="60" cy="60" r="54" fill="none" stroke="#C9A84C" stroke-width="1" opacity="0.25"/>
-      <polygon points="60,12 14,96 106,96" fill="none" stroke="#C9A84C" stroke-width="1.5" opacity="0.7"/>
-      <line x1="60" y1="12" x2="60" y2="68" stroke="#0C0B09" stroke-width="0.8" opacity="0.25"/>
-      <line x1="14" y1="96" x2="60" y2="68" stroke="#0C0B09" stroke-width="0.8" opacity="0.25"/>
-      <line x1="106" y1="96" x2="60" y2="68" stroke="#0C0B09" stroke-width="0.8" opacity="0.25"/>
-      <circle cx="60" cy="12" r="11" fill="#7B3F5E"/>
-      <circle cx="14" cy="96" r="11" fill="#2A7B7B"/>
-      <circle cx="106" cy="96" r="11" fill="#8A7E6E"/>
-      <text x="60" y="17" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="13" fill="#FDFCF8">φ</text>
-      <text x="14" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="13" fill="#FDFCF8">τ</text>
-      <text x="106" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="13" fill="#FDFCF8">ε</text>
-      <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-family="Palatino Linotype,Book Antiqua,Palatino,Georgia,serif" font-size="44" font-weight="400" fill="#0C0B09">G</text>
+  <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
+    <svg width="40" height="34" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M60 46.7 L80 82 L40 82 Z" fill="#C9A84C" fill-opacity="0.22"/>
+      <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3" stroke-linejoin="round"/>
     </svg>
     <div style="display:flex;align-items:baseline;gap:0">
-      <span class="logo-gusto">Gusto</span><span class="logo-science">Science</span>
+      <span class="logo-gusto">gusto</span><span class="logo-science">.science</span>
     </div>
   </div>
   <div class="topbar-right">
