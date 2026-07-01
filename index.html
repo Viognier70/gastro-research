@@ -69,9 +69,9 @@
 }
 </script>
 
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230C0B09'/%3E%3Cpath d='M50 44 L66 74 L34 74 Z' fill='%23C9A84C' fill-opacity='0.35'/%3E%3Cpath d='M38 24 L66 74 L10 74 Z' fill='none' stroke='%23FDFCF8' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M62 24 L90 74 L34 74 Z' fill='none' stroke='%23C9A84C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230C0B09'/%3E%3Cpath d='M38 24 L66 74 L10 74 Z' fill='%231A3A5C' fill-opacity='0.45'/%3E%3Cpath d='M62 24 L90 74 L34 74 Z' fill='%232D5016' fill-opacity='0.45'/%3E%3Cpath d='M50 44 L66 74 L34 74 Z' fill='%235C2D00' fill-opacity='0.7'/%3E%3Cpath d='M38 24 L66 74 L10 74 Z' fill='none' stroke='%23FDFCF8' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M62 24 L90 74 L34 74 Z' fill='none' stroke='%23C9A84C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Fraunces:opsz,wght@9..144,600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -89,8 +89,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
-.logo-gusto{font-family:'Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em}
-.logo-science{font-family:'Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--gold);letter-spacing:-.01em}
+.logo-gusto{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
+.logo-science{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--gold);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .academy-btn{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:flex;align-items:center;gap:4px}
 .lang-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
@@ -691,9 +691,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="topbar">
   <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
     <svg width="40" height="34" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M60 46.7 L80 82 L40 82 Z" fill="#C9A84C" fill-opacity="0.22"/>
-      <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M46 22 L80 82 L12 82 Z" fill="#E8EFF6"/>
+      <path d="M74 22 L108 82 L40 82 Z" fill="#EAF0E5"/>
+      <path d="M60 46.7 L80 82 L40 82 Z" fill="#F5EDE3"/>
+      <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3.4" stroke-linejoin="round"/>
+      <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3.4" stroke-linejoin="round"/>
     </svg>
     <div style="display:flex;align-items:baseline;gap:0">
       <span class="logo-gusto">gusto</span><span class="logo-science">.science</span>
