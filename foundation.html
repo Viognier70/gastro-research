@@ -398,6 +398,26 @@ nav {
   padding-top: 32px;
 }
 
+.triad-figure {
+  margin: 56px auto 8px;
+  max-width: 760px;
+  text-align: center;
+}
+.triad-figure img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 0.5px solid var(--border);
+  display: block;
+}
+.triad-figure figcaption {
+  margin-top: 16px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
 .cf-ref {
   font-size: 11px;
   color: var(--text-faint);
@@ -440,6 +460,57 @@ footer a:hover { background: rgba(201,168,76,0.08); }
 }
 
 /* MANIFESTO / WHY THIS EXISTS */
+/* ABOUT / BACKGROUND */
+.about-section {
+  background: var(--warm);
+  padding: 100px 48px;
+  border-top: 0.5px solid var(--border);
+}
+.about-inner { max-width: 720px; margin: 0 auto; }
+.about-inner .section-label { text-align: center; }
+.about-inner .section-title { text-align: center; margin-bottom: 40px; }
+.about-section p {
+  font-size: 15px;
+  line-height: 1.95;
+  color: var(--text-mid);
+  margin-bottom: 20px;
+}
+.about-section p .emph { color: var(--black); font-weight: 500; }
+.about-refs {
+  margin-top: 44px;
+  padding-top: 28px;
+  border-top: 0.5px solid var(--border);
+}
+.about-refs h4 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  margin-bottom: 18px;
+  font-weight: 500;
+}
+.about-refs p {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-mid);
+  margin-bottom: 14px;
+  padding-left: 32px;
+  text-indent: -32px;
+}
+.about-refs a { color: var(--gold); text-decoration: none; border-bottom: 0.5px solid var(--gold); }
+.about-origin {
+  border-left: 2px solid var(--gold);
+  padding: 4px 0 4px 24px;
+  margin: 32px 0;
+  font-style: italic;
+  color: var(--text-mid);
+  font-size: 15px;
+  line-height: 1.85;
+}
+@media (max-width: 768px) {
+  .about-section { padding: 70px 20px; }
+}
 .why-section {
   background: var(--white);
   padding: 120px 48px;
@@ -653,7 +724,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Laozi</div>
           <div class="thinker-work">Daodejing</div>
-          <p class="thinker-text">"The Dao that can be told is not the eternal Dao." The oldest articulation of tacit knowing: the deepest understanding resists full articulation. Knowledge of practice — the cook's hand, the taster's discrimination — is shown, not stated. A founding intuition for techne and phronesis.</p>
+          <p class="thinker-text">The Daodejing opens with the insight that the deepest reality resists being told — the Dao that can be spoken is not the eternal Dao. The oldest articulation of tacit knowing: the deepest understanding resists full articulation. Knowledge of practice — the cook's hand, the taster's discrimination — is shown, not stated. A founding intuition for techne and phronesis.</p>
           <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -664,7 +735,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Socrates</div>
           <div class="thinker-work">Dialogues (via Plato)</div>
-          <p class="thinker-text">"I know that I know nothing." The Socratic method — maieutics — does not transfer knowledge but draws it forth through dialogue. Professional knowledge is not received; it is generated through conscious questioning of practice. The beginning of all TRIAD thinking.</p>
+          <p class="thinker-text">The wisdom of recognising the limits of one's own knowledge. The Socratic method — maieutics — does not transfer knowledge but draws it forth through dialogue. Professional knowledge is not received; it is generated through conscious questioning of practice. The beginning of all TRIAD thinking.</p>
           <div class="thinker-tags"><span class="tag p">Phronesis</span><span class="tag e">Episteme</span></div>
         </div>
       </div>
@@ -702,7 +773,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Dante — Divina Commedia</div>
           <div class="thinker-work">The Divine Comedy (1320)</div>
-          <p class="thinker-text">Dante's cosmos, and Giotto's frescoes that accompanied his age, fractured the flat hierarchies of medieval perception and disclosed the possibility of a decentred world — cultivating a sensibility to spatial relativity long before Copernicus codified it. Art disclosed the rupture; science arrived late.</p>
+          <p class="thinker-text">Dante's cosmos, and Giotto's frescoes that accompanied his age, opened the flat hierarchies of medieval perception toward a decentred world — cultivating a sensibility to spatial relativity that later scientific work would articulate. An early example of how art and science illuminate the same shift in different registers.</p>
           <div class="thinker-tags"><span class="tag p">Phronesis</span><span class="tag t">Techne</span></div>
         </div>
       </div>
@@ -757,7 +828,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Brillat-Savarin</div>
           <div class="thinker-work">The Physiology of Taste (1825)</div>
-          <p class="thinker-text">"Tell me what you eat, and I will tell you what you are." The founding text of gastronomy treats taste as a genuine form of knowledge — sensory, reflective, and cultural at once. Eating is raised from appetite to discernment: the palate as an organ of judgment, the meal as a site of understanding. Gastronomy's own claim to the TRIAD.</p>
+          <p class="thinker-text">The founding text of gastronomy treats taste as a genuine form of knowledge — sensory, reflective, and cultural at once. What and how we eat reveals who we are. Eating is raised from appetite to discernment: the palate as an organ of judgment, the meal as a site of understanding. Gastronomy's own claim to the TRIAD.</p>
           <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -768,7 +839,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Charles Darwin</div>
           <div class="thinker-work">On the Origin of Species (1859)</div>
-          <p class="thinker-text">Variation within species was noted long before Darwin, but it became <em>anomalous</em> — revolutionary — only once evolution supplied the categories. The case exemplifies Kuhn's retrospectivity problem: the flux that Goethe and the Romantics had already made perceptible, science codified into theory.</p>
+          <p class="thinker-text">Variation within species was observed long before Darwin, but it gained its full significance once evolution supplied the categories. The sensibility to nature as flux that Goethe and the Romantics had cultivated, and the scientific theory that followed, illuminate the same reality — perception and codification working together.</p>
           <div class="thinker-tags"><span class="tag e">Episteme</span></div>
         </div>
       </div>
@@ -828,7 +899,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Ludwig Wittgenstein</div>
           <div class="thinker-work">Philosophical Investigations, 1953</div>
-          <p class="thinker-text">"Meaning is use." Knowledge does not exist prior to practice — it is constituted in the language games of a form of life. The sommelier's vocabulary is not a description of wine; it is the wine, for practical purposes. To change how professionals speak about their practice is to change the practice itself. The TRIAD model gives gastronomy a new language game.</p>
+          <p class="thinker-text">"In most cases, the meaning of a word is its use." Knowledge does not exist prior to practice — it is constituted in the language games of a form of life. The sommelier's vocabulary is not a description of wine; it is the wine, for practical purposes. To change how professionals speak about their practice is to change the practice itself. The TRIAD model gives gastronomy a new language game.</p>
           <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -850,7 +921,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Simone Weil</div>
           <div class="thinker-work">Gravity and Grace, 1947; Waiting for God, 1950</div>
-          <p class="thinker-text">"Attention is the rarest and purest form of generosity." Weil's concept of attention — complete, selfless, present — is the ethical core of phronesis. The practitioner who truly attends to the guest, the dish, the moment, is performing an ethical act, not merely a professional one. Excellence is attention.</p>
+          <p class="thinker-text">For Weil, attention — complete, selfless, present — is the ethical core of phronesis; she held it to be among the rarest and purest forms of generosity. The practitioner who truly attends to the guest, the dish, the moment, is performing an ethical act, not merely a professional one. Excellence is attention.</p>
           <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -916,7 +987,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Thomas Kuhn</div>
           <div class="thinker-work">The Structure of Scientific Revolutions (1962)</div>
-          <p class="thinker-text">Science advances not linearly but through paradigm shifts triggered by anomalies. Yet anomalies become visible only <em>after</em> a new paradigm supplies the categories — the retrospectivity problem. The TRIAD's resolution: art discloses the rupture in advance; science codifies it late. The double grip across history.</p>
+          <p class="thinker-text">Science advances not linearly but through paradigm shifts, as new frameworks reorganise what counts as knowledge. Kuhn's account opens a rich question: how the genuinely new first becomes perceptible. The TRIAD explores one answer — that art and science each contribute to seeing the new, one through sensibility, the other through codification. The double grip across history.</p>
           <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -982,7 +1053,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Richard Sennett</div>
           <div class="thinker-work">The Craftsman (2008)</div>
-          <p class="thinker-text">"Making is thinking." Sennett restores craftsmanship as a model of knowledge: the slow dialogue between hand and material through which skill, judgment, and ethics are formed together. The craftsman's knowing — embodied, developing, never fully articulable — is techne in its fullest contemporary defence.</p>
+          <p class="thinker-text">For Sennett, making is a form of thinking. He restores craftsmanship as a model of knowledge: the slow dialogue between hand and material through which skill, judgment, and ethics are formed together. The craftsman's knowing — embodied, developing, never fully articulable — is techne in its fullest contemporary defence.</p>
           <div class="thinker-tags"><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -993,7 +1064,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-content">
           <div class="thinker-name">Marina Abramović</div>
           <div class="thinker-work">The Artist is Present, MoMA 2010</div>
-          <p class="thinker-text">"The hardest thing is to do something which is close to nothing." Pure presence as artistic form — the body as the instrument of knowledge. Abramović's performance art is phronesis made visible: complete attention, complete presence, complete responsibility for the unrepeatable moment. The practitioner who achieves this in service, in the kitchen, in the classroom, achieves excellence.</p>
+          <p class="thinker-text">Pure presence as artistic form — the body as the instrument of knowledge. Abramović's performance art is phronesis made visible: complete attention, complete presence, complete responsibility for the unrepeatable moment. The practitioner who achieves this in service, in the kitchen, in the classroom, achieves excellence.</p>
           <div class="thinker-tags"><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -1042,8 +1113,8 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <div class="thinker-dot"></div>
         <div class="thinker-content">
           <div class="thinker-name">Anders Crichton-Fock</div>
-          <div class="thinker-work">The TRIAD Model — Applied Epistemology for Gastronomy, Örebro University</div>
-          <p class="thinker-text">The double grip: where scientific rigour and aesthetic sensibility converge into professional mastery. Crichton-Fock applies Aristotle's three forms of knowledge to gastronomy as a living framework for professional development. The practitioner who develops all three simultaneously — who can read the science, execute the craft, and exercise situated judgment — achieves a form of excellence that no single dimension alone can produce. Gusto Science is the infrastructure for this development.</p>
+          <div class="thinker-work">The Double Grip (2011); The TRIAD Model, Campus Grythyttan</div>
+          <p class="thinker-text">The double grip: where scientific rigour and aesthetic sensibility converge into professional mastery. Building on a licentiate in the aesthetics of sensory experience and a doctoral thesis on the double grip, Crichton-Fock applies Aristotle's three forms of knowledge to gastronomy as a living framework for teaching sommeliers and chefs. The practitioner who develops all three — who can read the science, execute the craft, and exercise situated judgment — achieves an excellence no single dimension alone can produce. Gusto Science is the infrastructure for this development.</p>
           <div class="thinker-tags"><span class="tag e">Episteme</span><span class="tag t">Techne</span><span class="tag p">Phronesis</span></div>
         </div>
       </div>
@@ -1143,17 +1214,23 @@ footer a:hover { background: rgba(201,168,76,0.08); }
     </p>
 
     <p class="cf-text">
-      Gusto Science is the infrastructure for developing this capacity. 66 726 research articles, translated into three dimensions of professional knowledge, available for every profession in gastronomy — so that the practitioner can build the knowledge base from which excellence can grow.
+      Gusto Science is the infrastructure for developing this capacity: a curated body of research, translated into three dimensions of professional knowledge and made available for every profession in gastronomy — so that the practitioner can build the knowledge base from which excellence can grow.
     </p>
+
+    <figure class="triad-figure">
+      <img src="assets/triad-model.png" alt="The Double Grip — an epistemological model of the sommelier. A triangle showing the three Aristotelian forms of knowledge: Sensory Realisation (Phronesis) at the top, Practical Orchestration (Techne) at the lower left, and Symbolic Framing (Episteme) at the lower right, with the double grip — analysis and experience — at the centre.">
+      <figcaption>The TRIAD model: the three Aristotelian forms of knowledge — episteme, techne, and phronesis — held together by the double grip, the movement between analysis ("what is in the glass?") and experience ("what does this evoke?").</figcaption>
+    </figure>
 
     <div class="cf-references">
       <p class="cf-ref">Aristotle. (trans. 2000). <em>Nicomachean Ethics</em>. (R. Crisp, Trans.). Cambridge University Press.</p>
       <p class="cf-ref">Beckett, S. (1983). <em>Worstward Ho</em>. Grove Press.</p>
       <p class="cf-ref">Bourdieu, P. (1980). <em>The Logic of Practice</em>. (R. Nice, Trans.). Stanford University Press.</p>
-      <p class="cf-ref">Crichton-Fock, A. (2024). <em>The TRIAD Model: Applied epistemology for gastronomy</em>. Örebro University.</p>
+      <p class="cf-ref">Crichton-Fock, A. P. F. &amp; Spence, C. (2024). The imitation game — exploring the double-grip analysis for creating analog wines. <em>Journal of Wine Research, 35</em>(2), 139–159.</p>
       <p class="cf-ref">Dewey, J. (1934). <em>Art as Experience</em>. Minton, Balch & Company.</p>
-      <p class="cf-ref">Diderot, D. (1830). <em>Paradoxe sur le comédien</em>. (W. H. Pollock, Trans.). Chatto & Windus.</p>
-      <p class="cf-ref">Herdenstam, A. (2011, 2024). <em>Sensory evaluation and professional knowledge in wine</em>.</p>
+      <p class="cf-ref">Diderot, D. (1773/1957). <em>The Paradox of the Actor</em>. (W. H. Pollock, Trans.). Hill and Wang.</p>
+      <p class="cf-ref">Herdenstam, A. P. F. (2004). <em>Sinnesupplevelsens estetik: vinprovaren, i gränslandet mellan konsten och vetenskapen</em> [Licentiate thesis]. Stockholm: KTH.</p>
+      <p class="cf-ref">Herdenstam, A. P. F. (2011). <em>Den arbetande gommen: vinprovarens dubbla grepp, från analys till upplevelse</em> [Doctoral dissertation]. Stockholm: KTH.</p>
       <p class="cf-ref">Polanyi, M. (1966). <em>The Tacit Dimension</em>. Doubleday.</p>
       <p class="cf-ref">Schön, D. A. (1983). <em>The Reflective Practitioner</em>. Basic Books.</p>
       <p class="cf-ref">Turing, A. M. (1950). Computing machinery and intelligence. <em>Mind, 59</em>(236), 433–460.</p>
@@ -1229,6 +1306,29 @@ footer a:hover { background: rgba(201,168,76,0.08); }
 
     <div class="method-honesty">
       <strong>An honest note.</strong> This is a living, self-correcting process, not a perfect filter. Curation runs continuously: new research is assessed as it arrives, and earlier judgments are revisited as the method improves. Some relevant work is still missed, and some borderline work is still included. We show the method openly because the integrity of the knowledge base depends on the integrity of how it is built.
+    </div>
+  </div>
+</section>
+
+<section class="about-section" id="about">
+  <div class="about-inner">
+    <div class="section-label">Background</div>
+    <h2 class="section-title">Where this comes from</h2>
+
+    <p>Gusto Science grows out of teaching practice at <span class="emph">Campus Grythyttan, Örebro University</span>, where the founder and colleagues work with Aristotle's forms of knowledge to teach sommeliers and chefs. Different kinds of knowledge call for different kinds of teaching — and for contexts in which each can take shape. A sommelier first learns the theory of viticulture, regions, and culture (episteme), then trains the craft of tasting, analysing, and describing (techne), and finally applies that knowledge in varied contexts to develop practical wisdom and judgment (phronesis).</p>
+
+    <p>The site was founded by <span class="emph">Dr Anders Crichton-Fock</span> — Senior Lecturer and researcher at the School of Hospitality, Culinary Arts and Meal Science (Campus Grythyttan), Örebro University, and one of the first two doctoral students when Meal Science was established there in the late 1990s. His earlier academic work, published under the name Herdenstam, includes a 2004 licentiate thesis on the aesthetics of sensory experience — the wine taster in the borderland between art and science — and a 2011 doctoral dissertation on the working palate and the wine taster's double grip, from analysis to experience, both from KTH Royal Institute of Technology. He was appointed Excellent Teacher in 2022, and is the originator of applied methods — the Double Grip Analysis, the Critical Attribute Technique, and the Dialogue Consensus Technique — in which art and science are used together to develop the three forms of knowledge and bring them closer to the practice where they are applied.</p>
+
+    <div class="about-origin">The idea for Gusto Science arose during parental leave in 2026 — from a simple question: how does a working professional stay current with new research, sorted for their own reality and application? That question led to a deeper one — which knowledge, and in what form, is relevant to a profession — and to the TRIAD as an answer.</div>
+
+    <p>The site is not about any one person. This background is offered only so the connection between the framework and its origin can be understood.</p>
+
+    <div class="about-refs">
+      <h4>Selected works by the founder</h4>
+      <p>Herdenstam, A. P. F. (2004). <em>Sinnesupplevelsens estetik: vinprovaren, i gränslandet mellan konsten och vetenskapen</em> [Licentiate thesis]. Stockholm: Kungliga Tekniska Högskolan (KTH). <a href="https://urn.kb.se/resolve?urn=urn:nbn:se:oru:diva-9183">urn:nbn:se:oru:diva-9183</a></p>
+      <p>Herdenstam, A. P. F. (2011). <em>Den arbetande gommen: vinprovarens dubbla grepp, från analys till upplevelse</em> [Doctoral dissertation]. Stockholm: KTH Royal Institute of Technology.</p>
+      <p>Crichton-Fock, A. P. F. &amp; Spence, C. (2024). The imitation game — exploring the double-grip analysis for creating analog wines. <em>Journal of Wine Research</em>, 35(2), 139–159.</p>
+      <p style="color:var(--text-light);">The 2004 and 2011 theses were published under the name Herdenstam. <a href="https://orcid.org/0000-0003-3762-483X">ORCID: 0000-0003-3762-483X</a></p>
     </div>
   </div>
 </section>
