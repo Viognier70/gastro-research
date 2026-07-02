@@ -924,7 +924,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="hero">
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
   <h1 class="hero-title" id="heroTitle">Science that tells you<br><em>what, how, and when.</em></h1>
-  <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you three things: what the science actually says (<em>Episteme</em>), how to put it into practice (<em>Techne</em>), and when and why it's right to act on it (<em>Phronesis</em>). Based on Aristotle's epistemology, developed for gastronomy by Crichton-Fock (2024). Select your role below — every article is translated for your perspective.</p>
+  <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you more: what science establishes analytically (<em>Episteme</em>), what art grasps analogically (<em>Phronesis</em>), and the craft born where the two meet (<em>Techne</em>) — where the double grip makes professional knowledge possible. Dr Anders Crichton-Fock's model (formerly Herdenstam), after Aristotle, Diderot &amp; Wittgenstein. Select your role below — every article is translated for your perspective.</p>
   <div class="hero-stats">
     <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
     <div class="stat-item"><div class="stat-num" id="triadCount">—</div><div class="stat-label">TRIAD analyses</div></div>
@@ -1492,14 +1492,18 @@ function triadBlock(text,label,bc,bg,lc){
   </div>`
 }
 
-function sigMark(ep,tc,ph){
-  const eOn=(ep||'').length>10, tOn=(tc||'').length>10, pOn=(ph||'').length>10;
-  return `<svg class="card-sig" viewBox="0 0 120 100" aria-label="TRIAD lenses">
-    <path d="M46 22 L80 82 L12 82 Z" fill="${eOn?'#E8EFF6':'#F2F0EA'}"/>
-    <path d="M74 22 L108 82 L40 82 Z" fill="${pOn?'#EAF0E5':'#F2F0EA'}"/>
-    <path d="M60 46.7 L80 82 L40 82 Z" fill="${tOn?'#F5EDE3':'#EDEAE1'}"/>
-    <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="${eOn?'#0C0B09':'#D8D2C6'}" stroke-width="3.4" stroke-linejoin="round"/>
-    <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="${pOn?'#C9A84C':'#E4DBC4'}" stroke-width="3.4" stroke-linejoin="round"/>
+function sigMark(hasBridge){
+  // Both outer triangles always coloured (every article has episteme + phronesis).
+  // The third form — the double grip / integration — glows sienna only when the
+  // article actually articulates the bridges between the forms. Honest: it reflects
+  // whether the integration is present, the one thing that truly varies.
+  return `<svg class="card-sig" viewBox="0 0 120 100" aria-label="TRIAD ${hasBridge?'with double grip':'analyses'}">
+    <path d="M46 22 L80 82 L12 82 Z" fill="#E8EFF6"/>
+    <path d="M74 22 L108 82 L40 82 Z" fill="#EAF0E5"/>
+    <path d="M60 46.7 L80 82 L40 82 Z" fill="${hasBridge?'#E9D3B8':'#F2EFE9'}"/>
+    <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3.4" stroke-linejoin="round"/>
+    <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3.4" stroke-linejoin="round"/>
+    ${hasBridge?'<path d="M60 46.7 L80 82 L40 82 Z" fill="none" stroke="#5C2D00" stroke-width="2" stroke-linejoin="round"/>':''}
   </svg>`;
 }
 function cardHTML(a,idx){
@@ -1527,12 +1531,12 @@ function cardHTML(a,idx){
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
       ${hasTriad?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()" title="TRIAD lenses with analysis">
-        ${sigMark(ep,tc,ph)}
+        ${sigMark((bridgeET||'').length>10||(bridgeTP||'').length>10)}
         <div class="triad-legend-popup">
           <div class="tlp-row"><div class="tlp-dot" style="background:#1A3A5C"></div><div><div class="tlp-label" style="color:#7BA7D4">ε Episteme</div><div class="tlp-desc">What the research actually establishes — the scientific finding</div></div></div>
           <div class="tlp-row"><div class="tlp-dot" style="background:#2D5016"></div><div><div class="tlp-label" style="color:#7BC47B">τ Techne</div><div class="tlp-desc">How to apply it in your professional practice</div></div></div>
           <div class="tlp-row"><div class="tlp-dot" style="background:#5C2D00"></div><div><div class="tlp-label" style="color:#C89478">φ Phronesis</div><div class="tlp-desc">Your situated judgment in this specific moment</div></div></div>
-          <div class="tlp-footer">Lit only for lenses with analysis · Based on Aristotle · Crichton-Fock (2024)</div>
+          <div class="tlp-footer">The centre glows when the article articulates the double grip — the integration between the forms · Crichton-Fock (2024)</div>
         </div>
       </div>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
