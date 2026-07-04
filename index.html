@@ -2610,19 +2610,31 @@ function openArticleOverlay(article){
   const claim = article.core_claim || article.insight || ''
   const claimEl = document.getElementById('artClaim')
   if(claim){ claimEl.textContent = claim; claimEl.style.display='block' } else { claimEl.style.display='none' }
-  _artData._ep = article['episteme_'+r] || article.episteme_sommelier || ''
-  _artData._tc = article['techne_'+r] || article.techne_sommelier || ''
-  _artData._ph = article['phronesis_'+r] || article.phronesis_sommelier || ''
-  const hasPremium = !!(_artData._ep || _artData._tc || _artData._ph)
+  _artData._ep = article['episteme_'+r] || ''
+  _artData._tc = article['techne_'+r] || ''
+  _artData._ph = article['phronesis_'+r] || ''
+  // Presence-boolean från articles_public — sanning för aktuell roll, inte gissad från payload
+  const hasTriadForRole = article['has_episteme_'+r] === true
+  const hasPremium = hasTriadForRole && !!(_artData._ep || _artData._tc || _artData._ph)
   const nav = document.querySelector('.art-triad-nav')
-  if(nav) nav.style.display = hasPremium ? '' : 'none'
+  const content = document.getElementById('artTriadContent')
   if(hasPremium){
+    // (1) Premium-payload finns → visa TRIAD-flikarna
+    if(nav) nav.style.display = ''
     window.switchArtTriad('e')
-  } else {
-    const content = document.getElementById('artTriadContent')
+  } else if(hasTriadForRole){
+    // (2) Analys finns för rollen men ingen payload (fri/anon) → Upgrade
+    if(nav) nav.style.display = 'none'
     if(content){
       content.className = 'art-triad-content'
       content.innerHTML = '<div style="padding:24px;text-align:center;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px"><div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">TRIAD analysis · Pro</div><div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px">ε Episteme · τ Techne · φ Phronesis — the three lenses on 5,200+ TRIAD-analyzed studies unlock with Pro.</div><button class="upgrade-btn" onclick="closeArticleModal();openModal(\'upgradeModal\')" style="padding:8px 20px;font-size:12px">Upgrade to Pro →</button></div>'
+    }
+  } else {
+    // (3) Ingen TRIAD för den här artikeln — neutralt, oavsett Pro-status
+    if(nav) nav.style.display = 'none'
+    if(content){
+      content.className = 'art-triad-content'
+      content.innerHTML = '<div style="padding:24px;text-align:center;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;font-size:12px;color:var(--text-secondary);line-height:1.7">No TRIAD analysis for this article yet.</div>'
     }
   }
   if(article.imrad_introduction){
