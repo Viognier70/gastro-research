@@ -14,3 +14,8 @@ supabase/.temp/
 
 # Loose backups (don't commit working backups)
 index_backup_*.html
+
+Loggor*/
+*.zip
+indexe2.html
+.DS_Store
