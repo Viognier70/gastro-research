@@ -1912,7 +1912,7 @@ async function loadCounts(){
     const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
     // TRIAD count
-    const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+    const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal);window._triadCount=triadTotal;loadTrending()}
     if(total>0){
