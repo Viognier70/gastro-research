@@ -1249,6 +1249,18 @@ const TRIAL_DAYS=14
 function freeCountKey(){return 'gs_free_'+new Date().toISOString().slice(0,10)}
 function readFreeCount(){return parseInt(localStorage.getItem(freeCountKey())||'0',10)||0}
 function writeFreeCount(n){localStorage.setItem(freeCountKey(),String(n))}
+async function enrichWithPremiumIfPro(items){
+  if(!isPro || !Array.isArray(items) || !items.length) return items
+  try{
+    const ids=items.map(a=>a && a.id).filter(Boolean)
+    if(!ids.length) return items
+    const {data,error}=await sb.rpc('get_articles_full',{article_ids:ids})
+    if(error || !Array.isArray(data)) return items
+    const byId=new Map(data.map(a=>[a.id,a]))
+    for(const it of items){const full=byId.get(it.id); if(full) Object.assign(it,full)}
+  }catch(e){/* keep metadata only */}
+  return items
+}
 function trialState(){
   if(localStorage.getItem('gs_reverse_trial')!=='1') return {active:false,daysLeft:0,started:false}
   const start=parseInt(localStorage.getItem('gs_trial_start')||'0',10)
@@ -1261,7 +1273,7 @@ function checkTrialReset(){const today=new Date().toDateString();const last=loca
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
 // Debug: test API connection
-fetch(SB_URL+'/rest/v1/articles?select=id&limit=1',{headers:H})
+fetch(SB_URL+'/rest/v1/articles_public?select=id&limit=1',{headers:H})
   .then(r=>{console.log('API test status:',r.status);return r.json()})
   .then(d=>console.log('API test data:',d))
   .catch(e=>console.log('API test error:',e))
@@ -1300,7 +1312,7 @@ function toggleDataPanel() {
 
 function updateDataPanel() {
   // Hämta senaste uppdateringstid från Supabase (klienten heter sb i denna kodbas)
-  sb.from('articles')
+  sb.from('articles_public')
     .select('fetched_at')
     .order('fetched_at', { ascending: false })
     .limit(1)
@@ -1800,15 +1812,14 @@ async function loadArticles(){
   const hasScenario = scenarioRoles.includes(role)
   const colMap2={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher',gastronomy:'gastronomy',fb_manager:'fb_manager',food_researcher:'food_researcher',sommelier:'sommelier',chef:'chef'}
   const rkey2=colMap2[role]||role
-  const triadCols=role==='all'
-    ? 'episteme_sommelier,techne_sommelier,phronesis_sommelier,episteme_chef,techne_chef,phronesis_chef,episteme_gastronomy,techne_gastronomy,phronesis_gastronomy,episteme_fb_manager,techne_fb_manager,phronesis_fb_manager,episteme_food_researcher,techne_food_researcher,phronesis_food_researcher'
-    : `episteme_${rkey2},techne_${rkey2},phronesis_${rkey2},bridge_episteme_techne_${rkey2},bridge_techne_phronesis_${rkey2}`
   const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher' : `relevance_sci_${rkey2}`
-  const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,core_claim,claim_keywords,imrad_introduction,imrad_methods,imrad_results,imrad_discussion,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,${sciCols},${triadCols}`
+  // articles_public: metadata + has_* presence booleans. Premium TRIAD/IMRAD/core_claim
+  // is layered in by enrichWithPremiumIfPro() below when the user is Pro.
+  const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,${sciCols}`
   try {
     if(search && search.length > 1) {
       // SEARCH MODE: query entire database
-      let url=SB_URL+'/rest/v1/articles?select='+fields+'&irrelevant=is.false&or=(title.ilike.*'+encodeURIComponent(search)+'*,authors.ilike.*'+encodeURIComponent(search)+'*,journal.ilike.*'+encodeURIComponent(search)+'*)&order=year.desc&limit=200'
+      let url=SB_URL+'/rest/v1/articles_public?select='+fields+'&irrelevant=is.false&or=(title.ilike.*'+encodeURIComponent(search)+'*,authors.ilike.*'+encodeURIComponent(search)+'*,journal.ilike.*'+encodeURIComponent(search)+'*)&order=year.desc&limit=200'
       if(src!=='all') url+=`&source=eq.${src}`
       const r=await fetch(url,{headers:H})
       articles=await r.json()
@@ -1821,11 +1832,11 @@ async function loadArticles(){
       if(role!=='all'){
         // Get top articles by relevance for this role
         const orderCol = `relevance_sci_${rkey2}`
-        url=`${SB_URL}/rest/v1/articles?select=${fields}&irrelevant=is.false&episteme_${rkey2}=not.is.null&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
+        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${rkey2}=is.true&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
-       url=`${SB_URL}/rest/v1/articles?select=${fields}&irrelevant=is.false&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)&order=year.desc.nullslast,fetched_at.desc&limit=200`
+       url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)&order=year.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       }
@@ -1833,6 +1844,7 @@ async function loadArticles(){
       articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
     }
+    await enrichWithPremiumIfPro(articles)
     renderFeed()
     loadSidebar()
     loadTrending()
@@ -1920,10 +1932,10 @@ function animateCount(el, target){
 }
 async function loadCounts(){
   try{
-    const r1=await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+    const r1=await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
     // TRIAD count
-    const r3=await fetch(`${SB_URL}/rest/v1/articles?select=id&episteme_sensory_pro=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+    const r3=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_episteme_sensory_pro=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal);window._triadCount=triadTotal;loadTrending()}
     if(total>0){
@@ -1932,17 +1944,17 @@ async function loadCounts(){
       if(obSub) obSub.textContent=total.toLocaleString('en-US',{maximumFractionDigits:0}).replace(/,/g,',')+'+  research studies translated into three dimensions of professional knowledge.'
     }
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
-    const r2=await fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
+    const r2=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
     if(newCount>0&&document.getElementById('newCount')) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
-    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles?select=id&core_claim=not.is.null`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
+    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_core_claim=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
     const synthResp=await fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const synthStats=await synthResp.json()
     const analyzed=parseInt(r4.headers.get("content-range")?.split("/")[1]||"0")
     const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
     const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
     const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
-    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE');const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=totalForDb.toLocaleString('sv-SE')
+    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE');const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=totalForDb.toLocaleString('sv-SE')
     const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' new today'
     const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE');const pyA=document.getElementById('pyAnalysed');if(pyA)pyA.textContent=analyzed.toLocaleString('sv-SE')
     const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
@@ -2266,7 +2278,7 @@ function interpolateColor(hex1, hex2, t){
 
 async function loadKnowledgeMap(){
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=topic,fetched_at,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_waiter,relevance_sci_educator,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator&limit=5000`,{headers:H})
+    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=topic,fetched_at,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_waiter,relevance_sci_educator,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator&limit=5000`,{headers:H})
     const arts = await r.json()
     if(!Array.isArray(arts)||arts.length===0) return
 
@@ -2571,10 +2583,15 @@ function countryFlags(c){if(!c||!c.length)return '';return(Array.isArray(c)?c:[c
 var _artData=null
 window.openArticleFromId = async function(id){
   try {
-    const r = await fetch(SB_URL+'/rest/v1/articles?select=*&id=eq.'+encodeURIComponent(id),{headers:H})
+    const r = await fetch(SB_URL+'/rest/v1/articles_public?select=*&id=eq.'+encodeURIComponent(id),{headers:H})
     const data = await r.json()
-    if(data && data[0]) { openArticleOverlay(data[0]); return }
-    throw new Error('not found')
+    if(!Array.isArray(data) || !data[0]) throw new Error('not found')
+    const merged = Object.assign({}, data[0])
+    try {
+      const {data:full} = await sb.rpc('get_articles_full',{article_ids:[id]})
+      if(Array.isArray(full) && full[0]) Object.assign(merged, full[0])
+    } catch(e) { /* non-Pro or RPC failure — proceed with metadata only */ }
+    openArticleOverlay(merged)
   } catch(e) {
     const si=document.getElementById('searchInput'); if(si) si.value=''
     loadArticles()
@@ -2596,7 +2613,18 @@ function openArticleOverlay(article){
   _artData._ep = article['episteme_'+r] || article.episteme_sommelier || ''
   _artData._tc = article['techne_'+r] || article.techne_sommelier || ''
   _artData._ph = article['phronesis_'+r] || article.phronesis_sommelier || ''
-  window.switchArtTriad('e')
+  const hasPremium = !!(_artData._ep || _artData._tc || _artData._ph)
+  const nav = document.querySelector('.art-triad-nav')
+  if(nav) nav.style.display = hasPremium ? '' : 'none'
+  if(hasPremium){
+    window.switchArtTriad('e')
+  } else {
+    const content = document.getElementById('artTriadContent')
+    if(content){
+      content.className = 'art-triad-content'
+      content.innerHTML = '<div style="padding:24px;text-align:center;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px"><div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">TRIAD analysis · Pro</div><div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px">ε Episteme · τ Techne · φ Phronesis — the three lenses on 5,200+ TRIAD-analyzed studies unlock with Pro.</div><button class="upgrade-btn" onclick="closeArticleModal();openModal(\'upgradeModal\')" style="padding:8px 20px;font-size:12px">Upgrade to Pro →</button></div>'
+    }
+  }
   if(article.imrad_introduction){
     document.getElementById('artImrad').style.display='block'
     document.getElementById('artImradBody').innerHTML = ['introduction','methods','results','discussion'].map(k=>article['imrad_'+k]?'<div class="art-imrad-row"><div class="art-imrad-label">'+k+'</div><div class="art-imrad-text">'+article['imrad_'+k]+'</div></div>':'').join('')
@@ -2695,7 +2723,7 @@ window.showReturnSignal = async function(user) {
     const newStreak = daysSince <= 1 ? streak + (daysSince===1?1:0) : 1
     await sb.from('profiles').update({last_visit:now.toISOString(),visit_streak:newStreak}).eq('id',user.id)
     if(daysSince < 1) return
-    const {count} = await sb.from('articles').select('*',{count:'exact',head:true}).gt('fetched_at',profile.last_visit)
+    const {count} = await sb.from('articles_public').select('*',{count:'exact',head:true}).gt('fetched_at',profile.last_visit)
     const rn = ({all:'gastronomy',sommelier:'sommelier',chef:'chef',gastronomy:'gastronomy',fb_manager:'F&B management',food_researcher:'food research',sensory_pro:'sensory science'})[window.role||'all'] || 'gastronomy'
     const dayLabel = daysSince===1?'yesterday':daysSince+' days ago'
     bar.innerHTML = '<div class="return-bar"><div class="return-streak"><div class="return-streak-num">'+newStreak+'</div><div class="return-streak-label">day streak</div></div><div class="return-msg"><div class="return-msg-main">'+(count||'New')+' articles added in '+rn+' since your last visit</div><div class="return-msg-sub">Last visited '+dayLabel+' &middot; '+(profile.weekly_reads||0)+' articles read this week</div></div><button class="return-cta" onclick="document.getElementById(\'feedPane\').scrollIntoView({behavior:\'smooth\'})">See what\'s new &rarr;</button></div>'
@@ -2733,7 +2761,7 @@ window.doSemanticSearch = async function() {
       <div style="padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id||''}')">
         <div style="font-size:10px;color:var(--gold);margin-bottom:3px">${a.journal||''} · ${a.year||''} · <span style="color:var(--episteme)">Match: ${Math.round((a.similarity||0)*100)}%</span></div>
         <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">${a.title?.slice(0,120)||''}</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic">${a.core_claim?.slice(0,150)||''}</div>
+        ${(isPro && a.core_claim)?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic">${a.core_claim.slice(0,150)}</div>`:''}
       </div>
     `).join('')
   } catch(e) {
@@ -2757,16 +2785,17 @@ window.renderMyLibrary = async function() {
     return
   }
 
-  // Hämta sparade artiklar med full data
+  // Hämta sparade artiklar: metadata från vy, TRIAD via RPC för Pro
   const ids = [...savedArticleIds]
   const r = window.role && window.role !== 'all' ? window.role : 'sensory_pro'
   const epCol = 'episteme_'+r, tcCol = 'techne_'+r, phCol = 'phronesis_'+r
 
-  const resp = await fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,topic,journal,year,${epCol},${tcCol},${phCol}&id=in.(${ids.join(',')})`, {
+  const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year&id=in.(${ids.join(',')})`, {
     headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
   })
   const arts = await resp.json()
   if(!Array.isArray(arts)) return
+  await enrichWithPremiumIfPro(arts)
 
   // Gruppera per topic
   const groups = {}
@@ -2837,7 +2866,7 @@ window.loadMiniTicker = async function() {
   const el = document.getElementById('miniTicker')
   if(!el) return
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=title,journal,year&or=(episteme_sommelier.not.is.null,episteme_chef.not.is.null,episteme_gastronomy.not.is.null,episteme_fb_manager.not.is.null,episteme_food_researcher.not.is.null)&order=year.desc.nullslast&limit=10`, {
+    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=title,journal,year&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)&order=year.desc.nullslast&limit=10`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const data = await r.json()
@@ -2871,7 +2900,7 @@ window.loadSpotlight = async function() {
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
 
     const [artResp, synthResp] = await Promise.all([
-      fetch(`${SB_URL}/rest/v1/articles?select=id,title,headline_en,core_claim,journal,year,url,fetched_at,${epCol},${tcCol},${phCol},${relCol},citation_count&${epCol}=not.is.null&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
+      fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${r}&has_episteme_${r}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
         headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
       }),
       fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'})[r]||'sommelier'}&order=updated_at.desc&limit=4`, {
@@ -2882,6 +2911,7 @@ window.loadSpotlight = async function() {
     const arts = await artResp.json()
     const synths = await synthResp.json()
     if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet for this role.</p>'; return }
+    await enrichWithPremiumIfPro(arts)
 
     const big = arts.filter(a => (a[relCol]||0) >= 8)
     const mid = arts.filter(a => (a[relCol]||0) >= 6 && (a[relCol]||0) < 8)
@@ -3172,7 +3202,7 @@ window.selectedCountry = null
 
 window.loadWorldMapData = async function() {
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles?select=institution_coords,primary_institution,institution_rank,topic&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&limit=3000`, {
+    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=institution_coords,primary_institution,institution_rank,topic&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&limit=3000`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const articles = await r.json()
