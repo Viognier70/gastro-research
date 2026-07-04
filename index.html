@@ -2528,9 +2528,59 @@ const COUNTRY_FLAGS = {'Sweden':'🇸🇪','United Kingdom':'🇬🇧','United S
 function countryFlags(c){if(!c||!c.length)return '';return(Array.isArray(c)?c:[c]).slice(0,4).map(x=>COUNTRY_FLAGS[x]||'').filter(Boolean).join(' ')}
 
 // Init
+var _artData=null
+window.openArticleFromId = async function(id){
+  try {
+    const r = await fetch(SB_URL+'/rest/v1/articles?select=*&id=eq.'+encodeURIComponent(id),{headers:H})
+    const data = await r.json()
+    if(data && data[0]) { openArticleOverlay(data[0]); return }
+    throw new Error('not found')
+  } catch(e) {
+    const si=document.getElementById('searchInput'); if(si) si.value=''
+    loadArticles()
+  }
+}
+function openArticleOverlay(article){
+  _artData = article
+  const r = (typeof role!=='undefined' && role && role!=='all') ? role : 'sensory_pro'
+  const topic = (article.topic||'').replace(/_/g,' ')
+  const badges = (topic?'<span class="topic-badge">'+topic+'</span>':'')+
+    (article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+
+    (article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
+  document.getElementById('artBadges').innerHTML = badges
+  document.getElementById('artTitle').textContent = article.title || ''
+  document.getElementById('artMeta').textContent = [article.authors?article.authors.split(',')[0]:null, article.journal, article.year].filter(Boolean).join(' · ')
+  const claim = article.core_claim || article.insight || ''
+  const claimEl = document.getElementById('artClaim')
+  if(claim){ claimEl.textContent = claim; claimEl.style.display='block' } else { claimEl.style.display='none' }
+  _artData._ep = article['episteme_'+r] || article.episteme_sommelier || ''
+  _artData._tc = article['techne_'+r] || article.techne_sommelier || ''
+  _artData._ph = article['phronesis_'+r] || article.phronesis_sommelier || ''
+  window.switchArtTriad('e')
+  if(article.imrad_introduction){
+    document.getElementById('artImrad').style.display='block'
+    document.getElementById('artImradBody').innerHTML = ['introduction','methods','results','discussion'].map(k=>article['imrad_'+k]?'<div class="art-imrad-row"><div class="art-imrad-label">'+k+'</div><div class="art-imrad-text">'+article['imrad_'+k]+'</div></div>':'').join('')
+  } else document.getElementById('artImrad').style.display='none'
+  const rb = document.getElementById('artReadBtn')
+  if(article.url){ rb.href = article.url; rb.style.display='inline-flex' } else rb.style.display='none'
+  document.getElementById('artOverlay').classList.add('open')
+  document.body.style.overflow='hidden'
+}
+window.switchArtTriad = function(key){
+  if(!_artData) return
+  const content = document.getElementById('artTriadContent')
+  const text = key==='e' ? _artData._ep : key==='t' ? _artData._tc : _artData._ph
+  content.textContent = text || (key==='e'?'Episteme not yet generated.':key==='t'?'Techne not yet generated.':'Phronesis not yet generated.')
+  content.className = 'art-triad-content '+key
+  ;['E','T','P'].forEach(x => {
+    const b = document.getElementById('artBtn'+x)
+    if(b) b.className = 'art-triad-btn'+(x.toLowerCase()===key?' active-'+key:'')
+  })
+}
 window.closeArticleModal = function() {
-  const m = document.getElementById('articleModal')
-  if(m) m.style.display = 'none'
+  const ov = document.getElementById('artOverlay')
+  if(ov) ov.classList.remove('open')
+  document.body.style.overflow = ''
 }
 
 window.closeOnboarding = function() {
@@ -2640,7 +2690,7 @@ window.doSemanticSearch = async function() {
     }
 
     results.innerHTML = data.map(a => `
-      <div style="padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="document.getElementById('searchInput').value='';loadArticles()">
+      <div style="padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id||''}')">
         <div style="font-size:10px;color:var(--gold);margin-bottom:3px">${a.journal||''} · ${a.year||''} · <span style="color:var(--episteme)">Match: ${Math.round((a.similarity||0)*100)}%</span></div>
         <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">${a.title?.slice(0,120)||''}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic">${a.core_claim?.slice(0,150)||''}</div>
@@ -2945,9 +2995,9 @@ setTimeout(()=>{if(typeof window.initWorldMap==='function') window.initWorldMap(
     <div class="art-body">
       <div class="art-claim" id="artClaim" style="display:none"></div>
       <div class="art-triad-nav">
-        <button class="art-triad-btn active-e" id="artBtnE" onclick="switchTriad('e')">e Episteme</button>
-        <button class="art-triad-btn" id="artBtnT" onclick="switchTriad('t')">t Techne</button>
-        <button class="art-triad-btn" id="artBtnP" onclick="switchTriad('p')">p Phronesis</button>
+        <button class="art-triad-btn active-e" id="artBtnE" onclick="switchArtTriad('e')">ε Episteme</button>
+        <button class="art-triad-btn" id="artBtnT" onclick="switchArtTriad('t')">τ Techne</button>
+        <button class="art-triad-btn" id="artBtnP" onclick="switchArtTriad('p')">φ Phronesis</button>
       </div>
       <div class="art-triad-content e" id="artTriadContent"></div>
       <div class="art-imrad" id="artImrad" style="display:none">
