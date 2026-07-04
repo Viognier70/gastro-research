@@ -24,6 +24,9 @@ const BLOCKED_JOURNALS = new Set([
 
 const FOOD_KEYWORDS = /wine|sommelier|tasting|flavor|flavour|aroma|taste|sensory|crossmodal|multisensory|gastronom|culinar|pairing|olfact|umami|ferment|beverage|hospitality|restaurant|chef|cuisine|eating|food quality|food science|food technol/i
 
+// Trusted core gastronomy/food-science journals — always allowed through the relevance gate
+const TRUSTED_JOURNALS = /food quality and preference|appetite|chemical senses|international journal of gastronomy|journal of sensory studies|food research international|flavour|journal of culinary|food science|food technolog|meat science|journal of wine|oeno|beverages|fermentation|food chemistry|nutrients|critical reviews in food/i
+
 function isBlockedJournal(journal: string, title: string, abstract: string): boolean {
   if(!journal) return false
   const j = journal.toLowerCase().trim()
@@ -79,6 +82,26 @@ function detectTopic(title: string, abstract: string, journal: string): string {
   return bestTopic
 }
 
+// ─── RELEVANCE GATE ───────────────────────────────────────────────────────────
+// Returns a reason string if the article should be REJECTED, or null if it passes.
+// Applies to ALL sources (Scopus, OpenAlex, PubMed, researchers, fresh).
+function relevanceReject(article: any): string | null {
+  // B1: abstract is NOT required at collection time — Scopus search API does not
+  // return abstracts; they are filled in later by the backfill-abstracts job.
+  // The real abstract-based relevance judgement happens in the separate
+  // relevance-check step (B2), after enrichment. Here we only do a COARSE filter.
+  // 1. Must have a DOI (scientific traceability — available from search results)
+  if (!article.doi && !/doi/i.test(article.url || '')) return 'no DOI'
+  // 2. Coarse relevance on title + journal (abstract usually absent at this stage):
+  //    trusted core journal OR food keywords in the title.
+  const j = (article.journal || '').toLowerCase()
+  const txt = `${article.title} ${article.abstract || ''}`
+  if (!TRUSTED_JOURNALS.test(j) && !FOOD_KEYWORDS.test(txt)) return 'off-topic'
+  // 3. Explicit journal blocklist still applies
+  if (isBlockedJournal(article.journal || '', article.title || '', article.abstract || '')) return 'blocked journal'
+  return null
+}
+
 // ─── GEMINI ANALYSIS ──────────────────────────────────────────────────────────
 async function analyzeWithClaude(title: string, abstract: string, topic: string): Promise<any> {
   const prompt = `You are a research analyst for gastronomy and food science. Return ONLY valid JSON (no markdown):
@@ -125,6 +148,14 @@ async function isDuplicate(doi: string, title: string): Promise<boolean> {
 async function saveArticle(article: any, topic: string): Promise<boolean> {
   try {
     if (!article.title || article.title.length < 10) return false
+
+    // ── RELEVANSGRIND (gäller ALLA källor) ──
+    const reject = relevanceReject(article)
+    if (reject) {
+      console.log(`Skipped (${reject}): ${article.title.slice(0,60)} [${article.journal || '-'}]`)
+      return false
+    }
+
     if (await isDuplicate(article.doi || '', article.title)) return false
 
     const analysis = article.abstract?.length > 50 ?
@@ -178,7 +209,6 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
         `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
       ).filter(Boolean).join(', ') || e['dc:creator'] || ''
       const doi = e['prism:doi'] || ''
-      // Extract affiliation countries
       const affils = e['affiliation'] || []
       const countries = [...new Set(
         (Array.isArray(affils) ? affils : [affils])
@@ -187,7 +217,6 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
       )]
       const country = countries[0] || ''
 
-      // Extract affiliation countries if not already extracted
       const affils2 = e['affiliation'] || []
       const allCountries = [...new Set(
         (Array.isArray(affils2) ? affils2 : [affils2])
@@ -302,7 +331,6 @@ const ARXIV_BLOCKED_PREFIXES = ['cs.LG','cs.CV','cs.AI','cs.NE','cs.CL','cs.IR',
 function isBlockedArxiv(externalIds: any): boolean {
   const arxivId = externalIds?.ArXiv
   if(!arxivId) return false
-  // Can't filter by category via SemanticScholar, so use title-based heuristics instead
   return false // Categories not available; use Haiku relevance scoring instead
 }
 
@@ -345,7 +373,6 @@ async function fetchFresh(): Promise<number> {
   let added = 0
   const currentYear = new Date().getFullYear()
 
-  // Scopus: rotate through all journals for fresh content
   const freshJournals = [
     'Food Quality and Preference', 'Appetite', 'Chemical Senses',
     'Frontiers in Psychology', 'International Journal of Gastronomy and Food Science',
@@ -366,7 +393,6 @@ async function fetchFresh(): Promise<number> {
 async function runBackfill(): Promise<number> {
   let added = 0
 
-  // Get next incomplete backfill jobs — prioritize most recent years first
   const { data: jobs } = await supabase
     .from('backfill_progress')
     .select('*')
@@ -417,7 +443,6 @@ async function runBackfill(): Promise<number> {
         if (nextYear < MIN_YEAR) completed = true
       }
 
-      // Also run Semantic Scholar for same query+year
       const ssArticles = await fetchSemanticScholar(identifier, year)
       for (const a of ssArticles) {
         const topic = detectTopic(a.title, a.abstract, a.journal)
@@ -535,18 +560,15 @@ async function fetchResearchers(): Promise<number> {
 Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}))
 
-  // Run fresh fetch first (always)
   const researcherAdded = await fetchResearchers()
   const freshAdded = await fetchFresh()
   console.log(`Fresh fetch: +${freshAdded}`)
 
-  // Then run backfill
   const backfillAdded = await runBackfill()
   console.log(`Backfill: +${backfillAdded}`)
 
   const total = freshAdded + backfillAdded
 
-  // Progress summary
   const { data: remaining } = await supabase
     .from('backfill_progress')
     .select('source, identifier, current_year, completed')
