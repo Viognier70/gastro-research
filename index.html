@@ -2023,14 +2023,22 @@ async function loadSavedArticles(){
 async function handleAuth(){
   const email=document.getElementById('authEmail').value
   const password=document.getElementById('authPassword').value
-  if(authIsSignup){await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}})}
-  else{await sb.auth.signInWithPassword({email,password})}
+  let authError=null
+  if(authIsSignup){const {error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}});authError=error}
+  else{const {error}=await sb.auth.signInWithPassword({email,password});authError=error}
+  if(authError){alert(authError.message||'Sign-in failed. Please try again.');return}
   closeModal('authModal')
   const {data:{session}}=await sb.auth.getSession()
   if(session){
     const btn=document.getElementById('authBtn')
     if(btn){btn.textContent=session.user.email.slice(0,1).toUpperCase();btn.style.background='var(--gold)';btn.style.color='#000'}
     loadSavedArticles()
+    const pending=localStorage.getItem('gs_pending_checkout')
+    if(pending){
+      localStorage.removeItem('gs_pending_checkout')
+      selectedPlan=pending
+      startCheckout()
+    }
   }
 }
 function handleUpgrade(){openModal('authModal')}
@@ -2038,7 +2046,13 @@ function handleUpgrade(){openModal('authModal')}
 async function startCheckout(){
   const plan = selectedPlan || 'monthly'
   const {data:{session}} = await sb.auth.getSession()
-  
+  if(!session){
+    localStorage.setItem('gs_pending_checkout', plan)
+    closeModal('upgradeModal')
+    authMode='signup'
+    openModal('authModal')
+    return
+  }
   try {
     const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/stripe-checkout', {
       method: 'POST',
