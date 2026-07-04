@@ -2031,11 +2031,27 @@ async function loadSavedArticles(){
 }
 
 
+window.toggleAuthMode=function(){
+  authMode=(authMode==='signup')?'signin':'signup'
+  const title=document.getElementById('authTitle')
+  const btn=document.querySelector('#authForm button')
+  const sw=document.getElementById('authSwitch')
+  if(authMode==='signup'){
+    if(title)title.textContent='Create account'
+    if(btn)btn.textContent='Create account'
+    if(sw)sw.innerHTML='Already have an account? <span onclick="toggleAuthMode()">Sign in</span>'
+  }else{
+    if(title)title.textContent='Sign in'
+    if(btn)btn.textContent='Sign in'
+    if(sw)sw.innerHTML='No account? <span onclick="toggleAuthMode()">Create one</span>'
+  }
+}
+
 async function handleAuth(){
   const email=document.getElementById('authEmail').value
   const password=document.getElementById('authPassword').value
   let authError=null
-  if(authIsSignup){const {error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}});authError=error}
+  if(authMode==='signup'){const {error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}});authError=error}
   else{const {error}=await sb.auth.signInWithPassword({email,password});authError=error}
   if(authError){alert(authError.message||'Sign-in failed. Please try again.');return}
   closeModal('authModal')
@@ -2060,7 +2076,7 @@ async function startCheckout(){
   if(!session){
     localStorage.setItem('gs_pending_checkout', plan)
     closeModal('upgradeModal')
-    authMode='signup'
+    if(authMode!=='signup') toggleAuthMode()
     openModal('authModal')
     return
   }
