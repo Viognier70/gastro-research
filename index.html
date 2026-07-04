@@ -2967,7 +2967,16 @@ function checkObReady(){
   if(b) b.disabled=!(_obRole&&e&&e.includes('@'))
   if(eb) eb.disabled=!_obRole
 }
-window.confirmObRole = function() {
+window.confirmObRole = async function() {
+  const email=document.getElementById('obEmail')?.value?.trim()
+  if(email&&email.includes('@')){
+    try{
+      await fetch(SB_URL+'/rest/v1/trial_signups',{method:'POST',
+        headers:{...H,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({email:email,role:window._obSelectedRole||null,source:'onboarding_trial'})})
+      localStorage.setItem('gs_trial_email',email)
+    }catch(e){console.log('trial signup save failed',e)}
+  }
   saveObRoleAndExplore()
 }
 
