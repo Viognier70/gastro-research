@@ -1184,7 +1184,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="closeModal('upgradeModal')">×</button>
     <div class="modal-eyebrow">Gusto Science Pro</div>
-    <div class="modal-title">Unlock the full research library</div>
+    <div class="modal-title" id="upgradeTitle">Unlock the full research library</div>
     <ul class="upgrade-features">
       <li>Unlimited access to 5,200+ TRIAD-analyzed studies — growing daily</li>
       <li>All three TRIAD layers per article</li>
@@ -1245,6 +1245,18 @@ const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 const STRIPE_PK='pk_live_51PESII01M2w13V3npDEvdbuNBFhxkMS81hr5AxeSD7jFTsqKdJ0JbHPLyla10n2dwmVFhlexjGDQHYg6vXGiNUWI00hxMg0oKb'
 const H={'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON}
 const FREE_LIMIT=3
+const TRIAL_DAYS=14
+function freeCountKey(){return 'gs_free_'+new Date().toISOString().slice(0,10)}
+function readFreeCount(){return parseInt(localStorage.getItem(freeCountKey())||'0',10)||0}
+function writeFreeCount(n){localStorage.setItem(freeCountKey(),String(n))}
+function trialState(){
+  if(localStorage.getItem('gs_reverse_trial')!=='1') return {active:false,daysLeft:0,started:false}
+  const start=parseInt(localStorage.getItem('gs_trial_start')||'0',10)
+  if(!start) return {active:false,daysLeft:0,started:false}
+  const elapsed=Date.now()-start
+  const left=Math.ceil((TRIAL_DAYS*24*60*60*1000-elapsed)/(24*60*60*1000))
+  return {active:elapsed<TRIAL_DAYS*24*60*60*1000,daysLeft:Math.max(0,left),started:true}
+}
 function checkTrialReset(){const today=new Date().toDateString();const last=localStorage.getItem("gs_free_date");if(last!==today){localStorage.setItem("gs_free_date",today);localStorage.removeItem("gs_free_used")}}
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
@@ -1360,9 +1372,9 @@ function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
   const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=remaining>0?'':t('freeLeft',remaining)
   const _ff=document.getElementById('freeFill');if(_ff)_ff.style.width=Math.round((freeCount/FREE_LIMIT)*100)+'%'
-  const isReverseTrial=localStorage.getItem('gs_reverse_trial')==='1'
-  const trialActive=localStorage.getItem('gs_trial_start')&&isReverseTrial
-  document.getElementById('freeBar').style.display=(isPro&&!trialActive)?'none':'flex'
+  const ts=trialState()
+  document.getElementById('freeBar').style.display=(isPro&&!ts.active)?'none':'flex'
+  if(ts.active&&_ft)_ft.textContent=`Trial · ${ts.daysLeft} day${ts.daysLeft===1?'':'s'} left`
 }
 
 function openModal(id){document.getElementById(id).classList.add('open')}
@@ -1507,7 +1519,7 @@ function sigMark(hasBridge){
 }
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
-  if(!locked) freeCount=Math.max(freeCount,idx+1)
+  if(!locked){const next=Math.max(freeCount,idx+1);if(next!==freeCount){freeCount=next;writeFreeCount(freeCount)}}
   const topicLabel=(a.topic||'').replace(/_/g,' ')
   const hasIMRaD=a.imrad_introduction&&a.imrad_introduction.length>5
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
@@ -1735,7 +1747,7 @@ function renderFeed(){
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
-  freeCount=0
+  freeCount=readFreeCount()
   document.getElementById('feedCount').textContent=source.length+' articles'+(showingSaved?' (saved)':'')
   updateFeedIntro(source.length)
   if(source.length===0){
@@ -2104,7 +2116,19 @@ async function initAuth(){
     } catch(e) { isPro = false }
     await loadSavedArticles()
   }
-  if(localStorage.getItem('isAdmin')==='true'&&session?.user?.email?.endsWith('@crichton-fock.com')) isPro=true
+  if(!isPro){
+    const ts=trialState()
+    if(ts.active){isPro=true}
+    else if(ts.started&&!localStorage.getItem('gs_trial_expired_shown')){
+      localStorage.setItem('gs_trial_expired_shown','1')
+      setTimeout(()=>{
+        const title=document.getElementById('upgradeTitle')
+        if(title) title.textContent='Your 14-day trial has ended — keep your full access'
+        openModal('upgradeModal')
+      },1500)
+    }
+  }
+  updateFreeBar()
 }
 
 // Admin fetch button
