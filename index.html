@@ -1862,7 +1862,7 @@ async function loadTrending(){
     const data=await r.json()
     if(!Array.isArray(data)||!data.length) return
     const maxCount = Math.max(...data.map(k => k.total_count||0))
-    const totalArticles = window._triadCount || 1809
+    const totalArticles = window._triadCount || 5203
     const metaEl = document.getElementById('trendingMeta')
     if(metaEl) metaEl.textContent = `Top keywords by frequency · ${totalArticles.toLocaleString()} TRIAD-analysed articles · 2025 vs 2024`
     const di={rising:'↑',stable:'→',declining:'↓',new:'✦'}
