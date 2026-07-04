@@ -2079,8 +2079,17 @@ async function startCheckout(){
 // Check for pro=true in URL after Stripe redirect — verify against DB
 if(window.location.search.includes('pro=true')){
   history.replaceState({}, '', window.location.pathname)
-  // Will be verified in initAuth below
-  setTimeout(()=>alert('Welcome to Gusto Science Pro! 🎉 Enjoy unlimited access.'), 1000)
+  ;(async()=>{
+    for(let i=0;i<15;i++){
+      const {data:{session}}=await sb.auth.getSession()
+      if(session){
+        const {data:p}=await sb.from('profiles').select('is_pro').eq('id',session.user.id).maybeSingle()
+        if(p?.is_pro){isPro=true;updateFreeBar();loadArticles();alert('Welcome to Gusto Science Pro! Enjoy unlimited access.');return}
+      }
+      await new Promise(r=>setTimeout(r,2000))
+    }
+    alert('Payment received — your Pro access is being activated. If it is not active within a few minutes, contact support.')
+  })()
 }
 
 async function initAuth(){
