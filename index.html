@@ -1734,9 +1734,10 @@ function renderFeed(){
   // regardless of selected role (author/title/journal search shows all matches).
   if(role!=='all' && !search){
     if(sort==='newest'){
-      // Only show articles with TRIAD when sorting newest
+      // Only show articles with TRIAD when sorting newest. Use presence booleans
+      // from articles_public — payload episteme_* is Pro-only via RPC.
       const ecol = role==='all'?'sensory_pro':role
-      source=source.filter(a=>a['episteme_'+ecol]||a.episteme_sensory_pro)
+      source=source.filter(a=>a['has_episteme_'+ecol]===true||a.has_episteme_sensory_pro===true)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default)
@@ -1755,7 +1756,7 @@ function renderFeed(){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
     const isSearching=document.getElementById('searchInput').value.trim().length>1
-    if(!isSearching) source=source.filter(a=>a.episteme_sommelier||a.episteme_chef||a.episteme_gastronomy||a.episteme_fb_manager||a.episteme_food_researcher)
+    if(!isSearching) source=source.filter(a=>a.has_episteme_sommelier===true||a.has_episteme_chef===true||a.has_episteme_gastronomy===true||a.has_episteme_fb_manager===true||a.has_episteme_food_researcher===true)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
