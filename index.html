@@ -3139,13 +3139,12 @@ setTimeout(()=>{if(typeof window.initWorldMap==='function') window.initWorldMap(
 </div>
 
 <script>
-var _obRole=null
 function checkObReady(){
   var e=document.getElementById('obEmail')?.value?.trim()
   var b=document.getElementById('obBtn')
   var eb=document.getElementById('obExploreBtn')
-  if(b) b.disabled=!(_obRole&&e&&e.includes('@'))
-  if(eb) eb.disabled=!_obRole
+  if(b) b.disabled=!(window._obSelectedRole&&e&&e.includes('@'))
+  if(eb) eb.disabled=!window._obSelectedRole
 }
 window.confirmObRole = async function() {
   const email=document.getElementById('obEmail')?.value?.trim()
@@ -3161,11 +3160,11 @@ window.confirmObRole = async function() {
 }
 
 function saveObRoleAndExplore(){
-  const _obRole = window._obSelectedRole
-  if(!_obRole) return
+  const selectedRole = window._obSelectedRole
+  if(!selectedRole) return
   const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
-  const feedRole=roleMap[_obRole]||_obRole
-  localStorage.setItem('gustoRole',_obRole)
+  const feedRole=roleMap[selectedRole]||selectedRole
+  localStorage.setItem('gustoRole',selectedRole)
   localStorage.setItem('gs_role',feedRole)
   localStorage.setItem('gs_onboarded','1')
   if(!localStorage.getItem('gs_trial_start')){
