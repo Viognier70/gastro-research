@@ -1544,7 +1544,13 @@ function cardHTML(a,idx){
   const ph=a['phronesis_'+r]||''
   const bridgeET=a['bridge_episteme_techne_'+r]||''
   const bridgeTP=a['bridge_techne_phronesis_'+r]||''
-  const hasTriad=ep.length>10||tc.length>10||ph.length>10
+  const hasPremiumPayload=ep.length>10||tc.length>10||ph.length>10
+  // Presence-boolean från articles_public: finns TRIAD för aktuell roll?
+  // För role='all' räcker att någon roll har TRIAD (matchar server-OR).
+  const hasTriadPresence = a['has_episteme_'+r]===true || (role==='all' && (
+    a.has_episteme_sommelier===true||a.has_episteme_chef===true||
+    a.has_episteme_gastronomy===true||a.has_episteme_fb_manager===true||
+    a.has_episteme_food_researcher===true||a.has_episteme_sensory_pro===true))
   const keywords=a.claim_keywords||[]
   const coreClaim=a.core_claim||a.insight||''
   const citCount=a.citation_count||null
@@ -1553,7 +1559,7 @@ function cardHTML(a,idx){
     <div class="card-top">
       <span class="topic-badge">${topicLabel}</span>
       <span class="source-badge">${a.source_label||''}</span>
-      ${hasTriad?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()" title="TRIAD lenses with analysis">
+      ${hasTriadPresence?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()" title="TRIAD lenses with analysis">
         ${sigMark((bridgeET||'').length>10||(bridgeTP||'').length>10)}
         <div class="triad-legend-popup">
           <div class="tlp-row"><div class="tlp-dot" style="background:#1A3A5C"></div><div><div class="tlp-label" style="color:#7BA7D4">ε Episteme</div><div class="tlp-desc">What the research actually establishes — the scientific finding</div></div></div>
@@ -1570,7 +1576,7 @@ function cardHTML(a,idx){
           <div class="rt-row"><span>Role match</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,relevance*10)}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${relevance}/10</span></div>
           <div class="rt-row"><span>Citations</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,Math.log10((a.citation_count||0)+1)/Math.log10(1000)*100)}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${(a.citation_count||0).toLocaleString()}</span></div>
           <div class="rt-row"><span>Recency</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${a.year>=2024?95:a.year>=2022?80:a.year>=2020?65:a.year>=2015?45:25}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${a.year||'?'}</span></div>
-          <div class="rt-row"><span>TRIAD depth</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:30}%"></div></div></div>
+          <div class="rt-row"><span>TRIAD depth</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:hasTriadPresence?60:30}%"></div></div></div>
           <div class="rt-footer">Citations · recency · AI role match · peer sources only</div>
         </div>
       </div>`:''
@@ -1580,7 +1586,7 @@ function cardHTML(a,idx){
     ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''}
     ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
-    ${!locked&&hasTriad?`
+    ${!locked?(hasPremiumPayload?`
     <div class="triad-nav" id="triad-nav-${cid}">
       <button class="triad-nav-btn e-active" onclick="switchTriad('${cid}','e',this)">ε Episteme</button>
       <button class="triad-nav-btn" onclick="switchTriad('${cid}','t',this)">τ Techne</button>
@@ -1621,12 +1627,16 @@ function cardHTML(a,idx){
         <div style="font-size:12px;color:#7A3D00;line-height:1.7">${ph}</div>
       </div>`:''}
     </div>
-    `:`<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic">TRIAD knowledge being generated — check back shortly.</div>`}
+    `:hasTriadPresence?`<div style="margin-top:8px;padding:14px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;text-align:center">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">ε · τ · φ TRIAD analysis</div>
+      <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px">Unlock the three-lens read for your role — this article plus 5,000+ others.</div>
+      <button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:11px;padding:5px 14px">Upgrade to Pro →</button>
+    </div>`:`<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);font-style:italic">No TRIAD analysis for this article yet.</div>`):''}
     ${a.limitation&&!locked?`<div class="card-limitation"><span style="margin-right:4px">⚠</span>${a.limitation}</div>`:''}
     <div class="art-timestamps">
       ${a.year?`<span>Published ${a.year}</span>`:''}
       ${a.fetched_at?`<span>Added ${new Date(a.fetched_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-      ${hasTriad?`<span class="art-ai-tag">TRIAD: AI-generated</span>`:''}
+      ${hasTriadPresence?`<span class="art-ai-tag">TRIAD: AI-generated</span>`:''}
     </div>
     <div class="card-footer">
       <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''} ${countryFlags(a.countries||[a.country])}</span>
