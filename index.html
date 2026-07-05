@@ -3246,18 +3246,25 @@ function checkObReady(){
   if(b) b.disabled=!(window._obSelectedRole&&e&&e.includes('@'))
   if(eb) eb.disabled=!window._obSelectedRole
 }
-// Lead-fångst för välkomstmailet. Anropad från startTrialFlow. Idempotens
-// mot dubbletter kommer i DEL 4 (unique-index på lower(email)); tills dess
-// hanterar welcome-email-fn:s welcome_sent_at dubblettmail på skärmnivå.
+// Lead-fångst för välkomstmailet. Idempotens säkras av unique-index på
+// lower(email) i trial_signups (DEL 4-migration). Vi lowercasar innan
+// insert så indexet matchar 1:1 och tolererar 409 (unique violation) som
+// "redan sparad" — ingen andra webhook-fire, inget dubbelmail.
 async function saveTrialLead(email, roleKey){
   if(!email || !email.includes('@')) return
+  const normalized = email.trim().toLowerCase()
   try{
-    await fetch(SB_URL+'/rest/v1/trial_signups', {
+    const resp = await fetch(SB_URL+'/rest/v1/trial_signups', {
       method: 'POST',
       headers: {...H, 'Content-Type':'application/json', 'Prefer':'return=minimal'},
-      body: JSON.stringify({email, role: roleKey || null, source: 'onboarding_trial'})
+      body: JSON.stringify({email: normalized, role: roleKey || null, source: 'onboarding_trial'})
     })
-    localStorage.setItem('gs_trial_email', email)
+    if(resp.status === 409){
+      // Redan sparad — dedup-indexet stoppade dubbletten. Ingen åtgärd.
+    } else if(!resp.ok){
+      console.log('trial signup save failed status', resp.status)
+    }
+    localStorage.setItem('gs_trial_email', normalized)
   } catch(e){ console.log('trial signup save failed', e) }
 }
 
