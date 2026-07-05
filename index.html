@@ -2762,31 +2762,60 @@ window.doSemanticSearch = async function() {
   results.style.display = 'block'
   results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Searching research...</div>'
 
+  // Stabil anon-identitet för rate-limit-räkning (mjuk gräns — går att
+  // nolla genom att rensa localStorage; hård gräns kräver auth ändå).
+  let anonId = localStorage.getItem('gs_anon_id')
+  if(!anonId){ anonId = crypto.randomUUID(); localStorage.setItem('gs_anon_id', anonId) }
+
+  // Skicka user-JWT om inloggad så edge-fn kan avgöra Pro-status via profiles.
+  let token = SB_ANON
   try {
-    // Anropa Anthropic API för att generera embedding via Claude artifact
+    const {data:{session}} = await sb.auth.getSession()
+    if(session?.access_token) token = session.access_token
+  } catch(_) { /* fall back to anon key */ }
+
+  try {
     const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/semantic-search', {
       method: 'POST',
       headers: {
         'apikey': SB_ANON,
-        'Authorization': `Bearer ${SB_ANON}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query, role: window.role || 'all', limit: 5 })
+      body: JSON.stringify({ query, role: window.role || 'all', limit: 5, anonId })
     })
 
     const data = await resp.json()
-    if(!Array.isArray(data) || !data.length) {
+
+    if(data?.limit === true){
+      results.innerHTML = `<div style="padding:16px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;text-align:center">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Daily free limit reached</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">You've used today's 3 free semantic searches. Pro unlocks unlimited semantic search across 5,000+ articles.</div>
+        <button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:11px;padding:6px 16px">Upgrade to Pro →</button>
+      </div>`
+      return
+    }
+
+    const hits = Array.isArray(data?.results) ? data.results : []
+    if(!hits.length) {
       results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">No results found. Try different search terms.</div>'
       return
     }
 
-    results.innerHTML = data.map(a => `
+    const cardsHtml = hits.map(a => `
       <div style="padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id||''}')">
         <div style="font-size:10px;color:var(--gold);margin-bottom:3px">${a.journal||''} · ${a.year||''} · <span style="color:var(--episteme)">Match: ${Math.round((a.similarity||0)*100)}%</span></div>
         <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">${a.title?.slice(0,120)||''}</div>
         ${(isPro && a.core_claim)?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic">${a.core_claim.slice(0,150)}</div>`:''}
       </div>
     `).join('')
+
+    const remaining = typeof data?.remaining === 'number' ? data.remaining : null
+    const nudge = (remaining !== null && remaining >= 0 && remaining < 3)
+      ? `<div style="font-size:10px;color:var(--text-tertiary);text-align:center;padding:8px 0;font-style:italic">${remaining} free semantic ${remaining===1?'search':'searches'} left today · <span style="color:var(--gold);cursor:pointer" onclick="openModal('upgradeModal')">unlock unlimited with Pro →</span></div>`
+      : ''
+
+    results.innerHTML = cardsHtml + nudge
   } catch(e) {
     results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Search unavailable. Try again.</div>'
     console.log('Semantic search error:', e)
