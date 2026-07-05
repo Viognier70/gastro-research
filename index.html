@@ -3247,25 +3247,36 @@ function checkObReady(){
   if(eb) eb.disabled=!window._obSelectedRole
 }
 // Lead-fångst för välkomstmailet. Idempotens säkras av unique-index på
-// lower(email) i trial_signups (DEL 4-migration). Vi lowercasar innan
-// insert så indexet matchar 1:1 och tolererar 409 (unique violation) som
-// "redan sparad" — ingen andra webhook-fire, inget dubbelmail.
+// lower(email) i trial_signups (DEL 4-migration). Best-effort: får ALDRIG
+// kasta eller returnera reject — anroparen (startTrialFlow) måste kunna
+// fortsätta till auth-modalen även om nätet är nere, indexet ger 409,
+// eller localStorage är avstängt.
 async function saveTrialLead(email, roleKey){
-  if(!email || !email.includes('@')) return
-  const normalized = email.trim().toLowerCase()
-  try{
-    const resp = await fetch(SB_URL+'/rest/v1/trial_signups', {
-      method: 'POST',
-      headers: {...H, 'Content-Type':'application/json', 'Prefer':'return=minimal'},
-      body: JSON.stringify({email: normalized, role: roleKey || null, source: 'onboarding_trial'})
-    })
-    if(resp.status === 409){
-      // Redan sparad — dedup-indexet stoppade dubbletten. Ingen åtgärd.
-    } else if(!resp.ok){
-      console.log('trial signup save failed status', resp.status)
+  try {
+    if(!email || !email.includes('@')) return
+    const normalized = email.trim().toLowerCase()
+    let resp = null
+    try {
+      resp = await fetch(SB_URL+'/rest/v1/trial_signups', {
+        method: 'POST',
+        headers: {...H, 'Content-Type':'application/json', 'Prefer':'return=minimal'},
+        body: JSON.stringify({email: normalized, role: roleKey || null, source: 'onboarding_trial'})
+      })
+    } catch(fetchErr) {
+      console.log('trial signup fetch failed', fetchErr)
     }
-    localStorage.setItem('gs_trial_email', normalized)
-  } catch(e){ console.log('trial signup save failed', e) }
+    if(resp){
+      if(resp.status === 409){
+        // Redan sparad — dedup-indexet stoppade dubbletten. Tyst no-op.
+      } else if(!resp.ok){
+        console.log('trial signup save failed status', resp.status)
+      }
+    }
+    try { localStorage.setItem('gs_trial_email', normalized) } catch(_){}
+  } catch(outerErr) {
+    // Sista skyddsnätet — inget här får någonsin påverka anroparen.
+    console.log('saveTrialLead swallowed', outerErr)
+  }
 }
 
 // Onboardingens "Start free trial"-knapp. Kräver konto — anon skickas till
@@ -3273,16 +3284,37 @@ async function saveTrialLead(email, roleKey){
 // resumePendingTrialIfAny plockar upp dem så fort en session finns.
 window.startTrialFlow = async function(){
   const email = document.getElementById('obEmail')?.value?.trim()
-  const {data:{session}} = await sb.auth.getSession()
-  await saveTrialLead(email, window._obSelectedRole)
+  let session = null
+  try {
+    const s = await sb.auth.getSession()
+    session = s?.data?.session || null
+  } catch(_) { session = null }
+
+  // Lead-fångst är best-effort och får ALDRIG blocka öppningen av auth-modalen.
+  // Egen try/catch runt anropet ovanpå saveTrialLeads inbyggda skydd.
+  try { await saveTrialLead(email, window._obSelectedRole) } catch(_){}
+
   if(!session){
-    if(window._obSelectedRole) localStorage.setItem('gs_pending_role', window._obSelectedRole)
+    if(window._obSelectedRole){
+      localStorage.setItem('gs_pending_role', window._obSelectedRole)
+      // Persistera vald roll DIREKT till samma nycklar som saveObRoleAndExplore
+      // använder. Annars ser checkOnboarding (körs från loadArticles → renderFeed
+      // efter closeOnboardings setRole-anrop) ingen sparad roll och re-öppnar
+      // ob-overlay (z:600) ovanpå auth-modalen (z:200) → ser ut som modalen
+      // "stängs direkt".
+      const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
+      const feedRole = roleMap[window._obSelectedRole] || window._obSelectedRole
+      try {
+        localStorage.setItem('gustoRole', window._obSelectedRole)
+        localStorage.setItem('gs_role', feedRole)
+      } catch(_){}
+    }
     if(email){
-      localStorage.setItem('gs_pending_trial_email', email)
+      try { localStorage.setItem('gs_pending_trial_email', email) } catch(_){}
       const authEmailInput = document.getElementById('authEmail')
       if(authEmailInput) authEmailInput.value = email
     }
-    localStorage.setItem('gs_pending_trial', '1')
+    try { localStorage.setItem('gs_pending_trial', '1') } catch(_){}
     closeOnboarding()
     if(authMode !== 'signup') toggleAuthMode()
     openModal('authModal')
