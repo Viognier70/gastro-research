@@ -2124,6 +2124,9 @@ async function handleAuth(){
     loadSavedArticles()
     // Skriv display_name till profilen om vi har ett väntande värde (t.ex. vid signin utan bekräftelse-mail eller efter e-postverifiering).
     await persistPendingDisplayName(session)
+    // Starta trialen om användaren uttryckt intent innan konto skapades.
+    // Måste ligga före pending_checkout — trial → is_pro=true först, sen ev. Stripe.
+    await resumePendingTrialIfAny()
     const pending=localStorage.getItem('gs_pending_checkout')
     if(pending){
       localStorage.removeItem('gs_pending_checkout')
@@ -2244,6 +2247,10 @@ async function initAuth(){
     }
     renderAuthArea(session, displayName, initial)
     await loadSavedArticles()
+    // Om användaren startade trial-flödet innan konto/verifiering: kör start_trial nu.
+    // Detta kan i sin tur re-kalla initAuth via doStartTrial; flaggan rensas först
+    // så rekursionen är bunden.
+    await resumePendingTrialIfAny()
     // Trial-utgångs-nudge, en gång per konto (localStorage-flagga per email).
     if(trialExpiredJustNow){
       const flagKey = 'gs_trial_expired_shown_' + session.user.id
@@ -3239,17 +3246,86 @@ function checkObReady(){
   if(b) b.disabled=!(window._obSelectedRole&&e&&e.includes('@'))
   if(eb) eb.disabled=!window._obSelectedRole
 }
-window.confirmObRole = async function() {
-  const email=document.getElementById('obEmail')?.value?.trim()
-  if(email&&email.includes('@')){
-    try{
-      await fetch(SB_URL+'/rest/v1/trial_signups',{method:'POST',
-        headers:{...H,'Content-Type':'application/json','Prefer':'return=minimal'},
-        body:JSON.stringify({email:email,role:window._obSelectedRole||null,source:'onboarding_trial'})})
-      localStorage.setItem('gs_trial_email',email)
-    }catch(e){console.log('trial signup save failed',e)}
+// Lead-fångst för välkomstmailet. Anropad från startTrialFlow. Idempotens
+// mot dubbletter kommer i DEL 4 (unique-index på lower(email)); tills dess
+// hanterar welcome-email-fn:s welcome_sent_at dubblettmail på skärmnivå.
+async function saveTrialLead(email, roleKey){
+  if(!email || !email.includes('@')) return
+  try{
+    await fetch(SB_URL+'/rest/v1/trial_signups', {
+      method: 'POST',
+      headers: {...H, 'Content-Type':'application/json', 'Prefer':'return=minimal'},
+      body: JSON.stringify({email, role: roleKey || null, source: 'onboarding_trial'})
+    })
+    localStorage.setItem('gs_trial_email', email)
+  } catch(e){ console.log('trial signup save failed', e) }
+}
+
+// Onboardingens "Start free trial"-knapp. Kräver konto — anon skickas till
+// auth-modalen i signup-läge; roll/email/intent parkas i localStorage och
+// resumePendingTrialIfAny plockar upp dem så fort en session finns.
+window.startTrialFlow = async function(){
+  const email = document.getElementById('obEmail')?.value?.trim()
+  const {data:{session}} = await sb.auth.getSession()
+  await saveTrialLead(email, window._obSelectedRole)
+  if(!session){
+    if(window._obSelectedRole) localStorage.setItem('gs_pending_role', window._obSelectedRole)
+    if(email){
+      localStorage.setItem('gs_pending_trial_email', email)
+      const authEmailInput = document.getElementById('authEmail')
+      if(authEmailInput) authEmailInput.value = email
+    }
+    localStorage.setItem('gs_pending_trial', '1')
+    closeOnboarding()
+    if(authMode !== 'signup') toggleAuthMode()
+    openModal('authModal')
+    return
   }
-  saveObRoleAndExplore()
+  await doStartTrial()
+}
+
+// Anropas när en session finns och användaren har uttryckt trial-intent.
+// Servern är sanning: start_trial-RPC:n avgör om trialen kan startas.
+window.doStartTrial = async function(){
+  const {data, error} = await sb.rpc('start_trial')
+  if(error){ alert('Could not start trial. Please try again.'); return }
+  if(data?.ok){
+    if(window._obSelectedRole) saveObRoleAndExplore()
+    await initAuth()
+    loadArticles()
+    loadSpotlight()
+    if(data.reason === 'trial_started'){
+      alert('Your 14-day Pro trial has started. Enjoy full access.')
+    }
+  } else if(data?.reason === 'trial_already_used'){
+    if(window._obSelectedRole) saveObRoleAndExplore()
+    await initAuth()
+    alert('This account has already used its free trial. Upgrade to Pro to continue with full access.')
+    openModal('upgradeModal')
+  } else if(data?.reason === 'not_authenticated'){
+    // Race mellan session-hydration och RPC-anrop. Spara pending och öppna auth igen.
+    localStorage.setItem('gs_pending_trial', '1')
+    if(authMode !== 'signup') toggleAuthMode()
+    openModal('authModal')
+  } else {
+    alert('Could not start trial.')
+  }
+}
+
+// Körs efter varje lyckad auth och som del av initAuth. Om användaren
+// uttryckt trial-intent innan de skapade konto → starta trialen nu.
+async function resumePendingTrialIfAny(){
+  if(localStorage.getItem('gs_pending_trial') !== '1') return
+  const {data:{session}} = await sb.auth.getSession()
+  if(!session) return
+  // Rensa flaggan FÖRE RPC:n — annars kan initAuth-rekursionen i doStartTrial
+  // återutlösa flödet i evighet.
+  localStorage.removeItem('gs_pending_trial')
+  const pendingRole = localStorage.getItem('gs_pending_role')
+  if(pendingRole && !window._obSelectedRole) window._obSelectedRole = pendingRole
+  localStorage.removeItem('gs_pending_role')
+  localStorage.removeItem('gs_pending_trial_email')
+  await doStartTrial()
 }
 
 function saveObRoleAndExplore(){
@@ -3260,9 +3336,9 @@ function saveObRoleAndExplore(){
   localStorage.setItem('gustoRole',selectedRole)
   localStorage.setItem('gs_role',feedRole)
   localStorage.setItem('gs_onboarded','1')
-  // (localStorage-trial borttagen i DEL 2 — server äger trial-status.
-  //  DEL 3 flyttar `isPro=true`-flaggan härifrån till start_trial-RPC-svaret.)
-  isPro=true
+  // saveObRoleAndExplore är nu en ren "spara roll + stäng onboarding"-primitiv.
+  // Anonym → utforskar free-tier. Pro/trial-status kommer via start_trial-RPC
+  // (doStartTrial) och initAuth:s server-läsning. Ingen isPro-tilldelning här.
   role=feedRole
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.toggle('on',b.dataset.role===feedRole))
   closeOnboarding()
@@ -3295,7 +3371,7 @@ function saveObRoleAndExplore(){
       <div style="flex:1;height:0.5px;background:var(--border)"></div>
     </div>
     <input type="email" id="obEmail" placeholder="Your email address" oninput="checkObReady()" style="width:100%;height:42px;border:0.5px solid var(--border-mid);border-radius:8px;padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:10px;outline:none;background:var(--white)">
-    <button class="ob-btn" id="obBtn" disabled onclick="confirmObRole()" style="background:var(--white);color:var(--black);border:0.5px solid var(--border-mid)">Start free trial — full access 14 days</button>
+    <button class="ob-btn" id="obBtn" disabled onclick="startTrialFlow()" style="background:var(--white);color:var(--black);border:0.5px solid var(--border-mid)">Start free trial — full access 14 days</button>
     <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px">No credit card required · Cancel anytime</div>
   </div>
 </div>
