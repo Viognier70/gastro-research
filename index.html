@@ -96,6 +96,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .lang-btn{font-size:11px;color:var(--text-tertiary);border:0.5px solid var(--border);padding:4px 10px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif}
 .auth-btn{font-size:12px;font-weight:500;background:var(--black);color:var(--white);border:none;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif}
 .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--black);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.user-greeting{font-size:11px;color:var(--text-secondary);font-family:'Outfit',sans-serif;font-style:italic;margin-right:8px;letter-spacing:.01em;white-space:nowrap}
+#authArea{display:flex;align-items:center;gap:0}
 /* NEWS TICKER */
 .ticker-wrap{background:var(--black);border-bottom:0.5px solid rgba(201,168,76,0.2);height:34px;overflow:hidden;position:relative}
 .ticker-label{position:absolute;left:0;top:0;height:34px;background:var(--gold);color:var(--black);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:0 14px;display:flex;align-items:center;z-index:2;white-space:nowrap}
@@ -1171,6 +1173,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div class="modal-eyebrow">Gusto Science</div>
     <div class="modal-title" id="authTitle">Sign in</div>
     <div class="auth-form" id="authForm">
+      <input type="text" id="authName" placeholder="Your name (e.g. Dr. Crichton-Fock)" style="display:none">
       <input type="email" id="authEmail" placeholder="Email address">
       <input type="password" id="authPassword" placeholder="Password">
       <button onclick="handleAuth()">Sign in</button>
@@ -1952,7 +1955,13 @@ async function loadCounts(){
     if(total>0){
       animateCount(document.getElementById('totalCount'), total)
       const obSub=document.getElementById('obSubText')
-      if(obSub) obSub.textContent=total.toLocaleString('en-US',{maximumFractionDigits:0}).replace(/,/g,',')+'+  research studies translated into three dimensions of professional knowledge.'
+      if(obSub){
+        // Separera de två talen: TRIAD-analyserade (~5 200) vs genomsökta (~453 000).
+        // triadTotal kan vara 0 om räkningen misslyckas — visa i så fall bara det statiska talet så vi inte skriver "0+ studies".
+        const triadStr = (triadTotal>0 ? triadTotal : 5200).toLocaleString('en-US')
+        const totalStr = total.toLocaleString('en-US')
+        obSub.textContent = `${triadStr}+ studies analyzed in depth through the TRIAD framework — drawn from ${totalStr}+ screened publications.`
+      }
     }
     const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
     const r2=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
@@ -2059,22 +2068,39 @@ window.toggleAuthMode=function(){
   const title=document.getElementById('authTitle')
   const btn=document.querySelector('#authForm button')
   const sw=document.getElementById('authSwitch')
+  const nameInput=document.getElementById('authName')
   if(authMode==='signup'){
     if(title)title.textContent='Create account'
     if(btn)btn.textContent='Create account'
     if(sw)sw.innerHTML='Already have an account? <span onclick="toggleAuthMode()">Sign in</span>'
+    if(nameInput) nameInput.style.display=''
   }else{
     if(title)title.textContent='Sign in'
     if(btn)btn.textContent='Sign in'
     if(sw)sw.innerHTML='No account? <span onclick="toggleAuthMode()">Create one</span>'
+    if(nameInput) nameInput.style.display='none'
   }
 }
 
 async function handleAuth(){
   const email=document.getElementById('authEmail').value
   const password=document.getElementById('authPassword').value
+  const displayName=document.getElementById('authName')?.value?.trim()||''
   let authError=null
-  if(authMode==='signup'){const {error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://gusto.science'}});authError=error}
+  if(authMode==='signup'){
+    // display_name skickas som user_metadata (om trigger finns kopieras det till profiles),
+    // och sparas lokalt så initAuth kan skriva det efter e-postverifiering.
+    if(displayName) localStorage.setItem('gs_pending_display_name', displayName)
+    const {error}=await sb.auth.signUp({
+      email,
+      password,
+      options:{
+        emailRedirectTo:'https://gusto.science',
+        data: displayName ? {display_name: displayName} : undefined
+      }
+    })
+    authError=error
+  }
   else{const {error}=await sb.auth.signInWithPassword({email,password});authError=error}
   if(authError){alert(authError.message||'Sign-in failed. Please try again.');return}
   closeModal('authModal')
@@ -2083,6 +2109,8 @@ async function handleAuth(){
     const btn=document.getElementById('authBtn')
     if(btn){btn.textContent=session.user.email.slice(0,1).toUpperCase();btn.style.background='var(--gold)';btn.style.color='#000'}
     loadSavedArticles()
+    // Skriv display_name till profilen om vi har ett väntande värde (t.ex. vid signin utan bekräftelse-mail eller efter e-postverifiering).
+    await persistPendingDisplayName(session)
     const pending=localStorage.getItem('gs_pending_checkout')
     if(pending){
       localStorage.removeItem('gs_pending_checkout')
@@ -2090,6 +2118,20 @@ async function handleAuth(){
       startCheckout()
     }
   }
+}
+
+async function persistPendingDisplayName(session){
+  const pending=localStorage.getItem('gs_pending_display_name')
+  if(!session||!pending) return
+  try{
+    const {data:existing}=await sb.from('profiles').select('display_name').eq('id',session.user.id).maybeSingle()
+    if(!existing) return  // trigger har inte hunnit skapa raden; försök igen nästa initAuth
+    if(!existing.display_name){
+      const {error}=await sb.from('profiles').update({display_name:pending}).eq('id',session.user.id)
+      if(error) return  // behåll pending så vi kan retrya
+    }
+    localStorage.removeItem('gs_pending_display_name')
+  }catch(_){/* nätfel etc — behåll pending för retry */}
 }
 function handleUpgrade(){openModal('authModal')}
 
@@ -2143,16 +2185,36 @@ if(window.location.search.includes('pro=true')){
   })()
 }
 
+const AUTH_ROLE_TITLES={sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Researcher'}
+function _escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function renderAuthArea(session, displayName, initial){
+  const savedRole = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole') || ''
+  const title = AUTH_ROLE_TITLES[savedRole] || ''
+  const greeting = displayName ? (title ? `${title} ${displayName}` : displayName) : ''
+  const tooltip = greeting ? `${greeting} · Sign out` : `${session.user.email} · Sign out`
+  const area = document.getElementById('authArea')
+  if(!area) return
+  area.innerHTML = `${greeting ? `<span class="user-greeting">${_escHtml(greeting)}</span>` : ''}<div class="user-avatar" title="${_escHtml(tooltip)}" onclick="sb.auth.signOut().then(()=>location.reload())">${initial}</div>`
+}
 async function initAuth(){
   const {data:{session}}=await sb.auth.getSession()
   if(session){
     const initial=session.user.email[0].toUpperCase()
-    document.getElementById('authArea').innerHTML=`<div class="user-avatar" onclick="sb.auth.signOut().then(()=>location.reload())">${initial}</div>`
-    // Verify Pro status from database
+    let displayName=''
     try {
-      const {data:profile} = await sb.from('profiles').select('is_pro').eq('id',session.user.id).maybeSingle()
+      const {data:profile} = await sb.from('profiles').select('is_pro, display_name').eq('id',session.user.id).maybeSingle()
       isPro = profile?.is_pro === true
+      displayName = profile?.display_name || ''
     } catch(e) { isPro = false }
+    // Om display_name saknas men vi har ett väntande värde — skriv det nu (nytt konto, trigger körd)
+    await persistPendingDisplayName(session)
+    if(!displayName){
+      try{
+        const {data:profile2}=await sb.from('profiles').select('display_name').eq('id',session.user.id).maybeSingle()
+        displayName = profile2?.display_name || ''
+      }catch(_){}
+    }
+    renderAuthArea(session, displayName, initial)
     await loadSavedArticles()
   }
   if(!isPro){
@@ -3183,7 +3245,7 @@ function saveObRoleAndExplore(){
   <div class="ob-panel">
     <div class="ob-eyebrow">Welcome to Gusto Science</div>
     <div class="ob-title">Research intelligence<br>for your profession</div>
-    <div class="ob-sub"><span id="obSubText">5,200+ research studies — selected from 453,000+ publications — translated into three dimensions of professional knowledge.</span></div>
+    <div class="ob-sub"><span id="obSubText">5,200+ studies analyzed in depth through the TRIAD framework — drawn from 453,000+ screened publications.</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
       <div style="padding:12px;border-radius:8px;background:#E8EFF6;border-left:3px solid var(--episteme)"><div style="font-size:10px;font-weight:700;color:var(--episteme);margin-bottom:4px">ε Episteme</div><div style="font-size:11px;color:#2A4A6C;line-height:1.5">What science knows</div></div>
       <div style="padding:12px;border-radius:8px;background:#EAF0E5;border-left:3px solid var(--techne)"><div style="font-size:10px;font-weight:700;color:var(--techne);margin-bottom:4px">τ Techne</div><div style="font-size:11px;color:#2D5016;line-height:1.5">How to apply it</div></div>
@@ -3192,7 +3254,7 @@ function saveObRoleAndExplore(){
     <div class="ob-roles">
       <div class="ob-role" onclick="selectObRole(this,'sommelier')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sommelier</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
       <div class="ob-role" onclick="selectObRole(this,'chef')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Chef</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'gastronomy')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Gastronomy</div><div class="ob-role-desc">Food anthropologist · Food stylist · Photographer</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'gastronomy')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Meal creator</div><div class="ob-role-desc">Culinary host · Food culture · Crossmodal experience</div></div></div>
       <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">F&amp;B Manager</div><div class="ob-role-desc">F&amp;B Manager · Hotelier · Menu strategist</div></div></div>
       <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher &amp; Educator</div><div class="ob-role-desc">Food researcher · Culinary educator · Sensory scientist</div></div></div>
     </div>
