@@ -1248,7 +1248,10 @@ const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 const STRIPE_PK='pk_live_51PESII01M2w13V3npDEvdbuNBFhxkMS81hr5AxeSD7jFTsqKdJ0JbHPLyla10n2dwmVFhlexjGDQHYg6vXGiNUWI00hxMg0oKb'
 const H={'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON}
 const FREE_LIMIT=3
-const TRIAL_DAYS=14
+// Trial-state kommer helt från servern (profiles.trial_ends_at / trial_used).
+// TRIAL_DAYS-konstanten och trialState()-funktionen bodde tidigare här och
+// läste från localStorage, vilket var trivialt att kringgå. RPC:n start_trial()
+// äger nu den 14-dagars perioden.
 function freeCountKey(){return 'gs_free_'+new Date().toISOString().slice(0,10)}
 function readFreeCount(){return parseInt(localStorage.getItem(freeCountKey())||'0',10)||0}
 function writeFreeCount(n){localStorage.setItem(freeCountKey(),String(n))}
@@ -1264,15 +1267,12 @@ async function enrichWithPremiumIfPro(items){
   }catch(e){/* keep metadata only */}
   return items
 }
-function trialState(){
-  if(localStorage.getItem('gs_reverse_trial')!=='1') return {active:false,daysLeft:0,started:false}
-  const start=parseInt(localStorage.getItem('gs_trial_start')||'0',10)
-  if(!start) return {active:false,daysLeft:0,started:false}
-  const elapsed=Date.now()-start
-  const left=Math.ceil((TRIAL_DAYS*24*60*60*1000-elapsed)/(24*60*60*1000))
-  return {active:elapsed<TRIAL_DAYS*24*60*60*1000,daysLeft:Math.max(0,left),started:true}
-}
 function checkTrialReset(){const today=new Date().toDateString();const last=localStorage.getItem("gs_free_date");if(last!==today){localStorage.setItem("gs_free_date",today);localStorage.removeItem("gs_free_used")}}
+// Server-sida trial-status. Sätts av initAuth från profiles-raden och läses
+// av updateFreeBar / TRIAD-grinden. Undvik direkt localStorage-läsning här.
+window._trialEndsAt = null
+window._trialUsed = false
+window._isProDb = false
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
 // Debug: test API connection
@@ -1387,9 +1387,22 @@ function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
   const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=remaining>0?'':t('freeLeft',remaining)
   const _ff=document.getElementById('freeFill');if(_ff)_ff.style.width=Math.round((freeCount/FREE_LIMIT)*100)+'%'
-  const ts=trialState()
-  document.getElementById('freeBar').style.display=(isPro&&!ts.active)?'none':'flex'
-  if(ts.active&&_ft)_ft.textContent=`Trial · ${ts.daysLeft} day${ts.daysLeft===1?'':'s'} left`
+  const trialEnds = window._trialEndsAt ? new Date(window._trialEndsAt) : null
+  const now = new Date()
+  const trialActive = !!(trialEnds && trialEnds > now)
+  const trialExpired = !!(trialEnds && trialEnds <= now)
+  const bar = document.getElementById('freeBar')
+  // Göm baren bara för äkta betalande Pro (is_pro=true, ingen aktiv trial).
+  // Aktiv trial → visa "N dagar kvar". Utgången trial + free tier → visa nudge.
+  if(bar) bar.style.display = (window._isProDb === true && !trialActive) ? 'none' : 'flex'
+  if(_ft){
+    if(trialActive){
+      const daysLeft = Math.max(0, Math.ceil((trialEnds - now) / (24*60*60*1000)))
+      _ft.textContent = `Trial · ${daysLeft} day${daysLeft===1?'':'s'} left`
+    } else if(trialExpired){
+      _ft.textContent = 'Trial ended · upgrade to keep access'
+    }
+  }
 }
 
 function openModal(id){document.getElementById(id).classList.add('open')}
@@ -2201,11 +2214,26 @@ async function initAuth(){
   if(session){
     const initial=session.user.email[0].toUpperCase()
     let displayName=''
+    let trialExpiredJustNow=false
     try {
-      const {data:profile} = await sb.from('profiles').select('is_pro, display_name').eq('id',session.user.id).maybeSingle()
-      isPro = profile?.is_pro === true
+      const {data:profile} = await sb.from('profiles')
+        .select('is_pro, display_name, trial_ends_at, trial_used')
+        .eq('id', session.user.id).maybeSingle()
+      const dbIsPro = profile?.is_pro === true
+      const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
+      const trialActive = !!(trialEnds && trialEnds > new Date())
+      isPro = dbIsPro || trialActive
+      window._isProDb = dbIsPro
+      window._trialEndsAt = profile?.trial_ends_at || null
+      window._trialUsed = profile?.trial_used === true
       displayName = profile?.display_name || ''
-    } catch(e) { isPro = false }
+      trialExpiredJustNow = !!(trialEnds && !trialActive && window._trialUsed && !dbIsPro)
+    } catch(e) {
+      isPro = false
+      window._isProDb = false
+      window._trialEndsAt = null
+      window._trialUsed = false
+    }
     // Om display_name saknas men vi har ett väntande värde — skriv det nu (nytt konto, trigger körd)
     await persistPendingDisplayName(session)
     if(!displayName){
@@ -2216,27 +2244,30 @@ async function initAuth(){
     }
     renderAuthArea(session, displayName, initial)
     await loadSavedArticles()
-  }
-  if(!isPro){
-    const ts=trialState()
-    if(ts.active){isPro=true}
-    else if(ts.started&&!localStorage.getItem('gs_trial_expired_shown')){
-      localStorage.setItem('gs_trial_expired_shown','1')
-      setTimeout(()=>{
-        const title=document.getElementById('upgradeTitle')
-        if(title) title.textContent='Your 14-day trial has ended — keep your full access'
-        openModal('upgradeModal')
-      },1500)
+    // Trial-utgångs-nudge, en gång per konto (localStorage-flagga per email).
+    if(trialExpiredJustNow){
+      const flagKey = 'gs_trial_expired_shown_' + session.user.id
+      if(!localStorage.getItem(flagKey)){
+        localStorage.setItem(flagKey, '1')
+        setTimeout(()=>{
+          const title = document.getElementById('upgradeTitle')
+          if(title) title.textContent = 'Your 14-day trial has ended — keep your full access'
+          openModal('upgradeModal')
+        }, 1500)
+      }
     }
+  } else {
+    // Anon — inget servertillstånd att läsa.
+    window._isProDb = false
+    window._trialEndsAt = null
+    window._trialUsed = false
   }
   updateFreeBar()
 }
 
-// Admin fetch button
-function triggerAdminFetch(){
-  if(localStorage.getItem('isAdmin')!=='true') return
-  fetch(`${SB_URL}/functions/v1/daily-fetch`,{method:'POST',headers:{...H},body:JSON.stringify({})}).then(r=>r.json()).then(d=>alert(JSON.stringify(d,null,2))).catch(e=>alert(e))
-}
+// (triggerAdminFetch borttagen i DEL 2 — dead code, localStorage.isAdmin
+//  var den sista kvarvarande "backdoor"-flaggan. daily-fetch triggas via
+//  service_role från Anders miljö, inte från frontend.)
 
 // ─── TOPIC GRAPH ─────────────────────────────────────────────────────────────
 const TOPIC_DATA = {
@@ -3229,10 +3260,8 @@ function saveObRoleAndExplore(){
   localStorage.setItem('gustoRole',selectedRole)
   localStorage.setItem('gs_role',feedRole)
   localStorage.setItem('gs_onboarded','1')
-  if(!localStorage.getItem('gs_trial_start')){
-    localStorage.setItem('gs_trial_start',Date.now().toString())
-    localStorage.setItem('gs_reverse_trial','1')
-  }
+  // (localStorage-trial borttagen i DEL 2 — server äger trial-status.
+  //  DEL 3 flyttar `isPro=true`-flaggan härifrån till start_trial-RPC-svaret.)
   isPro=true
   role=feedRole
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.toggle('on',b.dataset.role===feedRole))
