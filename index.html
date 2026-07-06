@@ -1273,6 +1273,21 @@ function checkTrialReset(){const today=new Date().toDateString();const last=loca
 window._trialEndsAt = null
 window._trialUsed = false
 window._isProDb = false
+
+// Kanoniska "chip"-rollnamn — de enda som finns som has_episteme_<x>,
+// episteme_<x>, techne_<x>, phronesis_<x> i articles_public. "Science"-
+// namnen (sensory_pro, culinary_pro, gastronomy_culture, hospitality_mgmt,
+// educator_researcher) mappas hit; de existerar bara som relevance_sci_<x>
+// i vyn. All query-byggning från window.role / gs_role ska gå via
+// toChipRole() — annars blir det 400 (kolumn saknas) för science-namnen.
+const CHIP_ROLE = {
+  sommelier:'sommelier', chef:'chef', gastronomy:'gastronomy',
+  fb_manager:'fb_manager', food_researcher:'food_researcher',
+  sensory_pro:'sommelier', culinary_pro:'chef',
+  gastronomy_culture:'gastronomy', hospitality_mgmt:'fb_manager',
+  educator_researcher:'food_researcher'
+}
+function toChipRole(r){ return CHIP_ROLE[r] || r }
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
 // Debug: test API connection
@@ -1837,8 +1852,10 @@ async function loadArticles(){
 
   const scenarioRoles = []
   const hasScenario = scenarioRoles.includes(role)
-  const colMap2={sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'gastronomy',hospitality_mgmt:'fb_manager',educator_researcher:'food_researcher',gastronomy:'gastronomy',fb_manager:'fb_manager',food_researcher:'food_researcher',sommelier:'sommelier',chef:'chef'}
-  const rkey2=colMap2[role]||role
+  // colMap2 flyttad till modultopp som CHIP_ROLE — samma mapping delas nu
+  // med loadSpotlight så science-namn (hospitality_mgmt etc.) inte längre
+  // slår igenom som has_episteme_<science> = 400.
+  const rkey2 = toChipRole(role)
   const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher' : `relevance_sci_${rkey2}`
   // articles_public: metadata + has_* presence booleans. Premium TRIAD/IMRAD/core_claim
   // is layered in by enrichWithPremiumIfPro() below when the user is Pro.
@@ -1876,7 +1893,14 @@ async function loadArticles(){
     loadSidebar()
     loadTrending()
     loadMostCited()
-    setTimeout(()=>{if(typeof loadSpotlight==='function'){loadSpotlight();loadTrends();loadHotProducts()}}, 800)
+    // Isolera varje sektionsladdare — en synkron throw i en av dem får inte
+    // stoppa de andra från att fyras. Async-fel fångas redan av respektive
+    // funktions inbyggda try/catch och rejected promises studsar tyst.
+    setTimeout(()=>{
+      try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight sync throw', e) }
+      try { if(typeof loadTrends==='function') loadTrends() } catch(e){ console.log('loadTrends sync throw', e) }
+      try { if(typeof loadHotProducts==='function') loadHotProducts() } catch(e){ console.log('loadHotProducts sync throw', e) }
+    }, 800)
     checkOnboarding()
     loadMiniTicker()
   }catch(e){
@@ -3072,20 +3096,24 @@ window.loadSpotlight = async function() {
   if(!el) return
   el.innerHTML = '<div style="color:#888;font-size:12px;padding:16px 0;font-family:Outfit,sans-serif">Loading latest findings...</div>'
   try {
-    const r = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
+    // rRaw = användarens vald roll (kan vara chip-namn eller kvarhängande science-namn).
+    // rChip = kanoniskt chip-namn, det ENDA som finns som has_episteme_<x> /
+    // episteme_<x> / techne_<x> / phronesis_<x> / relevance_sci_<x> i articles_public.
+    const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sommelier')
+    const r = toChipRole(rRaw)
     const epCol = `episteme_${r}`
     const tcCol = `techne_${r}`
     const phCol = `phronesis_${r}`
     const relCol = `relevance_sci_${r}`
     const roleLabels = {sensory_pro:'Sensory scientist',culinary_pro:'Chef & culinary',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator',sommelier:'Sommelier',chef:'Chef',fb_manager:'F&B Manager',food_researcher:'Food researcher',gastronomy:'Meal creator'}
-    const roleLabel = roleLabels[r] || r
+    const roleLabel = roleLabels[rRaw] || roleLabels[r] || r
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
 
     const [artResp, synthResp] = await Promise.all([
       fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${r}&has_episteme_${r}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
         headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
       }),
-      fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'})[r]||'sommelier'}&order=updated_at.desc&limit=4`, {
+      fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'})[rRaw]||'sommelier'}&order=updated_at.desc&limit=4`, {
         headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
       })
     ])
