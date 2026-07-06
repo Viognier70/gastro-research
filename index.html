@@ -2251,6 +2251,36 @@ async function initAuth(){
     // Detta kan i sin tur re-kalla initAuth via doStartTrial; flaggan rensas först
     // så rekursionen är bunden.
     await resumePendingTrialIfAny()
+    // Auto-start trial: robust brygga efter e-postverifiering. Kompletterar
+    // resumePendingTrialIfAny genom att tåla att gs_pending_trial-flaggan
+    // gått förlorad i mail-resan (bekräftelselänken öppnas ofta i ny flik,
+    // annan webbläsare, mobilens mailapp — där localStorage-flaggan inte
+    // hänger med). Använder gs_role/gustoRole som fallback-signal att
+    // användaren gått genom onboarding och uttryckt trial-intent. Server-
+    // sidans trial_used-guard i start_trial-RPC:n är sista brandväggen mot
+    // dubbelfyrning; vi kollar window._trialUsed här först för att slippa
+    // ett onödigt RPC-anrop varje initAuth.
+    try {
+      const hasRole      = !!(localStorage.getItem('gs_role') || localStorage.getItem('gustoRole'))
+      const pendingTrial = localStorage.getItem('gs_pending_trial') === '1'
+      const eligible     = window._isProDb === false
+                        && window._trialUsed === false
+                        && (pendingTrial || hasRole)
+      if(eligible){
+        const {data:res} = await sb.rpc('start_trial')
+        localStorage.removeItem('gs_pending_trial')  // rensa oavsett resultat
+        if(res?.ok && res.reason === 'trial_started'){
+          window._trialEndsAt = res.trial_ends_at || null
+          window._trialUsed   = true
+          isPro               = true
+          // Diskret engångsnotis — idempotens säkras av trial_used-guarden
+          // ovan; nästa initAuth ser trial_used=true och skippar hela blocket.
+          setTimeout(()=>alert('Your 14-day Pro trial has started. Enjoy full access.'), 300)
+        }
+        // Övriga svar (already_used / no_profile / RPC-fel) → tyst no-op,
+        // free-tier eller befintligt trial-tillstånd gäller.
+      }
+    } catch(_){ /* Auto-start får ALDRIG blocka initAuth. */ }
     // Trial-utgångs-nudge, en gång per konto (localStorage-flagga per email).
     if(trialExpiredJustNow){
       const flagKey = 'gs_trial_expired_shown_' + session.user.id
