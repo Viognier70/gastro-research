@@ -2297,6 +2297,13 @@ async function initAuth(){
           window._trialEndsAt = res.trial_ends_at || null
           window._trialUsed   = true
           isPro               = true
+          // Tvingad re-render: cards renderades med isPro=false innan RPC:n
+          // hann fyra (enrichWithPremiumIfPro skippade → hasPremiumPayload=false
+          // → state 2 "Upgrade to Pro" i cardHTML). Nu när isPro=true kör vi
+          // en till loadArticles så enrich fyras och cards visar TRIAD.
+          // Fire-and-forget — initAuth ska inte blocka på detta.
+          try { if(typeof loadArticles==='function') loadArticles() } catch(e){ console.log('loadArticles re-render failed', e) }
+          try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight re-render failed', e) }
           // Diskret engångsnotis — idempotens säkras av trial_used-guarden
           // ovan; nästa initAuth ser trial_used=true och skippar hela blocket.
           setTimeout(()=>alert('Your 14-day Pro trial has started. Enjoy full access.'), 300)
