@@ -592,6 +592,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .ob-role-emoji{font-size:20px;flex-shrink:0}
 .ob-role-name{font-size:13px;font-weight:500;color:var(--text-primary)}
 .ob-role-desc{font-size:11px;color:var(--text-tertiary);margin-top:1px}
+.ob-role-footnote{font-size:9px;color:var(--gold);font-style:italic;margin-top:6px;line-height:1.4;opacity:.75}
 .ob-btn{width:100%;height:46px;background:var(--black);color:var(--white);border:none;border-radius:23px;font-size:14px;font-weight:500;font-family:'Outfit',sans-serif;cursor:pointer;transition:opacity .15s}
 .ob-btn:hover{opacity:.85}
 .ob-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -950,11 +951,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="role-bar">
   <span class="role-label" id="roleLabel">For</span>
   <button class="role-chip on" data-role="all" onclick="setRole('all',this)">All</button>
-  <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)" title="Sommelier · Sensory scientist · Flavor technologist">Sommelier<span class="role-sub">Sommelier · Sensory scientist · Flavor technologist</span></button>
-  <button class="role-chip" data-role="chef" onclick="setRole('chef',this)" title="Chef · Pastry chef · Fermentation specialist">Chef<span class="role-sub">Chef · Pastry chef · Fermentation specialist</span></button>
-  <button class="role-chip" data-role="gastronomy" onclick="setRole('gastronomy',this)" title="Culinary host · Food culture · Crossmodal experience">Meal creator<span class="role-sub">Culinary host · Food culture · Crossmodal experience</span></button>
-  <button class="role-chip" data-role="fb_manager" onclick="setRole('fb_manager',this)" title="F&B Manager · Hotelier · Menu strategist">F&amp;B Manager<span class="role-sub">F&amp;B Manager · Hotelier · Menu strategist</span></button>
-  <button class="role-chip" data-role="food_researcher" onclick="setRole('food_researcher',this)" title="Food researcher · Culinary educator · Sensory scientist">Food Researcher &amp; Educator<span class="role-sub">Food researcher · Culinary educator · Sensory scientist</span></button>
+  <button class="role-chip" data-role="sommelier" onclick="setRole('sommelier',this)" title="Sensory science, flavor perception & the art of pairing">Sommelier<span class="role-sub">Sensory science, flavor perception &amp; the art of pairing</span></button>
+  <button class="role-chip" data-role="chef" onclick="setRole('chef',this)" title="Culinary technique, fermentation & novel foods — the science of the kitchen">Chef<span class="role-sub">Culinary technique, fermentation &amp; novel foods — the science of the kitchen</span></button>
+  <button class="role-chip" data-role="gastronomy" onclick="setRole('gastronomy',this)" title="Multisensory meal experiences — all senses and forms of knowledge in concert">Meal Creator<span class="role-sub">Multisensory meal experiences — all senses and forms of knowledge in concert</span></button>
+  <button class="role-chip" data-role="fb_manager" onclick="setRole('fb_manager',this)" title="Restaurants, hotels & service — operations, guest experience & service design">Hospitality Management<span class="role-sub">Restaurants, hotels &amp; service — operations, guest experience &amp; service design</span></button>
+  <button class="role-chip" data-role="food_researcher" onclick="setRole('food_researcher',this)" title="Method, nutrition & crossmodal science — for research and teaching">Food Researcher &amp; Educator<span class="role-sub">Method, nutrition &amp; crossmodal science — for research and teaching</span></button>
 
 </div>
 
@@ -1288,6 +1289,30 @@ const CHIP_ROLE = {
   educator_researcher:'food_researcher'
 }
 function toChipRole(r){ return CHIP_ROLE[r] || r }
+
+// Kanoniska VISADE rollnamn — Anders beslut 2026-07-06. Använd överallt där
+// rollnamnet visas för användaren, alltid via roleLabel()/roleSubtitle(), så
+// vi aldrig får glapp mellan led. Tekniska nycklar (chip-namnen ovan) rörs ej.
+const ROLE_LABELS = {
+  sommelier:       'Sommelier',
+  chef:            'Chef',
+  gastronomy:      'Meal Creator',
+  fb_manager:      'Hospitality Management',
+  food_researcher: 'Food Researcher & Educator'
+}
+const ROLE_SUBTITLES = {
+  sommelier:       'Sensory science, flavor perception & the art of pairing',
+  chef:            'Culinary technique, fermentation & novel foods — the science of the kitchen',
+  gastronomy:      'Multisensory meal experiences — all senses and forms of knowledge in concert',
+  fb_manager:      'Restaurants, hotels & service — operations, guest experience & service design',
+  food_researcher: 'Method, nutrition & crossmodal science — for research and teaching'
+}
+// Fotnot vid Meal Creator: Grythyttan-arvet. Visas som liten rad i onboarding.
+const ROLE_FOOTNOTES = {
+  gastronomy: 'A discipline rooted in Meal Science at Örebro University, Campus Grythyttan'
+}
+function roleLabel(r){ return ROLE_LABELS[toChipRole(r)] || r }
+function roleSubtitle(r){ return ROLE_SUBTITLES[toChipRole(r)] || '' }
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
 // Debug: test API connection
@@ -1305,7 +1330,7 @@ const T={
     sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',
     forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
     freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
-    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'F&B Manager',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
+    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal Creator',fb_manager:'Hospitality Management',food_researcher:'Food Researcher & Educator',creator:'Meal Creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'Hospitality Management',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sommelier',culinary_pro:'Chef',gastronomy_culture:'Meal Creator',hospitality_mgmt:'Hospitality Management',educator_researcher:'Food Researcher & Educator'}
   },
   sv:{
     eyebrow:'Forskningsintelligens för kulinariska proffs',
@@ -1313,7 +1338,7 @@ const T={
     sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen), Techne (praktisk tillämpning) och Phronesis (omdöme). Välj din yrkesroll för att börja.',
     forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
     freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
-    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Måltidsskapare',fb_manager:'F&B Manager',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'F&B Manager',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sensorisk Pro',culinary_pro:'Kulinarisk Pro',gastronomy_culture:'Måltidsskapare',hospitality_mgmt:'F&B Manager',educator_researcher:'Forskare & Utbildare'}
+    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Måltidsskapare',fb_manager:'Hospitality Management',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'Hospitality Management',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sommelier',culinary_pro:'Kock',gastronomy_culture:'Måltidsskapare',hospitality_mgmt:'Hospitality Management',educator_researcher:'Forskare & Utbildare'}
   }
 }
 
@@ -1376,8 +1401,7 @@ document.addEventListener('mouseout', e => {
 
 // A2: Section intros — role + feed count
 function updateSectionIntros(r){
-  const labels = {all:'your profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
-  const name = labels[r] || r || 'your profession'
+  const name = r === 'all' ? 'your profession' : (roleLabel(r) || 'your profession')
   const sp = document.getElementById('siSpotlightRole'); if(sp) sp.textContent = name
   const fr = document.getElementById('siFeedRole'); if(fr) fr.textContent = name
 }
@@ -1428,7 +1452,7 @@ function selectPlan(el,plan){selectedPlan=plan;document.querySelectorAll('.price
 function updateRoleNavBadge(r) {
   const badge = document.getElementById('roleNavBadge')
   if(!badge) return
-  const labels = {all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Researcher & Educator',sensory_pro:'Sensory scientist',culinary_pro:'Culinary pro',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher'}
+  const labels = {all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal Creator',fb_manager:'Hospitality Management',food_researcher:'Food Researcher & Educator',sensory_pro:'Sommelier',culinary_pro:'Chef',gastronomy_culture:'Meal Creator',hospitality_mgmt:'Hospitality Management',educator_researcher:'Food Researcher & Educator'}
   const colors = {
     sommelier:  {bg:'#e8f5f0',color:'#0d6e56',border:'#b5ddd0'},
     chef:       {bg:'#faf0e8',color:'#9a4e1a',border:'#e8c8a8'},
@@ -1461,8 +1485,7 @@ function setRole(r,btn){
   // Uppdatera hero-eyebrow med roll
   const heroEyebrow = document.getElementById('heroEyebrow')
   if(heroEyebrow && r !== 'all') {
-    const roleNames = {sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food researcher',sensory_pro:'Sensory scientist',culinary_pro:'Culinary professional',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator'}
-    const rn = roleNames[r] || r
+    const rn = roleLabel(r) || r
     heroEyebrow.textContent = `Research intelligence for the ${rn} — through three lenses of knowledge`
   }
   updateSectionIntros(r)
@@ -1807,7 +1830,7 @@ function renderFeed(){
   if(source.length===0){
     const topicVal=document.getElementById('topicSel')?.value
     const searchVal=document.getElementById('searchInput')?.value?.trim()
-    const roleName={all:'any profession',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator'}[role]||role
+    const roleName = role === 'all' ? 'any profession' : (roleLabel(role) || role)
     let emptyMsg='',emptyHint=''
     if(showingSaved){
       pane.innerHTML=`<div style="padding:48px 24px;text-align:center">
@@ -2229,7 +2252,7 @@ if(window.location.search.includes('pro=true')){
   })()
 }
 
-const AUTH_ROLE_TITLES={sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Researcher'}
+const AUTH_ROLE_TITLES={sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal Creator',fb_manager:'Hospitality Management',food_researcher:'Researcher'}
 function _escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function renderAuthArea(session, displayName, initial){
   const savedRole = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole') || ''
@@ -2502,8 +2525,8 @@ function renderLiveMap(){
   const isMob = w < 500
   const isMobile = isMob
   const h=isMob ? Math.min(300, w*0.85) : 460
-  const roleNames={all:'All professions',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal creator',fb_manager:'F&B Manager',food_researcher:'Food Researcher & Educator',creator:'Meal creator',waiter:'Service staff',educator:'Food Researcher & Educator',fbmanager:'F&B Manager',researcher:'Food Researcher & Educator',sensory_pro:'Sensory Pro',culinary_pro:'Culinary Pro',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Food Researcher & Educator'}
-  document.getElementById('mapRoleTitle').textContent=roleNames[role]+' — research landscape'
+  const mapRoleName = role === 'all' ? 'All professions' : (roleLabel(role) || role)
+  document.getElementById('mapRoleTitle').textContent = mapRoleName + ' — research landscape'
   const mapHint=document.getElementById('mapHint')
   if(mapHint&&!localStorage.getItem('gs_map_seen')){
     mapHint.innerHTML='<span style="color:var(--gold)">↓ Try clicking a topic node to filter articles</span>'
@@ -3116,8 +3139,8 @@ window.loadSpotlight = async function() {
     const tcCol = `techne_${r}`
     const phCol = `phronesis_${r}`
     const relCol = `relevance_sci_${r}`
-    const roleLabels = {sensory_pro:'Sensory scientist',culinary_pro:'Chef & culinary',gastronomy_culture:'Meal creator',hospitality_mgmt:'F&B Manager',educator_researcher:'Researcher & educator',sommelier:'Sommelier',chef:'Chef',fb_manager:'F&B Manager',food_researcher:'Food researcher',gastronomy:'Meal creator'}
-    const roleLabel = roleLabels[rRaw] || roleLabels[r] || r
+    // Konsoliderad label via ROLE_LABELS-mappen (toChipRole hanterar legacy-namn).
+    const spotlightRoleLabel = window.roleLabel(rRaw) || r
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
 
     const [artResp, synthResp] = await Promise.all([
@@ -3175,7 +3198,7 @@ window.loadSpotlight = async function() {
     const synthHTML = Array.isArray(synths) && synths.length ? `
       <div style="margin-top:28px;border-top:2px solid #1A1A1A;padding-top:16px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
-          <span class="gs-sp-section">Research Synthesis · ${roleLabel}</span>
+          <span class="gs-sp-section">Research Synthesis · ${spotlightRoleLabel}</span>
           <span class="gs-sp-date">Synthesised from peer-reviewed research</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
@@ -3196,7 +3219,7 @@ window.loadSpotlight = async function() {
     el.innerHTML = `<div class="gs-spotlight">
       <div class="gs-sp-header">
         <span class="gs-sp-section">Research Spotlight</span>
-        <span class="gs-sp-date">${today} · ${roleLabel}</span>
+        <span class="gs-sp-date">${today} · ${spotlightRoleLabel}</span>
       </div>
       <div class="gs-sp-grid">
         <div class="gs-sp-lead">
@@ -3465,11 +3488,11 @@ function saveObRoleAndExplore(){
       <div style="padding:12px;border-radius:8px;background:#F5EDE3;border-left:3px solid var(--phronesis)"><div style="font-size:10px;font-weight:700;color:var(--phronesis);margin-bottom:4px">φ Phronesis</div><div style="font-size:11px;color:#5C2D00;line-height:1.5">Where judgment integrates</div></div>
     </div>
     <div class="ob-roles">
-      <div class="ob-role" onclick="selectObRole(this,'sommelier')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sommelier</div><div class="ob-role-desc">Sommelier · Sensory scientist · Flavor technologist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'chef')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Chef</div><div class="ob-role-desc">Chef · Pastry chef · Fermentation specialist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'gastronomy')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Meal creator</div><div class="ob-role-desc">Culinary host · Food culture · Crossmodal experience</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">F&amp;B Manager</div><div class="ob-role-desc">F&amp;B Manager · Hotelier · Menu strategist</div></div></div>
-      <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher &amp; Educator</div><div class="ob-role-desc">Food researcher · Culinary educator · Sensory scientist</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'sommelier')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Sommelier</div><div class="ob-role-desc">Sensory science, flavor perception &amp; the art of pairing</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'chef')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Chef</div><div class="ob-role-desc">Culinary technique, fermentation &amp; novel foods — the science of the kitchen</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'gastronomy')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Meal Creator</div><div class="ob-role-desc">Multisensory meal experiences — all senses and forms of knowledge in concert</div><div class="ob-role-footnote">A discipline rooted in Meal Science at Örebro University, Campus Grythyttan</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'fb_manager')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Hospitality Management</div><div class="ob-role-desc">Restaurants, hotels &amp; service — operations, guest experience &amp; service design</div></div></div>
+      <div class="ob-role" onclick="selectObRole(this,'food_researcher')"><span class="ob-role-emoji">⬡</span><div><div class="ob-role-name">Food Researcher &amp; Educator</div><div class="ob-role-desc">Method, nutrition &amp; crossmodal science — for research and teaching</div></div></div>
     </div>
     <button class="ob-btn" id="obExploreBtn" onclick="saveObRoleAndExplore()" disabled style="background:var(--black);color:var(--white);margin-bottom:6px;opacity:0.4;cursor:not-allowed">Explore research for my profession →</button>
     <div id="obExploreHint" style="font-size:11px;color:var(--gold);text-align:center;margin-bottom:12px">← Select a profession to unlock</div>
