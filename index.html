@@ -1225,6 +1225,28 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div>
 </div>
 
+<!-- NEWSLETTER MODAL — navbar Subscribe → -->
+<div class="nl-overlay" id="nlOverlay" onclick="if(event.target===this)closeNewsletter()">
+  <div class="nl-panel">
+    <button class="nl-close" onclick="closeNewsletter()" aria-label="Close">×</button>
+    <div id="nlForm">
+      <div class="nl-eyebrow">Newsletter</div>
+      <div class="nl-title">Stay in the loop</div>
+      <div class="nl-subtitle">Occasional research updates, new features and interesting findings from the corpus. Unsubscribe anytime — no spam.</div>
+      <label class="nl-label" for="nlEmail">Email address</label>
+      <input class="nl-input" id="nlEmail" type="email" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')submitNewsletter()">
+      <button class="nl-submit" id="nlSubmitBtn" onclick="submitNewsletter()">Subscribe</button>
+      <div class="nl-error" id="nlError"></div>
+    </div>
+    <div id="nlSuccess" class="nl-success" style="display:none">
+      <div class="nl-success-icon">✓</div>
+      <h3>Thanks — you're subscribed</h3>
+      <p>Look for the first update in your inbox soon.</p>
+      <button class="nl-submit" style="margin-top:16px" onclick="closeNewsletter()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOPIC GRAPH MODAL -->
 <div class="modal-bg" id="topicGraphModal">
   <div class="modal" style="max-width:800px;padding:24px">
@@ -2879,6 +2901,75 @@ window.closeArticleModal = function() {
   const ov = document.getElementById('artOverlay')
   if(ov) ov.classList.remove('open')
   document.body.style.overflow = ''
+}
+
+// Newsletter modal (navbar Subscribe →). Anropas som onclick från
+// navSubscribeBtn (rad 736). Best-effort: try/catch runt allt så en trasig
+// modal aldrig kraschar appen. Best-effort Brevo-signup via
+// /functions/v1/newsletter-signup edge fn (samma BREVO_API_KEY som welcome-email).
+window.openNewsletter = function(){
+  try {
+    const ov = document.getElementById('nlOverlay')
+    if(!ov) return
+    // Återställ till form-vy varje öppning (om användaren redan subscribat
+    // tidigare i sessionen och stängde med success-vyn kvar).
+    const form = document.getElementById('nlForm')
+    const success = document.getElementById('nlSuccess')
+    const err = document.getElementById('nlError')
+    if(form) form.style.display = ''
+    if(success) success.style.display = 'none'
+    if(err){ err.textContent = ''; err.style.display = 'none' }
+    const input = document.getElementById('nlEmail')
+    if(input){ input.value = ''; setTimeout(()=>input.focus(), 100) }
+    ov.classList.add('open')
+  } catch(e){ console.log('openNewsletter failed', e) }
+}
+
+window.closeNewsletter = function(){
+  try { document.getElementById('nlOverlay')?.classList.remove('open') } catch(_){}
+}
+
+window.submitNewsletter = async function(){
+  const input = document.getElementById('nlEmail')
+  const btn   = document.getElementById('nlSubmitBtn')
+  const err   = document.getElementById('nlError')
+  const showErr = (msg)=>{ if(err){ err.textContent = msg; err.style.display = 'block' } }
+  const email = input?.value?.trim() || ''
+  if(!email || !email.includes('@')){
+    showErr('Please enter a valid email address.')
+    return
+  }
+  if(btn){ btn.disabled = true; btn.textContent = 'Subscribing…' }
+  if(err){ err.textContent = ''; err.style.display = 'none' }
+  try {
+    const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/newsletter-signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_ANON,
+        'Authorization': 'Bearer ' + SB_ANON
+      },
+      body: JSON.stringify({ email })
+    })
+    const data = await resp.json().catch(() => ({}))
+    if(resp.ok && data?.ok){
+      const form = document.getElementById('nlForm')
+      const success = document.getElementById('nlSuccess')
+      if(form) form.style.display = 'none'
+      if(success) success.style.display = ''
+      return
+    }
+    if(data?.error === 'invalid_email'){
+      showErr('That email doesn’t look right — please check and try again.')
+    } else {
+      showErr('Something went wrong. Please try again in a moment.')
+    }
+  } catch(e){
+    console.log('newsletter submit failed', e)
+    showErr('Network error — please try again.')
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = 'Subscribe' }
+  }
 }
 
 window.closeOnboarding = function() {
