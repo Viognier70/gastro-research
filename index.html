@@ -1284,6 +1284,10 @@ window._isProDb = false
 const CHIP_ROLE = {
   sommelier:'sommelier', chef:'chef', gastronomy:'gastronomy',
   fb_manager:'fb_manager', food_researcher:'food_researcher',
+  // Legacy science-namn från äldre localStorage/pipeline — map:as till
+  // närmaste chip-namn så inget slår igenom som saknad kolumn. Nya inserts
+  // i saveObRoleAndExplore/startTrialFlow skickar redan chip-namn direkt;
+  // detta är en defensiv fallback för användare med gamla gs_role-värden.
   sensory_pro:'sommelier', culinary_pro:'chef',
   gastronomy_culture:'gastronomy', hospitality_mgmt:'fb_manager',
   educator_researcher:'food_researcher'
@@ -1591,7 +1595,11 @@ function cardHTML(a,idx){
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
   const isSaved=savedArticleIds.has(a.id)
-  const r=role==='all'?'sensory_pro':role
+  // Kanoniskt chip-namn för alla property-accesser mot article-objektet.
+  // role='all' → fallback till sommelier (chip). Legacy science-nycklar
+  // (hospitality_mgmt osv.) mappas via toChipRole så cards aldrig visar
+  // "No TRIAD" bara för att gs_role råkar vara ett science-namn.
+  const r = role==='all' ? 'sommelier' : toChipRole(role)
   const roleName=t('roles')[r]||r
   const ep=a['episteme_'+r]||''
   const tc=a['techne_'+r]||a['scenario_'+r]||''
@@ -1800,7 +1808,9 @@ function renderFeed(){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest. Use presence booleans
       // from articles_public — payload episteme_* is Pro-only via RPC.
-      const ecol = role==='all'?'sensory_pro':role
+      // toChipRole mappar legacy science-nycklar (hospitality_mgmt osv.) till
+      // motsvarande chip-namn — annars droppar filtret alla artiklar.
+      const ecol = role==='all' ? 'sommelier' : toChipRole(role)
       source=source.filter(a=>a['has_episteme_'+ecol]===true||a.has_episteme_sensory_pro===true)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
@@ -2008,7 +2018,12 @@ async function loadCounts(){
   try{
     const r1=await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
-    // TRIAD count
+    // TRIAD count. has_episteme_sensory_pro fungerar som GLOBAL "har-TRIAD"-
+    // räknare på hela korpusen (~6425 artiklar) — INTE en användarroll.
+    // sensory_pro finns inte som chip eller onboarding-alternativ; kolumnen är
+    // en teknisk aggregat-markör som pipeline sätter för varje TRIAD-analyserad
+    // artikel oavsett roll-lens. Rollmodellen har 5 riktiga roller: sommelier,
+    // chef, gastronomy, fb_manager, food_researcher.
     const r3=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_episteme_sensory_pro=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal);window._triadCount=triadTotal;loadTrending()}
@@ -2798,7 +2813,11 @@ window.openArticleFromId = async function(id){
 }
 function openArticleOverlay(article){
   _artData = article
-  const r = (typeof role!=='undefined' && role && role!=='all') ? role : 'sensory_pro'
+  // Kanoniskt chip-namn för alla property-accesser mot article-objektet.
+  // Utan toChipRole skulle role='hospitality_mgmt' resulteras i has_episteme_
+  // hospitality_mgmt=undefined → overlayn visar upsell istället för TRIAD.
+  const rRaw = (typeof role!=='undefined' && role && role!=='all') ? role : 'sommelier'
+  const r = toChipRole(rRaw)
   const topic = (article.topic||'').replace(/_/g,' ')
   const badges = (topic?'<span class="topic-badge">'+topic+'</span>':'')+
     (article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+
@@ -3388,16 +3407,17 @@ window.startTrialFlow = async function(){
 
   if(!session){
     if(window._obSelectedRole){
-      localStorage.setItem('gs_pending_role', window._obSelectedRole)
-      // Persistera vald roll DIREKT till samma nycklar som saveObRoleAndExplore
-      // använder. Annars ser checkOnboarding (körs från loadArticles → renderFeed
-      // efter closeOnboardings setRole-anrop) ingen sparad roll och re-öppnar
-      // ob-overlay (z:600) ovanpå auth-modalen (z:200) → ser ut som modalen
-      // "stängs direkt".
-      const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
-      const feedRole = roleMap[window._obSelectedRole] || window._obSelectedRole
+      localStorage.setItem('gs_pending_role', toChipRole(window._obSelectedRole))
+      // Persistera vald roll DIREKT så checkOnboarding (körs från loadArticles →
+      // renderFeed efter closeOnboardings setRole-anrop) ser en sparad roll och
+      // inte re-öppnar ob-overlay (z:600) ovanpå auth-modalen (z:200).
+      // Kanonisera på chip-namn — inget science-namn får läcka in i gs_role
+      // längre. toChipRole hanterar defensivt legacy-nycklar från ev. externa
+      // callers (window._obSelectedRole sätts bara av selectObRole och chip-
+      // knapparna, som redan använder chip-namn).
+      const feedRole = toChipRole(window._obSelectedRole)
       try {
-        localStorage.setItem('gustoRole', window._obSelectedRole)
+        localStorage.setItem('gustoRole', feedRole)
         localStorage.setItem('gs_role', feedRole)
       } catch(_){}
     }
@@ -3462,10 +3482,13 @@ async function resumePendingTrialIfAny(){
 function saveObRoleAndExplore(){
   const selectedRole = window._obSelectedRole
   if(!selectedRole) return
-  const roleMap={meal_creator:'culinary_pro',fb_manager:'hospitality_mgmt',pastry_chef:'culinary_pro',food_photographer:'gastronomy_culture',hotelier:'hospitality_mgmt'}
-  const feedRole=roleMap[selectedRole]||selectedRole
-  localStorage.setItem('gustoRole',selectedRole)
-  localStorage.setItem('gs_role',feedRole)
+  // Kanonisera på chip-namn genom hela systemet. selectObRole skickar redan
+  // chip-namn (sommelier/chef/gastronomy/fb_manager/food_researcher), men
+  // toChipRole är kvar som defensiv fallback så ev. legacy-nyckel från
+  // extern kod inte poisonar gs_role igen.
+  const feedRole = toChipRole(selectedRole)
+  localStorage.setItem('gustoRole', feedRole)
+  localStorage.setItem('gs_role', feedRole)
   localStorage.setItem('gs_onboarded','1')
   // saveObRoleAndExplore är nu en ren "spara roll + stäng onboarding"-primitiv.
   // Anonym → utforskar free-tier. Pro/trial-status kommer via start_trial-RPC
