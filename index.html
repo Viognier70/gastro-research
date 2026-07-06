@@ -2178,7 +2178,11 @@ function handleUpgrade(){openModal('authModal')}
 async function startCheckout(){
   const plan = selectedPlan || 'monthly'
   const {data:{session}} = await sb.auth.getSession()
-  if(!session){
+  // Ingen anonym checkout — kräv både session OCH user.id. Om något
+  // saknas → parkera intent + öppna auth-modalen i signup-läge (samma
+  // K3-mönster som pending_trial). stripe-checkout-fn:n avvisar också
+  // requests utan user_id med 400, så detta är belt-and-braces.
+  if(!session || !session.user?.id){
     localStorage.setItem('gs_pending_checkout', plan)
     closeModal('upgradeModal')
     if(authMode!=='signup') toggleAuthMode()
@@ -2190,13 +2194,13 @@ async function startCheckout(){
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + (session?.access_token || SB_ANON),
+        'Authorization': 'Bearer ' + session.access_token,
         'apikey': SB_ANON
       },
       body: JSON.stringify({
         plan,
-        user_id: session?.user?.id || null,
-        email: session?.user?.email || null,
+        user_id: session.user.id,
+        email: session.user.email,
         success_url: window.location.origin + '?pro=true',
         cancel_url: window.location.origin
       })
