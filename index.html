@@ -130,6 +130,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .synth-card{background:var(--white);border:0.5px solid var(--border-mid);border-radius:8px;padding:16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .synth-card:hover{border-color:var(--gold);box-shadow:0 2px 12px rgba(0,0,0,.04)}
 
+/* EXPLORE — topic-scoped article list under the knowledge map */
+.explore-pane{max-width:1100px;margin:0 auto;padding:24px 32px 48px}
+.explore-pane-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:0.5px solid var(--border);padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap}
+.explore-pane-eyebrow{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.explore-pane-title{font-size:20px;font-family:'Playfair Display',serif;color:var(--text-primary);line-height:1.2}
+.explore-clear-btn{background:none;border:0.5px solid var(--border-mid);color:var(--text-secondary);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:11px;font-family:'Outfit',sans-serif;letter-spacing:.02em}
+.explore-clear-btn:hover{border-color:var(--gold);color:var(--gold)}
+.explore-pane-filter{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.explore-pane-filter input{flex:1;padding:8px 12px;border:0.5px solid var(--border-mid);border-radius:6px;background:var(--white);font-family:'Outfit',sans-serif;font-size:13px;color:var(--text-primary)}
+.explore-pane-filter input:focus{outline:none;border-color:var(--gold)}
+.explore-pane-count{font-size:11px;color:var(--text-tertiary);white-space:nowrap;font-family:'Outfit',sans-serif}
+
 /* NEWS TICKER */
 .ticker-wrap{background:var(--black);border-bottom:0.5px solid rgba(201,168,76,0.2);height:34px;overflow:hidden;position:relative}
 .ticker-label{position:absolute;left:0;top:0;height:34px;background:var(--gold);color:var(--black);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:0 14px;display:flex;align-items:center;z-index:2;white-space:nowrap}
@@ -1098,6 +1110,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div style="margin-top:4px"><span style="font-size:10px;color:rgba(255,255,255,.15);font-style:italic">Click a node to filter · Hover to preview</span></div>
   </div>
 </div>
+</div>
+
+<!-- Topic-scoped article list, populated by loadExploreArticles() when a node is clicked -->
+<div id="explorePane" class="explore-pane" hidden>
+  <div class="explore-pane-header">
+    <div>
+      <div class="explore-pane-eyebrow">Topic focus</div>
+      <div class="explore-pane-title" id="exploreTopicLabel"></div>
+    </div>
+    <button class="explore-clear-btn" onclick="clearExploreTopic()">× Clear topic</button>
+  </div>
+  <div class="explore-pane-filter">
+    <input type="text" id="exploreSearch" placeholder="Filter within this topic — title, author, journal…" oninput="renderExploreArticles()">
+    <span class="explore-pane-count" id="exploreCount"></span>
+  </div>
+  <div id="exploreArticles"></div>
 </div>
 </div>
 
@@ -2809,21 +2837,101 @@ function renderLiveMap(){
   }
 }
 
+// Explore-scoped topic focus. Sedan STEG 2 lever Explore i egen vy — så
+// klick på nod filtrerar INTE Feed (den är dold), utan öppnar en artikel-
+// lista UNDER kartan inom view-explore. Klick på samma nod igen = clear.
+window._explore = window._explore || { topic: null, articles: [] }
+
 function toggleMapTopic(topic){
   if(activeMapTopics.has(topic)){
-    activeMapTopics.clear()
-    document.getElementById('topicSel').value='all'
-  } else {
-    activeMapTopics.clear()
-    activeMapTopics.add(topic)
-    document.getElementById('topicSel').value=topic
-    setTimeout(()=>{
-      const feed=document.getElementById('freeBar')||document.getElementById('feedPane')
-      if(feed) feed.scrollIntoView({behavior:'smooth',block:'start'})
-    },200)
+    clearExploreTopic()
+    return
   }
+  activeMapTopics.clear()
+  activeMapTopics.add(topic)
   renderLiveMap()
-  loadArticles()
+  loadExploreArticles(topic)
+  setTimeout(()=>{
+    const pane=document.getElementById('explorePane')
+    if(pane) pane.scrollIntoView({behavior:'smooth',block:'start'})
+  },200)
+}
+
+function clearExploreTopic(){
+  activeMapTopics.clear()
+  window._explore.topic = null
+  window._explore.articles = []
+  const wrap = document.getElementById('explorePane')
+  if(wrap) wrap.hidden = true
+  const searchEl = document.getElementById('exploreSearch')
+  if(searchEl) searchEl.value = ''
+  renderLiveMap()
+}
+
+async function loadExploreArticles(topic){
+  const pane = document.getElementById('exploreArticles')
+  const label = document.getElementById('exploreTopicLabel')
+  const wrap = document.getElementById('explorePane')
+  if(!pane || !wrap) return
+  wrap.hidden = false
+  if(label) label.textContent = (topic || '').replace(/_/g, ' ')
+  pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading articles…</span></div>'
+
+  // Samma query-mönster som loadArticles() — role-medveten,
+  // TRIAD-presence-filter, sort på scientific relevance.
+  const rkey = role === 'all' ? null : toChipRole(role)
+  const sciCols = rkey
+    ? `relevance_sci_${rkey}`
+    : 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher'
+  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,primary_institution,institution_rank,citation_count,${sciCols}`
+
+  let url
+  if(rkey){
+    const orderCol = `relevance_sci_${rkey}`
+    url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${rkey}=is.true&topic=eq.${encodeURIComponent(topic)}&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=100`
+  } else {
+    url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&topic=eq.${encodeURIComponent(topic)}&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)&order=year.desc.nullslast,fetched_at.desc&limit=100`
+  }
+
+  try {
+    const r = await fetch(url, { headers: H })
+    const arts = await r.json()
+    if(!Array.isArray(arts)){
+      pane.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-secondary);font-size:13px">Could not load articles for this topic.</div>'
+      return
+    }
+    // Pro-payload läggs på när relevant (samma helper som Feed).
+    await enrichWithPremiumIfPro(arts)
+    window._explore.topic = topic
+    window._explore.articles = arts
+    renderExploreArticles()
+  } catch(e) {
+    console.log('loadExploreArticles error:', e)
+    pane.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-secondary);font-size:13px">Could not load articles. Please try again.</div>'
+  }
+}
+
+function renderExploreArticles(){
+  const pane = document.getElementById('exploreArticles')
+  const count = document.getElementById('exploreCount')
+  const searchEl = document.getElementById('exploreSearch')
+  if(!pane) return
+  const q = (searchEl?.value || '').trim().toLowerCase()
+  let source = window._explore.articles || []
+  if(q){
+    source = source.filter(a =>
+      (a.title||'').toLowerCase().includes(q) ||
+      (a.authors||'').toLowerCase().includes(q) ||
+      (a.journal||'').toLowerCase().includes(q))
+  }
+  if(count) count.textContent = `${source.length} article${source.length===1?'':'s'}`
+  if(!source.length){
+    pane.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-secondary);font-size:13px">No matches within this topic.</div>'
+    return
+  }
+  // Återanvänd Feed:s cardHTML — samma role-medvetna gate, TRIAD-lens
+  // toggle, free/pro-cap. Passa index så free-count hanteras korrekt.
+  pane.innerHTML = source.slice(0, 50).map((a, i) => cardHTML(a, i)).join('')
 }
 
 function hideMapPopup(){
@@ -2870,11 +2978,16 @@ function showTopicCollabs(topic){
   renderLiveMap()
 }
 
-// setRole is defined above, patch it to also re-render map
+// setRole is defined above, patch it to also re-render map and refresh the
+// Explore article list (om ett topic är valt) så relevans-sortering och
+// TRIAD-gate speglar den nya rollen.
 const _baseSetRole=setRole
 window.setRole=function(r,btn){
   _baseSetRole(r,btn)
-  setTimeout(()=>{if(mapTopicData.length>0)renderLiveMap()},150)
+  setTimeout(()=>{
+    if(mapTopicData.length>0) renderLiveMap()
+    if(window._explore?.topic) loadExploreArticles(window._explore.topic)
+  },150)
 }
 
 // ─── COUNTRY FLAGS ───────────────────────────────────────────────────────────
