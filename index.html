@@ -1194,6 +1194,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 </div>
 <div id="worldMapTooltip" style="position:fixed;display:none;background:#1a1a18;border:0.5px solid rgba(201,168,76,.3);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:9999;max-width:220px"></div>
+
+<!-- Institution/country-scoped article list, populated by focusMapInstitution() / focusMapCountry() -->
+<div id="mapPane" class="explore-pane" hidden>
+  <div class="explore-pane-header">
+    <div>
+      <div class="explore-pane-eyebrow" id="mapPaneEyebrow">Institution focus</div>
+      <div class="explore-pane-title" id="mapPaneLabel"></div>
+    </div>
+    <button class="explore-clear-btn" onclick="clearMapFocus()">× Clear</button>
+  </div>
+  <div class="explore-pane-filter">
+    <input type="text" id="mapPaneSearch" placeholder="Filter within these articles — title, author, journal…" oninput="renderMapArticles()">
+    <span class="explore-pane-count" id="mapPaneCount"></span>
+  </div>
+  <div id="mapPaneArticles"></div>
+</div>
 </div>
 
 <!-- TRIAD MODAL -->
@@ -2987,6 +3003,10 @@ window.setRole=function(r,btn){
   setTimeout(()=>{
     if(mapTopicData.length>0) renderLiveMap()
     if(window._explore?.topic) loadExploreArticles(window._explore.topic)
+    if(window._mapFocus?.value){
+      const f = window._mapFocus
+      loadMapFocusArticles(f.kind === 'inst' ? { name: f.value } : { country: f.value })
+    }
   },150)
 }
 
@@ -4000,9 +4020,13 @@ function filterByCountry(countryCode) {
   const sidebar = document.getElementById('worldMapSidebar')
   if(!countryCode) {
     sidebar.style.display = 'none'
+    clearMapFocus()
     renderWorldDots()
     return
   }
+  // Öppna artikel-listan för landet direkt — sidebar visar institutioner
+  // för browse, mapPane visar artiklar för läsning.
+  focusMapCountry(countryCode)
   const insts = worldMapData.filter(i => i.country === countryCode)
     .sort((a,b) => {
       if(a.rank && b.rank) return a.rank - b.rank
@@ -4016,7 +4040,7 @@ function filterByCountry(countryCode) {
     `<span style="color:var(--gold)">${countryCode}</span> · ${insts.length} institutions · ${insts.reduce((s,i)=>s+i.count,0)} articles`
   
   document.getElementById('worldMapInstitutions').innerHTML = insts.slice(0,20).map(i => `
-    <div style="padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer" onclick="filterByInstitution('${i.name.replace(/'/g,"\'")}',null)">
+    <div style="padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer" onclick="focusMapInstitution('${i.name.replace(/'/g,"\'")}')">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.3">${i.name}</span>
         <span style="font-size:11px;color:${getNodeColor(i.rank)};font-weight:500;flex-shrink:0;margin-left:8px">${i.rank&&i.rank<999?'#'+i.rank:''}</span>
@@ -4031,7 +4055,13 @@ function filterByCountry(countryCode) {
 
 function filterByInstitution(name, event) {
   if(event) event.stopPropagation()
-  // Set search to institution name
+  // I Map-vyn: skicka till mapPane så användaren stannar i kartan när ett
+  // korts institutions-badge klickas. I Feed/Explore: befintlig beteende
+  // (Feed-sök) — Explore har inget institution-fokus ännu.
+  if(window._appView === 'map'){
+    focusMapInstitution(name)
+    return
+  }
   const searchEl = document.getElementById('searchInput')
   if(searchEl) { searchEl.value = name; searchEl.dispatchEvent(new Event('input')) }
 }
@@ -4101,7 +4131,9 @@ window.renderWorldDots = function() {
     .on('click', (event, d) => {
       event.stopPropagation()
       tooltip.style.display = 'none'
-      showInstPopup(d, event)
+      // Direkt-flow: klick på dot → artikel-lista i mapPane.
+      // showInstPopup finns kvar (dead code) för framtida drill-down.
+      focusMapInstitution(d.name)
     })
 }
 
@@ -4236,6 +4268,128 @@ window.initWorldMap = async function() {
   window.worldMapSvg.call(zoom.transform, d3.zoomIdentity)
 }
 
+// Map-scoped focus. Klick på institution/land öppnar en artikel-lista UNDER
+// kartan inom view-map — samma mönster som Explore-B (topic focus). Låter
+// användaren stanna i kartan i stället för att bounca till dolda Feed.
+window._mapFocus = window._mapFocus || { kind: null, value: null, articles: [] }
+
+async function focusMapInstitution(name){
+  const wrap  = document.getElementById('mapPane')
+  const pane  = document.getElementById('mapPaneArticles')
+  const lbl   = document.getElementById('mapPaneLabel')
+  const eye   = document.getElementById('mapPaneEyebrow')
+  const s     = document.getElementById('mapPaneSearch')
+  if(!wrap || !pane) return
+  wrap.hidden = false
+  if(eye) eye.textContent = 'Institution focus'
+  if(lbl) lbl.textContent = name
+  if(s) s.value = ''
+  pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading articles…</span></div>'
+  window._mapFocus.kind = 'inst'
+  window._mapFocus.value = name
+  await loadMapFocusArticles({ name })
+  setTimeout(() => wrap.scrollIntoView({ behavior:'smooth', block:'start' }), 200)
+  // Highlight clicked dot, dim others
+  if(window.worldMapSvg){
+    window.worldMapSvg.selectAll('.winst').attr('opacity', n => n.name === name ? 1 : 0.25)
+  }
+}
+
+async function focusMapCountry(countryCode){
+  const wrap  = document.getElementById('mapPane')
+  const pane  = document.getElementById('mapPaneArticles')
+  const lbl   = document.getElementById('mapPaneLabel')
+  const eye   = document.getElementById('mapPaneEyebrow')
+  const s     = document.getElementById('mapPaneSearch')
+  if(!wrap || !pane) return
+  wrap.hidden = false
+  if(eye) eye.textContent = 'Country focus'
+  if(lbl) lbl.textContent = countryCode
+  if(s) s.value = ''
+  pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading articles…</span></div>'
+  window._mapFocus.kind = 'country'
+  window._mapFocus.value = countryCode
+  await loadMapFocusArticles({ country: countryCode })
+  setTimeout(() => wrap.scrollIntoView({ behavior:'smooth', block:'start' }), 200)
+}
+
+async function loadMapFocusArticles(filter){
+  const pane = document.getElementById('mapPaneArticles')
+  if(!pane) return
+  // Samma role-medvetna query-mönster som Explore-B / Feed browse-mode.
+  const rkey = role === 'all' ? null : toChipRole(role)
+  const sciCols = rkey
+    ? `relevance_sci_${rkey}`
+    : 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher'
+  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count,${sciCols}`
+  // JSONB containment på institution_coords — matchar när arrayen innehåller
+  // minst ett element med rätt name/country. Samma källa som dot:sen på
+  // kartan, så resultat = konsekvent med det användaren ser.
+  const target = filter.name ? [{ name: filter.name }] : [{ country: filter.country }]
+  const targetEnc = encodeURIComponent(JSON.stringify(target))
+  const roleGate = rkey
+    ? `&has_episteme_${rkey}=is.true`
+    : '&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)'
+  const orderCol = rkey ? `relevance_sci_${rkey}` : 'year'
+  const url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false${roleGate}&institution_coords=cs.${targetEnc}&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=100`
+
+  try {
+    const r = await fetch(url, { headers: H })
+    const arts = await r.json()
+    if(!Array.isArray(arts)){
+      pane.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-secondary);font-size:13px">Could not load articles. Please try again.</div>'
+      return
+    }
+    await enrichWithPremiumIfPro(arts)
+    window._mapFocus.articles = arts
+    renderMapArticles()
+  } catch(e) {
+    console.log('loadMapFocusArticles error:', e)
+    pane.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-secondary);font-size:13px">Could not load articles. Please try again.</div>'
+  }
+}
+
+function renderMapArticles(){
+  const pane = document.getElementById('mapPaneArticles')
+  const count = document.getElementById('mapPaneCount')
+  const s = document.getElementById('mapPaneSearch')
+  if(!pane) return
+  const q = (s?.value || '').trim().toLowerCase()
+  let source = window._mapFocus.articles || []
+  if(q){
+    source = source.filter(a =>
+      (a.title||'').toLowerCase().includes(q) ||
+      (a.authors||'').toLowerCase().includes(q) ||
+      (a.journal||'').toLowerCase().includes(q))
+  }
+  if(count) count.textContent = `${source.length} article${source.length===1?'':'s'}`
+  if(!source.length){
+    const focusVal = window._mapFocus.value || 'this selection'
+    const roleName = role === 'all' ? '' : ` for ${roleLabel(role) || role}`
+    // Elegant tomt-läge — förklara coverage-begränsningen så användaren
+    // inte tror att systemet är trasigt när institution har få träffar.
+    pane.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-secondary);font-size:13px;max-width:520px;margin:0 auto">
+      <div style="font-size:24px;color:var(--gold);opacity:.5;margin-bottom:10px">◎</div>
+      <div style="font-size:15px;color:var(--text-primary);margin-bottom:6px;font-weight:500">No TRIAD analyses from ${focusVal}${roleName} yet</div>
+      <div style="line-height:1.7">Institution coordinates cover only 89 of 1,809 articles today — backfill is ongoing. Try another marker on the map${role!=='all' ? ', or switch role in the Feed tab' : ''}.</div>
+    </div>`
+    return
+  }
+  // Återanvänd Feed:s cardHTML — samma role-medvetna gate, TRIAD-lens
+  // toggle, free/pro-cap som Feed + Explore-B.
+  pane.innerHTML = source.slice(0, 50).map((a, i) => cardHTML(a, i)).join('')
+}
+
+function clearMapFocus(){
+  window._mapFocus = { kind: null, value: null, articles: [] }
+  const wrap = document.getElementById('mapPane')
+  if(wrap) wrap.hidden = true
+  const s = document.getElementById('mapPaneSearch')
+  if(s) s.value = ''
+  // Restore dot opacity, remove per-inst collab lines if any
+  if(window.worldMapSvg) window.worldMapSvg.selectAll('.winst').attr('opacity', 1)
+  if(window.worldMapG) window.worldMapG.selectAll('.inst-collab').remove()
+}
 
 </script>
 </body>
