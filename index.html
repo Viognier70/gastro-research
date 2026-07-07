@@ -118,6 +118,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .app-view-placeholder__title{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;color:var(--text-primary);margin-bottom:12px}
 .app-view-placeholder__body{font-size:13px;color:var(--text-secondary);line-height:1.7}
 
+/* SYNTHESES VIEW — separat vy för Research Synthesis-korten som tidigare
+   satt inuti loadSpotlight (Feed). Grid av kort, klick expanderar synthesis-body. */
+.syntheses-wrap{max-width:1100px;margin:32px auto;padding:0 32px 64px}
+.syntheses-header{display:flex;align-items:baseline;gap:16px;margin-bottom:6px}
+.syntheses-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.syntheses-role{font-size:14px;color:var(--text-secondary);font-family:'Outfit',sans-serif}
+.syntheses-sub{font-size:12px;color:var(--text-tertiary);margin-bottom:24px;line-height:1.6;font-style:italic}
+.syntheses-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.syntheses-loading,.syntheses-empty{grid-column:1/-1;padding:32px;text-align:center;color:var(--text-tertiary);font-size:13px;font-style:italic}
+.synth-card{background:var(--white);border:0.5px solid var(--border-mid);border-radius:8px;padding:16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.synth-card:hover{border-color:var(--gold);box-shadow:0 2px 12px rgba(0,0,0,.04)}
+
 /* NEWS TICKER */
 .ticker-wrap{background:var(--black);border-bottom:0.5px solid rgba(201,168,76,0.2);height:34px;overflow:hidden;position:relative}
 .ticker-label{position:absolute;left:0;top:0;height:34px;background:var(--gold);color:var(--black);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:0 14px;display:flex;align-items:center;z-index:2;white-space:nowrap}
@@ -842,87 +854,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 </div>
 </div>
-<div style="background:#0C0B09;width:100%;border-bottom:0.5px solid rgba(201,168,76,.15)">
-<div style="max-width:1100px;margin:0 auto;padding:20px 32px 16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div style="display:flex;align-items:center;gap:16px">
-      <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Research Landscape</span>
-      <span style="font-size:11px;color:rgba(255,255,255,.4)" id="mapRoleTitle">All professions</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:16px">
-      <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="#C9A84C"/></svg><span style="font-size:10px;color:rgba(255,255,255,.4)">New this week</span></div>
-      <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="rgba(255,255,255,.25)"/></svg><span style="font-size:10px;color:rgba(255,255,255,.4)">Established</span></div>
-      <span style="font-size:10px;color:rgba(255,255,255,.25)">· Click node to filter</span>
-    </div>
-  </div>
-  <div class="section-intro si-dark">
-    <span class="si-what">How gastronomy research areas connect — node size = study count · lines = shared focus.</span>
-    <span class="si-sep">·</span>
-    <span class="si-not">Not shown: areas with fewer than 5 studies · unclassified articles</span>
-  </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
-    <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
-  </div>
-  <div style="margin-top:8px">
-    <span style="font-size:10px;color:rgba(255,255,255,.2);font-style:italic" id="mapSubtitle">Node size = number of studies · Lines = shared research focus</span>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
-      <div style="display:flex;align-items:center;gap:5px"><svg width="16" height="8"><circle cx="8" cy="4" r="4" fill="#C9A84C"/></svg><span style="font-size:10px;color:rgba(255,255,255,.35)">Core topic for your role</span></div>
-      <div style="display:flex;align-items:center;gap:5px"><svg width="16" height="8"><circle cx="8" cy="4" r="2.5" fill="rgba(255,255,255,.25)"/></svg><span style="font-size:10px;color:rgba(255,255,255,.35)">Related area</span></div>
-      <div style="display:flex;align-items:center;gap:5px"><svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="rgba(201,168,76,.4)" stroke-width="1.5"/></svg><span style="font-size:10px;color:rgba(255,255,255,.35)">Shared focus</span></div>
-    </div>
-    <div style="margin-top:4px"><span style="font-size:10px;color:rgba(255,255,255,.15);font-style:italic">Click a node to filter · Hover to preview</span></div>
-  </div>
-</div>
-</div>
-<!-- WORLD MAP SECTION -->
-<div style="background:#0C0B09;width:100%;border-bottom:0.5px solid rgba(201,168,76,.15)">
-<div style="max-width:1100px;margin:0 auto;padding:20px 32px 24px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div style="display:flex;align-items:center;gap:16px">
-      <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Global Research Origins</span>
-      <span style="font-size:11px;color:rgba(255,255,255,.7)" id="worldMapSubtitle">Where gastronomy science is made</span>
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
-      <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
-      <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">My topics</button>
-      <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">Collaborations</button>
-    </div>
-  </div>
-  <div class="section-intro si-dark">
-    <span class="si-what">Where gastronomy research is produced.</span>
-    <span class="si-sep">·</span>
-    <span class="si-coverage">Institution coordinates: <strong>89 of 1,809 articles</strong> — backfilling ongoing.</span>
-    <span class="si-sep">·</span>
-    <span class="si-not">Source: OpenAlex institution data</span>
-  </div>
-  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-    <div style="flex:1;min-width:280px">
-      <div id="worldMapContainer" style="width:100%;position:relative"></div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <span style="font-size:10px;color:rgba(255,255,255,.5)">Each dot = an institution &nbsp;·&nbsp; brighter = more articles here &nbsp;·&nbsp; lines = international collaboration &nbsp;·&nbsp; hover for QS rank</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap">
-        <span style="font-size:10px;color:rgba(255,255,255,.4)">Colour = main research field:</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E8A020;display:inline-block"></span>Gastronomy &amp; flavour</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#5A9AE8;display:inline-block"></span>Sensory &amp; multisensory</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#4AAA6A;display:inline-block"></span>Hospitality &amp; food science</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#B87CC8;display:inline-block"></span>Sommellerie &amp; psychology</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E87040;display:inline-block"></span>Appetite &amp; novel foods</span>
-      </div>
-    </div>
-    <div id="worldMapFilterBanner" style="display:none;background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.3);border-radius:6px;padding:8px 14px;margin-top:8px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <span id="worldMapFilterText" style="font-size:12px;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif"></span>
-      <button onclick="clearWorldMapFilter()" style="font-size:11px;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.4);padding:3px 10px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">× Clear filter</button>
-    </div>
-    <div id="worldMapSidebar" style="width:240px;flex-shrink:0;display:none">
-      <div id="worldMapCountryTitle" style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px"></div>
-      <div id="worldMapInstitutions" style="background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;max-height:280px;overflow-y:auto"></div>
-      <button onclick="filterByCountry(null)" style="margin-top:8px;font-size:11px;color:rgba(201,168,76,.7);background:none;border:none;cursor:pointer;padding:0">← Back to all</button>
-    </div>
-  </div>
-</div>
-</div>
-<div id="worldMapTooltip" style="position:fixed;display:none;background:#1a1a18;border:0.5px solid rgba(201,168,76,.3);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:9999;max-width:220px"></div>
 
 <div class="mini-ticker" id="miniTicker">
   <div style="flex-shrink:0;padding:0 20px 0 24px;border-right:0.5px solid rgba(201,168,76,.2);height:100%;display:flex;align-items:center;gap:6px;min-width:fit-content">
@@ -1133,31 +1064,107 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 </div><!-- /view-feed -->
 
-<!-- APP VIEW: Explore (steg 2) -->
+<!-- APP VIEW: Explore — Research Landscape (SVG knowledge map) -->
 <div id="view-explore" class="app-view" role="tabpanel" hidden>
-  <div class="app-view-placeholder">
-    <div class="app-view-placeholder__eyebrow">Explore</div>
-    <h2 class="app-view-placeholder__title">Coming in step 2</h2>
-    <p class="app-view-placeholder__body">A dedicated view for topic-driven exploration will live here.</p>
+<div style="background:#0C0B09;width:100%;border-bottom:0.5px solid rgba(201,168,76,.15)">
+<div style="max-width:1100px;margin:0 auto;padding:20px 32px 16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:16px">
+      <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Research Landscape</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.4)" id="mapRoleTitle">All professions</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="#C9A84C"/></svg><span style="font-size:10px;color:rgba(255,255,255,.4)">New this week</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="rgba(255,255,255,.25)"/></svg><span style="font-size:10px;color:rgba(255,255,255,.4)">Established</span></div>
+      <span style="font-size:10px;color:rgba(255,255,255,.25)">· Click node to filter</span>
+    </div>
+  </div>
+  <div class="section-intro si-dark">
+    <span class="si-what">How gastronomy research areas connect — node size = study count · lines = shared focus.</span>
+    <span class="si-sep">·</span>
+    <span class="si-not">Not shown: areas with fewer than 5 studies · unclassified articles</span>
+  </div>
+  <div id="liveKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
+    <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
+  </div>
+  <div style="margin-top:8px">
+    <span style="font-size:10px;color:rgba(255,255,255,.2);font-style:italic" id="mapSubtitle">Node size = number of studies · Lines = shared research focus</span>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+      <div style="display:flex;align-items:center;gap:5px"><svg width="16" height="8"><circle cx="8" cy="4" r="4" fill="#C9A84C"/></svg><span style="font-size:10px;color:rgba(255,255,255,.35)">Core topic for your role</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><svg width="16" height="8"><circle cx="8" cy="4" r="2.5" fill="rgba(255,255,255,.25)"/></svg><span style="font-size:10px;color:rgba(255,255,255,.35)">Related area</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="rgba(201,168,76,.4)" stroke-width="1.5"/></svg><span style="font-size:10px;color:rgba(255,255,255,.35)">Shared focus</span></div>
+    </div>
+    <div style="margin-top:4px"><span style="font-size:10px;color:rgba(255,255,255,.15);font-style:italic">Click a node to filter · Hover to preview</span></div>
   </div>
 </div>
+</div>
+</div>
 
-<!-- APP VIEW: Syntheses (steg 3) -->
+<!-- APP VIEW: Syntheses — Research Synthesis cards, laddas av loadSyntheses() -->
 <div id="view-syntheses" class="app-view" role="tabpanel" hidden>
-  <div class="app-view-placeholder">
-    <div class="app-view-placeholder__eyebrow">Syntheses</div>
-    <h2 class="app-view-placeholder__title">Coming in step 3</h2>
-    <p class="app-view-placeholder__body">Research syntheses grouped by role and topic will live here.</p>
+  <div class="syntheses-wrap">
+    <div class="syntheses-header">
+      <span class="syntheses-eyebrow">Research Synthesis</span>
+      <span class="syntheses-role" id="synthesesRoleLabel">—</span>
+    </div>
+    <div class="syntheses-sub">Peer-reviewed research grouped by topic for your role.</div>
+    <div id="synthesesGrid" class="syntheses-grid">
+      <div class="syntheses-loading">Loading syntheses…</div>
+    </div>
   </div>
 </div>
 
-<!-- APP VIEW: Map (steg 4) -->
+<!-- APP VIEW: Map — Global Research Origins (world map) -->
 <div id="view-map" class="app-view" role="tabpanel" hidden>
-  <div class="app-view-placeholder">
-    <div class="app-view-placeholder__eyebrow">Map</div>
-    <h2 class="app-view-placeholder__title">Coming in step 4</h2>
-    <p class="app-view-placeholder__body">The knowledge map and global institution graph will live here.</p>
+<!-- WORLD MAP SECTION -->
+<div style="background:#0C0B09;width:100%;border-bottom:0.5px solid rgba(201,168,76,.15)">
+<div style="max-width:1100px;margin:0 auto;padding:20px 32px 24px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:16px">
+      <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Global Research Origins</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.7)" id="worldMapSubtitle">Where gastronomy science is made</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
+      <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
+      <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">My topics</button>
+      <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">Collaborations</button>
+    </div>
   </div>
+  <div class="section-intro si-dark">
+    <span class="si-what">Where gastronomy research is produced.</span>
+    <span class="si-sep">·</span>
+    <span class="si-coverage">Institution coordinates: <strong>89 of 1,809 articles</strong> — backfilling ongoing.</span>
+    <span class="si-sep">·</span>
+    <span class="si-not">Source: OpenAlex institution data</span>
+  </div>
+  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1;min-width:280px">
+      <div id="worldMapContainer" style="width:100%;position:relative"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:10px;color:rgba(255,255,255,.5)">Each dot = an institution &nbsp;·&nbsp; brighter = more articles here &nbsp;·&nbsp; lines = international collaboration &nbsp;·&nbsp; hover for QS rank</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap">
+        <span style="font-size:10px;color:rgba(255,255,255,.4)">Colour = main research field:</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E8A020;display:inline-block"></span>Gastronomy &amp; flavour</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#5A9AE8;display:inline-block"></span>Sensory &amp; multisensory</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#4AAA6A;display:inline-block"></span>Hospitality &amp; food science</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#B87CC8;display:inline-block"></span>Sommellerie &amp; psychology</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E87040;display:inline-block"></span>Appetite &amp; novel foods</span>
+      </div>
+    </div>
+    <div id="worldMapFilterBanner" style="display:none;background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.3);border-radius:6px;padding:8px 14px;margin-top:8px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span id="worldMapFilterText" style="font-size:12px;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif"></span>
+      <button onclick="clearWorldMapFilter()" style="font-size:11px;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.4);padding:3px 10px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">× Clear filter</button>
+    </div>
+    <div id="worldMapSidebar" style="width:240px;flex-shrink:0;display:none">
+      <div id="worldMapCountryTitle" style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px"></div>
+      <div id="worldMapInstitutions" style="background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;max-height:280px;overflow-y:auto"></div>
+      <button onclick="filterByCountry(null)" style="margin-top:8px;font-size:11px;color:rgba(201,168,76,.7);background:none;border:none;cursor:pointer;padding:0">← Back to all</button>
+    </div>
+  </div>
+</div>
+</div>
+<div id="worldMapTooltip" style="position:fixed;display:none;background:#1a1a18;border:0.5px solid rgba(201,168,76,.3);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:9999;max-width:220px"></div>
 </div>
 
 <!-- TRIAD MODAL -->
@@ -3055,10 +3062,13 @@ window.selectAll = function() {
   loadArticles()
 }
 
-// APP-VIEW SWITCHER — steg 1 av nav-bygget. In-memory state (window._appView),
-// ingen localStorage. Feed default. Steg 2-4 flyttar innehåll in i respektive
-// view; just nu är Explore/Syntheses/Map bara platshållare.
+// APP-VIEW SWITCHER + LAZY-LOAD. In-memory state, ingen localStorage.
+// Feed laddar vid init (default landing). Explore/Syntheses/Map lazy-loadar
+// vid första öppningen. _viewLoaded-flaggan sätts EFTER lyckad load — om
+// laddaren fallerar (400, timeout, throw) förblir flaggan false så att
+// ny-öppning retry:ar automatiskt.
 window._appView = 'feed'
+window._viewLoaded = { feed: true, explore: false, syntheses: false, map: false }
 window.showView = function(name){
   const views = ['feed','explore','syntheses','map']
   if(!views.includes(name)) return
@@ -3074,6 +3084,27 @@ window.showView = function(name){
   })
   // Scrolla till top när användaren byter vy — förstasidan ska rensas.
   try { window.scrollTo({top: 0, behavior: 'instant'}) } catch(_) { window.scrollTo(0, 0) }
+  // Lazy-load: fyra separata hooks. Varje sätter sin flagga bara vid success
+  // så vi kan retry:a genom att klicka bort och tillbaka.
+  if(name === 'explore' && !window._viewLoaded.explore){
+    Promise.resolve()
+      .then(() => (typeof loadKnowledgeMap === 'function') ? loadKnowledgeMap() : Promise.resolve())
+      .then(() => { if(typeof renderLiveMap === 'function') renderLiveMap() })
+      .then(() => { window._viewLoaded.explore = true })
+      .catch(e => { console.log('Explore lazy-load failed', e) })
+  }
+  if(name === 'syntheses' && !window._viewLoaded.syntheses){
+    Promise.resolve()
+      .then(() => (typeof window.loadSyntheses === 'function') ? window.loadSyntheses() : Promise.resolve())
+      .then(() => { window._viewLoaded.syntheses = true })
+      .catch(e => { console.log('Syntheses lazy-load failed', e) })
+  }
+  if(name === 'map' && !window._viewLoaded.map){
+    Promise.resolve()
+      .then(() => (typeof window.initWorldMap === 'function') ? window.initWorldMap() : Promise.resolve())
+      .then(() => { window._viewLoaded.map = true })
+      .catch(e => { console.log('Map lazy-load failed', e) })
+  }
 }
 
 window.toggleImrad = function(id) {
@@ -3338,17 +3369,13 @@ window.loadSpotlight = async function() {
     const spotlightRoleLabel = window.roleLabel(rRaw) || r
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
 
-    const [artResp, synthResp] = await Promise.all([
-      fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${r}&has_episteme_${r}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
-        headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
-      }),
-      fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'})[rRaw]||'sommelier'}&order=updated_at.desc&limit=4`, {
-        headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
-      })
-    ])
+    // Research Synthesis-korten hämtas av loadSyntheses() i Syntheses-vyn.
+    // loadSpotlight fokuserar på Feed:s artikel-highlights.
+    const artResp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${r}&has_episteme_${r}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
+      headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+    })
 
     const arts = await artResp.json()
-    const synths = await synthResp.json()
     if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet for this role.</p>'; return }
     await enrichWithPremiumIfPro(arts)
 
@@ -3390,27 +3417,6 @@ window.loadSpotlight = async function() {
       </div>`
     }).join('')
 
-    const synthHTML = Array.isArray(synths) && synths.length ? `
-      <div style="margin-top:28px;border-top:2px solid #1A1A1A;padding-top:16px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
-          <span class="gs-sp-section">Research Synthesis · ${spotlightRoleLabel}</span>
-          <span class="gs-sp-date">Synthesised from peer-reviewed research</span>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
-          ${synths.map(s => `
-            <div style="background:#fff;border:0.5px solid #C8C0B0;padding:14px;cursor:pointer" onclick="var b=this.querySelector('.synth-body');b.style.display=b.style.display==='none'?'block':'none'">
-              <div class="gs-sp-journal">${(s.topic||'').replace(/_/g,' ')}</div>
-              ${s.article_count>=5?'<span class="synth-tag converging">Converging</span>':'<span class="synth-tag tension">Emerging</span>'}
-              <div class="gs-sp-title-sm" style="margin-bottom:4px">${s.title||''}</div>
-              <div class="gs-sp-meta">${s.article_count||0} articles · Updated ${formatDate(s.updated_at)}</div>
-              <div style="font-size:10px;color:#555;font-family:'Outfit',sans-serif;margin-top:4px;font-style:italic">${s.article_count>=5?'Studies align — consistent findings across '+s.article_count+' papers':'Emerging evidence — '+s.article_count+' studies building consensus'}</div>
-              <div class="synth-body" style="display:none;margin-top:10px;font-size:11px;color:#333;line-height:1.6;font-family:'Outfit',sans-serif">${s.synthesis?.slice(0,500)||''}</div>
-              <div style="font-size:10px;color:#1A3A5C;margin-top:8px;font-family:'Outfit',sans-serif">Open synthesis →</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>` : ''
-
     el.innerHTML = `<div class="gs-spotlight">
       <div class="gs-sp-header">
         <span class="gs-sp-section">Research Spotlight</span>
@@ -3437,14 +3443,57 @@ window.loadSpotlight = async function() {
           ${smallCards}
         </div>
       </div>
-      ${synthHTML}
     </div>`
   } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
 }
 
-initAuth().then(async ()=>{loadArticles();loadCounts();loadKnowledgeMap().then(()=>renderLiveMap());const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
+// Research Synthesis-korten — lyft ut från loadSpotlight så de bor i sin egen
+// vy (Syntheses). Samma data (research_syntheses) + samma role→role-kolumn-map,
+// men renderas som en fokuserad grid utan Spotlight-omgivningen.
+window.loadSyntheses = async function() {
+  const grid = document.getElementById('synthesesGrid')
+  const roleEl = document.getElementById('synthesesRoleLabel')
+  if(!grid) return
+  grid.innerHTML = '<div class="syntheses-loading">Loading syntheses…</div>'
+  try {
+    const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sommelier')
+    const synthRole = ({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'})[rRaw] || 'sommelier'
+    const label = window.roleLabel(rRaw) || rRaw
+    if(roleEl) roleEl.textContent = label
+    const resp = await fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${synthRole}&order=updated_at.desc&limit=12`, {
+      headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+    })
+    const synths = await resp.json()
+    if(!Array.isArray(synths) || !synths.length){
+      grid.innerHTML = '<div class="syntheses-empty">No syntheses yet for this role — check back soon.</div>'
+      return
+    }
+    const formatDate = d => d ? new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''
+    grid.innerHTML = synths.map(s => `
+      <div class="synth-card" onclick="var b=this.querySelector('.synth-body');b.style.display=b.style.display==='none'?'block':'none'">
+        <div class="gs-sp-journal">${(s.topic||'').replace(/_/g,' ')}</div>
+        ${s.article_count>=5?'<span class="synth-tag converging">Converging</span>':'<span class="synth-tag tension">Emerging</span>'}
+        <div class="gs-sp-title-sm" style="margin-bottom:4px">${s.title||''}</div>
+        <div class="gs-sp-meta">${s.article_count||0} articles · Updated ${formatDate(s.updated_at)}</div>
+        <div style="font-size:10px;color:#555;font-family:'Outfit',sans-serif;margin-top:4px;font-style:italic">${s.article_count>=5?'Studies align — consistent findings across '+s.article_count+' papers':'Emerging evidence — '+s.article_count+' studies building consensus'}</div>
+        <div class="synth-body" style="display:none;margin-top:10px;font-size:12px;color:#333;line-height:1.7;font-family:'Outfit',sans-serif">${s.synthesis?.slice(0,600)||''}</div>
+        <div style="font-size:10px;color:#1A3A5C;margin-top:8px;font-family:'Outfit',sans-serif">Open synthesis →</div>
+      </div>
+    `).join('')
+  } catch(e) {
+    console.log('Syntheses error:', e)
+    grid.innerHTML = '<div class="syntheses-empty">Could not load syntheses. Please try again.</div>'
+    // Kasta så anroparen (showView) kan välja att INTE sätta _viewLoaded-flaggan.
+    throw e
+  }
+}
+
+// Feed default — bara Feed-datan (artiklar, counts, spotlight) laddas vid init.
+// loadKnowledgeMap (Explore) och initWorldMap (Map) triggas av showView() vid
+// första öppning. Sparar ~2s på förstasidan + Anthropic-kvot om användaren
+// aldrig öppnar de tunga vyerna.
+initAuth().then(async ()=>{loadArticles();loadCounts();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
 setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
-setTimeout(()=>{if(typeof window.initWorldMap==='function') window.initWorldMap()}, 2500)
 </script>
 <!-- TRIAD MODAL — paste this block into index.html -->
 <!-- Add this CSS to the <style> section -->
