@@ -4329,8 +4329,12 @@ async function loadMapFocusArticles(filter){
   // Country: fortsatt via institution_coords JSONB — countries text[]
   // är inte alltid populerat på historiska rader; dot-having artiklar
   // har alltid coords med country_code satt.
+  //
+  // Syntax OBS: text[] cs-värdet är Postgres array-literal `{"..."}`,
+  // INTE JSON `["..."]`. JSON.stringify ger fel bracket-typ och 400
+  // 'malformed array literal'. JSONB cs däremot tar JSON.
   const filterClause = filter.name
-    ? `institutions=cs.${encodeURIComponent(JSON.stringify([filter.name]))}`
+    ? `institutions=cs.${encodeURIComponent('{"' + filter.name.replace(/(["\\])/g, '\\$1') + '"}')}`
     : `institution_coords=cs.${encodeURIComponent(JSON.stringify([{ country: filter.country }]))}`
   // Institution-vyn är BREDARE än Feed — visar institutionens hela
   // gastronomi-output, inte bara TRIAD-analyserade. Ingen has_episteme-
