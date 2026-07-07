@@ -2663,7 +2663,11 @@ function renderLiveMap(){
   const getTopicColor = t => topicColors[t] || '#C9A84C'
 
   // Center: profession node
-  const rname=roleNames[role]
+  // Använder roleLabel() (canonical helper från DEL A) istället för den lokala
+  // roleNames-mappen som togs bort i d5bb536. Utan denna byte kastas
+  // ReferenceError och renderLiveMap avbryts före container.innerHTML=svg
+  // → loadern "Building knowledge map..." stannar för alltid.
+  const rname = role === 'all' ? 'All' : (roleLabel(role) || role)
   svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="2"/>`
   svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#C9A84C">${rname}</text>`
   svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.5)">Aristotle·TRIAD</text>`
