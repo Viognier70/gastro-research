@@ -1153,7 +1153,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Global Research Origins</span>
       <span style="font-size:11px;color:rgba(255,255,255,.7)" id="worldMapSubtitle">Where gastronomy science is made</span>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap" id="worldMapFilters">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="worldMapFilters">
+      <input type="text" id="mapInstSearch" placeholder="Search institution by name…" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.04);color:rgba(255,255,255,.9);width:200px;font-family:'Outfit',sans-serif" onkeydown="if(event.key==='Enter'){const v=this.value.trim();if(v) focusMapInstitution(v)}">
       <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
       <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">My topics</button>
       <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">Collaborations</button>
@@ -4322,16 +4323,20 @@ async function loadMapFocusArticles(filter){
     ? `relevance_sci_${rkey}`
     : 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher'
   const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count,${sciCols}`
-  // JSONB containment på institution_coords — matchar när arrayen innehåller
-  // minst ett element med rätt name/country. Samma källa som dot:sen på
-  // kartan, så resultat = konsekvent med det användaren ser.
-  const target = filter.name ? [{ name: filter.name }] : [{ country: filter.country }]
-  const targetEnc = encodeURIComponent(JSON.stringify(target))
-  const roleGate = rkey
-    ? `&has_episteme_${rkey}=is.true`
-    : '&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)'
-  const orderCol = rkey ? `relevance_sci_${rkey}` : 'year'
-  const url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false${roleGate}&institution_coords=cs.${targetEnc}&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=100`
+  // Institution: text[] containment på institutions — bredare än
+  // institution_coords (som kräver geo-lookup). Fångar alla co-authors,
+  // inklusive preflight/backfill-berikade artiklar utan koordinater.
+  // Country: fortsatt via institution_coords JSONB — countries text[]
+  // är inte alltid populerat på historiska rader; dot-having artiklar
+  // har alltid coords med country_code satt.
+  const filterClause = filter.name
+    ? `institutions=cs.${encodeURIComponent(JSON.stringify([filter.name]))}`
+    : `institution_coords=cs.${encodeURIComponent(JSON.stringify([{ country: filter.country }]))}`
+  // Institution-vyn är BREDARE än Feed — visar institutionens hela
+  // gastronomi-output, inte bara TRIAD-analyserade. Ingen has_episteme-
+  // gate. cardHTML renderar TRIAD-lösa kort rent (title/authors/journal/
+  // year, inga ε/τ/φ-block). Sortering: newest first.
+  const url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&${filterClause}&order=year.desc.nullslast,fetched_at.desc&limit=100`
 
   try {
     const r = await fetch(url, { headers: H })
