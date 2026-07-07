@@ -176,6 +176,16 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       limitation: analysis.limitation || '',
       limit_type: analysis.limit_type || '',
       study_type: analysis.study_type || '',
+      // Institution linkage from source APIs. Preserves the
+      // affiliation-text that used to get discarded — makes the map
+      // institution-vy queryable per institution (see migration
+      // 20260707120000_affiliations_column.sql).
+      institutions: article.institutions?.length ? article.institutions : null,
+      institution_coords: article.institution_coords?.length ? article.institution_coords : null,
+      affiliations: article.affiliations?.length ? article.affiliations : null,
+      primary_institution: article.primary_institution || null,
+      country: article.country || null,
+      countries: article.countries?.length ? article.countries : null,
       fetched_at: new Date().toISOString()
     })
     if (error) console.log('Save error:', error.message)
@@ -209,21 +219,26 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
         `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
       ).filter(Boolean).join(', ') || e['dc:creator'] || ''
       const doi = e['prism:doi'] || ''
-      const affils = e['affiliation'] || []
-      const countries = [...new Set(
-        (Array.isArray(affils) ? affils : [affils])
-          .map((a: any) => a['affiliation-country'] || '')
-          .filter(Boolean)
-      )]
-      const country = countries[0] || ''
+      const affilsRaw = e['affiliation'] || []
+      const affilArr = Array.isArray(affilsRaw) ? affilsRaw : [affilsRaw]
 
-      const affils2 = e['affiliation'] || []
-      const allCountries = [...new Set(
-        (Array.isArray(affils2) ? affils2 : [affils2])
-          .map((a: any) => a['affiliation-country'] || a?.['@country'] || '')
-          .filter(Boolean)
-      )]
-      const primaryCountry = allCountries[0] || ''
+      // Rich affiliation text: name + city + country when Scopus provides
+      // them. Preserves the department/campus signal that got thrown away.
+      const affiliations = affilArr
+        .map((a: any) => {
+          const name = (a['affiliation-name'] || '').trim()
+          const city = (a['affiliation-city'] || '').trim()
+          const country = (a['affiliation-country'] || '').trim()
+          return [name, city, country].filter(Boolean).join(', ')
+        })
+        .filter(Boolean)
+      const institutions = [...new Set(
+        affilArr.map((a: any) => (a['affiliation-name'] || '').trim()).filter(Boolean)
+      )] as string[]
+      const countries = [...new Set(
+        affilArr.map((a: any) => a['affiliation-country'] || a?.['@country'] || '').filter(Boolean)
+      )] as string[]
+      const country = countries[0] || ''
 
       return {
         title: e['dc:title'] || '',
@@ -231,8 +246,11 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
         authors,
         journal: e['prism:publicationName'] || journal,
         year: parseInt(e['prism:coverDate']?.slice(0, 4) || '0'),
-        country: primaryCountry,
-        countries: allCountries.length ? allCountries : null,
+        country,
+        countries: countries.length ? countries : null,
+        institutions,
+        affiliations,
+        primary_institution: institutions[0] || null,
         doi,
         url: doi ? `https://doi.org/${doi}` : (e['prism:url'] || ''),
         source: 'scopus', source_label: 'Scopus'
@@ -278,8 +296,23 @@ async function fetchPubMedPage(query: string, year: number, page: number): Promi
         const fore = a.match(/<ForeName>(.*?)<\/ForeName>/)?.[1] || ''
         return `${fore} ${last}`.trim()
       }).filter(Boolean).join(', ')
+      // PubMed <Affiliation> is per-author, often duplicated across
+      // authors from the same lab. Dedupe. Institution = the first
+      // comma-separated segment ("Örebro University, School of ..." →
+      // "Örebro University"). Heuristic; good enough for filtering.
+      const affiliations = [...new Set(
+        (articleXml.match(/<Affiliation>[\s\S]*?<\/Affiliation>/g) || [])
+          .map(m => m.replace(/<\/?Affiliation>/g, '').replace(/<[^>]+>/g, '').trim())
+          .filter(Boolean)
+      )] as string[]
+      const institutions = [...new Set(
+        affiliations.map(a => a.split(',')[0].trim()).filter(Boolean)
+      )] as string[]
       return { title, abstract, authors, journal, year, doi,
         url: doi ? `https://doi.org/${doi}` : '',
+        institutions,
+        affiliations,
+        primary_institution: institutions[0] || null,
         source: 'pubmed', source_label: 'PubMed' }
     }).filter(a => a.title.length > 5)
 
@@ -302,20 +335,37 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
     const total = d.meta?.count || 0
     const hasMore = ((page + 1) * perPage) < total
 
-    const articles = (d.results || []).map((w: any) => ({
-      title: w.title || '',
-      abstract: w.abstract || '',
-      journal: w.primary_location?.source?.display_name || '',
-      year: w.publication_year || year,
-      doi: w.doi?.replace('https://doi.org/', '') || '',
-      url: w.doi || w.id || '',
-      authors: (w.authorships || []).map((a: any) => a.author?.display_name || '').filter(Boolean).join(', '),
-      country: (w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.country_code)).filter(Boolean)[0] || '',
-      institutions: [...new Set((w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.display_name)).filter(Boolean))],
-      institution_coords: (w.authorships || []).flatMap((a: any) => (a.institutions || []).filter((i: any) => i.geo?.latitude).map((i: any) => ({name: i.display_name, lat: i.geo.latitude, lng: i.geo.longitude, country: i.country_code}))).filter((v,i,a) => a.findIndex(x=>x.name===v.name)===i),
-      countries: [...new Set((w.authorships || []).flatMap((a: any) => (a.institutions || []).map((i: any) => i.country_code)).filter(Boolean))],
-      source: 'openalex', source_label: 'OpenAlex'
-    })).filter((a: any) => a.title.length > 5 && !isBlockedJournal(a.journal||'', a.title||'', a.abstract||''))
+    const articles = (d.results || []).map((w: any) => {
+      const authorships = w.authorships || []
+      const flatInsts = authorships.flatMap((a: any) => a.institutions || [])
+      const institutions = [...new Set(flatInsts.map((i: any) => i.display_name).filter(Boolean))] as string[]
+      const institution_coords = flatInsts
+        .filter((i: any) => i.geo?.latitude)
+        .map((i: any) => ({ name: i.display_name, lat: i.geo.latitude, lng: i.geo.longitude, country: i.country_code }))
+        .filter((v: any, i: number, a: any[]) => a.findIndex((x: any) => x.name === v.name) === i)
+      const countries = [...new Set(flatInsts.map((i: any) => i.country_code).filter(Boolean))] as string[]
+      // raw_affiliation_strings preserves department/campus text ("Örebro
+      // University, Grythyttan Campus") that display_name flattens away.
+      const affiliations = [...new Set(
+        authorships.flatMap((a: any) => a.raw_affiliation_strings || []).filter(Boolean)
+      )] as string[]
+      return {
+        title: w.title || '',
+        abstract: w.abstract || '',
+        journal: w.primary_location?.source?.display_name || '',
+        year: w.publication_year || year,
+        doi: w.doi?.replace('https://doi.org/', '') || '',
+        url: w.doi || w.id || '',
+        authors: authorships.map((a: any) => a.author?.display_name || '').filter(Boolean).join(', '),
+        country: countries[0] || '',
+        institutions,
+        institution_coords,
+        countries,
+        affiliations,
+        primary_institution: institutions[0] || null,
+        source: 'openalex', source_label: 'OpenAlex'
+      }
+    }).filter((a: any) => a.title.length > 5 && !isBlockedJournal(a.journal||'', a.title||'', a.abstract||''))
 
     console.log(`OpenAlex ${query} ${year} p${page}: ${articles.length}/${total}`)
     return { articles, hasMore }
