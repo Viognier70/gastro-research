@@ -44,12 +44,13 @@ function extractDoi(url: string): string | null {
 
 type Outcome =
   | { kind: 'ok', data: {
-      institutions:        string[],
-      institution_coords:  Array<{name:string,lat:number,lng:number,country:string}> | null,
-      affiliations:        string[] | null,
-      primary_institution: string,
-      country:             string,
-      countries:           string[]
+      institutions:             string[],
+      institution_openalex_ids: string[],  // parallel to institutions, same index → same inst
+      institution_coords:       Array<{name:string,lat:number,lng:number,country:string}> | null,
+      affiliations:             string[] | null,
+      primary_institution:      string,
+      country:                  string,
+      countries:                string[]
     } }
   | { kind: 'missed' }                             // 200 with no institutions, or 404
   | { kind: 'retry_429' }                          // rate-limited — break the batch
@@ -68,9 +69,26 @@ async function fetchOpenAlex(doi: string): Promise<Outcome> {
     const d = await r.json()
     const authorships = d.authorships || []
     const flatInsts = authorships.flatMap((a: any) => a.institutions || [])
-    const institutions = [...new Set(
-      flatInsts.map((i: any) => i.display_name).filter(Boolean)
-    )] as string[]
+
+    // institutions[] and institution_openalex_ids[] are built as parallel
+    // arrays deduped by display_name — same index in both refers to the
+    // same institution. The ID is what /institutions/{id} resolves against
+    // (name is ambiguous — "Christ University", "Université de Maradi" vs
+    // its Diffa campus, etc). Store the short form (strip openalex.org/
+    // prefix); the API accepts both, short is cleaner in storage.
+    const seen = new Set<string>()
+    const institutions: string[] = []
+    const institution_openalex_ids: string[] = []
+    for (const inst of flatInsts) {
+      const name = inst?.display_name
+      if (!name || seen.has(name)) continue
+      seen.add(name)
+      institutions.push(name)
+      const rawId = (inst?.id || '') as string
+      institution_openalex_ids.push(
+        rawId.replace(/^https?:\/\/openalex\.org\//, '')
+      )
+    }
 
     // Same-DOI 200 with no authorships = OpenAlex has the work but no
     // institutional signal. Attempted, missed — no fallback in fas 1.
@@ -99,6 +117,7 @@ async function fetchOpenAlex(doi: string): Promise<Outcome> {
       kind: 'ok',
       data: {
         institutions,
+        institution_openalex_ids,
         institution_coords: institution_coords.length ? institution_coords : null,
         affiliations:       affiliations.length       ? affiliations       : null,
         primary_institution: institutions[0],
@@ -178,13 +197,14 @@ Deno.serve(async (req) => {
     // affiliation_attempted_at is set.
     const data = outcome.kind === 'ok' ? outcome.data : null
     const { error: rpcErr } = await supabase.rpc('backfill_affiliations_update', {
-      p_id:                  article.id,
-      p_institutions:        data?.institutions        ?? null,
-      p_institution_coords:  data?.institution_coords  ?? null,
-      p_affiliations:        data?.affiliations        ?? null,
-      p_primary_institution: data?.primary_institution ?? null,
-      p_country:             data?.country             ?? null,
-      p_countries:           data?.countries           ?? null,
+      p_id:                       article.id,
+      p_institutions:             data?.institutions             ?? null,
+      p_institution_openalex_ids: data?.institution_openalex_ids ?? null,
+      p_institution_coords:       data?.institution_coords       ?? null,
+      p_affiliations:             data?.affiliations             ?? null,
+      p_primary_institution:      data?.primary_institution      ?? null,
+      p_country:                  data?.country                  ?? null,
+      p_countries:                data?.countries                ?? null,
     })
 
     if (rpcErr) {
