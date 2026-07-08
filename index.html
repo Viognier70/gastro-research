@@ -4076,8 +4076,15 @@ window.renderWorldDots = function() {
     data = data.filter(i => i.rank && i.rank <= 200)
   }
   if(currentWorldFilter === 'collabs') {
-    // Collaborations — visa bara institutioner med samarbetslinjer
-    data = data.filter(i => i.rank && i.rank <= 500)
+    // Collaborations — bara institutioner som faktiskt förekommer i minst en
+    // international collab (inst_a/inst_b i worldMapCollabs). Rank-gaten
+    // (rank <= 500) var en kvarleva från top500-knappen — QS-rank har inte
+    // med samarbetstillhörighet att göra och exkluderade dessutom
+    // Grythyttan/Basque/Örebro-klassen ur kartan.
+    if(Array.isArray(window.worldMapCollabs) && window.worldMapCollabs.length) {
+      const collabInsts = new Set(window.worldMapCollabs.flatMap(c => [c.inst_a, c.inst_b]))
+      data = data.filter(i => collabInsts.has(i.name))
+    }
   }
   if(selectedCountry) data = data.filter(i => i.country === selectedCountry)
   
