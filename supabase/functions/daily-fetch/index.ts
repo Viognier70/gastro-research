@@ -196,13 +196,65 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
   }
 }
 
+// ─── SCOPUS ENTRY MAPPER ─────────────────────────────────────────────────────
+// Both fetchScopusPage (journal-scoped) and fetchResearchers (AU-ID-scoped)
+// call the same Search API endpoint with STANDARD view — response shape is
+// identical, so both go through this mapper. Keeps the affilname/-city/
+// -country extraction in one place instead of drifting into two copies.
+// yearFallback: use 0 in journal-fetch (matches previous no-date → 0
+// behaviour); use the search year in researcher-fetch so an entry without
+// prism:coverDate at least stays inside the requested year window.
+function mapScopusEntry(e: any, defaultJournal: string, yearFallback: number): any {
+  const authorList = e['authors']?.author || []
+  const authors = authorList.map((a: any) =>
+    `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
+  ).filter(Boolean).join(', ') || e['dc:creator'] || ''
+  const doi = e['prism:doi'] || ''
+  const affilsRaw = e['affiliation'] || []
+  const affilArr = Array.isArray(affilsRaw) ? affilsRaw : [affilsRaw]
+
+  // Rich affiliation text: name + city + country when Scopus provides
+  // them. Preserves the department/campus signal that got thrown away.
+  const affiliations = affilArr
+    .map((a: any) => {
+      const name = (a['affilname'] || '').trim()
+      const city = (a['affiliation-city'] || '').trim()
+      const country = (a['affiliation-country'] || '').trim()
+      return [name, city, country].filter(Boolean).join(', ')
+    })
+    .filter(Boolean)
+  const institutions = [...new Set(
+    affilArr.map((a: any) => (a['affilname'] || '').trim()).filter(Boolean)
+  )] as string[]
+  const countries = [...new Set(
+    affilArr.map((a: any) => a['affiliation-country'] || a?.['@country'] || '').filter(Boolean)
+  )] as string[]
+  const country = countries[0] || ''
+
+  return {
+    title: e['dc:title'] || '',
+    abstract: e['dc:description'] || '',
+    authors,
+    journal: e['prism:publicationName'] || defaultJournal,
+    year: parseInt(e['prism:coverDate']?.slice(0, 4) || '0') || yearFallback,
+    country,
+    countries: countries.length ? countries : null,
+    institutions,
+    affiliations,
+    primary_institution: institutions[0] || null,
+    doi,
+    url: doi ? `https://doi.org/${doi}` : (e['prism:url'] || ''),
+    source: 'scopus', source_label: 'Scopus'
+  }
+}
+
 // ─── SCOPUS FETCH (with pagination) ──────────────────────────────────────────
 async function fetchScopusPage(journal: string, year: number, page: number): Promise<{articles: any[], hasMore: boolean}> {
   const start = page * 25
   try {
     const query = encodeURIComponent(`SRCTITLE("${journal}") AND PUBYEAR IS ${year}`)
     const url = `https://api.elsevier.com/content/search/scopus?query=${query}&count=25&start=${start}&sort=-coverDate&apiKey=${SCOPUS_KEY}&httpAccept=application%2Fjson`
-    
+
     const r = await fetch(url)
     if (!r.ok) {
       console.log(`Scopus ${journal} ${year} p${page}: HTTP ${r.status}`)
@@ -213,49 +265,9 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
     const total = parseInt(d['search-results']?.['opensearch:totalResults'] || '0')
     const hasMore = (start + 25) < total && total > 0
 
-    const articles = entries.map((e: any) => {
-      const authorList = e['authors']?.author || []
-      const authors = authorList.map((a: any) =>
-        `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
-      ).filter(Boolean).join(', ') || e['dc:creator'] || ''
-      const doi = e['prism:doi'] || ''
-      const affilsRaw = e['affiliation'] || []
-      const affilArr = Array.isArray(affilsRaw) ? affilsRaw : [affilsRaw]
-
-      // Rich affiliation text: name + city + country when Scopus provides
-      // them. Preserves the department/campus signal that got thrown away.
-      const affiliations = affilArr
-        .map((a: any) => {
-          const name = (a['affilname'] || '').trim()
-          const city = (a['affiliation-city'] || '').trim()
-          const country = (a['affiliation-country'] || '').trim()
-          return [name, city, country].filter(Boolean).join(', ')
-        })
-        .filter(Boolean)
-      const institutions = [...new Set(
-        affilArr.map((a: any) => (a['affilname'] || '').trim()).filter(Boolean)
-      )] as string[]
-      const countries = [...new Set(
-        affilArr.map((a: any) => a['affiliation-country'] || a?.['@country'] || '').filter(Boolean)
-      )] as string[]
-      const country = countries[0] || ''
-
-      return {
-        title: e['dc:title'] || '',
-        abstract: e['dc:description'] || '',
-        authors,
-        journal: e['prism:publicationName'] || journal,
-        year: parseInt(e['prism:coverDate']?.slice(0, 4) || '0'),
-        country,
-        countries: countries.length ? countries : null,
-        institutions,
-        affiliations,
-        primary_institution: institutions[0] || null,
-        doi,
-        url: doi ? `https://doi.org/${doi}` : (e['prism:url'] || ''),
-        source: 'scopus', source_label: 'Scopus'
-      }
-    }).filter((a: any) => a.title.length > 5)
+    const articles = entries
+      .map((e: any) => mapScopusEntry(e, journal, 0))
+      .filter((a: any) => a.title.length > 5)
 
     console.log(`Scopus ${journal} ${year} p${page}: ${entries.length}/${total}`)
     return { articles, hasMore }
@@ -564,25 +576,13 @@ async function fetchResearchers(): Promise<number> {
 
       console.log(`Researcher ${researcher.name} ${year} p${page}: ${entries.length}/${total}`)
 
+      // Samma Scopus Search API som fetchScopusPage — dela extraktionen så
+      // affilname/-city/-country landar i researcher-hämtade artiklar också.
+      // Utan detta hamnade Anders 13 egna publikationer (och alla andra
+      // AU-ID-fetchade) med institutions=null trots att svaret innehåller
+      // affiliation-arrayen.
       for (const e of entries) {
-        const authorList = e['authors']?.author || []
-        const authors = authorList.map((a: any) =>
-          `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
-        ).filter(Boolean).join(', ') || e['dc:creator'] || ''
-        const doi = e['prism:doi'] || ''
-        const articleYear = parseInt(e['prism:coverDate']?.slice(0, 4) || '0') || year
-
-        const article = {
-          title: e['dc:title'] || '',
-          abstract: e['dc:description'] || '',
-          authors,
-          journal: e['prism:publicationName'] || '',
-          year: articleYear,
-          doi,
-          url: doi ? `https://doi.org/${doi}` : (e['prism:url'] || ''),
-          source: 'scopus', source_label: 'Scopus'
-        }
-
+        const article = mapScopusEntry(e, '', year)
         const topic = detectTopic(article.title, article.abstract, article.journal)
         if (await saveArticle(article, topic)) added++
         await new Promise(r => setTimeout(r, 150))
