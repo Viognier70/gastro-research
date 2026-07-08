@@ -226,14 +226,14 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
       // them. Preserves the department/campus signal that got thrown away.
       const affiliations = affilArr
         .map((a: any) => {
-          const name = (a['affiliation-name'] || '').trim()
+          const name = (a['affilname'] || '').trim()
           const city = (a['affiliation-city'] || '').trim()
           const country = (a['affiliation-country'] || '').trim()
           return [name, city, country].filter(Boolean).join(', ')
         })
         .filter(Boolean)
       const institutions = [...new Set(
-        affilArr.map((a: any) => (a['affiliation-name'] || '').trim()).filter(Boolean)
+        affilArr.map((a: any) => (a['affilname'] || '').trim()).filter(Boolean)
       )] as string[]
       const countries = [...new Set(
         affilArr.map((a: any) => a['affiliation-country'] || a?.['@country'] || '').filter(Boolean)
