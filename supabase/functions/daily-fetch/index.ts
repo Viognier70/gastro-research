@@ -342,6 +342,24 @@ async function fetchPubMedPage(query: string, year: number, page: number): Promi
   }
 }
 
+// OpenAlex serves the abstract as a positional inverted index — {word: [pos,
+// pos, ...]}. Reconstruct linearly: for each word push it at every position,
+// sort by position, join with spaces. Truthy checks first because a) many
+// works have abstract_inverted_index=null (no abstract available), b) some
+// return an empty object {}, c) rare bad shapes should degrade to '' rather
+// than throw and abort the mapper for a whole page.
+function reconstructAbstract(inv: Record<string, number[]> | null | undefined): string {
+  if (!inv || typeof inv !== 'object') return ''
+  const positions: [number, string][] = []
+  for (const [word, indices] of Object.entries(inv)) {
+    if (!Array.isArray(indices)) continue
+    for (const i of indices) if (typeof i === 'number') positions.push([i, word])
+  }
+  if (!positions.length) return ''
+  positions.sort((a, b) => a[0] - b[0])
+  return positions.map(([, w]) => w).join(' ')
+}
+
 // ─── OPENALEX FETCH (with year + pagination) ──────────────────────────────────
 async function fetchOpenAlexPage(query: string, year: number, page: number): Promise<{articles: any[], hasMore: boolean}> {
   try {
@@ -369,7 +387,11 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
       )] as string[]
       return {
         title: w.title || '',
-        abstract: w.abstract || '',
+        // OpenAlex returns abstract as abstract_inverted_index, not as a
+        // string field — the old `w.abstract || ''` was always ''. Rebuild
+        // the text so new OpenAlex-sourced articles land with abstract,
+        // available for relevance-check and the map-institution flow.
+        abstract: reconstructAbstract(w.abstract_inverted_index),
         journal: w.primary_location?.source?.display_name || '',
         year: w.publication_year || year,
         doi: w.doi?.replace('https://doi.org/', '') || '',
