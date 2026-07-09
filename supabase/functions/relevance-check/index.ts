@@ -132,12 +132,14 @@ Deno.serve(async (req) => {
     if (hits === 0) {
       isRelevant = false
       method = '0kw'
-    } else if (hits >= 2) {
-      isRelevant = true
-      method = '≥2kw'
     } else {
-      // 1 träff → Haiku avgör. Men respektera taket: när nått, skjut upp
-      // återstående 1-träff-artiklar till nästa körning (lämna obedömda).
+      // hits >= 1 → Haiku avgör. Auto-relevant-grenen (hits >= 2 utan
+      // Haiku) togs bort 2026-07-09 — de 11 keyword-regexerna är för
+      // breda för att bära ett auto-godkännande. Två slumpträffar på
+      // /sensor/, /aroma/, /microbio/, /preservation/ räckte för att
+      // släppa igenom insekticid-artiklar, kinesiska aktieindex, tak-
+      // tegel-antikvariat och chimpansers bobyggande utan att prompten
+      // fick titta. Prompten är rimligt formulerad — låt den svara.
       if (haikuCalls >= MAX_HAIKU_PER_RUN) { deferred++; continue }
       haikuCalls++
       const verdict = await haikuIsRelevant(a.title, abstract)

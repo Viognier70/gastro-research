@@ -79,7 +79,14 @@ const TOPICS: Record<string, string[]> = {
 
 function detectTopic(title: string, abstract: string, journal: string): string {
   const text = `${title} ${abstract} ${journal}`.toLowerCase()
-  let bestTopic = 'gastronomy'
+  // Default 'uncategorized' istället för 'gastronomy'. Tidigare fick allt
+  // som inte träffade någon TOPICS-nyckel 'gastronomy' by default — det
+  // gjorde att kinesiska aktieindex, taktegel-antikvariat och tusentals
+  // andra rader hamnade i gastronomy-topic'en utan att verkligen matcha.
+  // 'uncategorized' är en ny kategori som saknas i TOPIC_LABELS/topicColors
+  // — frontend faller tillbaka till raw-strängen respektive gold-defaulten
+  // så inget kraschar; det syns bara som "uncategorized" i etiketter.
+  let bestTopic = 'uncategorized'
   let bestScore = 0
   for (const [topic, keywords] of Object.entries(TOPICS)) {
     const score = keywords.filter(k => text.includes(k.toLowerCase())).length
