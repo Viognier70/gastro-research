@@ -57,44 +57,42 @@ function fmtRange(a: unknown, b: unknown): string {
   return `${av}–${bv}`
 }
 
-// LABEL_MAP: beskriv varje signal + hur den ska renderas. Nyckeln är bara
-// intern (för SECTION_ORDER); label är vad som visas.
-//
-// Kolumnnamnen är bästa gissningar från Anders exempel-format 2026-07-09.
-// Fält som inte matchar riktiga kolumnnamn tas bort per rad efter första
-// test-send när vi ser råvärde-blocket i mailet.
+// LABEL_MAP — verifierat mot faktiska kolumnnamn i gusto_health-vyn
+// 2026-07-09. Första test-sendens rå-JSON-block avslöjade svenska
+// nycklar; mina engelska gissningar missade alla åtta. Nu låst mot
+// vyns faktiska namn.
 const FIELDS: Record<string, FieldSpec> = {
   kran_institution: {
     label: 'Kran (nya m. institution)',
-    format: (r) => fmtPct(r.new_with_institution_pct ?? r.pct_new_with_institution),
+    format: (r) => fmtPct(r.kran_pct_med_inst),
   },
   syntheses_rows_unique: {
     label: 'Synteser (rader/unika)',
-    format: (r) => fmtPair(r.syntheses_rows ?? r.synth_rows, r.syntheses_unique ?? r.synth_unique),
+    format: (r) => fmtPair(r.synt_rader, r.synt_unika),
   },
   svep_stale: {
     label: 'Svep ej körda >24h',
-    format: (r) => fmtPair(r.stale_svep_24h ?? r.svep_stale_24h, r.total_svep ?? r.svep_total),
+    format: (r) => fmtPair(r.svep_gamla, r.svep_totalt),
   },
   year_span: {
     label: 'Korpus årsspann',
-    format: (r) => fmtRange(r.year_min ?? r.corpus_year_min, r.year_max ?? r.corpus_year_max),
+    format: (r) => fmtRange(r.korpus_minar, r.korpus_maxar),
   },
   unchecked_no_abstract_pct: {
     label: 'Obedömda utan abstract',
-    format: (r) => fmtPct(r.unchecked_no_abstract_pct ?? r.pct_unchecked_no_abstract),
+    format: (r) => fmtPct(r.obedomt_utan_abstract_pct),
   },
   unchecked_queue: {
     label: 'Obedömd kö',
-    format: (r) => fmtInt(r.unchecked_queue ?? r.unchecked_total),
+    format: (r) => fmtInt(r.obedomd_ko),
   },
   unique_dois: {
     label: 'Unika DOI',
-    format: (r) => fmtInt(r.unique_dois ?? r.dois_unique),
+    format: (r) => fmtInt(r.unika_doi),
   },
   judged_relevant: {
     label: 'Bedömt relevanta',
-    format: (r) => fmtInt(r.judged_relevant ?? r.relevant_count),
+    format: (r) => fmtInt(r.bedomt_relevanta),
   },
 }
 
@@ -111,26 +109,20 @@ const SECTION_ORDER: Array<{ header?: string, keys: string[] }> = [
   { header: 'Copy-tal', keys: ['unique_dois', 'judged_relevant'] },
 ]
 
-// Alla nycklar (fältnamn i vyn) som FIELDS-format-funktionerna slår upp.
-// Används för att avgöra vilka kolumner som är "täckta" av LABEL_MAP så
-// resten kan visas i råvärde-blocket.
+// Nycklar som LABEL_MAP slår upp — används av responsen för att flagga
+// om vyn någon dag börjar returnera ett fält vi inte känner igen. Om
+// uncovered_keys blir icke-tom ska LABEL_MAP + denna set uppdateras i
+// takt.
 const COVERED_COLUMN_KEYS = new Set<string>([
-  'new_with_institution_pct', 'pct_new_with_institution',
-  'syntheses_rows', 'synth_rows', 'syntheses_unique', 'synth_unique',
-  'stale_svep_24h', 'svep_stale_24h', 'total_svep', 'svep_total',
-  'year_min', 'corpus_year_min', 'year_max', 'corpus_year_max',
-  'unchecked_no_abstract_pct', 'pct_unchecked_no_abstract',
-  'unchecked_queue', 'unchecked_total',
-  'unique_dois', 'dois_unique',
-  'judged_relevant', 'relevant_count',
+  'kran_pct_med_inst',
+  'synt_rader', 'synt_unika',
+  'svep_gamla', 'svep_totalt',
+  'korpus_minar', 'korpus_maxar',
+  'obedomt_utan_abstract_pct',
+  'obedomd_ko',
+  'unika_doi',
+  'bedomt_relevanta',
 ])
-
-function prettifyColumnName(k: string): string {
-  return k
-    .replace(/_pct$/, ' (%)')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase())
-}
 
 function padRight(s: string, w: number): string {
   return s.length >= w ? s + '  ' : s + ' '.repeat(w - s.length)
@@ -154,24 +146,6 @@ function buildBody(row: Record<string, any>, isoDate: string): string {
       lines.push(`${padRight(spec.label + ':', LABEL_WIDTH)}${spec.format(row)}`)
     }
   }
-
-  // Ej täckta kolumner — visas rått så vi ser om vyn har fler signaler
-  // som borde in i LABEL_MAP.
-  const uncovered = Object.entries(row).filter(([k]) => !COVERED_COLUMN_KEYS.has(k))
-  if (uncovered.length) {
-    lines.push('')
-    lines.push('── Övriga fält (ej mappade) ──')
-    for (const [k, v] of uncovered) {
-      const val = v === null || v === undefined ? '—' : String(v)
-      lines.push(`${padRight(prettifyColumnName(k) + ':', LABEL_WIDTH)}${val}`)
-    }
-  }
-
-  // Råvärde-block längst ner så vi kan verifiera vad vyn faktiskt gav.
-  // Tas bort efter första lyckade test-send.
-  lines.push('')
-  lines.push('── Rå JSON (för verifiering) ──')
-  lines.push(JSON.stringify(row, null, 2))
 
   return lines.join('\n')
 }
