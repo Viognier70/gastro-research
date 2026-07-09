@@ -37,7 +37,13 @@ function isBlockedJournal(journal: string, title: string, abstract: string): boo
   return false
 }
 const SCOPUS_KEY = '394f43f3b56c0271865da601cbe7e786'
-const MIN_YEAR = 0
+// Scopus indexeras praktiskt från tidigt 1970-tal, PubMed från 1966. Under
+// 1970 finns i vår domän i princip inget (Chemical Senses börjar 1974,
+// Journal of Texture Studies 1969, moderna sensory-vetenskapen är i mångt
+// en 1980-tals-företeelse). 1970 är gränsen där tomma ticks tar över — vi
+// behöver inte ticka längre. completed = true sätts när svepet decrementat
+// nedanför denna floor och faller ur runBackfills pool.
+const MIN_YEAR = 1970
 
 const supabase = createClient(SB_URL, SB_SERVICE_KEY)
 
@@ -459,7 +465,7 @@ async function runBackfill(): Promise<number> {
     .from('backfill_progress')
     .select('*')
     .eq('completed', false)
-    .order('current_year', { ascending: false })
+    .order('last_run', { ascending: true, nullsFirst: true })
     .limit(20)
 
   if (!jobs?.length) {
