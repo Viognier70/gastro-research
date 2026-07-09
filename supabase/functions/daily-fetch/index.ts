@@ -36,7 +36,7 @@ function isBlockedJournal(journal: string, title: string, abstract: string): boo
   if(BROAD.includes(j) && !FOOD_KEYWORDS.test(title + ' ' + (abstract||''))) return true
   return false
 }
-const SCOPUS_KEY = '394f43f3b56c0271865da601cbe7e786'
+const SCOPUS_KEY = Deno.env.get('SCOPUS_KEY') || ''
 // Scopus indexeras praktiskt från tidigt 1970-tal, PubMed från 1966. Under
 // 1970 finns i vår domän i princip inget (Chemical Senses börjar 1974,
 // Journal of Texture Studies 1969, moderna sensory-vetenskapen är i mångt
