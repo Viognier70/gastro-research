@@ -1,0 +1,250 @@
+// health-mail
+// ─────────────────────────────────────────────────────────────────────────────
+// Dagligt hälsomail till Anders. Läser en rad ur gusto_health-vyn (service
+// role, vyn timeoutar mot anon på grund av corpus-storleken), formaterar den
+// till ett läsbart text-mail och skickar via Brevo — samma endpoint och
+// BREVO_API_KEY-secret som weekly-newsletters admin-digest använder.
+//
+// LABEL_MAP och SECTION_ORDER är där man tunar utseendet utan att röra
+// pipeline-logiken. Fält som saknas i mappen kastas inte bort — de renderas
+// med auto-prettifierat namn i slutet så nya kolumner i vyn syns direkt.
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
+const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+const BREVO_KEY = Deno.env.get('BREVO_API_KEY') || ''
+const supabase = createClient(SB_URL, SB_SERVICE_KEY, { auth: { persistSession: false } })
+
+const RECIPIENT_EMAIL = 'anders@crichton-fock.com'
+const RECIPIENT_NAME  = 'Anders'
+const SENDER_EMAIL    = 'anders@crichton-fock.com'
+const SENDER_NAME     = 'Gusto Science'
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Content-Type': 'application/json'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatering
+// ─────────────────────────────────────────────────────────────────────────────
+
+type FieldSpec = {
+  label: string
+  format: (row: Record<string, any>) => string
+}
+
+// Svenska tusentalsavgränsare (mellanslag). "10 000" istället för "10,000".
+function fmtInt(n: unknown): string {
+  if (n === null || n === undefined || n === '') return '—'
+  const num = Number(n)
+  if (!Number.isFinite(num)) return String(n)
+  return Math.trunc(num).toLocaleString('sv-SE').replace(/ /g, ' ')
+}
+function fmtPct(n: unknown): string {
+  if (n === null || n === undefined || n === '') return '—'
+  const num = Number(n)
+  if (!Number.isFinite(num)) return String(n)
+  return `${num.toFixed(1)}%`
+}
+function fmtPair(a: unknown, b: unknown, sep = ' / '): string {
+  return `${fmtInt(a)}${sep}${fmtInt(b)}`
+}
+function fmtRange(a: unknown, b: unknown): string {
+  const av = (a === null || a === undefined) ? '?' : String(a)
+  const bv = (b === null || b === undefined) ? '?' : String(b)
+  return `${av}–${bv}`
+}
+
+// LABEL_MAP: beskriv varje signal + hur den ska renderas. Nyckeln är bara
+// intern (för SECTION_ORDER); label är vad som visas.
+//
+// Kolumnnamnen är bästa gissningar från Anders exempel-format 2026-07-09.
+// Fält som inte matchar riktiga kolumnnamn tas bort per rad efter första
+// test-send när vi ser råvärde-blocket i mailet.
+const FIELDS: Record<string, FieldSpec> = {
+  kran_institution: {
+    label: 'Kran (nya m. institution)',
+    format: (r) => fmtPct(r.new_with_institution_pct ?? r.pct_new_with_institution),
+  },
+  syntheses_rows_unique: {
+    label: 'Synteser (rader/unika)',
+    format: (r) => fmtPair(r.syntheses_rows ?? r.synth_rows, r.syntheses_unique ?? r.synth_unique),
+  },
+  svep_stale: {
+    label: 'Svep ej körda >24h',
+    format: (r) => fmtPair(r.stale_svep_24h ?? r.svep_stale_24h, r.total_svep ?? r.svep_total),
+  },
+  year_span: {
+    label: 'Korpus årsspann',
+    format: (r) => fmtRange(r.year_min ?? r.corpus_year_min, r.year_max ?? r.corpus_year_max),
+  },
+  unchecked_no_abstract_pct: {
+    label: 'Obedömda utan abstract',
+    format: (r) => fmtPct(r.unchecked_no_abstract_pct ?? r.pct_unchecked_no_abstract),
+  },
+  unchecked_queue: {
+    label: 'Obedömd kö',
+    format: (r) => fmtInt(r.unchecked_queue ?? r.unchecked_total),
+  },
+  unique_dois: {
+    label: 'Unika DOI',
+    format: (r) => fmtInt(r.unique_dois ?? r.dois_unique),
+  },
+  judged_relevant: {
+    label: 'Bedömt relevanta',
+    format: (r) => fmtInt(r.judged_relevant ?? r.relevant_count),
+  },
+}
+
+// Sektioner: primära signaler överst, "copy-tal" separator, sedan mängder.
+const SECTION_ORDER: Array<{ header?: string, keys: string[] }> = [
+  { keys: [
+      'kran_institution',
+      'syntheses_rows_unique',
+      'svep_stale',
+      'year_span',
+      'unchecked_no_abstract_pct',
+      'unchecked_queue',
+    ] },
+  { header: 'Copy-tal', keys: ['unique_dois', 'judged_relevant'] },
+]
+
+// Alla nycklar (fältnamn i vyn) som FIELDS-format-funktionerna slår upp.
+// Används för att avgöra vilka kolumner som är "täckta" av LABEL_MAP så
+// resten kan visas i råvärde-blocket.
+const COVERED_COLUMN_KEYS = new Set<string>([
+  'new_with_institution_pct', 'pct_new_with_institution',
+  'syntheses_rows', 'synth_rows', 'syntheses_unique', 'synth_unique',
+  'stale_svep_24h', 'svep_stale_24h', 'total_svep', 'svep_total',
+  'year_min', 'corpus_year_min', 'year_max', 'corpus_year_max',
+  'unchecked_no_abstract_pct', 'pct_unchecked_no_abstract',
+  'unchecked_queue', 'unchecked_total',
+  'unique_dois', 'dois_unique',
+  'judged_relevant', 'relevant_count',
+])
+
+function prettifyColumnName(k: string): string {
+  return k
+    .replace(/_pct$/, ' (%)')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function padRight(s: string, w: number): string {
+  return s.length >= w ? s + '  ' : s + ' '.repeat(w - s.length)
+}
+
+function buildBody(row: Record<string, any>, isoDate: string): string {
+  const LABEL_WIDTH = 30
+
+  const lines: string[] = []
+  lines.push(`Gusto hälsa — ${isoDate}`)
+  lines.push('')
+
+  for (const section of SECTION_ORDER) {
+    if (section.header) {
+      lines.push('')
+      lines.push(`── ${section.header} ──`)
+    }
+    for (const key of section.keys) {
+      const spec = FIELDS[key]
+      if (!spec) continue
+      lines.push(`${padRight(spec.label + ':', LABEL_WIDTH)}${spec.format(row)}`)
+    }
+  }
+
+  // Ej täckta kolumner — visas rått så vi ser om vyn har fler signaler
+  // som borde in i LABEL_MAP.
+  const uncovered = Object.entries(row).filter(([k]) => !COVERED_COLUMN_KEYS.has(k))
+  if (uncovered.length) {
+    lines.push('')
+    lines.push('── Övriga fält (ej mappade) ──')
+    for (const [k, v] of uncovered) {
+      const val = v === null || v === undefined ? '—' : String(v)
+      lines.push(`${padRight(prettifyColumnName(k) + ':', LABEL_WIDTH)}${val}`)
+    }
+  }
+
+  // Råvärde-block längst ner så vi kan verifiera vad vyn faktiskt gav.
+  // Tas bort efter första lyckade test-send.
+  lines.push('')
+  lines.push('── Rå JSON (för verifiering) ──')
+  lines.push(JSON.stringify(row, null, 2))
+
+  return lines.join('\n')
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  const startedAt = Date.now()
+
+  if (!BREVO_KEY) {
+    return new Response(
+      JSON.stringify({ ok: false, error: 'BREVO_API_KEY not set' }),
+      { status: 500, headers: CORS }
+    )
+  }
+
+  const { data: rows, error: selectErr } = await supabase
+    .from('gusto_health')
+    .select('*')
+    .limit(1)
+
+  if (selectErr) {
+    return new Response(
+      JSON.stringify({ ok: false, error: `select gusto_health: ${selectErr.message}` }),
+      { status: 500, headers: CORS }
+    )
+  }
+  if (!rows?.length) {
+    return new Response(
+      JSON.stringify({ ok: false, error: 'gusto_health returned no rows' }),
+      { status: 500, headers: CORS }
+    )
+  }
+
+  const row = rows[0] as Record<string, any>
+  const isoDate = new Date().toISOString().slice(0, 10)
+  const body = buildBody(row, isoDate)
+
+  // Brevo transactional email — samma endpoint som weekly-newsletter
+  // admin-digest (v3/smtp/email). textContent istället för htmlContent
+  // så mailet är ren monospace/text.
+  const brevoResp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': BREVO_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sender:  { name: SENDER_NAME, email: SENDER_EMAIL },
+      to:      [{ email: RECIPIENT_EMAIL, name: RECIPIENT_NAME }],
+      subject: `Gusto hälsa ${isoDate}`,
+      textContent: body,
+      // Brevo kräver antingen textContent eller htmlContent; vi vill ha
+      // monospace för siffror-justering. Wrapper-html som bevarar text
+      // som <pre>-block så mailklienter renderar det korrekt.
+      htmlContent: `<pre style="font-family:monospace,ui-monospace;font-size:13px;line-height:1.55;white-space:pre-wrap;color:#0C0B09;background:#F7F4ED;padding:16px;border-radius:8px">${
+        body
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+      }</pre>`,
+    }),
+  })
+  const brevoBody = await brevoResp.json().catch(() => ({}))
+  const brevoOk = brevoResp.ok
+
+  return new Response(JSON.stringify({
+    ok: brevoOk,
+    status: brevoResp.status,
+    message_id: brevoBody.messageId || null,
+    brevo_message: brevoBody.message || null,
+    row_keys: Object.keys(row),
+    uncovered_keys: Object.keys(row).filter(k => !COVERED_COLUMN_KEYS.has(k)),
+    duration_ms: Date.now() - startedAt,
+  }), { headers: CORS })
+})
