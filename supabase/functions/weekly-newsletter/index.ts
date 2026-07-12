@@ -53,8 +53,12 @@ async function sendAdminDigest(): Promise<boolean> {
 
   const [{count:total},{count:sciDone},{count:triadDone},{count:newToday}] = await Promise.all([
     supabase.from('articles').select('id',{count:'exact',head:true}),
-    supabase.from('articles').select('id',{count:'exact',head:true}).not('relevance_sci_sommelier','is',null),
-    supabase.from('articles').select('id',{count:'exact',head:true}).not('episteme_sommelier','is',null),
+    // sciDone: runSci skriver alla 5 relevance_sci_[science]-fält atomärt,
+    // så vilket som helst av dem = alla. sensory_pro används som canary.
+    // triadDone: phronesis_educator_researcher är sista fältet i labeled-prose-
+    // formatet — samma strikta canary som screening_funnel-vyns triad_analyserade.
+    supabase.from('articles').select('id',{count:'exact',head:true}).not('relevance_sci_sensory_pro','is',null),
+    supabase.from('articles').select('id',{count:'exact',head:true}).not('phronesis_educator_researcher','is',null),
     supabase.from('articles').select('id',{count:'exact',head:true}).gte('fetched_at',new Date(Date.now()-24*60*60*1000).toISOString())
   ])
   const {data:pendingRoles} = await supabase.from('discovered_roles').select('role_key,role_label,article_count').eq('approved',false).order('article_count',{ascending:false}).limit(5)
