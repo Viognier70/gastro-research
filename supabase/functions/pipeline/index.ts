@@ -125,9 +125,14 @@ async function releaseStuck() {
     .lt('updated_at', tenMinAgo)
 }
 
+// Max attempts innan raden markeras permanent failed. En rad utan
+// väg framåt är samma lögn som en obedömbar artikel kvar i kön.
+const MAX_ATTEMPTS = 5
+
 Deno.serve(async (_req) => {
   const startTime = Date.now()
   let processed = 0, errors = 0, sciCalls = 0, triadCalls = 0
+  let skipped = 0, permanentlyFailed = 0
 
   // Release stuck items first
   await releaseStuck()
@@ -140,7 +145,7 @@ Deno.serve(async (_req) => {
       {headers:{'Content-Type':'application/json'}})
   }
 
-  const batch = await claimBatch(10)
+  const batch = await claimBatch(20)
   if(!batch.length) {
     const {count:remaining} = await supabase.from('processing_queue')
       .select('id',{count:'exact',head:true}).eq('status','pending')
@@ -165,10 +170,17 @@ Deno.serve(async (_req) => {
       continue
     }
 
-    // Skip articles without enough content
+    // Skip articles without enough content. Tidigare markerades de som
+    // status='done' med sci_done=true/triad_done=true — samma lögn som
+    // "obedömbar artikel räknas relevant". Nu status='skipped' med skäl
+    // så de syns i last_error och kan re-processas om title fylls i.
     if(!article.title || article.title.length < 10) {
-      await supabase.from('processing_queue').update({status:'done',sci_done:true,triad_done:true,updated_at:new Date().toISOString()}).eq('id',item.id)
-      processed++
+      await supabase.from('processing_queue').update({
+        status: 'skipped',
+        last_error: 'title too short (< 10 chars) — cannot analyze',
+        updated_at: new Date().toISOString()
+      }).eq('id', item.id)
+      skipped++
       continue
     }
 
@@ -213,33 +225,59 @@ Deno.serve(async (_req) => {
         console.log('Skipping TRIAD — relevance:', maxRelevance)
       }
 
-      // Step 4: Save
-      await save(article, sci, triad)
+      // Step 4: Save — FÅNGA returvärdet. sci_done/triad_done sätts ENDAST
+      // när save verkligen lyckades. Tidigare version satte flaggorna
+      // baserat på !!sci (Haiku-svar), oberoende av save-utfall → skapade
+      // ~9 462 spöken där kön säger "klart" men articles-tabellen är NULL.
+      const saved = await save(article, sci, triad)
+      const newAttempts = (item.attempts || 0) + 1
 
-      // Step 5: Update queue status
-      const sciDone = item.sci_done || !!sci
+      if (!saved) {
+        // Save misslyckades — flaggorna behåller sina gamla värden. attempts
+        // ökas. Om vi når MAX_ATTEMPTS: status='failed' med last_error så
+        // raden lämnar kön permanent istället för att ligga kvar som pending
+        // för alltid.
+        const failed = newAttempts >= MAX_ATTEMPTS
+        await supabase.from('processing_queue').update({
+          status: failed ? 'failed' : 'pending',
+          attempts: newAttempts,
+          last_error: `save failed on attempt ${newAttempts} of ${MAX_ATTEMPTS}`,
+          updated_at: new Date().toISOString()
+        }).eq('id', item.id)
+        if (failed) permanentlyFailed++
+        errors++
+        continue
+      }
+
+      // Save lyckades → flaggorna reflekterar vad som faktiskt skrevs.
       // triad räknas som DONE bara om parsningen validerades. Om triad har
       // missing/too_short-fält skrevs ingenting, och artikeln ska plockas
       // igen nästa batch för nytt Sonnet-försök.
+      const sciDone = item.sci_done || !!sci
       const triadOk = !!(triad && !validateTriad(triad))
       const triadDone = item.triad_done || triadOk || !shouldTriad
+
       await supabase.from('processing_queue').update({
         status: sciDone && triadDone ? 'done' : 'pending',
         sci_done: sciDone,
         triad_done: triadDone,
-        attempts: (item.attempts||0) + 1,
+        attempts: newAttempts,
+        last_error: null,   // rensa ev. tidigare fel när save lyckas
         updated_at: new Date().toISOString()
       }).eq('id', item.id)
 
       processed++
     } catch(e: any) {
       console.log('Error:', item.article_id.slice(0,8), e.message)
+      const newAttempts = (item.attempts||0) + 1
+      const failed = newAttempts >= MAX_ATTEMPTS
       await supabase.from('processing_queue').update({
-        status: 'pending',
-        attempts: (item.attempts||0) + 1,
-        last_error: e.message?.slice(0,200),
+        status: failed ? 'failed' : 'pending',
+        attempts: newAttempts,
+        last_error: e.message?.slice(0,200) || 'unknown exception',
         updated_at: new Date().toISOString()
       }).eq('id', item.id)
+      if (failed) permanentlyFailed++
       errors++
     }
 
@@ -251,10 +289,15 @@ Deno.serve(async (_req) => {
   console.log(`Done: ${processed} processed, ${errors} errors, ${remaining} remaining`)
 
   return new Response(JSON.stringify({
-    ok: true, processed, errors,
+    ok: true,
+    processed,                            // save() lyckades, sci_done/triad_done reflekterar sanning
+    errors,                               // save() misslyckades eller kastade
+    skipped,                              // title < 10 chars, status='skipped'
+    permanently_failed: permanentlyFailed, // attempts nådde MAX_ATTEMPTS, status='failed'
     sci_calls: sciCalls,
     triad_calls: triadCalls,
     triad_enabled: TRIAD_ENABLED,
+    batch_size: 20,
     remaining: remaining||0,
     elapsed: Date.now()-startTime
   }), {headers:{'Content-Type':'application/json'}})
