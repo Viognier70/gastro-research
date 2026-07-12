@@ -1473,6 +1473,28 @@ const CHIP_ROLE = {
 }
 function toChipRole(r){ return CHIP_ROLE[r] || r }
 
+// DB_ROLE — chip → science-namn. Används för ALLA databasfrågor (view-
+// kolumner, filter, order, SELECT). Vyn articles_public exponerar bara
+// science-namn efter cleanup 2026-07-12. Chip-namn lever bara kvar i
+// UI-slug (data-role, localStorage) och roleLabel-lookup — aldrig i
+// query-strängar mot Postgres.
+const DB_ROLE = {
+  sommelier:          'sensory_pro',
+  chef:               'culinary_pro',
+  gastronomy:         'gastronomy_culture',
+  fb_manager:         'hospitality_mgmt',
+  food_researcher:    'educator_researcher',
+  // Science-namn passar rakt igenom.
+  sensory_pro:        'sensory_pro',
+  culinary_pro:       'culinary_pro',
+  gastronomy_culture: 'gastronomy_culture',
+  hospitality_mgmt:   'hospitality_mgmt',
+  educator_researcher:'educator_researcher',
+}
+function toDbRole(r){ return DB_ROLE[r] || r }
+// Alla fem science-namn för OR-kedjor mot articles_public.
+const DB_ROLES_ALL = ['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher']
+
 // Kanoniska VISADE rollnamn — Anders beslut 2026-07-06. Använd överallt där
 // rollnamnet visas för användaren, alltid via roleLabel()/roleSubtitle(), så
 // vi aldrig får glapp mellan led. Tekniska nycklar (chip-namnen ovan) rörs ej.
@@ -1780,24 +1802,26 @@ function cardHTML(a,idx){
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
   const isSaved=savedArticleIds.has(a.id)
-  // Kanoniskt chip-namn för alla property-accesser mot article-objektet.
-  // role='all' → fallback till sommelier (chip). Legacy science-nycklar
-  // (hospitality_mgmt osv.) mappas via toChipRole så cards aldrig visar
-  // "No TRIAD" bara för att gs_role råkar vara ett science-namn.
+  // Science-namn för alla property-accesser mot article-objektet.
+  // role='all' → fallback till sensory_pro. Legacy chip-nycklar (sommelier
+  // osv.) och legacy science-nycklar mappas via toDbRole så cards aldrig
+  // visar "No TRIAD" bara för att gs_role råkar vara chip-slug.
+  const dbRoleName = role==='all' ? 'sensory_pro' : toDbRole(role)
+  // Chip-slug behåller vi bara för display-lookup i roles-objektet.
   const r = role==='all' ? 'sommelier' : toChipRole(role)
   const roleName=t('roles')[r]||r
-  const ep=a['episteme_'+r]||''
-  const tc=a['techne_'+r]||a['scenario_'+r]||''
-  const ph=a['phronesis_'+r]||''
-  const bridgeET=a['bridge_episteme_techne_'+r]||''
-  const bridgeTP=a['bridge_techne_phronesis_'+r]||''
+  const ep=a['episteme_'+dbRoleName]||''
+  const tc=a['techne_'+dbRoleName]||a['scenario_'+r]||''
+  const ph=a['phronesis_'+dbRoleName]||''
+  const bridgeET=a['bridge_episteme_techne_'+dbRoleName]||''
+  const bridgeTP=a['bridge_techne_phronesis_'+dbRoleName]||''
   const hasPremiumPayload=ep.length>10||tc.length>10||ph.length>10
   // Presence-boolean från articles_public: finns TRIAD för aktuell roll?
   // För role='all' räcker att någon roll har TRIAD (matchar server-OR).
-  const hasTriadPresence = a['has_episteme_'+r]===true || (role==='all' && (
-    a.has_episteme_sommelier===true||a.has_episteme_chef===true||
-    a.has_episteme_gastronomy===true||a.has_episteme_fb_manager===true||
-    a.has_episteme_food_researcher===true||a.has_episteme_sensory_pro===true))
+  const hasTriadPresence = a['has_episteme_'+dbRoleName]===true || (role==='all' && (
+    a.has_episteme_sensory_pro===true||a.has_episteme_culinary_pro===true||
+    a.has_episteme_gastronomy_culture===true||a.has_episteme_hospitality_mgmt===true||
+    a.has_episteme_educator_researcher===true))
   const keywords=a.claim_keywords||[]
   const coreClaim=a.core_claim||a.insight||''
   const citCount=a.citation_count||null
@@ -1912,7 +1936,7 @@ function cardHTML(a,idx){
   </div>` : ''
 
   if(locked){
-    const phText=a['phronesis_'+r]||a['phronesis_sommelier']||''
+    const phText=a['phronesis_'+dbRoleName]||a['phronesis_sensory_pro']||''
     const phPreview=phText.length>20?phText.slice(0,120)+'…':''
     const lockedExtra=phPreview?`<div style="margin-top:8px;position:relative;overflow:hidden;border-radius:0 0 6px 6px">
       <div style="background:var(--phronesis-light);border-left:3px solid var(--phronesis);padding:12px 14px;filter:blur(3px);user-select:none;pointer-events:none">
@@ -1993,18 +2017,19 @@ function renderFeed(){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest. Use presence booleans
       // from articles_public — payload episteme_* is Pro-only via RPC.
-      // toChipRole mappar legacy science-nycklar (hospitality_mgmt osv.) till
-      // motsvarande chip-namn — annars droppar filtret alla artiklar.
-      const ecol = role==='all' ? 'sommelier' : toChipRole(role)
-      source=source.filter(a=>a['has_episteme_'+ecol]===true||a.has_episteme_sensory_pro===true)
+      // toDbRole mappar chip-slug (sommelier osv.) och legacy science-nycklar
+      // till kanoniska science-namn som matchar articles_public-kolumnerna.
+      const ecol = role==='all' ? 'sensory_pro' : toDbRole(role)
+      source=source.filter(a=>a['has_episteme_'+ecol]===true)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
-      // Sort by relevance (default)
-      const enriched=source.filter(a=>a['relevance_sci_'+role]!==null&&a['relevance_sci_'+role]!==undefined&&parseInt(a['relevance_sci_'+role])>0)
-      const pending=source.filter(a=>a['relevance_sci_'+role]===null||a['relevance_sci_'+role]===undefined)
+      // Sort by relevance (default). Relevance-kolumnerna är science-namn.
+      const rcol = 'relevance_sci_' + toDbRole(role)
+      const enriched=source.filter(a=>a[rcol]!==null&&a[rcol]!==undefined&&parseInt(a[rcol])>0)
+      const pending=source.filter(a=>a[rcol]===null||a[rcol]===undefined)
       enriched.sort((a,b)=>{
-        const ra=parseInt(a['relevance_sci_'+role]||0)
-        const rb=parseInt(b['relevance_sci_'+role]||0)
+        const ra=parseInt(a[rcol]||0)
+        const rb=parseInt(b[rcol]||0)
         if(rb!==ra) return rb-ra
         return parseInt(b.year||0)-parseInt(a.year||0)
       })
@@ -2015,7 +2040,7 @@ function renderFeed(){
     source=[...source].sort((a,b)=>getRelevanceScore(b)-getRelevanceScore(a))
   } else {
     const isSearching=document.getElementById('searchInput').value.trim().length>1
-    if(!isSearching) source=source.filter(a=>a.has_episteme_sommelier===true||a.has_episteme_chef===true||a.has_episteme_gastronomy===true||a.has_episteme_fb_manager===true||a.has_episteme_food_researcher===true)
+    if(!isSearching) source=source.filter(a=>a.has_episteme_sensory_pro===true||a.has_episteme_culinary_pro===true||a.has_episteme_gastronomy_culture===true||a.has_episteme_hospitality_mgmt===true||a.has_episteme_educator_researcher===true)
     source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
   }
 
@@ -2070,14 +2095,15 @@ async function loadArticles(){
 
   const scenarioRoles = []
   const hasScenario = scenarioRoles.includes(role)
-  // colMap2 flyttad till modultopp som CHIP_ROLE — samma mapping delas nu
-  // med loadSpotlight så science-namn (hospitality_mgmt etc.) inte längre
-  // slår igenom som has_episteme_<science> = 400.
-  const rkey2 = toChipRole(role)
-  const sciCols = role==='all' ? 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher' : `relevance_sci_${rkey2}`
+  // Alla queries mot articles_public använder science-namn direkt.
+  // toDbRole normaliserar chip-slug och legacy science-nycklar.
+  const dbRole = toDbRole(role)
+  const sciCols = role==='all'
+    ? DB_ROLES_ALL.map(r=>'relevance_sci_'+r).join(',')
+    : `relevance_sci_${dbRole}`
   // articles_public: metadata + has_* presence booleans. Premium TRIAD/IMRAD/core_claim
   // is layered in by enrichWithPremiumIfPro() below when the user is Pro.
-  const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,${sciCols}`
+  const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad`
   try {
     if(search && search.length > 1) {
       // SEARCH MODE: query entire database
@@ -2092,13 +2118,14 @@ async function loadArticles(){
       // BROWSE MODE: show most relevant for current role
       let url
       if(role!=='all'){
-        // Get top articles by relevance for this role
-        const orderCol = `relevance_sci_${rkey2}`
-        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${rkey2}=is.true&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
+        // Get top articles by relevance for this role (science-namn)
+        const orderCol = `relevance_sci_${dbRole}`
+        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${dbRole}=is.true&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
-       url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)&order=year.desc.nullslast,fetched_at.desc&limit=200`
+        const orClause = DB_ROLES_ALL.map(r=>'has_episteme_'+r+'.is.true').join(',')
+        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(${orClause})&order=year.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       }
@@ -2315,7 +2342,7 @@ async function loadCounts(){
     const r2=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
     if(newCount>0&&document.getElementById('newCount')) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
-    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_core_claim=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
+    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_core_claim=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
     const synthResp=await fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const synthStats=await synthResp.json()
     const analyzed=parseInt(r4.headers.get("content-range")?.split("/")[1]||"0")
@@ -2765,7 +2792,7 @@ function interpolateColor(hex1, hex2, t){
 
 async function loadKnowledgeMap(){
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=topic,fetched_at,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_waiter,relevance_sci_educator,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator&limit=5000`,{headers:H})
+    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=topic,fetched_at,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher&limit=5000`,{headers:H})
     const arts = await r.json()
     if(!Array.isArray(arts)||arts.length===0) return
 
@@ -2778,13 +2805,14 @@ async function loadKnowledgeMap(){
       const t=topicMap[a.topic]
       t.count++
       if(a.fetched_at && a.fetched_at > sevenDaysAgo) t.recent++
-      // Prefer scientific relevance, fallback to Claude relevance
-      const gs=(f,s)=>a[f]!=null?parseFloat(a[f]):a[s]!=null?parseFloat(a[s]):null
-      const vs=gs('relevance_sci_sommelier','relevance_sommelier'); if(vs!=null) t.rs.push(vs)
-      const vc=gs('relevance_sci_chef','relevance_chef'); if(vc!=null) t.rc.push(vc)
-      const vcr=gs('relevance_sci_creator','relevance_creator'); if(vcr!=null) t.rCr.push(vcr)
-      const vw=gs('relevance_sci_waiter','relevance_waiter'); if(vw!=null) t.rW.push(vw)
-      const ve=gs('relevance_sci_educator','relevance_educator'); if(ve!=null) t.rE.push(ve)
+      // Science-namn direkt från articles_public. Legacy fallback-chip-namn
+      // (relevance_sommelier/relevance_chef m.fl.) togs bort ur vyn 2026-07-12.
+      const num=f=>a[f]!=null?parseFloat(a[f]):null
+      const vs =num('relevance_sci_sensory_pro');         if(vs !=null) t.rs.push(vs)
+      const vc =num('relevance_sci_culinary_pro');        if(vc !=null) t.rc.push(vc)
+      const vcr=num('relevance_sci_gastronomy_culture');  if(vcr!=null) t.rCr.push(vcr)
+      const vw =num('relevance_sci_hospitality_mgmt');    if(vw !=null) t.rW.push(vw)
+      const ve =num('relevance_sci_educator_researcher'); if(ve !=null) t.rE.push(ve)
     })
 
     const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0
@@ -3032,20 +3060,20 @@ async function loadExploreArticles(topic){
   if(label) label.textContent = (topic || '').replace(/_/g, ' ')
   pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading articles…</span></div>'
 
-  // Samma query-mönster som loadArticles() — role-medveten,
-  // TRIAD-presence-filter, sort på scientific relevance.
-  const rkey = role === 'all' ? null : toChipRole(role)
-  const sciCols = rkey
-    ? `relevance_sci_${rkey}`
-    : 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher'
-  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,primary_institution,institution_rank,citation_count,${sciCols}`
+  // Samma query-mönster som loadArticles() — science-namn direkt.
+  const dbRole = role === 'all' ? null : toDbRole(role)
+  const sciCols = dbRole
+    ? `relevance_sci_${dbRole}`
+    : DB_ROLES_ALL.map(r=>'relevance_sci_'+r).join(',')
+  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,citation_count`
 
   let url
-  if(rkey){
-    const orderCol = `relevance_sci_${rkey}`
-    url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${rkey}=is.true&topic=eq.${encodeURIComponent(topic)}&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=100`
+  if(dbRole){
+    const orderCol = `relevance_sci_${dbRole}`
+    url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${dbRole}=is.true&topic=eq.${encodeURIComponent(topic)}&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=100`
   } else {
-    url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&topic=eq.${encodeURIComponent(topic)}&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)&order=year.desc.nullslast,fetched_at.desc&limit=100`
+    const orClause = DB_ROLES_ALL.map(r=>'has_episteme_'+r+'.is.true').join(',')
+    url = `${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&topic=eq.${encodeURIComponent(topic)}&or=(${orClause})&order=year.desc.nullslast,fetched_at.desc&limit=100`
   }
 
   try {
@@ -3605,7 +3633,7 @@ window.loadMiniTicker = async function() {
   const el = document.getElementById('miniTicker')
   if(!el) return
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=title,journal,year&or=(has_episteme_sommelier.is.true,has_episteme_chef.is.true,has_episteme_gastronomy.is.true,has_episteme_fb_manager.is.true,has_episteme_food_researcher.is.true)&order=year.desc.nullslast&limit=10`, {
+    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=title,journal,year&or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)&order=year.desc.nullslast&limit=10`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const data = await r.json()
@@ -4469,11 +4497,11 @@ async function loadMapFocusArticles(filter){
   const pane = document.getElementById('mapPaneArticles')
   if(!pane) return
   // Samma role-medvetna query-mönster som Explore-B / Feed browse-mode.
-  const rkey = role === 'all' ? null : toChipRole(role)
-  const sciCols = rkey
-    ? `relevance_sci_${rkey}`
-    : 'relevance_sci_sommelier,relevance_sci_chef,relevance_sci_gastronomy,relevance_sci_fb_manager,relevance_sci_food_researcher'
-  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sommelier,relevance_chef,relevance_creator,relevance_waiter,relevance_educator,relevance_researcher,relevance_fbmanager,relevance_hotelier,relevance_sci_sommelier,relevance_sci_chef,relevance_sci_creator,relevance_sci_fbmanager,relevance_sci_researcher,has_episteme_sommelier,has_episteme_chef,has_episteme_gastronomy,has_episteme_fb_manager,has_episteme_food_researcher,has_episteme_sensory_pro,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count,${sciCols}`
+  const dbRole = role === 'all' ? null : toDbRole(role)
+  const sciCols = dbRole
+    ? `relevance_sci_${dbRole}`
+    : DB_ROLES_ALL.map(r=>'relevance_sci_'+r).join(',')
+  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count`
   // Institution: text[] containment på institutions — bredare än
   // institution_coords (som kräver geo-lookup). Fångar alla co-authors,
   // inklusive preflight/backfill-berikade artiklar utan koordinater.
