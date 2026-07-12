@@ -78,9 +78,21 @@ const FIELDS: Record<string, FieldSpec> = {
     label: 'Korpus årsspann',
     format: (r) => fmtRange(r.korpus_minar, r.korpus_maxar),
   },
-  unchecked_no_abstract_pct: {
-    label: 'Obedömda utan abstract',
-    format: (r) => fmtPct(r.obedomt_utan_abstract_pct),
+  abstract_remaining: {
+    label: 'Abstract kvar att hämta',
+    format: (r) => fmtInt(r.abstract_kvar_att_hamta),
+  },
+  abstract_takt_1h: {
+    label: 'Abstract-takt (1h)',
+    format: (r) => fmtInt(r.abstract_takt_1h),
+  },
+  affil_takt_1h: {
+    label: 'Affil-takt (1h)',
+    format: (r) => fmtInt(r.affil_takt_1h),
+  },
+  relevance_takt_1h: {
+    label: 'Relevance-takt (1h)',
+    format: (r) => fmtInt(r.relevance_takt_1h),
   },
   unchecked_queue: {
     label: 'Obedömd kö',
@@ -94,6 +106,10 @@ const FIELDS: Record<string, FieldSpec> = {
     label: 'Bedömt relevanta',
     format: (r) => fmtInt(r.bedomt_relevanta),
   },
+  triad_suspect_short: {
+    label: 'TRIAD misstänkt korta',
+    format: (r) => fmtInt(r.triad_misstankt_korta),
+  },
 }
 
 // Sektioner: primära signaler överst, "copy-tal" separator, sedan mängder.
@@ -103,10 +119,12 @@ const SECTION_ORDER: Array<{ header?: string, keys: string[] }> = [
       'syntheses_rows_unique',
       'svep_stale',
       'year_span',
-      'unchecked_no_abstract_pct',
+      'abstract_remaining',
       'unchecked_queue',
     ] },
+  { header: 'Takt (1h)', keys: ['abstract_takt_1h', 'affil_takt_1h', 'relevance_takt_1h'] },
   { header: 'Copy-tal', keys: ['unique_dois', 'judged_relevant'] },
+  { header: 'TRIAD-kvalitet', keys: ['triad_suspect_short'] },
 ]
 
 // Nycklar som LABEL_MAP slår upp — används av responsen för att flagga
@@ -118,10 +136,12 @@ const COVERED_COLUMN_KEYS = new Set<string>([
   'synt_rader', 'synt_unika',
   'svep_gamla', 'svep_totalt',
   'korpus_minar', 'korpus_maxar',
-  'obedomt_utan_abstract_pct',
+  'abstract_kvar_att_hamta',
+  'abstract_takt_1h', 'affil_takt_1h', 'relevance_takt_1h',
   'obedomd_ko',
   'unika_doi',
   'bedomt_relevanta',
+  'triad_misstankt_korta',
 ])
 
 function padRight(s: string, w: number): string {
@@ -165,18 +185,18 @@ Deno.serve(async (req) => {
     )
   }
 
-  const { data: rows, error: selectErr } = await supabase
-    .from('gusto_health')
-    .select('*')
-    .limit(1)
+  // Via RPC get_gusto_health() istället för direkt view-select — RPC:n har
+  // SET statement_timeout=30s så triad_misstankt_korta hinner klart.
+  const { data: rpcRows, error: selectErr } = await supabase.rpc('get_gusto_health')
 
   if (selectErr) {
     return new Response(
-      JSON.stringify({ ok: false, error: `select gusto_health: ${selectErr.message}` }),
+      JSON.stringify({ ok: false, error: `get_gusto_health: ${selectErr.message}` }),
       { status: 500, headers: CORS }
     )
   }
-  if (!rows?.length) {
+  const rows = (rpcRows as any[]) || []
+  if (!rows.length) {
     return new Response(
       JSON.stringify({ ok: false, error: 'gusto_health returned no rows' }),
       { status: 500, headers: CORS }

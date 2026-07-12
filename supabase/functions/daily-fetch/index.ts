@@ -37,6 +37,14 @@ function isBlockedJournal(journal: string, title: string, abstract: string): boo
   return false
 }
 const SCOPUS_KEY = Deno.env.get('SCOPUS_KEY') || ''
+
+// Kommersiell produkt fr.o.m. 2026-07-10: Scopus akademiska API-nyckel får
+// inte längre användas för hämtning. Alla call sites som träffar
+// api.elsevier.com short-circuitar när SCOPUS_ENABLED = false. Koden för
+// fetchScopusPage/fetchResearchers/mapScopusEntry ligger kvar tills
+// OpenAlex-migreringen är klar och kan tas bort helt. Flippa denna flagga
+// bara om nyckeln blir tillåten igen (den blir det inte).
+const SCOPUS_ENABLED = false
 // Scopus indexeras praktiskt från tidigt 1970-tal, PubMed från 1966. Under
 // 1970 finns i vår domän i princip inget (Chemical Senses börjar 1974,
 // Journal of Texture Studies 1969, moderna sensory-vetenskapen är i mångt
@@ -371,7 +379,22 @@ function reconstructAbstract(inv: Record<string, number[]> | null | undefined): 
 async function fetchOpenAlexPage(query: string, year: number, page: number): Promise<{articles: any[], hasMore: boolean}> {
   try {
     const perPage = 20
-    const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=${perPage}&page=${page + 1}&filter=type:article,publication_year:${year}&sort=cited_by_count:desc`
+    // Dual-mode. Identifierare som matchar ^S\d+$ tolkas som OpenAlex
+    // source-id och ger journal-scoped svep (exakt tidskrift, år för år,
+    // deterministisk paginering via publication_date:desc). Allt annat
+    // är fritext-svep som förr (topic-backfill via search=, sortering
+    // på cited_by_count för att få kärnan först).
+    const isSourceId = /^S\d+$/.test(query)
+    let url: string
+    // mailto → OpenAlex "polite pool": högre kvot, snabbare svar, gratis.
+    const mailto = 'anders@crichton-fock.com'
+    if (isSourceId) {
+      const filter = `primary_location.source.id:${query},publication_year:${year}`
+      url = `https://api.openalex.org/works?per-page=${perPage}&page=${page + 1}&filter=${filter}&sort=publication_date:desc&mailto=${mailto}`
+    } else {
+      const filter = `type:article,publication_year:${year}`
+      url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=${perPage}&page=${page + 1}&filter=${filter}&sort=cited_by_count:desc&mailto=${mailto}`
+    }
     const r = await fetch(url, { headers: { 'User-Agent': 'GustoScience/1.0 (gusto.science)' } })
     if (!r.ok) return { articles: [], hasMore: false }
     const d = await r.json()
@@ -467,6 +490,10 @@ async function updateProgress(source: string, identifier: string, year: number, 
 
 // ─── FRESH FETCH (last 7 days) ────────────────────────────────────────────────
 async function fetchFresh(): Promise<number> {
+  if (!SCOPUS_ENABLED) {
+    console.log('fetchFresh: skipped (SCOPUS_ENABLED=false)')
+    return 0
+  }
   let added = 0
   const currentYear = new Date().getFullYear()
 
@@ -490,10 +517,14 @@ async function fetchFresh(): Promise<number> {
 async function runBackfill(): Promise<number> {
   let added = 0
 
+  // Exkludera scopus-rader ur .limit(20)-rotationen. De skulle annars
+  // stjäla platser från pubmed/openalex-jobb (samma svält vi lagade förr).
+  // In-branch-gaten nedan är kvar som säkerhetsnät ifall raden återinförs.
   const { data: jobs } = await supabase
     .from('backfill_progress')
     .select('*')
     .eq('completed', false)
+    .neq('source', 'scopus')
     .order('last_run', { ascending: true, nullsFirst: true })
     .limit(20)
 
@@ -510,6 +541,10 @@ async function runBackfill(): Promise<number> {
     let completed = false
 
     if (source === 'scopus') {
+      if (!SCOPUS_ENABLED) {
+        console.log(`Backfill skip scopus/${identifier}: SCOPUS_ENABLED=false`)
+        continue  // pausar utan progress-uppdatering; jobbet ligger kvar
+      }
       const { articles, hasMore } = await fetchScopusPage(identifier, year, page)
       for (const a of articles) {
         const topic = detectTopic(a.title, a.abstract, a.journal)
@@ -555,7 +590,17 @@ async function runBackfill(): Promise<number> {
         if (await saveArticle(a, topic)) newAdded++
         await new Promise(r => setTimeout(r, 200))
       }
-      if (hasMore) {
+      // Diagnostik för att kunna reda ut framtida stuck-sweep-fall.
+      console.log(`Backfill openalex/${identifier} ${year} p${page}: articles=${articles.length} hasMore=${hasMore} newAdded=${newAdded}`)
+      // Safety net: om OpenAlex returnerade 0 artiklar för denna sida,
+      // backa alltid året (även om hasMore påstår motsatsen). Detta
+      // förhindrar stuck sweeps där meta.count och effektiv page-content
+      // divergerar. Ett svep får aldrig fastna på ett år.
+      if (articles.length === 0) {
+        nextPage = 0
+        nextYear = year - 1
+        if (nextYear < MIN_YEAR) completed = true
+      } else if (hasMore) {
         nextPage = page + 1
       } else {
         nextPage = 0
@@ -576,6 +621,10 @@ async function runBackfill(): Promise<number> {
 
 // ─── RESEARCHER FETCH ────────────────────────────────────────────────────────
 async function fetchResearchers(): Promise<number> {
+  if (!SCOPUS_ENABLED) {
+    console.log('fetchResearchers: skipped (SCOPUS_ENABLED=false)')
+    return 0
+  }
   let added = 0
   try {
     const { data: researchers } = await supabase

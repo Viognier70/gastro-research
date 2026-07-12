@@ -1,0 +1,58 @@
+-- =====================================================================
+-- Partiellt index för relevance-check-kön
+-- =====================================================================
+-- Bakgrund: relevance-check hämtade obedömda artiklar med
+--   .eq('relevance_checked', false).like('abstract','%<100 underscores>%')
+-- LIKE-mönstret var ett sätt att kräva abstract >= 100 tecken i DB, men
+-- Postgres kan inte använda index för ett wildcard-vänsterbundet
+-- LIKE-mönster — det blev full seq scan över hela articles-tabellen
+-- (455k rader). När kön var liten stannade LIMIT scanet tidigt. När
+-- kön växte till 37k+ (ombedömning av tidigare heuristikstämplade rader)
+-- hann seq scanet aldrig klart innan Supabase statement_timeout dödade
+-- edge-fn:en med "canceling statement due to statement timeout" — kön
+-- stod helt still.
+--
+-- Lösning: partiellt index där predikatet i indexets WHERE-klausul
+-- matchar edge-fn:ens nya query exakt:
+--   .eq('relevance_checked', false).not('abstract','is', null).limit(N)
+-- Kravet på >=100 tecken flyttas ur DB och fångas av JS-guarden på
+-- rad 124 (som redan finns som säkerhetsnät). Rader med kort abstract
+-- (1–99 tecken) hämtas alltså med i batchen men skippas per artikel
+-- utan att skriva relevance_checked, så de återkommer nästa körning
+-- efter att backfill-abstracts fyllt dem.
+--
+-- Storlek: partiella indexet är bara raderna där (relevance_checked
+-- = false AND abstract IS NOT NULL) — idag ~37k rader, krymper mot 0
+-- när kön betas av. Full storleksordning mindre än ett heltäckande
+-- index på (relevance_checked, abstract).
+--
+-- Icke-blockerande skapande: CREATE INDEX CONCURRENTLY så backfill-
+-- motorerna inte låses medan indexet byggs. Kan inte köras i en
+-- transaktion, så migrationen har ingen explicit BEGIN/COMMIT.
+-- =====================================================================
+
+create index concurrently if not exists idx_relevance_queue
+  on public.articles (id)
+  where relevance_checked = false and abstract is not null;
+
+-- =====================================================================
+-- Verifiering:
+--
+--   -- 1. Indexet finns och är valid?
+--   select indexname, indexdef
+--     from pg_indexes
+--    where indexname = 'idx_relevance_queue';
+--
+--   -- 2. Query planner använder det?
+--   explain (analyze, buffers)
+--   select id, title, abstract, journal, insight
+--     from public.articles
+--    where relevance_checked = false and abstract is not null
+--    limit 200;
+--   -- expected: "Bitmap Index Scan on idx_relevance_queue" eller
+--   --           "Index Only Scan using idx_relevance_queue" i planen,
+--   --           inte "Seq Scan on articles".
+--
+--   -- 3. Storlek på indexet?
+--   select pg_size_pretty(pg_relation_size('idx_relevance_queue'));
+-- =====================================================================

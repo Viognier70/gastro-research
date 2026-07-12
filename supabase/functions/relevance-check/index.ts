@@ -17,6 +17,11 @@ const DRY_RUN = false         // ← skarpt läge: skriver irrelevant + relevanc
 const BATCH_SIZE = 400         // artiklar per körning — majoriteten avgörs gratis (0kw/≥2kw)
 const MAX_HAIKU_PER_RUN = 90   // tak på Haiku-anrop/körning så vi ej slår i tidsgränsen
 
+// Diagnostik: håller senaste Haiku-felet så det kan exponeras i JSON-svaret.
+// Nollas i handler-start. Skiljer 401/403 (nyckelproblem) från 429 (kvot)
+// från 400 (modell-ID) från "oväntat svar" (modell svarar men inte yes/no).
+let lastHaikuError: string | null = null
+
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') || ''
@@ -74,6 +79,7 @@ Is this paper relevant to the gastronomy database as defined above? Answer with 
     })
     if (!resp.ok) {
       const errBody = await resp.text()
+      lastHaikuError = `HTTP ${resp.status}: ${errBody.slice(0, 300)}`
       console.log(`Haiku HTTP ${resp.status}: ${errBody.slice(0, 300)}`)
       return null
     }
@@ -81,30 +87,36 @@ Is this paper relevant to the gastronomy database as defined above? Answer with 
     const ans = (d.content?.[0]?.text || '').toLowerCase().trim()
     if (ans.startsWith('yes')) return true
     if (ans.startsWith('no')) return false
+    lastHaikuError = `unexpected answer: "${ans.slice(0, 100)}"`
     console.log(`Haiku oväntat svar: "${ans}"`)
     return null
   } catch (e: any) {
+    lastHaikuError = `exception: ${e.message}`
     console.log('Haiku error:', e.message)
     return null
   }
 }
 
 Deno.serve(async (req) => {
+  const startedAt = Date.now()
+  lastHaikuError = null  // nollas per körning så gammal diagnostik inte läcker
   const body = await req.json().catch(() => ({}))
   const batchSize = body.batch_size || BATCH_SIZE
   const dryRun = body.dry_run !== undefined ? body.dry_run : DRY_RUN
 
-  // Hämta obedömda artiklar med tillräckligt långt abstract för att kunna bedömas.
-  // Filtret kräver minst 100 tecken i abstract (100 '_' i like-mönstret) direkt i
-  // databasen — så korta/abstract-lösa artiklar hämtas aldrig och funktionen fastnar
-  // inte på dem. De lämnas orörda (relevance_checked=false) och bedöms automatiskt
-  // när backfill-abstracts fyllt deras abstract.
-  const MIN_ABSTRACT = '_'.repeat(100)
+  // Hämta obedömda artiklar med abstract. LIKE-filtret med 100 underscores
+  // ('%__________...%') var full seq scan över 455k rader och dödade edge-fn:en
+  // så fort kön växte (37k+ matchande rader → statement_timeout). Byt till
+  // ett indexerbart predikat som träffar det partiella indexet
+  // idx_relevance_queue (migration 20260711120000). Kravet på >=100 tecken
+  // fångas av JS-guarden på rad 124 nedan — korta/tomma abstracts hämtas
+  // med i batchen men skippas per artikel utan att skriva relevance_checked,
+  // så de återkommer när backfill-abstracts fyllt dem.
   const { data: articles, error } = await supabase
     .from('articles')
     .select('id, title, abstract, journal, insight')
     .eq('relevance_checked', false)
-    .like('abstract', `%${MIN_ABSTRACT}%`)
+    .not('abstract', 'is', null)
     .limit(batchSize)
 
   if (error) {
@@ -156,8 +168,10 @@ Deno.serve(async (req) => {
     }
 
     if (!dryRun) {
+      // relevance_checked_at fyller relevance_takt_1h-signalen i
+      // gusto_health så health-alert kan detektera stall + loop-mönster.
       await supabase.from('articles')
-        .update({ irrelevant: !isRelevant, relevance_checked: true })
+        .update({ irrelevant: !isRelevant, relevance_checked: true, relevance_checked_at: new Date().toISOString() })
         .eq('id', a.id)
     }
 
@@ -169,6 +183,14 @@ Deno.serve(async (req) => {
 
   console.log(`Klar: ${articles.length} hämtade, ${relevant} relevanta, ${irrelevant} irrelevanta, ${haikuCalls} haiku-anrop, ${deferred} uppskjutna, ${skipped} hoppade`)
 
+  // Kvarvarande kö. count=exact + head=true = ingen data hämtas, bara Content-
+  // Range-headern räknar över samma partiella index som selecten ovan använder.
+  const { count: queueRemaining } = await supabase
+    .from('articles')
+    .select('*', { count: 'exact', head: true })
+    .eq('relevance_checked', false)
+    .not('abstract', 'is', null)
+
   return new Response(JSON.stringify({
     ok: true,
     dry_run: dryRun,
@@ -178,6 +200,9 @@ Deno.serve(async (req) => {
     haiku_calls: haikuCalls,
     deferred,
     skipped,
+    queue_remaining: queueRemaining ?? null,
+    duration_ms: Date.now() - startedAt,
+    last_haiku_error: lastHaikuError,
     examples
   }, null, 2), { headers: { 'Content-Type': 'application/json' } })
 })

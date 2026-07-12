@@ -35,7 +35,7 @@ const supabase = createClient(SB_URL, SB_SERVICE_KEY)
 
 const OPENALEX_UA = 'GustoScience/1.0 (mailto:anders@crichton-fock.com)'
 const CROSSREF_UA = 'GustoScience/1.0 (mailto:anders@crichton-fock.com)'
-const BATCH_SIZE = 100
+const BATCH_SIZE = 200
 const CALL_DELAY_MS = 100
 const MIN_ABSTRACT_LEN = 50
 

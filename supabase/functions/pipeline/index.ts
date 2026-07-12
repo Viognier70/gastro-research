@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { buildTriadPrompt, parseLabeledProse, validateTriad, fieldsToDbUpdate } from '../_shared/labeled-triad.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
@@ -8,6 +9,15 @@ const supabase = createClient(SB_URL, SB_SERVICE_KEY, { auth: { persistSession: 
 
 // Hard timeout: leave 20s buffer before Supabase kills us
 const HARD_TIMEOUT_MS = 100000
+
+// TRIAD kostnadsbroms. Default på (bakåtkompatibelt). Sätts till '0' via
+// supabase secrets när Sonnet-räknaren ska frysas — pipeline fortsätter
+// köra runSci (Haiku, billigt) men hoppar över runTriad (Sonnet, 99% av
+// Anthropic-räkningen). Artiklar som är TRIAD-berättigade men körs i
+// gate-off-läge markeras triad_done=true och lämnar kön; att slå på
+// TRIAD igen senare berör alltså bara NYA artiklar. Redan-hoppade
+// måste re-enqueueas separat.
+const TRIAD_ENABLED = Deno.env.get('TRIAD_ENABLED') !== '0'
 
 const ROLES = [
   {role_key:'sensory_pro', role_label:'Sommelier'},
@@ -55,16 +65,12 @@ Return ONLY JSON: {"role_scores":{"sensory_pro":0,"culinary_pro":0,"gastronomy_c
   } catch(e) { console.log('runSci error:', e.message); return null }
 }
 
-async function runTriad(article: any) {
+// Prompt-format, parser, validering och DB-mapping ligger i
+// ../_shared/labeled-triad.ts. Returnerar ParseResult (som save() konsumerar)
+// eller null vid Sonnet-fel/exception.
+async function runTriad(article: any): Promise<ReturnType<typeof parseLabeledProse> | null> {
   try {
-    const all = ['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher']
-    const fields = all.map(rk=>`"relevance_${rk}":5,"episteme_${rk}":"60-80w 3rd person analytical","techne_${rk}":"60-80w 2nd person instructional","phronesis_${rk}":"60-80w 2nd person present vivid"`).join(',')
-    const prompt = `TRIAD: EPISTEME=universal truth 3rd person. TECHNE=craft skill 2nd person instructional. PHRONESIS=situated judgement 2nd person present.
-Roles: sensory_pro=Sommelier/sensory scientist, culinary_pro=Chef/fermentation, gastronomy_culture=Food anthropologist/stylist, hospitality_mgmt=F&B manager/hotelier, educator_researcher=Researcher/culinary educator
-Title: "${(article.title||'').slice(0,150)}"
-Finding: "${(article.insight||article.abstract||'').slice(0,300)}"
-Return ONLY JSON: {"imrad_introduction":"...","imrad_methods":"...","imrad_results":"...","imrad_discussion":"...","knowledge_explanation":"...",${fields}}`
-
+    const prompt = buildTriadPrompt(article)
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
@@ -72,17 +78,15 @@ Return ONLY JSON: {"imrad_introduction":"...","imrad_methods":"...","imrad_resul
     })
     if(!resp.ok) { console.log('Sonnet error:', resp.status); return null }
     const d = await resp.json()
-    let txt = (d.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim()
-    try { return JSON.parse(txt) } catch {
-      // Try to recover truncated JSON
-      const i = txt.lastIndexOf('}')
-      if(i > 0) try { return JSON.parse(txt.slice(0,i+1)) } catch { return null }
-      return null
-    }
-  } catch(e) { console.log('runTriad error:', e.message); return null }
+    const rawText = (d.content?.[0]?.text || '').trim()
+    return parseLabeledProse(rawText)
+  } catch(e: any) { console.log('runTriad error:', e.message); return null }
 }
 
-async function save(article: any, sci: any, triad: any) {
+// triad-parametern är nu ParseResult (från labeled-triad-parsern) istället
+// för raw JSON. Om validateTriad() returnerar non-null skrivs INGA TRIAD-
+// fält — sci-delen skrivs oberoende (relevance_sci_*, keywords, headline).
+async function save(article: any, sci: any, triad: ReturnType<typeof parseLabeledProse> | null) {
   try {
     const u: any = {}
     if(sci) {
@@ -98,22 +102,18 @@ async function save(article: any, sci: any, triad: any) {
       if(sci.headline_en) u.headline_en = sci.headline_en
     }
     if(triad) {
-      u.imrad_introduction = triad.imrad_introduction||null
-      u.imrad_methods = triad.imrad_methods||null
-      u.imrad_results = triad.imrad_results||null
-      u.imrad_discussion = triad.imrad_discussion||null
-      u.knowledge_explanation = triad.knowledge_explanation||null
-      u.knowledge_type = 'mixed'
-      for(const role of ['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher']) {
-        u[`episteme_${role}`] = triad[`episteme_${role}`]||null
-        u[`techne_${role}`] = triad[`techne_${role}`]||null
-        u[`phronesis_${role}`] = triad[`phronesis_${role}`]||null
+      const parseError = validateTriad(triad)
+      if(parseError) {
+        console.log(`TRIAD invalid ${article.id.slice(0,8)}: ${parseError}`,
+          { missing: triad.missing.length, too_short: triad.too_short.length, extra: triad.extra.length })
+      } else {
+        Object.assign(u, fieldsToDbUpdate(triad.fields))
       }
     }
     const {error} = await supabase.from('articles').update(u).eq('id', article.id)
     if(error) console.log('Save error:', article.id.slice(0,8), error.message)
     return !error
-  } catch(e) { console.log('save exception:', e.message); return false }
+  } catch(e: any) { console.log('save exception:', e.message); return false }
 }
 
 async function releaseStuck() {
@@ -127,7 +127,7 @@ async function releaseStuck() {
 
 Deno.serve(async (_req) => {
   const startTime = Date.now()
-  let processed = 0, errors = 0
+  let processed = 0, errors = 0, sciCalls = 0, triadCalls = 0
 
   // Release stuck items first
   await releaseStuck()
@@ -176,8 +176,11 @@ Deno.serve(async (_req) => {
 
     try {
       // Step 1: Sci analysis (Haiku) — only if not done
-      const sci = (!item.sci_done && article.abstract && article.abstract.length > 50)
-        ? await runSci(article) : null
+      let sci: any = null
+      if (!item.sci_done && article.abstract && article.abstract.length > 50) {
+        sciCalls++
+        sci = await runSci(article)
+      }
 
       // Step 2: Determine max relevance
       const sciScores = sci?.role_scores || {}
@@ -194,10 +197,17 @@ Deno.serve(async (_req) => {
         ? 5
         : Math.max(...Object.values(effectiveScores).map((v:any) => Number(v)||0))
 
-      // Step 3: TRIAD (Sonnet) — only if relevant and not done
+      // Step 3: TRIAD (Sonnet) — only if relevant and not done. TRIAD_ENABLED
+      // är kostnadsgate: när '0' skippas Sonnet-anropet men artikeln markeras
+      // ändå triad_done nedan så kön inte fastnar. Re-enable påverkar bara
+      // nya artiklar.
       const hasAbstract = article.abstract && article.abstract !== '[unavailable]' && article.abstract.length > 50
-      const shouldTriad = !item.triad_done && hasAbstract && maxRelevance >= 5
-      const triad = shouldTriad ? await runTriad(article) : null
+      const shouldTriad = TRIAD_ENABLED && !item.triad_done && hasAbstract && maxRelevance >= 5
+      let triad: any = null
+      if (shouldTriad) {
+        triadCalls++
+        triad = await runTriad(article)
+      }
 
       if(!shouldTriad && !item.triad_done) {
         console.log('Skipping TRIAD — relevance:', maxRelevance)
@@ -208,7 +218,11 @@ Deno.serve(async (_req) => {
 
       // Step 5: Update queue status
       const sciDone = item.sci_done || !!sci
-      const triadDone = item.triad_done || !!triad || !shouldTriad
+      // triad räknas som DONE bara om parsningen validerades. Om triad har
+      // missing/too_short-fält skrevs ingenting, och artikeln ska plockas
+      // igen nästa batch för nytt Sonnet-försök.
+      const triadOk = !!(triad && !validateTriad(triad))
+      const triadDone = item.triad_done || triadOk || !shouldTriad
       await supabase.from('processing_queue').update({
         status: sciDone && triadDone ? 'done' : 'pending',
         sci_done: sciDone,
@@ -238,6 +252,9 @@ Deno.serve(async (_req) => {
 
   return new Response(JSON.stringify({
     ok: true, processed, errors,
+    sci_calls: sciCalls,
+    triad_calls: triadCalls,
+    triad_enabled: TRIAD_ENABLED,
     remaining: remaining||0,
     elapsed: Date.now()-startTime
   }), {headers:{'Content-Type':'application/json'}})
