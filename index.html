@@ -6,33 +6,33 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gusto Science">
+<meta name="apple-mobile-web-app-title" content="Gustema">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta charset="UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gusto Science — Research Intelligence for Culinary Professionals</title>
-<meta name="description" content="Gusto Science delivers peer-reviewed research intelligence for culinary professionals — sommeliers, chefs, F&B managers and food researchers. Discover the latest findings in flavor science, gastronomy, fermentation and sensory evaluation.">
+<title>Gustema — research intelligence for gastronomy</title>
+<meta name="description" content="Gustema delivers peer-reviewed research intelligence for gastronomy — for sommeliers, chefs, F&B managers and food researchers. Discover the latest findings in flavor science, gastronomy, fermentation and sensory evaluation.">
 <meta name="keywords" content="culinary research, food science, sommelier, gastronomy, flavor science, fermentation, sensory evaluation, chef research, F&B management">
-<meta name="author" content="Gusto Science">
+<meta name="author" content="Gustema">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://gusto.science">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://gusto.science">
-<meta property="og:title" content="Gusto Science — Research Intelligence for Culinary Professionals">
+<meta property="og:title" content="Gustema — research intelligence for gastronomy">
 <meta property="og:description" content="Peer-reviewed research for sommeliers, chefs, F&B managers and food researchers. 5,200+ studies analyzed in depth through the TRIAD framework, drawn from 453,000+ scanned publications.">
 <meta property="og:image" content="https://gusto.science/og-image.png">
-<meta property="og:site_name" content="Gusto Science">
+<meta property="og:site_name" content="Gustema">
 <meta property="og:locale" content="en_US">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:url" content="https://gusto.science">
-<meta name="twitter:title" content="Gusto Science — Research Intelligence for Culinary Professionals">
+<meta name="twitter:title" content="Gustema — research intelligence for gastronomy">
 <meta name="twitter:description" content="Peer-reviewed research for sommeliers, chefs, F&B managers and food researchers.">
 <meta name="twitter:image" content="https://gusto.science/og-image.png">
 
@@ -41,9 +41,9 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "Gusto Science",
+  "name": "Gustema",
   "url": "https://gusto.science",
-  "description": "Research intelligence platform for culinary professionals. Peer-reviewed articles analyzed through the TRIAD epistemological model.",
+  "description": "Research intelligence for gastronomy. Peer-reviewed articles analyzed through the TRIAD epistemological model.",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "Web",
   "audience": {
@@ -63,18 +63,24 @@
   },
   "publisher": {
     "@type": "Organization",
-    "name": "Gusto Science",
+    "name": "Gustema",
     "url": "https://gusto.science"
   }
 }
 </script>
 
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230C0B09'/%3E%3Cpath d='M38 24 L66 74 L10 74 Z' fill='%231A3A5C' fill-opacity='0.45'/%3E%3Cpath d='M62 24 L90 74 L34 74 Z' fill='%232D5016' fill-opacity='0.45'/%3E%3Cpath d='M50 44 L66 74 L34 74 Z' fill='%235C2D00' fill-opacity='0.7'/%3E%3Cpath d='M38 24 L66 74 L10 74 Z' fill='none' stroke='%23FDFCF8' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M62 24 L90 74 L34 74 Z' fill='none' stroke='%23C9A84C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Fraunces:opsz,wght@9..144,600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
+  /* Gustema-varumärke — accentlager över sajtens varma estetik. */
+  --gustema-ink:    #2A2419;
+  --gustema-gold:   #A08A55;
+  --gustema-paper:  #FAF7F0;
+  --gustema-line:   #E5DECF;
+  --gustema-muted:  #8A7B5E;
   --gold:#C9A84C;--gold-light:#F5EDD3;--black:#0C0B09;--white:#FDFCF8;
   --warm-100:#F7F4ED;--warm-200:#EDE8DC;
   --text-primary:#0C0B09;--text-secondary:#5C5649;--text-tertiary:#9C9484;
@@ -89,6 +95,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
+.logo-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:22px;font-weight:600;color:var(--gustema-ink);letter-spacing:-.02em}
+/* Gamla klasser bevarade — kan tas bort i cleanup-commit när inga referenser finns kvar. */
 .logo-gusto{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
 .logo-science{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--gold);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
 .topbar-right{display:flex;align-items:center;gap:10px}
@@ -330,6 +338,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .page-container{width:100%;max-width:1100px;margin:0 auto;box-sizing:border-box;padding:0 32px}
 .hero{padding:56px 32px 40px;max-width:900px}
 .hero-eyebrow{font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.gustema-tagline{font-family:'Inter','Outfit',sans-serif;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--gustema-gold);margin-bottom:12px}
 .hero-title{font-family:'Playfair Display',serif;font-size:48px;font-weight:400;line-height:1.1;margin-bottom:20px;color:var(--text-primary)}
 .hero-title em{color:var(--gold);font-style:italic}
 .hero-sub{font-size:14px;color:var(--text-secondary);line-height:1.8;font-weight:300;max-width:640px;margin-bottom:20px}
@@ -783,16 +792,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
-    <svg width="40" height="34" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M46 22 L80 82 L12 82 Z" fill="#E8EFF6"/>
-      <path d="M74 22 L108 82 L40 82 Z" fill="#EAF0E5"/>
-      <path d="M60 46.7 L80 82 L40 82 Z" fill="#F5EDE3"/>
-      <path d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3.4" stroke-linejoin="round"/>
-      <path d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3.4" stroke-linejoin="round"/>
+    <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gustema">
+      <path d="M 75.5 24.5 A 36 36 0 1 0 86 50" fill="none" stroke="#2A2419" stroke-width="12" stroke-linecap="round"/>
+      <path d="M 86 50 L 68 50" fill="none" stroke="#2A2419" stroke-width="12" stroke-linecap="round"/>
+      <path d="M 62 32 A 13 13 0 1 0 50 50 A 13 13 0 1 1 40 71.4" fill="none" stroke="#A08A55" stroke-width="12" stroke-linecap="round"/>
     </svg>
-    <div style="display:flex;align-items:baseline;gap:0">
-      <span class="logo-gusto">gusto</span><span class="logo-science">.science</span>
-    </div>
+    <span class="logo-wordmark">Gustema</span>
   </div>
   <div class="topbar-right">
     <!-- Gusto Academy länk dold tills live -->
@@ -920,6 +925,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 <!-- HERO -->
 <div class="hero">
+  <div class="gustema-tagline" aria-label="Gustema tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
   <h1 class="hero-title" id="heroTitle">Science that tells you<br><em>what, how, and when.</em></h1>
   <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you more: what science establishes analytically (<em>Episteme</em>), what art grasps analogically (<em>Phronesis</em>), and the craft born where the two meet (<em>Techne</em>) — where the double grip makes professional knowledge possible. Dr Anders Crichton-Fock's model (formerly Herdenstam), after Aristotle, Diderot &amp; Wittgenstein. Select your role below — every article is translated for your perspective.</p>
@@ -1322,7 +1328,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="modal-bg" id="authModal">
   <div class="modal" style="max-width:380px">
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
-    <div class="modal-eyebrow">Gusto Science</div>
+    <div class="modal-eyebrow">Gustema</div>
     <div class="modal-title" id="authTitle">Sign in</div>
     <div class="auth-form" id="authForm">
       <input type="text" id="authName" placeholder="Your name (e.g. Dr. Crichton-Fock)" style="display:none">
@@ -1338,7 +1344,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="modal-bg" id="upgradeModal">
   <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="closeModal('upgradeModal')">×</button>
-    <div class="modal-eyebrow">Gusto Science Pro</div>
+    <div class="modal-eyebrow">Gustema Pro</div>
     <div class="modal-title" id="upgradeTitle">Unlock the full research library</div>
     <ul class="upgrade-features">
       <li>Unlimited access to 5,200+ TRIAD-analyzed studies — growing daily</li>
@@ -1823,7 +1829,7 @@ function cardHTML(a,idx){
       </div>`:''
       }${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
     </div>
-    ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gusto Science</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${a.primary_institution.replace(/'/g,"\'")}',event)" title="Filter by institution"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
+    ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gustema</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${a.primary_institution.replace(/'/g,"\'")}',event)" title="Filter by institution"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
     ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''}
     ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
     ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
@@ -2526,7 +2532,7 @@ if(window.location.search.includes('pro=true')){
       const {data:{session}}=await sb.auth.getSession()
       if(session){
         const {data:p}=await sb.from('profiles').select('is_pro').eq('id',session.user.id).maybeSingle()
-        if(p?.is_pro){isPro=true;updateFreeBar();loadArticles();alert('Welcome to Gusto Science Pro! Enjoy unlimited access.');return}
+        if(p?.is_pro){isPro=true;updateFreeBar();loadArticles();alert('Welcome to Gustema Pro! Enjoy unlimited access.');return}
       }
       await new Promise(r=>setTimeout(r,2000))
     }
@@ -3778,28 +3784,32 @@ setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*10
 @media(max-width:640px){.triad-cards{grid-template-columns:1fr}}
 .triad-card{border-radius:8px;padding:20px;cursor:pointer;transition:transform .15s,box-shadow .15s}
 .triad-card:hover{transform:translateY(-2px)}
-.triad-card.episteme{background:var(--episteme-light);border:1px solid rgba(26,58,92,0.2)}
-.triad-card.techne{background:var(--techne-light);border:1px solid rgba(45,80,22,0.2)}
-.triad-card.phronesis{background:var(--phronesis-light);border:1px solid rgba(92,45,0,0.2)}
+/* Gustema-harmoniserade TRIAD-färger. Enbart .triad-card-reglerna påverkas
+   — övriga användningar av --episteme/--techne/--phronesis (ticker, filter,
+   IMRaD-labels m.fl.) behåller sina originalfärger tills en bredare
+   harmonisering görs separat. */
+.triad-card.episteme{background:#EDF1F6;border:1px solid #3A5F8F;border-left:3px solid #3A5F8F}
+.triad-card.techne{background:#EBF0EA;border:1px solid #4E7A57;border-left:3px solid #4E7A57}
+.triad-card.phronesis{background:#F5EFE2;border:1px solid #A8823C;border-left:3px solid #A8823C}
 .triad-card-greek{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:4px}
-.triad-card.episteme .triad-card-greek{color:var(--episteme)}
-.triad-card.techne .triad-card-greek{color:var(--techne)}
-.triad-card.phronesis .triad-card-greek{color:var(--phronesis)}
+.triad-card.episteme .triad-card-greek{color:#2E4C73}
+.triad-card.techne .triad-card-greek{color:#3C6144}
+.triad-card.phronesis .triad-card-greek{color:#836428}
 .triad-card-number{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px}
 .triad-card-name{font-size:14px;font-weight:600;margin-bottom:2px}
-.triad-card.episteme .triad-card-name{color:var(--episteme)}
-.triad-card.techne .triad-card-name{color:var(--techne)}
-.triad-card.phronesis .triad-card-name{color:var(--phronesis)}
+.triad-card.episteme .triad-card-name{color:#2E4C73}
+.triad-card.techne .triad-card-name{color:#3C6144}
+.triad-card.phronesis .triad-card-name{color:#836428}
 .triad-card-swe{font-size:11px;font-weight:500;margin-bottom:8px;opacity:.7}
-.triad-card.episteme .triad-card-swe{color:var(--episteme)}
-.triad-card.techne .triad-card-swe{color:var(--techne)}
-.triad-card.phronesis .triad-card-swe{color:var(--phronesis)}
+.triad-card.episteme .triad-card-swe{color:#2E4C73}
+.triad-card.techne .triad-card-swe{color:#3C6144}
+.triad-card.phronesis .triad-card-swe{color:#836428}
 .triad-card-subtitle{font-size:11px;font-style:italic;color:var(--text-secondary);margin-bottom:10px;line-height:1.5}
 .triad-card-dims{font-size:11px;color:var(--text-tertiary);margin-bottom:10px}
 .triad-card-action{font-size:11px;font-weight:500;letter-spacing:.06em}
-.triad-card.episteme .triad-card-action{color:var(--episteme)}
-.triad-card.techne .triad-card-action{color:var(--techne)}
-.triad-card.phronesis .triad-card-action{color:var(--phronesis)}
+.triad-card.episteme .triad-card-action{color:#2E4C73}
+.triad-card.techne .triad-card-action{color:#3C6144}
+.triad-card.phronesis .triad-card-action{color:#836428}
 .triad-card-detail{display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text-secondary);line-height:1.7}
 .triad-card.active .triad-card-detail{display:block}
 .double-grip{background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:24px}
@@ -3994,7 +4004,7 @@ function saveObRoleAndExplore(){
 </script>
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
-    <div class="ob-eyebrow">Welcome to Gusto Science</div>
+    <div class="ob-eyebrow">Welcome to Gustema</div>
     <div class="ob-title">Research intelligence<br>for your profession</div>
     <div class="ob-sub"><span id="obSubText">5,200+ studies analyzed in depth through the TRIAD framework — drawn from 453,000+ screened publications.</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
@@ -4293,7 +4303,7 @@ window.showInstPopup = function(d, event) {
       <button onclick="document.getElementById('instPopup').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;padding:0 0 0 8px">×</button>
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:12px">${d.country}${d.rank&&d.rank<999?' · QS #'+d.rank:''}</div>
-    <div style="font-size:11px;color:rgba(201,168,76,.7);margin-bottom:12px">${d.count} gastronomy articles identified in Gusto Science database · may include co-authored works</div>
+    <div style="font-size:11px;color:rgba(201,168,76,.7);margin-bottom:12px">${d.count} gastronomy articles identified in the Gustema database · may include co-authored works</div>
     ${sortedTopics.length ? `
     <div style="margin-bottom:12px">
       <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.6);text-transform:uppercase;margin-bottom:8px">Research areas</div>
