@@ -338,6 +338,28 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .stat-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:400;line-height:1;margin-bottom:3px}
 .stat-label{font-size:11px;color:var(--text-tertiary);letter-spacing:.06em}
 
+/* SCREENING FUNNEL */
+.funnel{max-width:900px;margin:0 auto;padding:24px 32px 32px;font-family:'Inter','Outfit',sans-serif}
+.funnel-eyebrow{font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--gustema-gold,#A08A55);margin-bottom:12px}
+.funnel-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;line-height:1.2;color:var(--gustema-ink,#2A2419);margin-bottom:8px}
+.funnel-sub{font-size:13px;color:var(--gustema-muted,#8A7B5E);margin-bottom:24px;font-weight:300;line-height:1.6;max-width:640px}
+.funnel-bars{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.funnel-row{display:grid;grid-template-columns:150px 55px 1fr 100px;align-items:center;gap:14px}
+.funnel-label{color:var(--gustema-ink,#2A2419);font-size:12.5px;font-weight:500;text-align:right;font-family:'Inter','Outfit',sans-serif;letter-spacing:.01em}
+.funnel-pct{color:var(--gustema-muted,#8A7B5E);font-size:11px;text-align:right;font-variant-numeric:tabular-nums;font-family:'Inter','Outfit',sans-serif}
+.funnel-track{height:22px;background:transparent}
+.funnel-bar{display:block;height:100%;border-radius:3px;transform-origin:left;transform:scaleX(0);transition:transform .9s cubic-bezier(.22,.61,.36,1)}
+.funnel-count{font-variant-numeric:tabular-nums;color:var(--gustema-ink,#2A2419);font-weight:600;font-size:13px;text-align:left;font-family:'Inter','Outfit',sans-serif}
+.funnel-row.is-qualified .funnel-count{color:#836428}
+.funnel-footer{display:flex;justify-content:space-between;align-items:baseline;margin-top:22px;padding-top:14px;border-top:0.5px solid var(--gustema-line,#E5DECF);font-size:11px;color:var(--gustema-muted,#8A7B5E);font-family:'Inter','Outfit',sans-serif;flex-wrap:wrap;gap:8px;font-variant-numeric:tabular-nums}
+@media(max-width:640px){
+  .funnel{padding:20px 16px 24px}
+  .funnel-row{grid-template-columns:110px 46px 1fr 76px;gap:8px}
+  .funnel-title{font-size:19px}
+  .funnel-label{font-size:11.5px}
+  .funnel-count{font-size:12px}
+}
+
 /* BLACK FILTER BAR */
 .filter-bar{background:var(--black);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .triad-label{font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);letter-spacing:.1em;flex-shrink:0}
@@ -908,6 +930,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </div><!-- /hero-stats -->
 </div><!-- /hero -->
 
+<!-- SCREENING FUNNEL — live via public.screening_funnel-vyn.
+     Sex granskningssteg med logaritmisk stapelbredd (sista steget är 2 %
+     av det första — linjär bredd hade gjort den osynlig). Färgstegen
+     går från bläck till guld: de överlevande blir gyllene. Fotraden
+     räknas dynamiskt från samma vy — inga hårdkodade tal. -->
+<section class="funnel" id="screeningFunnel" hidden aria-label="Screening funnel">
+  <div class="funnel-eyebrow" id="funnelEyebrow">SCREENING</div>
+  <h2 class="funnel-title" id="funnelTitle">Vad som överlever granskningen</h2>
+  <p class="funnel-sub" id="funnelSub">Det handlar om vetenskaplig kvalitet, inte kvantitet. Att bara en bråkdel tar sig igenom är inte en svaghet — det är beviset på stringens.</p>
+  <ul class="funnel-bars" id="funnelBars"></ul>
+  <div class="funnel-footer">
+    <span class="funnel-footer-left" id="funnelFooterLeft">Uppdateras live</span>
+    <span class="funnel-footer-right" id="funnelFooterRight"></span>
+  </div>
+</section>
+
 <!-- PYRAMID + MAP GRID -->
 <!-- TRIAD BAR -->
 <div class="filter-bar">
@@ -1469,7 +1507,8 @@ const T={
     sub:'Gastronomy is the only art form that orchestrates all the senses — sight, sound, touch, taste and smell — simultaneously. This library translates research into three forms of professional knowledge: Episteme (the science, via IMRaD), Techne (practical application), and Phronesis (ethical and aesthetic judgment). Select your profession to begin.',
     forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
     freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
-    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal Creator',fb_manager:'Hospitality Management',food_researcher:'Food Researcher & Educator',creator:'Meal Creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'Hospitality Management',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sommelier',culinary_pro:'Chef',gastronomy_culture:'Meal Creator',hospitality_mgmt:'Hospitality Management',educator_researcher:'Food Researcher & Educator'}
+    roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal Creator',fb_manager:'Hospitality Management',food_researcher:'Food Researcher & Educator',creator:'Meal Creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'Hospitality Management',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sommelier',culinary_pro:'Chef',gastronomy_culture:'Meal Creator',hospitality_mgmt:'Hospitality Management',educator_researcher:'Food Researcher & Educator'},
+    funnelEyebrow:'SCREENING',funnelTitle:'What survives the screening',funnelSub:'This is about scientific quality, not quantity. That only a fraction makes it through is not a weakness — it is the proof of rigor.',funnelFooterLive:'Live',funnelFooterCorpus:'corpus',funnelFooterSurvivor:n=>`1 in ${n} articles survive`
   },
   sv:{
     eyebrow:'Forskningsintelligens för kulinariska proffs',
@@ -1477,7 +1516,8 @@ const T={
     sub:'Gastronomin är den enda konstformen som orkestrar alla sinnen — syn, ljud, beröring, smak och doft — simultaneously. Det här biblioteket omvandlar forskning till tre kunskapsformer: Episteme (vetenskapen), Techne (praktisk tillämpning) och Phronesis (omdöme). Välj din yrkesroll för att börja.',
     forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
     freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
-    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Måltidsskapare',fb_manager:'Hospitality Management',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'Hospitality Management',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sommelier',culinary_pro:'Kock',gastronomy_culture:'Måltidsskapare',hospitality_mgmt:'Hospitality Management',educator_researcher:'Forskare & Utbildare'}
+    roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Måltidsskapare',fb_manager:'Hospitality Management',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'Hospitality Management',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sommelier',culinary_pro:'Kock',gastronomy_culture:'Måltidsskapare',hospitality_mgmt:'Hospitality Management',educator_researcher:'Forskare & Utbildare'},
+    funnelEyebrow:'SCREENING',funnelTitle:'Vad som överlever granskningen',funnelSub:'Det handlar om vetenskaplig kvalitet, inte kvantitet. Att bara en bråkdel tar sig igenom är inte en svaghet — det är beviset på stringens.',funnelFooterLive:'Uppdateras live',funnelFooterCorpus:'korpus',funnelFooterSurvivor:n=>`1 av ${n} artiklar överlever`
   }
 }
 
@@ -1552,6 +1592,10 @@ function updateTexts(){
   document.getElementById('heroEyebrow').textContent=t('eyebrow')
   document.getElementById('heroTitle').innerHTML=t('title')
   document.getElementById('heroSub').innerHTML=t('sub')
+  const fe=document.getElementById('funnelEyebrow'); if(fe) fe.textContent=t('funnelEyebrow')
+  const ft=document.getElementById('funnelTitle');   if(ft) ft.innerHTML=t('funnelTitle')
+  const fs=document.getElementById('funnelSub');     if(fs) fs.textContent=t('funnelSub')
+  if(typeof refreshFunnelLabels==='function') refreshFunnelLabels()
   document.getElementById('roleLabel').textContent=t('forRole')
   document.querySelectorAll('.role-chip').forEach(b=>{
     const label=t('roles')[b.dataset.role]||b.dataset.role
@@ -2148,6 +2192,94 @@ function animateCount(el, target){
   if(!el) return
   let c=0, step=Math.ceil(target/60)
   const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('sv-SE');if(c>=target)clearInterval(timer)},25)
+}
+// SCREENING FUNNEL — läser aggregerad vy public.screening_funnel vid
+// sidladdning. Vyn räknar om varje request (ingen materialized), så
+// tratten reflekterar korpusen just nu.
+//
+// Sex steg med log-bredd: största får 100 %, minsta 38 %. Färger går
+// från bläck (#2A2419) till guld (#C9A961). Talen för qualified-steg
+// (relevanta, TRIAD-analyserade) skrivs i mörkguld #836428. Procent
+// visas efter etiketten (av totalen, inte föregående steg). Fotraden
+// har korpus-år från screening_funnel om vyn exponerar dem, annars
+// bara "Uppdateras live".
+const FUNNEL_STEPS=[
+  {key:'indexerade',        en:'Indexed',        sv:'Indexerade',        color:'#2A2419'},
+  {key:'unika_doi',         en:'Unique DOIs',    sv:'Unika DOI',         color:'#3D3527'},
+  {key:'med_abstract',      en:'With abstract',  sv:'Med abstract',      color:'#544A38'},
+  {key:'screenade',         en:'Screened',       sv:'Screenade',         color:'#6B5E45'},
+  {key:'relevanta',         en:'Relevant',       sv:'Relevanta',         color:'#A08A55', qualified:true},
+  {key:'triad_analyserade', en:'TRIAD analysed', sv:'TRIAD-analyserade', color:'#C9A961', qualified:true},
+]
+function refreshFunnelLabels(){
+  document.querySelectorAll('#funnelBars .funnel-row').forEach(row=>{
+    const s=FUNNEL_STEPS.find(x=>x.key===row.dataset.key); if(!s) return
+    const lbl=row.querySelector('.funnel-label'); if(lbl) lbl.textContent=(lang==='sv'?s.sv:s.en)
+  })
+  // Fotraden re-renderas också vid språkbyte om vi har cachade tal.
+  if(typeof window._funnelLastData==='object' && window._funnelLastData) renderFunnelFooter(window._funnelLastData)
+}
+function renderFunnelFooter(d){
+  const footerLeft=document.getElementById('funnelFooterLeft')
+  const footerRight=document.getElementById('funnelFooterRight')
+  const indexed=Number(d.indexerade)||0
+  const triad=Number(d.triad_analyserade)||0
+  if(footerRight && indexed>0 && triad>0){
+    const n=Math.round(indexed/triad)
+    footerRight.textContent=t('funnelFooterSurvivor',n)
+  }
+  if(footerLeft){
+    const liveLabel=t('funnelFooterLive')
+    const corpusMin=d.korpus_minar
+    const corpusMax=d.korpus_maxar
+    footerLeft.textContent=(corpusMin && corpusMax)
+      ? `${liveLabel} · ${t('funnelFooterCorpus')} ${corpusMin}–${corpusMax}`
+      : liveLabel
+  }
+}
+async function loadScreeningFunnel(){
+  const box=document.getElementById('screeningFunnel')
+  const bars=document.getElementById('funnelBars')
+  if(!box||!bars) return
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/screening_funnel?select=*',{headers:H})
+    if(!r.ok) return
+    const rows=await r.json()
+    const d=rows&&rows[0]; if(!d) return
+    window._funnelLastData=d
+    const values=FUNNEL_STEPS.map(s=>Number(d[s.key])||0)
+    const max=values[0]||1                                 // steg 1 (indexerade) = referens för bredd och procent
+    const min=values[values.length-1]||1                   // sista steget (triad_analyserade) = golv för log-formeln
+    const logMax=Math.log(max)
+    const logMin=Math.log(min)
+    const logSpan=(logMax-logMin)||1
+    const fmt=n=>Number(n).toLocaleString('sv-SE')
+    bars.innerHTML=''
+    FUNNEL_STEPS.forEach((s,i)=>{
+      const val=values[i]
+      // Log-formel per spec: 38% för minsta, 100% för största. Linjär
+      // hade gjort sista stapeln 2% = ca 8px = osynlig.
+      const width=val>0
+        ? 38 + 62 * ((Math.log(val)-logMin)/logSpan)
+        : 38
+      // Procent AV TOTALEN (steg 1), inte av föregående steg. Steg 1 visar ingenting.
+      const pctText=(i===0 || max===0) ? '' : ((val/max)*100).toFixed(1)+'%'
+      const lbl=(lang==='sv'?s.sv:s.en)
+      const li=document.createElement('li')
+      li.className='funnel-row'+(s.qualified?' is-qualified':'')
+      li.dataset.key=s.key
+      li.innerHTML=`<span class="funnel-label">${lbl}</span><span class="funnel-pct">${pctText}</span><span class="funnel-track"><span class="funnel-bar" style="width:${width.toFixed(2)}%;background:${s.color}"></span></span><span class="funnel-count">${fmt(val)}</span>`
+      bars.appendChild(li)
+    })
+    renderFunnelFooter(d)
+    box.hidden=false
+    // Stagger-animera bar-scale från 0 till 1. 100ms per rad per spec.
+    requestAnimationFrame(()=>{
+      bars.querySelectorAll('.funnel-bar').forEach((el,i)=>{
+        setTimeout(()=>{el.style.transform='scaleX(1)'},100*i)
+      })
+    })
+  }catch(_){}
 }
 async function loadCounts(){
   try{
@@ -3627,7 +3759,7 @@ window.loadSyntheses = async function() {
 // loadKnowledgeMap (Explore) och initWorldMap (Map) triggas av showView() vid
 // första öppning. Sparar ~2s på förstasidan + Anthropic-kvot om användaren
 // aldrig öppnar de tunga vyerna.
-initAuth().then(async ()=>{loadArticles();loadCounts();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
+initAuth().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
 setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 </script>
 <!-- TRIAD MODAL — paste this block into index.html -->
