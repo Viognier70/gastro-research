@@ -792,11 +792,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
-    <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gustema">
-      <path d="M 75.5 24.5 A 36 36 0 1 0 86 50" fill="none" stroke="#2A2419" stroke-width="12" stroke-linecap="round"/>
-      <path d="M 86 50 L 68 50" fill="none" stroke="#2A2419" stroke-width="12" stroke-linecap="round"/>
-      <path d="M 62 32 A 13 13 0 1 0 50 50 A 13 13 0 1 1 40 71.4" fill="none" stroke="#A08A55" stroke-width="12" stroke-linecap="round"/>
-    </svg>
+    <img src="/gustema-logo.svg" alt="Gustema" width="36" height="36" class="logo-mark" style="display:block">
     <span class="logo-wordmark">Gustema</span>
   </div>
   <div class="topbar-right">
@@ -910,25 +906,26 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div style="display:flex;gap:20px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:8px">
       <span style="width:28px;height:28px;border-radius:50%;background:var(--episteme);display:flex;align-items:center;justify-content:center;font-size:13px;color:#E8EFF6;font-family:Georgia,serif;flex-shrink:0">ε</span>
-      <div><div style="font-size:11px;font-weight:600;color:var(--episteme)">Episteme</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">Knowledge through science — analytical, the parts</div></div>
+      <div><div style="font-size:11px;font-weight:600;color:var(--episteme)">Episteme</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">what the research establishes</div></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span style="width:28px;height:28px;border-radius:50%;background:var(--techne);display:flex;align-items:center;justify-content:center;font-size:13px;color:#EAF0E5;font-family:Georgia,serif;flex-shrink:0">τ</span>
-      <div><div style="font-size:11px;font-weight:600;color:var(--techne)">Techne</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">The craft born where science and art meet</div></div>
+      <div><div style="font-size:11px;font-weight:600;color:var(--techne)">Techne</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">how it applies</div></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span style="width:28px;height:28px;border-radius:50%;background:var(--phronesis);display:flex;align-items:center;justify-content:center;font-size:13px;color:#F5EDE3;font-family:Georgia,serif;flex-shrink:0">φ</span>
-      <div><div style="font-size:11px;font-weight:600;color:var(--phronesis)">Phronesis</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">Knowledge through art — analogical, the whole</div></div>
+      <div><div style="font-size:11px;font-weight:600;color:var(--phronesis)">Phronesis</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">when to judge</div></div>
     </div>
   </div>
   <a href="/foundation" style="margin-left:auto;font-size:11px;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.3);padding:5px 14px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;flex-shrink:0;text-decoration:none">The Foundation →</a>
 </div>
 <!-- HERO -->
 <div class="hero">
+  <img src="/gustema-logo.svg" alt="Gustema" width="120" height="120" class="hero-logo" style="display:block;margin:0 auto 20px">
   <div class="gustema-tagline" aria-label="Gustema tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
   <h1 class="hero-title" id="heroTitle">Science that tells you<br><em>what, how, and when.</em></h1>
-  <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you more: what science establishes analytically (<em>Episteme</em>), what art grasps analogically (<em>Phronesis</em>), and the craft born where the two meet (<em>Techne</em>) — where the double grip makes professional knowledge possible. Dr Anders Crichton-Fock's model (formerly Herdenstam), after Aristotle, Diderot &amp; Wittgenstein. Select your role below — every article is translated for your perspective.</p>
+  <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you more: what the research establishes (<em>Episteme</em>), how it applies in practice (<em>Techne</em>), and the situated judgment that binds them (<em>Phronesis</em>) — the double grip that makes professional knowledge possible. Dr Anders Crichton-Fock's model, after Aristotle. Select your role below — every article is translated for your perspective.</p>
   <div class="hero-stats">
     <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
     <div class="stat-item"><div class="stat-num" id="triadCount">—</div><div class="stat-label">TRIAD analyses</div></div>
@@ -978,42 +975,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 </div>
 
-<!-- LENS PANEL: the moment (animation) + selector (logo as knowledge navigator) -->
-<div class="lens-panel" id="lensPanel">
-  <div class="lens-stage">
-    <svg class="lens-svg" id="lensSvg" viewBox="0 0 120 100">
-      <path id="lensFillE" d="M46 22 L80 82 L12 82 Z" fill="#E8EFF6" opacity="0"/>
-      <path id="lensFillP" d="M74 22 L108 82 L40 82 Z" fill="#EAF0E5" opacity="0"/>
-      <path id="lensThird" d="M60 46.7 L80 82 L40 82 Z" fill="#F5EDE3" opacity="0"/>
-      <path id="lensSegE" d="M46 22 L80 82 L12 82 Z" fill="none" stroke="#0C0B09" stroke-width="3.4" stroke-linejoin="round"/>
-      <path id="lensSegP" d="M74 22 L108 82 L40 82 Z" fill="none" stroke="#C9A84C" stroke-width="3.4" stroke-linejoin="round"/>
-      <path class="lens-seg-hit" data-lens="e" d="M46 22 L61 52 L27 82 L12 82 Z" fill="transparent"/>
-      <path class="lens-seg-hit" data-lens="p" d="M74 22 L108 82 L79 82 L59 52 Z" fill="transparent"/>
-      <path class="lens-seg-hit" data-lens="t" d="M60 46.7 L80 82 L40 82 Z" fill="transparent"/>
-    </svg>
-    <div class="lens-info-col">
-      <div class="lens-card2 lens-intro-card on" id="lensIntro">
-        <p class="lens-intro">This is your lens — the <b id="lensRoleName">field's</b> TRIAD. Research seen through three forms of knowledge. <b>Tap a part of the mark</b> to explore each: analysis, judgment, and the double grip that binds them.</p>
-      </div>
-      <div class="lens-card2 e" data-lens-card="e">
-        <span class="lc-tag"><span class="lc-sw"></span>Episteme · Analysis</span>
-        <h4>The analytical grip</h4>
-        <p id="lensTxtE"></p>
-      </div>
-      <div class="lens-card2 p" data-lens-card="p">
-        <span class="lc-tag"><span class="lc-sw"></span>Phronesis · Judgment</span>
-        <h4>The analogical grip</h4>
-        <p id="lensTxtP"></p>
-      </div>
-      <div class="lens-card2 t" data-lens-card="t">
-        <span class="lc-tag"><span class="lc-sw"></span>Techne · The double grip</span>
-        <h4>Where the two meet</h4>
-        <p id="lensTxtT"></p>
-      </div>
-    </div>
-  </div>
-  <div class="lens-hint2">The two triangles — analysis and experience — form a third: the integration. Tap the mark's parts to read each grip.</div>
-</div>
+<!-- LENS PANEL borttagen 2026-07-12: den gamla "two triangles / double grip"-
+     grafiken konkurrerade med Gustema-märket och Lévi-Strauss-berättelsen.
+     CSS-regler (.lens-*, .lc-*) och JS-handlers (#lensSvg, .lens-seg-hit)
+     är dead code och tas i separat cleanup-commit. -->
 
 <!-- TOOLBAR -->
 <div class="toolbar">
