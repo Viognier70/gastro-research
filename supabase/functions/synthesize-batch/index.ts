@@ -16,6 +16,8 @@ const COMBOS: [string,string][] = [
   ['sensory_pro','servicescape'],['sensory_pro','crossmodal'],
   ['culinary_pro','gastronomy'],['culinary_pro','culinary_science'],['culinary_pro','fermentation_science'],
   ['culinary_pro','neurogastronomy'],['culinary_pro','food_science'],
+  ['gastronomy_culture','gastronomy'],['gastronomy_culture','multisensory'],
+  ['gastronomy_culture','crossmodal'],['gastronomy_culture','neurogastronomy'],
   ['hospitality_mgmt','gastronomy'],['hospitality_mgmt','servicescape'],['hospitality_mgmt','food_science'],
   ['educator_researcher','gastronomy'],['educator_researcher','multisensory'],['educator_researcher','flavor_science'],
   ['educator_researcher','nutritional_science'],['educator_researcher','sensory_evaluation'],
