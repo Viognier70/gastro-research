@@ -3,7 +3,6 @@ import { buildTriadPrompt, parseLabeledProse, validateTriad, fieldsToDbUpdate } 
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
-const SB_ANON = Deno.env.get('SUPABASE_ANON_KEY') || ''
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') || ''
 const supabase = createClient(SB_URL, SB_SERVICE_KEY, { auth: { persistSession: false } })
 
@@ -28,16 +27,12 @@ const ROLES = [
 ]
 
 async function claimBatch(n: number) {
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/rpc/claim_pipeline_batch`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':`Bearer ${SB_ANON}`,'apikey':SB_ANON},
-      body: JSON.stringify({ batch_size: n })
-    })
-    if(!r.ok) { console.log('claimBatch failed:', r.status); return [] }
-    const data = await r.json()
-    return Array.isArray(data) ? data : []
-  } catch(e) { console.log('claimBatch error:', e.message); return [] }
+  const { data, error } = await supabase.rpc('claim_pipeline_batch', { batch_size: n })
+  if (error) {
+    console.log('claimBatch failed:', error.message, error.code)
+    return []
+  }
+  return Array.isArray(data) ? data : []
 }
 
 async function runSci(article: any) {
