@@ -115,6 +115,19 @@ type SignalBundle = {
   unjudgedNow:       number | null      // obedomd_ko just nu
   unjudgedThen:      number | null      // obedomd_ko ~2h sedan (från queue_snapshots)
   unjudgedGrowth:    number | null      // now - then, för sms-texten
+  // v2 (2026-07-13): fem nya signaler mot pipeline + synthesize.
+  // sciTakt/sciQueue paras enligt "en takt utan sin kö säger ingenting".
+  // sciGhosts är regression-vakt för e14f773 (sci_done gated on save).
+  // syntRecencyH driver synt_stale; queueFailed driver ko_failed_alert.
+  // sciQueueThen/Growth följer relevance_looping-mönstret via
+  // queue_snapshots (kind='sci_ko').
+  sciTakt:           number | null      // sci_takt_1h
+  sciQueue:          number | null      // sci_ko just nu
+  sciQueueThen:      number | null      // sci_ko ~2h sedan
+  sciQueueGrowth:    number | null      // now - then
+  sciGhosts:         number | null      // sci_spoken
+  syntRecencyH:      number | null      // synt_senaste_alder_h
+  queueFailed:       number | null      // ko_failed
 }
 
 type AlertSpec = {
@@ -169,6 +182,62 @@ const ALERTS: AlertSpec[] = [
     message: (s) =>
       `GUSTO alert: relevance queue GROWING. Job running but not processing. +${fmtCompact(s.unjudgedGrowth)} in 2h. Check skip rate + predicate.`,
   },
+  // v2 (2026-07-13): pipeline + synthesize + regression-vakter.
+  {
+    type: 'sci_stalled',
+    // Samma "takt=0 + kö>1000"-mönster som ovanstående _stalled-larm.
+    // Nattens claimBatch-401 (fixat i a0682d0) gav takt 0 på kö 25k —
+    // hade fyrat inom 30 min om detta larm funnits.
+    fires: (s) =>
+      isLiteralZero(s.sciTakt) &&
+      s.sciQueue !== null && s.sciQueue > 1000,
+    // ~100 tecken med "999k".
+    message: (s) =>
+      `GUSTO alert: sci scoring stalled. Rate 0/h, queue ${fmtCompact(s.sciQueue)}. Check pipeline cron + edge fn + Haiku quota.`,
+  },
+  {
+    type: 'sci_ghosts',
+    // Regression-vakt för e14f773 (sci_done sätts bara på verifierat
+    // save). Tröskel > 0 — spöken ska ALDRIG uppstå. En enda är en
+    // regression. Att tolerera 100 vore att bygga in marginal för
+    // en bugg vi just eliminerat.
+    fires: (s) => s.sciGhosts !== null && s.sciGhosts > 0,
+    // ~92 tecken.
+    message: (s) =>
+      `GUSTO alert: sci ghosts ${fmtCompact(s.sciGhosts)}. Queue says done, articles side is NULL. sci_done fix regressed.`,
+  },
+  {
+    type: 'sci_growing',
+    // Kompletterar sci_stalled. Pipeline kan mala 380/h medan
+    // relevance-check fyller på snabbare — då sjunker sci_ko aldrig,
+    // takt > 0, allt ser friskt ut, kön växer i månader.
+    // Kräver att sci_ko snapshotats (kind='sci_ko') ~2h sedan.
+    fires: (s) =>
+      s.sciQueue       !== null &&
+      s.sciQueueThen   !== null &&
+      s.sciQueueGrowth !== null && s.sciQueueGrowth > 500,
+    // ~113 tecken med "+1k".
+    message: (s) =>
+      `GUSTO alert: sci queue GROWING. Pipeline running but losing ground. +${fmtCompact(s.sciQueueGrowth)} in 2h. Check batch size vs enqueue rate.`,
+  },
+  {
+    type: 'synt_stale',
+    // synt_senaste_alder_h > 48. Cron kör dagligen 04:00 UTC, så 48h
+    // ger EN missad natt innan larm — inte känsligt för enstaka fail.
+    fires: (s) => s.syntRecencyH !== null && s.syntRecencyH > 48,
+    // ~80 tecken.
+    message: (s) =>
+      `GUSTO alert: syntheses stale ${fmtCompact(s.syntRecencyH)}h. Daily cron dead or synthesize saving to NULL.`,
+  },
+  {
+    type: 'ko_failed_alert',
+    // > 10 permanent failed rader. Enskilda är sällsynta (MAX_ATTEMPTS
+    // uppnått) och varje bör undersökas — 50 vore för generöst.
+    fires: (s) => s.queueFailed !== null && s.queueFailed > 10,
+    // ~70 tecken.
+    message: (s) =>
+      `GUSTO alert: ${fmtCompact(s.queueFailed)} queue rows permanently failed. Investigate last_error.`,
+  },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -208,15 +277,17 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, error: `articles count: ${cErr.message}` }), { status: 500, headers: CORS })
 
   const unjudgedNow = toNum(row.obedomd_ko)
+  const sciQueueNow = toNum(row.sci_ko)
 
   // Läs snapshot ~2h sedan för looping-detektion. Vi kräver en post minst
   // 1h45min gammal (så vi jämför mot något som INTE precis snapshotades)
   // och inte äldre än 4h (annars är jämförelsen inte pålitlig — t.ex.
-  // efter helg-outage). Om ingen matchande post finns är unjudgedThen
-  // null och relevance_looping fires inte.
-  let unjudgedThen: number | null = null
+  // efter helg-outage). Om ingen matchande post finns är *Then null och
+  // motsvarande growing-larm fires inte.
   const cutoffMax = new Date(Date.now() - 1.75 * 3600 * 1000).toISOString()  // 1h45min ago
   const cutoffMin = new Date(Date.now() - 4    * 3600 * 1000).toISOString()  // 4h ago
+
+  let unjudgedThen: number | null = null
   const { data: snap } = await supabase.from('queue_snapshots')
     .select('value, ts')
     .eq('kind', 'obedomd_ko')
@@ -227,12 +298,26 @@ Deno.serve(async (req) => {
     .maybeSingle()
   if (snap) unjudgedThen = toNum(snap.value)
 
-  // Snapshota nuvarande kö för framtida jämförelser. Insert-och-glöm.
+  let sciQueueThen: number | null = null
+  const { data: snapSci } = await supabase.from('queue_snapshots')
+    .select('value, ts')
+    .eq('kind', 'sci_ko')
+    .lt('ts', cutoffMax)
+    .gt('ts', cutoffMin)
+    .order('ts', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (snapSci) sciQueueThen = toNum(snapSci.value)
+
+  // Snapshota nuvarande köer för framtida jämförelser. Insert-och-glöm.
   if (unjudgedNow !== null) {
     await supabase.from('queue_snapshots').insert({ kind: 'obedomd_ko', value: unjudgedNow })
   }
+  if (sciQueueNow !== null) {
+    await supabase.from('queue_snapshots').insert({ kind: 'sci_ko', value: sciQueueNow })
+  }
 
-  // Städa snapshots äldre än 7 dygn (mängden växer 48/dag = ~336/vecka).
+  // Städa snapshots äldre än 7 dygn (mängden växer nu 96/dag med 2 kinder).
   await supabase.from('queue_snapshots')
     .delete().lt('ts', new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString())
 
@@ -245,6 +330,13 @@ Deno.serve(async (req) => {
     unjudgedNow,
     unjudgedThen,
     unjudgedGrowth: (unjudgedNow !== null && unjudgedThen !== null) ? (unjudgedNow - unjudgedThen) : null,
+    sciTakt:        toNum(row.sci_takt_1h),
+    sciQueue:       sciQueueNow,
+    sciQueueThen,
+    sciQueueGrowth: (sciQueueNow !== null && sciQueueThen !== null) ? (sciQueueNow - sciQueueThen) : null,
+    sciGhosts:      toNum(row.sci_spoken),
+    syntRecencyH:   toNum(row.synt_senaste_alder_h),
+    queueFailed:    toNum(row.ko_failed),
   }
 
   // 3. Utvärdera larm, respektera cooldown, skicka.
