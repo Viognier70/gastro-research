@@ -2241,11 +2241,29 @@ async function loadScreeningFunnel(){
   const box=document.getElementById('screeningFunnel')
   const bars=document.getElementById('funnelBars')
   if(!box||!bars) return
+  // Silent swallow-mönstret (if(!r.ok) return / if(!d) return / catch(_){})
+  // dolde tratten helt när matview-refresh dröjde eller när PostgREST timeout:ade.
+  // Samma mönster som göm ticker-, synthesize- och Feed-buggarna tidigare idag.
+  // Fallback: visa sektionen ändå med diskret meddelande + log till console —
+  // vi vill SE att den är trasig, inte att den försvinner.
+  const showFallback=(reason)=>{
+    console.error('funnel:', reason)
+    bars.innerHTML='<li class="funnel-fallback" style="padding:12px 0;color:var(--gustema-muted,#8A7B5E);font-size:12px;font-style:italic;list-style:none">Screening counts temporarily unavailable — next refresh in a few minutes.</li>'
+    box.hidden=false
+  }
   try{
     const r=await fetch(SB_URL+'/rest/v1/screening_funnel?select=*',{headers:H})
-    if(!r.ok) return
+    if(!r.ok){
+      const bodyText=await r.text().catch(()=>'<unread>')
+      showFallback(`HTTP ${r.status}: ${bodyText.slice(0,200)}`)
+      return
+    }
     const rows=await r.json()
-    const d=rows&&rows[0]; if(!d) return
+    const d=rows&&rows[0]
+    if(!d){
+      showFallback('empty result — matview may need refresh')
+      return
+    }
     window._funnelLastData=d
     const values=FUNNEL_STEPS.map(s=>Number(d[s.key])||0)
     const max=values[0]||1                                 // steg 1 (indexerade) = referens för bredd och procent
@@ -2279,7 +2297,9 @@ async function loadScreeningFunnel(){
         setTimeout(()=>{el.style.transform='scaleX(1)'},100*i)
       })
     })
-  }catch(_){}
+  }catch(e){
+    showFallback('exception: '+(e?.message||String(e)))
+  }
 }
 async function loadCounts(){
   try{
