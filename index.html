@@ -3725,7 +3725,18 @@ window.loadSyntheses = async function() {
   grid.innerHTML = '<div class="syntheses-loading">Loading syntheses…</div>'
   try {
     const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sommelier')
-    const synthRole = ({sensory_pro:'sommelier',culinary_pro:'chef',gastronomy_culture:'sommelier',hospitality_mgmt:'fb_manager',educator_researcher:'researcher',sommelier:'sommelier',chef:'chef',fb_manager:'fb_manager',food_researcher:'researcher',gastronomy:'sommelier'})[rRaw] || 'sommelier'
+    // research_syntheses.role är science-namn efter migration 2026-07-13.
+    // Chip-slug från UI/localStorage måste översättas hit; okänd input
+    // fallback:ar till sensory_pro (samma default som synthesize-batch
+    // producerar mest data för).
+    const synthRole = ({
+      sensory_pro:'sensory_pro', culinary_pro:'culinary_pro',
+      gastronomy_culture:'gastronomy_culture', hospitality_mgmt:'hospitality_mgmt',
+      educator_researcher:'educator_researcher',
+      sommelier:'sensory_pro', chef:'culinary_pro',
+      gastronomy:'gastronomy_culture', meal_creator:'gastronomy_culture',
+      fb_manager:'hospitality_mgmt', food_researcher:'educator_researcher'
+    })[rRaw] || 'sensory_pro'
     const label = window.roleLabel(rRaw) || rRaw
     if(roleEl) roleEl.textContent = label
     const resp = await fetch(`${SB_URL}/rest/v1/research_syntheses?select=id,title,synthesis,topic,role,article_count,updated_at&role=eq.${synthRole}&order=updated_at.desc&limit=12`, {
