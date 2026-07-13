@@ -1763,7 +1763,12 @@ document.addEventListener('click',function(ev){
 
 function getRelevanceScore(a){
   if(role==='all') return 0
-  return Math.min(10, parseInt(a['relevance_sci_'+role]||a['relevance_'+role]||0))
+  // MÅSTE gå via toDbRole. Direkt 'relevance_sci_'+role bygger chip-kolumn
+  // (relevance_sci_sommelier etc) — tom sedan namnrymdsmigrationen 2026-07-12,
+  // vilket gjorde att relevance-badgen fastnade på 0 för alla nya artiklar.
+  // 'relevance_'+role är ännu äldre legacy (existerar knappt) — bort.
+  const dbRole = toDbRole(role)
+  return Math.min(10, parseInt(a['relevance_sci_'+dbRole]||0))
 }
 
 function triadBlock(text,label,bc,bg,lc){
@@ -1805,7 +1810,9 @@ function cardHTML(a,idx){
   const r = role==='all' ? 'sommelier' : toChipRole(role)
   const roleName=t('roles')[r]||r
   const ep=a['episteme_'+dbRoleName]||''
-  const tc=a['techne_'+dbRoleName]||a['scenario_'+r]||''
+  // scenario_+chip var en pre-migration alias som ingen writer fyller längre.
+  // Dead fallback = tyst felmatchning maskerad som "graceful degradation".
+  const tc=a['techne_'+dbRoleName]||''
   const ph=a['phronesis_'+dbRoleName]||''
   const bridgeET=a['bridge_episteme_techne_'+dbRoleName]||''
   const bridgeTP=a['bridge_techne_phronesis_'+dbRoleName]||''
@@ -3228,11 +3235,13 @@ window.openArticleFromId = async function(id){
 }
 function openArticleOverlay(article){
   _artData = article
-  // Kanoniskt chip-namn för alla property-accesser mot article-objektet.
-  // Utan toChipRole skulle role='hospitality_mgmt' resulteras i has_episteme_
-  // hospitality_mgmt=undefined → overlayn visar upsell istället för TRIAD.
-  const rRaw = (typeof role!=='undefined' && role && role!=='all') ? role : 'sommelier'
-  const r = toChipRole(rRaw)
+  // Science-namn för ALLA DB-nyckelaccesser (episteme_/techne_/phronesis_/
+  // has_episteme_). Pipeline, triad-on-demand och triad-background skriver
+  // bara science-kolumner (sensory_pro etc) sedan 2026-07-12. Chip-versionerna
+  // (sommelier etc) finns kvar i vyn men fylls aldrig av nya writers — tomma
+  // för allt analyserat efter migrationen.
+  const rRaw = (typeof role!=='undefined' && role && role!=='all') ? role : 'sensory_pro'
+  const dbRole = toDbRole(rRaw)
   const topic = (article.topic||'').replace(/_/g,' ')
   const badges = (topic?'<span class="topic-badge">'+topic+'</span>':'')+
     (article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+
@@ -3243,11 +3252,13 @@ function openArticleOverlay(article){
   const claim = article.core_claim || article.insight || ''
   const claimEl = document.getElementById('artClaim')
   if(claim){ claimEl.textContent = claim; claimEl.style.display='block' } else { claimEl.style.display='none' }
-  _artData._ep = article['episteme_'+r] || ''
-  _artData._tc = article['techne_'+r] || ''
-  _artData._ph = article['phronesis_'+r] || ''
-  // Presence-boolean från articles_public — sanning för aktuell roll, inte gissad från payload
-  const hasTriadForRole = article['has_episteme_'+r] === true
+  _artData._ep = article['episteme_'+dbRole] || ''
+  _artData._tc = article['techne_'+dbRole] || ''
+  _artData._ph = article['phronesis_'+dbRole] || ''
+  // Presence-boolean från articles_public. dbRole (science) matchar vad
+  // pipeline/triad-on-demand/triad-background skriver. Chip-versionen fastnade
+  // false för alla nya writes → branch (3) alltid → CTA:n stod kvar efter analys.
+  const hasTriadForRole = article['has_episteme_'+dbRole] === true
   const hasPremium = hasTriadForRole && !!(_artData._ep || _artData._tc || _artData._ph)
   const nav = document.querySelector('.art-triad-nav')
   const content = document.getElementById('artTriadContent')
@@ -3798,10 +3809,13 @@ window.renderMyLibrary = async function() {
     return
   }
 
-  // Hämta sparade artiklar: metadata från vy, TRIAD via RPC för Pro
+  // Hämta sparade artiklar: metadata från vy, TRIAD via RPC för Pro.
+  // dbRole (science) — direkt window.role gav chip-slug som blir chip-kolumn
+  // (episteme_sommelier etc), tomt sedan namnrymdsmigrationen → My Library
+  // visade blanka TRIAD-fält och trasigt lens-filter för alla icke-'all'-roller.
   const ids = [...savedArticleIds]
-  const r = window.role && window.role !== 'all' ? window.role : 'sensory_pro'
-  const epCol = 'episteme_'+r, tcCol = 'techne_'+r, phCol = 'phronesis_'+r
+  const dbRole = window.role && window.role !== 'all' ? toDbRole(window.role) : 'sensory_pro'
+  const epCol = 'episteme_'+dbRole, tcCol = 'techne_'+dbRole, phCol = 'phronesis_'+dbRole
 
   const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year&id=in.(${ids.join(',')})`, {
     headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
@@ -3910,22 +3924,25 @@ window.loadSpotlight = async function() {
   if(!el) return
   el.innerHTML = '<div style="color:#888;font-size:12px;padding:16px 0;font-family:Outfit,sans-serif">Loading latest findings...</div>'
   try {
-    // rRaw = användarens vald roll (kan vara chip-namn eller kvarhängande science-namn).
-    // rChip = kanoniskt chip-namn, det ENDA som finns som has_episteme_<x> /
-    // episteme_<x> / techne_<x> / phronesis_<x> / relevance_sci_<x> i articles_public.
-    const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sommelier')
-    const r = toChipRole(rRaw)
-    const epCol = `episteme_${r}`
-    const tcCol = `techne_${r}`
-    const phCol = `phronesis_${r}`
-    const relCol = `relevance_sci_${r}`
-    // Konsoliderad label via ROLE_LABELS-mappen (toChipRole hanterar legacy-namn).
-    const spotlightRoleLabel = window.roleLabel(rRaw) || r
+    // Science-namn (via toDbRole) för ALLA DB-kolumnaccesser. Kommentaren
+    // ovan var direkt fel: articles_public har både chip- och science-kolumner
+    // efter additiva migrationen, men pipeline/triad-* skriver enbart science.
+    // Att bygga URL:er med chip gav tysta noll-resultat sedan 2026-07-12
+    // → "Loading latest findings" fastnade eller gick tom.
+    // rChip behålls för roleLabel-lookup (display-namn), aldrig som DB-nyckel.
+    const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
+    const dbRole = toDbRole(rRaw)
+    const rChip  = toChipRole(rRaw)
+    const epCol = `episteme_${dbRole}`
+    const tcCol = `techne_${dbRole}`
+    const phCol = `phronesis_${dbRole}`
+    const relCol = `relevance_sci_${dbRole}`
+    const spotlightRoleLabel = window.roleLabel(rRaw) || rChip
     const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
 
     // Research Synthesis-korten hämtas av loadSyntheses() i Syntheses-vyn.
     // loadSpotlight fokuserar på Feed:s artikel-highlights.
-    const artResp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${r}&has_episteme_${r}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
+    const artResp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${dbRole}&has_episteme_${dbRole}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
 
