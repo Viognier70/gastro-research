@@ -3374,7 +3374,14 @@ window.requestTriadAnalysis = async function(articleId){
     txt.textContent = 'Försök igen'
     if(errBox && msg){ errBox.textContent = msg; errBox.style.display = 'block' }
   }
-  // POST-anrop med 502-retry (cold-start upptäcktes i test)
+  // POST-anrop med 502-retry (cold-start upptäcktes i test).
+  // role skickas som science-namn så backend kan returnera roll-specifikt
+  // content inline i svaret — vi förlitar oss INTE på refetch via
+  // openArticleFromId eftersom get_articles_full är Pro-gate:ad och skulle
+  // ge free-user tom payload trots att analysen är skriven till DB.
+  const dbRoleName = (typeof role !== 'undefined' && role && role !== 'all')
+    ? (typeof toDbRole === 'function' ? toDbRole(role) : role)
+    : 'sensory_pro'
   const doPost = async () => fetch(`${SB_URL}/functions/v1/triad-on-demand`, {
     method: 'POST',
     headers: {
@@ -3382,7 +3389,7 @@ window.requestTriadAnalysis = async function(articleId){
       'apikey':        SB_ANON,
       'Content-Type':  'application/json'
     },
-    body: JSON.stringify({ article_id: articleId })
+    body: JSON.stringify({ article_id: articleId, role: dbRoleName })
   })
   let resp
   try {
@@ -3425,11 +3432,12 @@ window.requestTriadAnalysis = async function(articleId){
     if(typeof body.quota_remaining === 'number'){
       console.log('TRIAD: analys klar. Kvot kvar denna månad:', body.quota_remaining)
     }
-    // Fas 3: fade-in på nästa öppning av overlayn — anropa openArticleFromId
-    // som refetchar via articles_public + enrichWithPremiumIfPro
-    window._triadJustLanded = articleId
-    closeArticleModal()
-    setTimeout(()=>{ if(typeof openArticleFromId==='function') openArticleFromId(articleId) }, 200)
+    // Fas 3: rendera INLINE i öppna overlayn. Ingen refetch — svaret från
+    // triad-on-demand innehåller roll-specifikt content och IMRaD. Refetch
+    // via openArticleFromId → get_articles_full skulle ge tom payload för
+    // free-user och lämna dem med "no TRIAD yet"-vyn de precis betalat
+    // kvot för att slippa.
+    renderTriadInline(body.triad || {}, articleId)
     return
   }
   // 'pending' → polla var 3:e s tills det finns TRIAD (max 30 polls = 90s)
@@ -3453,9 +3461,7 @@ window.requestTriadAnalysis = async function(articleId){
           clearInterval(pollTimer)
           stopCycle()
           btn.classList.remove('spinning')
-          window._triadJustLanded = articleId
-          closeArticleModal()
-          setTimeout(()=>{ if(typeof openArticleFromId==='function') openArticleFromId(articleId) }, 200)
+          renderTriadInline(pollBody.triad || {}, articleId)
         }
         // om fortfarande 'pending' → fortsätt polla
       } catch(e){
@@ -3468,6 +3474,51 @@ window.requestTriadAnalysis = async function(articleId){
   console.error('triad-on-demand: unexpected status', resp.status, body)
   const errMsg = body?.error || `Oväntat svar (HTTP ${resp.status})`
   resetButton(errMsg)
+}
+
+// Rendera TRIAD-content från svaret inline i öppna article-overlayn.
+// Uppdaterar _artData, ersätter CTA-boxen i #artTriadContent med E/T/P-tabs
+// (samma render-väg som switchArtTriad), populerar IMRaD, kör stagger
+// fade-in. Ingen refetch — vi har allt vi behöver från triad-on-demand-svaret.
+function renderTriadInline(triad, articleId){
+  if(!triad) return
+  const c   = document.getElementById('artTriadContent')
+  const nav = document.querySelector('.art-triad-nav')
+  if(!c || !nav) return
+  // Uppdatera _artData så switchArtTriad hittar rätt fält
+  if(typeof _artData !== 'undefined' && _artData){
+    _artData._ep = triad.episteme  || ''
+    _artData._tc = triad.techne    || ''
+    _artData._ph = triad.phronesis || ''
+    _artData.imrad_introduction = triad.imrad_introduction || _artData.imrad_introduction
+    _artData.imrad_methods      = triad.imrad_methods      || _artData.imrad_methods
+    _artData.imrad_results      = triad.imrad_results      || _artData.imrad_results
+    _artData.imrad_discussion   = triad.imrad_discussion   || _artData.imrad_discussion
+  }
+  // Visa TRIAD-tabs
+  nav.style.display = ''
+  // Rendera E som initialt aktivt
+  if(typeof window.switchArtTriad === 'function') window.switchArtTriad('e')
+  // Populera IMRaD om svaret innehåller det
+  if(triad.imrad_introduction || triad.imrad_methods || triad.imrad_results || triad.imrad_discussion){
+    const wrap = document.getElementById('artImrad')
+    const bodyEl = document.getElementById('artImradBody')
+    if(wrap) wrap.style.display = 'block'
+    if(bodyEl){
+      bodyEl.innerHTML = ['introduction','methods','results','discussion'].map(k => {
+        const v = triad['imrad_'+k]
+        return v ? `<div class="art-imrad-row"><div class="art-imrad-label">${k}</div><div class="art-imrad-text">${v}</div></div>` : ''
+      }).join('')
+    }
+  }
+  // Fas 3-animation: stagger fade-in (translateY 6→0, 0.5s, 200ms stagger)
+  c.style.animationDelay = '0ms'
+  c.classList.remove('triad-in'); void c.offsetWidth; c.classList.add('triad-in')
+  const imradRows = document.querySelectorAll('#artImradBody .art-imrad-row')
+  imradRows.forEach((el, i) => {
+    el.style.animationDelay = (200 + i * 200) + 'ms'
+    el.classList.remove('triad-in'); void el.offsetWidth; el.classList.add('triad-in')
+  })
 }
 
 // Newsletter modal (navbar Subscribe →). Anropas som onclick från

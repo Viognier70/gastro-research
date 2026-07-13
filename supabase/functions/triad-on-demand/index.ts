@@ -120,11 +120,17 @@ Deno.serve(async (req) => {
     .select('is_pro').eq('id', userId).maybeSingle()
   const isPro = !!profile?.is_pro
 
-  // 3. Body. test_max_tokens är ett tillfälligt diagnostikfält för att
-  //    mäta hur output-length vs latens skalar. Tas bort efter beslut.
+  // 3. Body. role (science-namn) styr vilka roll-specifika fält som
+  //    returneras i svaret så frontend kan rendera inline direkt utan
+  //    refetch — kritiskt för free-user som betalat kvot: get_articles_full
+  //    är Pro-gate:ad, så refetch ger inget content utan Pro/trial. Vi
+  //    vitlist:ar mot injection eftersom role interpoleras i .select()-strängen.
+  //    test_max_tokens är ett tillfälligt diagnostikfält.
   const body = await req.json().catch(() => ({}))
   const { article_id } = body
   if (!article_id) return json({ status: 'error', error: 'missing article_id' }, 400)
+  const VALID_ROLES = new Set(['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher'])
+  const role = VALID_ROLES.has(String(body.role || '')) ? String(body.role) : 'sensory_pro'
   const testMaxTokens = Math.max(500, Math.min(4000, Number(body.test_max_tokens) || 4000))
 
   // 4. Läs artikel
@@ -133,9 +139,28 @@ Deno.serve(async (req) => {
     .eq('id', article_id).maybeSingle()
   if (aErr || !article) return json({ status: 'error', error: 'article not found' }, 404)
 
-  // 5. Cache-hit. Gratis. Ingen kvot, ingen låsning. Frontend refreshar bara.
+  // 5. Cache-hit. Ingen kvot, ingen låsning. Hämta content för aktiv roll
+  //    så frontend kan rendera direkt — annars skulle free-user se sin
+  //    just-analyserade artikel som "no TRIAD yet" när de öppnar den igen.
   if (article.imrad_methods) {
-    return json({ status: 'cached', duration_ms: Date.now() - startedAt })
+    const { data: content } = await supabase.from('articles')
+      .select(`imrad_introduction, imrad_methods, imrad_results, imrad_discussion, knowledge_explanation, episteme_${role}, techne_${role}, phronesis_${role}`)
+      .eq('id', article_id).maybeSingle()
+    return json({
+      status: 'cached',
+      duration_ms: Date.now() - startedAt,
+      role,
+      triad: {
+        knowledge_explanation: content?.knowledge_explanation || null,
+        imrad_introduction:    content?.imrad_introduction    || null,
+        imrad_methods:         content?.imrad_methods         || null,
+        imrad_results:         content?.imrad_results         || null,
+        imrad_discussion:      content?.imrad_discussion      || null,
+        episteme:              (content as any)?.[`episteme_${role}`]  || null,
+        techne:                (content as any)?.[`techne_${role}`]    || null,
+        phronesis:             (content as any)?.[`phronesis_${role}`] || null,
+      }
+    })
   }
 
   // 6. Lock-check. Annan invocation kör redan → klienten pollar. Detta
@@ -222,18 +247,25 @@ Deno.serve(async (req) => {
   const { error: uErr } = await supabase.from('articles').update(update).eq('id', article_id)
   if (uErr) return json({ status: 'error', error: `save: ${uErr.message}`, timing }, 500)
 
+  // Roll-specifika fält från parsed.fields så free-user som betalade
+  // kvot kan se sin analys direkt utan att refetch via Pro-gate:ad
+  // get_articles_full. Formatet i parsed.fields: EPISTEME_SENSORY_PRO etc.
+  const upperRole = role.toUpperCase()
   return json({
     status: 'analyzed',
     quota_remaining: qRemaining,
     duration_ms: Date.now() - startedAt,
+    role,
     timing,
     triad: {
-      knowledge_explanation: parsed.fields.KNOWLEDGE_EXPLANATION || null,
-      imrad_introduction:    parsed.fields.IMRAD_INTRODUCTION    || null,
-      imrad_methods:         parsed.fields.IMRAD_METHODS         || null,
-      imrad_results:         parsed.fields.IMRAD_RESULTS         || null,
-      imrad_discussion:      parsed.fields.IMRAD_DISCUSSION      || null,
-      // Rollspecifika fält (5 × 3 dimensioner) hämtas via articles_public efter refresh.
+      knowledge_explanation: parsed.fields.KNOWLEDGE_EXPLANATION      || null,
+      imrad_introduction:    parsed.fields.IMRAD_INTRODUCTION         || null,
+      imrad_methods:         parsed.fields.IMRAD_METHODS              || null,
+      imrad_results:         parsed.fields.IMRAD_RESULTS              || null,
+      imrad_discussion:      parsed.fields.IMRAD_DISCUSSION           || null,
+      episteme:              parsed.fields[`EPISTEME_${upperRole}`]   || null,
+      techne:                parsed.fields[`TECHNE_${upperRole}`]     || null,
+      phronesis:             parsed.fields[`PHRONESIS_${upperRole}`]  || null,
     }
   })
 })
