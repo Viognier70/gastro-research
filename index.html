@@ -3597,15 +3597,22 @@ window.checkOnboarding = function() {
 }
 
 window.loadMiniTicker = async function() {
-  const el = document.getElementById('miniTicker')
-  if(!el) return
+  // Skriv till INRE track-elementet, inte till #miniTicker (den yttre).
+  // Att skriva outer.innerHTML raderar animation-tracket och
+  // "Incoming research"-cellen — resultat: statiska, osynliga items.
+  // Klassnamnet .mini-ticker-item (rad 330) bär color:rgba(255,255,255,.9);
+  // den gamla .ticker-item (rad 158) saknar color och blev black-on-black.
+  const track = document.getElementById('miniTickerTrack')
+  if(!track) return
   try {
     const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=title,journal,year&or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)&order=year.desc.nullslast&limit=10`, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const data = await r.json()
-    if(!Array.isArray(data)) return
-    el.innerHTML = data.map(a => `<span class="ticker-item">● ${a.title?.slice(0,80)} · ${a.journal||''} · ${a.year||''}</span>`).join('')
+    if(!Array.isArray(data) || !data.length) return
+    // Duplicera items för att seamless-loopa när animationen når slutet.
+    const items = data.map(a => `<span class="mini-ticker-item"><span class="mini-ticker-dot"></span>${a.title?.slice(0,80)} · ${a.journal||''} · ${a.year||''}</span>`).join('')
+    track.innerHTML = items + items
   } catch(e) { console.log('ticker error:', e) }
 }
 
