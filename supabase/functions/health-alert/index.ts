@@ -128,6 +128,17 @@ type SignalBundle = {
   sciGhosts:         number | null      // sci_spoken
   syntRecencyH:      number | null      // synt_senaste_alder_h
   queueFailed:       number | null      // ko_failed
+  // v3 (2026-07-13): TRIAD-motorn. triadTakt24h är enda takt-signalen
+  // som just NU inte kräver takt-utan-kö-paring i alarmet — canary triadQueue
+  // ska inte tömmas (TRIAD är gated lazy caching, ~26k kandidater by design).
+  triadTakt24h:      number | null      // triad_takt_24h
+  triadQueue:        number | null      // triad_queue (canary, inte progress)
+  // Warmup-guard mot deploy-day false positive: triad_completed_at-kolumnen
+  // föddes 2026-07-13; en 24h-nollmätning inom kolumnens första dygn är
+  // artefakt, inte engine-death. Trusted = true bara när ≥1 skrivning finns
+  // äldre än 24h. False positive av triad_stalled fick ETT SMS strax efter
+  // deploy; guarden förhindrar upprepning.
+  triadHistoryTrusted: boolean
 }
 
 type AlertSpec = {
@@ -238,6 +249,26 @@ const ALERTS: AlertSpec[] = [
     message: (s) =>
       `GUSTO alert: ${fmtCompact(s.queueFailed)} queue rows permanently failed. Investigate last_error.`,
   },
+  {
+    type: 'triad_stalled',
+    // TRIAD-motorn (triad-background) dead. triad_takt_24h = 0 AND
+    // canary > 100. TRIAD är gated lazy caching — kön ska INTE tömmas.
+    // Larmet är ETT vaktljus: "0 skrivna på 24h" = bakgrundsjobbet
+    // slutat mala, inte "kön växer". Meddelandet undviker medvetet
+    // "queue" i budskapet.
+    //
+    // Warmup-guard: triadHistoryTrusted är false innan någon skrivning
+    // med triad_completed_at äldre än 24h finns. Före det är 0-taljet
+    // en artefakt av kolumnens födelse (2026-07-13), inte "engine dead".
+    // Handler skriver false → fires() returnerar false → ingen larm.
+    fires: (s) =>
+      s.triadHistoryTrusted === true &&
+      isLiteralZero(s.triadTakt24h) &&
+      s.triadQueue !== null && s.triadQueue > 100,
+    // ~110 tecken.
+    message: (_s) =>
+      `GUSTO alert: TRIAD background dead. 0 written in 24h. Check triad-background timeout + Sonnet quota.`,
+  },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,6 +309,14 @@ Deno.serve(async (req) => {
 
   const unjudgedNow = toNum(row.obedomd_ko)
   const sciQueueNow = toNum(row.sci_ko)
+
+  // Warmup-guard för triad_stalled: existerar ≥1 skrivning äldre än 24h?
+  // Om nej → kolumnen är för färsk för att lita på "0 senaste 24h"-signalen.
+  const { count: triadOldCount } = await supabase
+    .from('articles')
+    .select('*', { count: 'exact', head: true })
+    .lt('triad_completed_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString())
+  const triadHistoryTrusted = (triadOldCount ?? 0) > 0
 
   // Läs snapshot ~2h sedan för looping-detektion. Vi kräver en post minst
   // 1h45min gammal (så vi jämför mot något som INTE precis snapshotades)
@@ -337,6 +376,9 @@ Deno.serve(async (req) => {
     sciGhosts:      toNum(row.sci_spoken),
     syntRecencyH:   toNum(row.synt_senaste_alder_h),
     queueFailed:    toNum(row.ko_failed),
+    triadTakt24h:   toNum(row.triad_takt_24h),
+    triadQueue:     toNum(row.triad_queue),
+    triadHistoryTrusted,
   }
 
   // 3. Utvärdera larm, respektera cooldown, skicka.

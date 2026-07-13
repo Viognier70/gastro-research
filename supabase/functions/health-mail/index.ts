@@ -136,6 +136,18 @@ const FIELDS: Record<string, FieldSpec> = {
     label: 'Kö permanent failed',
     format: (r) => fmtInt(r.ko_failed),
   },
+  // v3 (2026-07-13): TRIAD-motorns takt + canary-kö. NULL-startpunkt för
+  // triad_takt_24h: kolumnen triad_completed_at tillkom 2026-07-13, så
+  // signalen börjar på 0 och stiger naturligt. triad_queue är kanari, inte
+  // progress — TRIAD är gated lazy caching, kön ska INTE tömmas.
+  triad_takt_24h: {
+    label: 'TRIAD-takt (24h)',
+    format: (r) => fmtInt(r.triad_takt_24h),
+  },
+  triad_queue: {
+    label: 'TRIAD-kö (canary)',
+    format: (r) => fmtInt(r.triad_queue),
+  },
 }
 
 // Sektioner: primära signaler överst, "copy-tal" separator, sedan mängder,
@@ -154,7 +166,7 @@ const SECTION_ORDER: Array<{ header?: string, keys: string[] }> = [
     ] },
   { header: 'Takt (1h)', keys: ['abstract_takt_1h', 'affil_takt_1h', 'relevance_takt_1h'] },
   { header: 'Copy-tal', keys: ['unique_dois', 'judged_relevant'] },
-  { header: 'TRIAD-kvalitet', keys: ['triad_suspect_short'] },
+  { header: 'TRIAD', keys: ['triad_queue', 'triad_takt_24h', 'triad_suspect_short'] },
   { header: 'Kanarier', keys: ['sci_ghosts', 'queue_failed'] },
 ]
 
@@ -174,6 +186,7 @@ const COVERED_COLUMN_KEYS = new Set<string>([
   'unika_doi',
   'bedomt_relevanta',
   'triad_misstankt_korta',
+  'triad_takt_24h', 'triad_queue',
 ])
 
 function padRight(s: string, w: number): string {
