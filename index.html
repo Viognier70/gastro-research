@@ -829,7 +829,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Install App
     </button>
-    <button class="academy-btn" id="navSubscribeBtn" onclick="openNewsletter()">Subscribe →</button>
+    <!-- Subscribe-knappen dold 2026-07-13: weekly-newsletter är kod-buggad
+         (odeklarerad BREVO_LIST_ID → ReferenceError vid körning) OCH aldrig
+         schemalagd (0 rader i cron.job för %newsletter%). En knapp som samlar
+         adresser till ett brev som aldrig skickas är värre än ingen knapp.
+         Återkommer när: (1) BREVO_LIST_ID deklareras + testad, (2) cron är
+         satt, (3) ett välkomstmail bekräftar att skrivningen fungerar. -->
+    <button class="academy-btn" id="navSubscribeBtn" onclick="openNewsletter()" style="display:none">Subscribe →</button>
     <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
     <div id="roleNavBadge" onclick="localStorage.removeItem('gs_onboarding_seen');checkOnboarding()" style="display:none;cursor:pointer;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;font-family:Outfit,sans-serif;border:0.5px solid;transition:all .2s"></div>
     <!-- A1: Data transparency trigger -->
