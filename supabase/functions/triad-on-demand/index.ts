@@ -21,7 +21,15 @@ const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const ANTHROPIC_KEY  = Deno.env.get('ANTHROPIC_API_KEY') || ''
 const supabase = createClient(SB_URL, SB_SERVICE_KEY, { auth: { persistSession: false } })
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+// CORS måste tillåta authorization + apikey + content-type i preflighten,
+// annars faller browserns POST-anrop innan de når edge-fn. Buggen dolde sig
+// tills frontend-CTA:n testades — cron/curl-tester behöver ingen preflight.
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type':                 'application/json'
+}
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000  // 5 min: stale lock tas över
 
 function json(body: any, status = 200) {
