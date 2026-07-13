@@ -110,21 +110,52 @@ const FIELDS: Record<string, FieldSpec> = {
     label: 'TRIAD misstänkt korta',
     format: (r) => fmtInt(r.triad_misstankt_korta),
   },
+  // v2 (2026-07-13): signaler bakom Väktarens blindpunkter.
+  // synt_recency parar färskhet med synt_rader/synt_unika.
+  // sci_queue + sci_takt_1h paras enligt principen "en takt utan sin kö
+  // säger ingenting" — Anders beslut 2026-07-13. Övriga takt-signaler
+  // står kvar i takt-blocket tills nästa iteration.
+  // sci_ghosts + queue_failed är regressions-vakter i egen Kanarier-sektion.
+  synt_recency: {
+    label: 'Synteser senaste (h)',
+    format: (r) => fmtInt(r.synt_senaste_alder_h),
+  },
+  sci_queue: {
+    label: 'Sci-kö (utan poäng)',
+    format: (r) => fmtInt(r.sci_ko),
+  },
+  sci_takt_1h: {
+    label: 'Sci-takt (1h)',
+    format: (r) => fmtInt(r.sci_takt_1h),
+  },
+  sci_ghosts: {
+    label: 'Spöken (kö≠rad)',
+    format: (r) => fmtInt(r.sci_spoken),
+  },
+  queue_failed: {
+    label: 'Kö permanent failed',
+    format: (r) => fmtInt(r.ko_failed),
+  },
 }
 
-// Sektioner: primära signaler överst, "copy-tal" separator, sedan mängder.
+// Sektioner: primära signaler överst, "copy-tal" separator, sedan mängder,
+// sist Kanarier (regressions-vakter — ska stå på 0 när allt är friskt).
 const SECTION_ORDER: Array<{ header?: string, keys: string[] }> = [
   { keys: [
       'kran_institution',
       'syntheses_rows_unique',
+      'synt_recency',                       // färskhet intill volym
       'svep_stale',
       'year_span',
       'abstract_remaining',
       'unchecked_queue',
+      'sci_queue',                          // kö-mått bredvid obedömd_ko
+      'sci_takt_1h',                        // takt intill sin kö
     ] },
   { header: 'Takt (1h)', keys: ['abstract_takt_1h', 'affil_takt_1h', 'relevance_takt_1h'] },
   { header: 'Copy-tal', keys: ['unique_dois', 'judged_relevant'] },
   { header: 'TRIAD-kvalitet', keys: ['triad_suspect_short'] },
+  { header: 'Kanarier', keys: ['sci_ghosts', 'queue_failed'] },
 ]
 
 // Nycklar som LABEL_MAP slår upp — används av responsen för att flagga
@@ -133,12 +164,13 @@ const SECTION_ORDER: Array<{ header?: string, keys: string[] }> = [
 // takt.
 const COVERED_COLUMN_KEYS = new Set<string>([
   'kran_pct_med_inst',
-  'synt_rader', 'synt_unika',
+  'synt_rader', 'synt_unika', 'synt_senaste_alder_h',
   'svep_gamla', 'svep_totalt',
   'korpus_minar', 'korpus_maxar',
   'abstract_kvar_att_hamta',
   'abstract_takt_1h', 'affil_takt_1h', 'relevance_takt_1h',
   'obedomd_ko',
+  'sci_ko', 'sci_takt_1h', 'sci_spoken', 'ko_failed',
   'unika_doi',
   'bedomt_relevanta',
   'triad_misstankt_korta',
