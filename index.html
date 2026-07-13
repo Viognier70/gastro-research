@@ -76,7 +76,7 @@
 <style>
 :root{
   /* Gustema-varumärke — accentlager över sajtens varma estetik. */
-  --gustema-ink:    #2A2419;
+  --gustema-ink:    #3A3226;
   --gustema-gold:   #A08A55;
   --gustema-paper:  #FAF7F0;
   --gustema-line:   #E5DECF;
@@ -95,7 +95,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
-.logo-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:22px;font-weight:600;color:var(--gustema-ink);letter-spacing:-.02em}
+.logo-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--gustema-ink);letter-spacing:-.02em}
+.hero-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:32px;font-weight:600;color:var(--gustema-ink);letter-spacing:-.02em;line-height:1;margin-bottom:10px;text-align:center}
 /* Gamla klasser bevarade — kan tas bort i cleanup-commit när inga referenser finns kvar. */
 .logo-gusto{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
 .logo-science{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--gold);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
@@ -338,8 +339,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .page-container{width:100%;max-width:1100px;margin:0 auto;box-sizing:border-box;padding:0 32px}
 .hero{padding:56px 32px 40px;max-width:900px}
 .hero-eyebrow{font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
-.gustema-tagline{font-family:'Inter','Outfit',sans-serif;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--gustema-gold);margin-bottom:12px}
-.hero-title{font-family:'Playfair Display',serif;font-size:48px;font-weight:400;line-height:1.1;margin-bottom:20px;color:var(--text-primary)}
+.gustema-tagline{font-family:'Inter','Outfit',sans-serif;font-size:9px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--gustema-gold);margin-bottom:12px}
+.hero-title{font-family:'Playfair Display',serif;font-size:48px;font-weight:400;line-height:1.1;margin-bottom:20px;color:var(--gustema-ink)}
 .hero-title em{color:var(--gold);font-style:italic}
 .hero-sub{font-size:14px;color:var(--text-secondary);line-height:1.8;font-weight:300;max-width:640px;margin-bottom:20px}
 .hero-stats{display:flex;gap:32px;flex-wrap:wrap}
@@ -792,7 +793,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
-    <img src="/gustema-logo.svg" alt="Gustema" width="36" height="36" class="logo-mark" style="display:block">
+    <img src="/gustema-logo.svg" alt="Gustema" height="34" class="logo-mark" style="display:block;height:34px;width:auto">
     <span class="logo-wordmark">Gustema</span>
   </div>
   <div class="topbar-right">
@@ -921,7 +922,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 <!-- HERO -->
 <div class="hero">
-  <img src="/gustema-logo.svg" alt="Gustema" width="120" height="120" class="hero-logo" style="display:block;margin:0 auto 20px">
+  <img src="/gustema-logo.svg" alt="" width="120" height="120" class="hero-logo" style="display:block;margin:0 auto 14px">
+  <div class="hero-wordmark">Gustema</div>
   <div class="gustema-tagline" aria-label="Gustema tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
   <h1 class="hero-title" id="heroTitle">Science that tells you<br><em>what, how, and when.</em></h1>
