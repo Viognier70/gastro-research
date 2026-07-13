@@ -18,10 +18,36 @@ async function upsertBrevoContact(email: string, roles: string[]): Promise<boole
   } catch(e:any){console.log('Brevo error:',e.message);return false}
 }
 async function getArticlesForRole(roleKey: string, limit=4): Promise<any[]> {
-  const colMap: Record<string,string> = {meal_creator:'creator',fb_manager:'waiter'}
-  const col = colMap[roleKey]||roleKey
+  // Chip → science-namn. Före denna fix pekade colMap på ännu äldre kortare
+  // legacy-varianter (meal_creator→'creator', fb_manager→'waiter') och resten
+  // passerade rakt igenom som chip-slug. Alla dessa läste kolumner som
+  // pipeline slutade fylla vid namnrymdsmigrationen 2026-07-12 — resultatet
+  // var 0 artiklar för varje roll, tyst tomt. relevance_${col} var dessutom
+  // äldre legacy (relevance_sci_ är rätt). Whitelist-mappen fungerar också
+  // som injection-guard i .select().
+  const colMap: Record<string,string> = {
+    sommelier:           'sensory_pro',
+    chef:                'culinary_pro',
+    gastronomy:          'gastronomy_culture',
+    meal_creator:        'gastronomy_culture',
+    fb_manager:          'hospitality_mgmt',
+    food_researcher:     'educator_researcher',
+    researcher:          'educator_researcher',
+    // Science-namn passar rakt igenom.
+    sensory_pro:         'sensory_pro',
+    culinary_pro:        'culinary_pro',
+    gastronomy_culture:  'gastronomy_culture',
+    hospitality_mgmt:    'hospitality_mgmt',
+    educator_researcher: 'educator_researcher',
+  }
+  const col = colMap[roleKey]
+  // Roller utanför Gustema-namnrymden (pastry_chef, hotelier, food_photographer
+  // etc från ROLE_LABELS) har ingen Gustema-analys. Returnera [] tydligt
+  // istället för att bygga en säker-men-tom SQL — och undvik injection-yta.
+  if(!col) return []
   const oneWeekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString()
-  const {data} = await supabase.from('articles').select(`id,title,authors,journal,year,url,insight,topic,source_label,episteme_${col},techne_${col},phronesis_${col},relevance_${col}`).gte('fetched_at',oneWeekAgo).not(`episteme_${col}`,'is',null).order(`relevance_${col}`,{ascending:false}).limit(limit)
+  const {data,error} = await supabase.from('articles').select(`id,title,authors,journal,year,url,insight,topic,source_label,episteme_${col},techne_${col},phronesis_${col},relevance_sci_${col}`).gte('fetched_at',oneWeekAgo).not(`episteme_${col}`,'is',null).order(`relevance_sci_${col}`,{ascending:false}).limit(limit)
+  if(error){ console.log('getArticlesForRole error:', roleKey, error.message); return [] }
   return (data||[]).map(a=>({...a,episteme:(a as any)[`episteme_${col}`],techne:(a as any)[`techne_${col}`],phronesis:(a as any)[`phronesis_${col}`]}))
 }
 function articleHTML(a: any): string {
