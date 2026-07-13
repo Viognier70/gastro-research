@@ -171,8 +171,12 @@ export function validateTriad(result: ParseResult): string | null {
 // ─── DB-mapping ──────────────────────────────────────────────────────────────
 // Bara körs efter validateTriad() returnerat null. Ingen halv-skrivning möjlig.
 // knowledge_type='mixed' hårkodad som pipeline gjort tidigare.
+// triad_completed_at satt här (en källa till sanning) så pipeline, triad-
+// background och triad-on-demand alla stämplar utan att veta om det.
+// Migration 20260713110000_articles_triad_completed_at.sql skapar kolumnen.
 export function fieldsToDbUpdate(fields: Record<string, string>): Record<string, any> {
   return {
+    triad_completed_at:            new Date().toISOString(),
     imrad_introduction:            fields.IMRAD_INTRODUCTION,
     imrad_methods:                 fields.IMRAD_METHODS,
     imrad_results:                 fields.IMRAD_RESULTS,
