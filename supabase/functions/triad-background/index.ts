@@ -22,9 +22,12 @@ const ANTHROPIC_KEY  = Deno.env.get('ANTHROPIC_API_KEY') || ''
 const supabase = createClient(SB_URL, SB_SERVICE_KEY, { auth: { persistSession: false } })
 
 const TRIAD_DAILY_BUDGET = parseInt(Deno.env.get('TRIAD_DAILY_BUDGET') || '50', 10)
-const HARD_TIMEOUT_MS    = 30000             // 30s wall = en säker Sonnet-anrop (~63s själva anropet + overhead)
-                                             // innan 150s edge-cap. Cron 30min × 48 = ~48 analyser/dag under budget 50.
-                                             // Test 140s med taket 80s var för tight — Anthropic-throughput varierar.
+const HARD_TIMEOUT_MS    = 120000            // 120s wall = 2 Sonnet-analyser (~63s × 2 + overhead) inom
+                                             // 150s edge-cap med ~15s buffer. 30s (tidigare värde) lämnade
+                                             // 100+s outnyttjat och begränsade oss till 1 analys/tick trots
+                                             // budget 50/dag. Med 120s blir dagsbudgeten bindande i stället
+                                             // för timeouten. Om Sonnet-latensen sjunker till ~15s hinner
+                                             // fler iterationer per tick — budgeten stannar den ändå.
 const LOCK_TIMEOUT_MS    = 5 * 60 * 1000     // 5 min stale lock cutoff
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
