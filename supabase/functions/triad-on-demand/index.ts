@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
   const { article_id } = body
   if (!article_id) return json({ status: 'error', error: 'missing article_id' }, 400)
   const VALID_ROLES = new Set(['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher'])
-  const role = VALID_ROLES.has(String(body.role || '')) ? String(body.role) : 'sensory_pro'
+  const dbRole = VALID_ROLES.has(String(body.role || '')) ? String(body.role) : 'sensory_pro'
   const testMaxTokens = Math.max(500, Math.min(4000, Number(body.test_max_tokens) || 4000))
 
   // 4. Läs artikel
@@ -144,21 +144,21 @@ Deno.serve(async (req) => {
   //    just-analyserade artikel som "no TRIAD yet" när de öppnar den igen.
   if (article.imrad_methods) {
     const { data: content } = await supabase.from('articles')
-      .select(`imrad_introduction, imrad_methods, imrad_results, imrad_discussion, knowledge_explanation, episteme_${role}, techne_${role}, phronesis_${role}`)
+      .select(`imrad_introduction, imrad_methods, imrad_results, imrad_discussion, knowledge_explanation, episteme_${dbRole}, techne_${dbRole}, phronesis_${dbRole}`)
       .eq('id', article_id).maybeSingle()
     return json({
       status: 'cached',
       duration_ms: Date.now() - startedAt,
-      role,
+      role: dbRole,
       triad: {
         knowledge_explanation: content?.knowledge_explanation || null,
         imrad_introduction:    content?.imrad_introduction    || null,
         imrad_methods:         content?.imrad_methods         || null,
         imrad_results:         content?.imrad_results         || null,
         imrad_discussion:      content?.imrad_discussion      || null,
-        episteme:              (content as any)?.[`episteme_${role}`]  || null,
-        techne:                (content as any)?.[`techne_${role}`]    || null,
-        phronesis:             (content as any)?.[`phronesis_${role}`] || null,
+        episteme:              (content as any)?.[`episteme_${dbRole}`]  || null,
+        techne:                (content as any)?.[`techne_${dbRole}`]    || null,
+        phronesis:             (content as any)?.[`phronesis_${dbRole}`] || null,
       }
     })
   }
@@ -250,12 +250,12 @@ Deno.serve(async (req) => {
   // Roll-specifika fält från parsed.fields så free-user som betalade
   // kvot kan se sin analys direkt utan att refetch via Pro-gate:ad
   // get_articles_full. Formatet i parsed.fields: EPISTEME_SENSORY_PRO etc.
-  const upperRole = role.toUpperCase()
+  const upperRole = dbRole.toUpperCase()
   return json({
     status: 'analyzed',
     quota_remaining: qRemaining,
     duration_ms: Date.now() - startedAt,
-    role,
+    role: dbRole,
     timing,
     triad: {
       knowledge_explanation: parsed.fields.KNOWLEDGE_EXPLANATION      || null,

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — kör chip-namn-lint innan commit.
+# Aktivera EN GÅNG per klon: git config core.hooksPath .githooks
+set -e
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+bash "$REPO_ROOT/scripts/lint-role-columns.sh"

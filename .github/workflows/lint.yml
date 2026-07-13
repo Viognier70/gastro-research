@@ -1,0 +1,15 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  role-columns:
+    name: chip-name DB-key lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for chip-name interpolation into DB columns
+        run: bash scripts/lint-role-columns.sh

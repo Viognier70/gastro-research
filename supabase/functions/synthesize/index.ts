@@ -12,28 +12,36 @@ const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'
 // skriver dit. Legacy chip-kolumner (episteme_sommelier m.fl.) har 100–500
 // rader kvar sedan roll-migrationen och är inte längre sanningen. Vi läser
 // science-namn direkt, ingen mappning behövs.
+// Whitelist för injection-guard mot .select()-interpolation OCH för att
+// enforca science-namnrymden. Efter denna check är dbRole 100% science-namn
+// och namn-konventionen (dbRole for SQL, aldrig 'role') gör att
+// scripts/lint-role-columns.sh inte flaggar interpolationen.
+const VALID_ROLES = new Set(['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher'])
+
 Deno.serve(async (req) => {
   if(req.method==='OPTIONS') return new Response('ok',{headers:CORS})
-  const {role, topic} = await req.json().catch(()=>({}))
-  if(!role||!topic) return new Response(JSON.stringify({error:'role and topic required'}),{status:400,headers:CORS})
+  const body = await req.json().catch(()=>({}))
+  const { topic } = body
+  const dbRole = VALID_ROLES.has(String(body.role || '')) ? String(body.role) : ''
+  if(!dbRole||!topic) return new Response(JSON.stringify({error:'role and topic required',invalid_role:!VALID_ROLES.has(String(body.role||''))}),{status:400,headers:CORS})
 
   const { data: articles, error: readErr } = await supabase
     .from('articles')
-    .select(`id,title,core_claim,episteme_${role}`)
+    .select(`id,title,core_claim,episteme_${dbRole}`)
     .eq('topic', topic)
-    .not(`episteme_${role}`, 'is', null)
-    .order(`relevance_sci_${role}`, { ascending: false, nullsFirst: false })
+    .not(`episteme_${dbRole}`, 'is', null)
+    .order(`relevance_sci_${dbRole}`, { ascending: false, nullsFirst: false })
     .limit(10)
 
   if(readErr) {
     return new Response(JSON.stringify({error:'read_failed',db_error:readErr.message,code:readErr.code}),{status:500,headers:CORS})
   }
   if(!Array.isArray(articles) || articles.length < 3) {
-    return new Response(JSON.stringify({error:'insufficient_articles',count:articles?.length||0,role,topic}),{headers:CORS})
+    return new Response(JSON.stringify({error:'insufficient_articles',count:articles?.length||0,role:dbRole,topic}),{headers:CORS})
   }
 
   const summaries = articles.map((a:any,i:number)=>`[${i+1}] "${a.title}": ${(a.core_claim||'').slice(0,120)}`).join('\n')
-  const prompt = `Write ONE synthesis JSON for a ${role} about "${topic.replace(/_/g,' ')}".\nArticles:\n${summaries.slice(0,700)}\nReturn ONLY JSON:\n{"title":"5-8 words","convergence":"Research consistently shows X.","synthesis":"For you as a ${role}, X.","evidence_strength":"strong|moderate|emerging"}`
+  const prompt = `Write ONE synthesis JSON for a ${dbRole} about "${topic.replace(/_/g,' ')}".\nArticles:\n${summaries.slice(0,700)}\nReturn ONLY JSON:\n{"title":"5-8 words","convergence":"Research consistently shows X.","synthesis":"For you as a ${dbRole}, X.","evidence_strength":"strong|moderate|emerging"}`
 
   const resp = await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -53,7 +61,7 @@ Deno.serve(async (req) => {
   const { error: saveErr } = await supabase
     .from('research_syntheses')
     .upsert({
-      role, topic,
+      role: dbRole, topic,
       title: parsed.title||'',
       synthesis: synth,
       synthesis_text: synth,
@@ -61,12 +69,12 @@ Deno.serve(async (req) => {
       evidence_strength: parsed.evidence_strength||'moderate',
       article_count: articles.length,
       topics: [topic],
-      professions: [role],
+      professions: [dbRole],
       updated_at: new Date().toISOString()
     }, { onConflict: 'role,topic' })
 
   if(saveErr) {
     return new Response(JSON.stringify({error:'save_failed',db_error:saveErr.message,code:saveErr.code}),{status:500,headers:CORS})
   }
-  return new Response(JSON.stringify({ok:true,synthesis:parsed,role,topic,article_count:articles.length}),{headers:CORS})
+  return new Response(JSON.stringify({ok:true,synthesis:parsed,role:dbRole,topic,article_count:articles.length}),{headers:CORS})
 })
