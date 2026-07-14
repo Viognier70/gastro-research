@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
 
   const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {}
   const batchSize = Math.max(1, Math.min(500, Number(body.batch_size) || DEFAULT_BATCH))
+  console.log(`1: start batch_size=${batchSize}`)
 
   const { data: articles, error } = await supabase
     .from('articles')
@@ -22,6 +23,7 @@ Deno.serve(async (req) => {
     .not('episteme_sensory_pro', 'is', null)
     .is('embedding', null)
     .limit(batchSize)
+  console.log(`2: fetched ${articles?.length ?? 0}${error ? ` error=${error.message}` : ''}`)
 
   if (error || !articles?.length) {
     return json({
@@ -79,6 +81,7 @@ Deno.serve(async (req) => {
   }
 
   const estTokens = sum
+  console.log(`3: packed ${texts.length} tokens ${sum} deferred ${articles.length - packedTo}`)
 
   // Om vi inte packade en enda artikel: raden ensam >HARD_TOKENS (kunde inte
   // ens kapas — omöjligt eftersom cap är 90% av taket). Bara ett bör-ej-hända
@@ -94,12 +97,33 @@ Deno.serve(async (req) => {
   }
 
   // ETT batch-anrop mot OpenAI /v1/embeddings med input: string[].
+  // AbortController 60s: Deno fetch har ingen default-timeout. Ett
+  // hängt anrop skulle annars äta hela edge-fn:ens wall-clock utan
+  // signal (200s tyst 2026-07-14 var symptom på just detta).
   const openaiStart = Date.now()
-  const res = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'text-embedding-3-small', input: texts })
-  })
+  const openaiAc = new AbortController()
+  const openaiTimer = setTimeout(() => openaiAc.abort(), 60_000)
+  let res: Response
+  try {
+    res = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'text-embedding-3-small', input: texts }),
+      signal: openaiAc.signal
+    })
+  } catch (e) {
+    clearTimeout(openaiTimer)
+    const aborted = (e as Error).name === 'AbortError'
+    console.log(`ABORT: openai ${aborted ? 'timeout-60s' : (e as Error).name}`)
+    return json({
+      ok: false,
+      error: aborted ? 'openai timeout after 60s' : (e as Error).message,
+      packed: texts.length, est_tokens: estTokens,
+      openai_ms: Date.now() - openaiStart,
+      duration_ms: Date.now() - startedAt
+    }, aborted ? 504 : 502)
+  }
+  clearTimeout(openaiTimer)
   const openaiMs = Date.now() - openaiStart
 
   const rateLimits: Record<string, string> = {}
@@ -119,6 +143,7 @@ Deno.serve(async (req) => {
 
   const d = await res.json()
   const embeddings: Array<{ index?: number, embedding: number[] }> = d.data || []
+  console.log(`4: openai done ${embeddings.length} vectors in ${openaiMs}ms`)
 
   // KRITISKT: verifiera length. Skriv ALDRIG halva batchen.
   if (embeddings.length !== texts.length) {
@@ -169,6 +194,7 @@ Deno.serve(async (req) => {
     }
   }
   const dbMs = Date.now() - dbStart
+  console.log(`5: written ${dbOk} errors ${dbErr} in ${dbMs}ms`)
 
   return json({
     ok: dbErr === 0,

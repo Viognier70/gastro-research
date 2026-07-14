@@ -1,0 +1,58 @@
+-- =====================================================================
+-- Partiellt index för embedding-kön (generate-embeddings edge fn)
+-- =====================================================================
+-- Bakgrund: generate-embeddings hämtade sin kö med
+--   .not('episteme_sensory_pro','is', null).is('embedding', null).limit(300)
+-- Utan matchande index blev det seq scan över hela articles-tabellen
+-- (456k rader). EXPLAIN 2026-07-14: Seq Scan, 318 215 rader skannade,
+-- 1,55s i psql. Under edge-fn:ens körning eskalerade det till minst
+-- 200s wall-clock och dog tyst innan första console.log — kön stod
+-- still.
+--
+-- Detta är samma diagnos som Anders skrev in i 20260711120000
+-- (relevance_queue_partial_index): "Postgres kan inte använda index
+-- för [ett filter] utan matchande partial index — det blev full seq
+-- scan över articles". Sjätte instansen av samma sjukdom idag.
+--
+-- Predikatet i indexets WHERE-klausul matchar edge-fn:ens SELECT
+-- exakt:
+--   embedding IS NULL AND episteme_sensory_pro IS NOT NULL
+--
+-- Storlek: partiella indexet är bara raderna där båda villkoren är
+-- sanna — idag 625 rader (0,14% av 456k). Krymper mot 0 när
+-- generate-embeddings-cronen betar av kön. När kön är tom är indexet
+-- nästan gratis att underhålla.
+--
+-- Icke-blockerande skapande: CREATE INDEX CONCURRENTLY så pipeline/
+-- triad-motorerna inte låses medan indexet byggs. Kan inte köras i
+-- en transaktion, så migrationen har ingen explicit BEGIN/COMMIT.
+-- =====================================================================
+
+create index concurrently if not exists idx_embedding_queue
+  on public.articles (id)
+  where embedding is null and episteme_sensory_pro is not null;
+
+-- =====================================================================
+-- Verifiering:
+--
+--   -- 1. Indexet finns och är valid?
+--   select indexname, indexdef
+--     from pg_indexes
+--    where indexname = 'idx_embedding_queue';
+--
+--   -- 2. Query planner använder det?
+--   explain (analyze, buffers)
+--   select id, title, core_claim, topic,
+--          episteme_sensory_pro, episteme_culinary_pro,
+--          episteme_gastronomy_culture, episteme_hospitality_mgmt,
+--          episteme_educator_researcher
+--     from public.articles
+--    where episteme_sensory_pro is not null and embedding is null
+--    limit 300;
+--   -- expected: "Bitmap Index Scan on idx_embedding_queue" eller
+--   --           "Index Only Scan using idx_embedding_queue" i planen,
+--   --           inte "Seq Scan on articles". Tid < 50ms för 300 rader.
+--
+--   -- 3. Storlek på indexet?
+--   select pg_size_pretty(pg_relation_size('idx_embedding_queue'));
+-- =====================================================================
