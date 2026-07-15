@@ -805,6 +805,239 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   border: 0.5px solid rgba(0,0,0,.1);
   letter-spacing: .02em;
 }
+
+/* ── Progressiv upplysning på kort (2026-07-15) ────────────────────────
+   Tre lager: viloläge → TRIAD → IMRaD. Klasserna nedan är den nya
+   render-vägen för cardHTML. Behåller tidigare .article-card wrappern
+   för locked/save-tillstånd; det gamla triad-nav/triad-blocks-* mönstret
+   är utfasat men CSS:en finns kvar för bakåtkompat om ngn view återgår
+   till gamla renderaren. */
+.card-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.card-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--gustema-ink);
+  margin: 0 0 18px;
+  letter-spacing: -.005em;
+}
+.card-meta-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 14px;
+  margin: 0 0 18px;
+}
+.card-meta-list dt {
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gustema-gold);
+  padding-top: 3px;
+  white-space: nowrap;
+}
+.card-meta-list dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gustema-ink);
+  line-height: 1.55;
+}
+.card-meta-list .cm-original-title {
+  font-style: italic;
+  color: #5C5649;
+}
+.card-claim-box {
+  border-left: 3px solid var(--gustema-gold);
+  background: #F5F0E4;
+  padding: 12px 16px;
+  margin: 18px 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--gustema-ink);
+  border-radius: 0 4px 4px 0;
+}
+.card-limitation-inline {
+  font-size: 11.5px;
+  color: #7A6845;
+  margin: 6px 0 12px;
+  padding-left: 2px;
+}
+.card-actions-v2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 18px;
+}
+.btn-triad-toggle {
+  background: var(--gustema-ink);
+  color: #FAF7F0;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: .01em;
+  transition: background .15s;
+}
+.btn-triad-toggle:hover { background: #2A2419 }
+.btn-cite-toggle, .btn-share-v2 {
+  background: none;
+  color: var(--gustema-ink);
+  border: 0.5px solid var(--border-mid);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: .01em;
+}
+.btn-cite-toggle:hover, .btn-share-v2:hover { border-color: var(--gustema-ink) }
+.btn-read-paper {
+  color: var(--gustema-gold-dark, #836428);
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border: 0.5px solid rgba(131,100,40,.35);
+  border-radius: 20px;
+  letter-spacing: .01em;
+  transition: border-color .15s, color .15s;
+}
+.btn-read-paper:hover { border-color: var(--gustema-gold-dark, #836428); color: var(--gustema-ink) }
+.btn-save-v2 {
+  color: var(--text-secondary);
+  background: none;
+  border: 0.5px solid var(--border-mid);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  letter-spacing: .01em;
+}
+.btn-save-v2.saved { color: var(--gold); border-color: var(--gold) }
+.btn-save-v2:hover:not(.saved) { border-color: var(--text-primary) }
+
+/* Lager 2 — TRIAD */
+.card-triad-v2 {
+  margin-top: 22px;
+  border-top: 1px solid rgba(160,138,85,.15);
+  padding-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.triad-band-v2 {
+  border-left: 3px solid;
+  border-radius: 0 6px 6px 0;
+  padding: 14px 16px;
+}
+.triad-band-v2-header {
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.triad-band-v2-body {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--gustema-ink);
+}
+.triad-band-v2-note {
+  font-size: 9px;
+  font-style: italic;
+  margin-top: 10px;
+  opacity: .5;
+}
+.triad-band-v2-e { background: #EDF1F6; border-left-color: #3A5F8F }
+.triad-band-v2-e .triad-band-v2-header,
+.triad-band-v2-e .triad-band-v2-note { color: #3A5F8F }
+.triad-band-v2-t { background: #EBF0EA; border-left-color: #4E7A57 }
+.triad-band-v2-t .triad-band-v2-header,
+.triad-band-v2-t .triad-band-v2-note { color: #4E7A57 }
+.triad-band-v2-p { background: #F5EFE2; border-left-color: #A8823C }
+.triad-band-v2-p .triad-band-v2-header,
+.triad-band-v2-p .triad-band-v2-note { color: #A8823C }
+
+.imrad-toggle-v2 {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 11.5px;
+  color: var(--gustema-gold-dark, #836428);
+  cursor: pointer;
+  padding: 4px 2px;
+  user-select: none;
+}
+.imrad-toggle-v2:hover { text-decoration: underline; text-underline-offset: 3px }
+
+/* Lager 3 — IMRaD */
+.card-imrad-v2 {
+  margin-top: 12px;
+  background: #FAF7F0;
+  border: 1px solid var(--gustema-line, #E5DECF);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+.imrad-header-v2 {
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gustema-ink);
+  margin-bottom: 14px;
+  letter-spacing: .005em;
+}
+.imrad-header-v2 em {
+  font-family: 'Outfit', sans-serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--gustema-muted, #8A7B5E);
+}
+.imrad-row-v2 {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin-bottom: 12px;
+}
+.imrad-row-v2:last-child { margin-bottom: 0 }
+.imrad-row-v2 dt {
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gustema-gold);
+  padding-top: 3px;
+  white-space: nowrap;
+}
+.imrad-row-v2 dd {
+  margin: 0;
+  font-size: 12px;
+  color: var(--gustema-ink);
+  line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+  .card-meta-list, .imrad-row-v2 { grid-template-columns: 1fr }
+  .card-meta-list dt, .imrad-row-v2 dt { padding-top: 0; margin-bottom: 2px }
+  .card-actions-v2 { gap: 8px }
+  .card-headline { font-size: 18px }
+}
 </style>
 </head>
 <body>
@@ -1803,6 +2036,40 @@ function sigMark(hasBridge){
     ${hasBridge?'<path d="M60 46.7 L80 82 L40 82 Z" fill="none" stroke="#5C2D00" stroke-width="2" stroke-linejoin="round"/>':''}
   </svg>`;
 }
+// Progressiv upplysning på kort (2026-07-15). In-memory-state så
+// expansion överlever scroll av samma resultatlista. Rensas när ny
+// sökning fyller `articles` (hooken sitter i loadFeed/searchArticles-
+// vägen, se __cardExpansion.clear()-anropen).
+window.__cardExpansion = window.__cardExpansion || new Map()
+
+window.toggleCardTriad = function(artId){
+  const s = window.__cardExpansion.get(artId) || {triad:false, imrad:false}
+  s.triad = !s.triad
+  if(!s.triad) s.imrad = false
+  window.__cardExpansion.set(artId, s)
+  const card = document.querySelector('.article-card[data-artid="'+CSS.escape(artId)+'"]')
+  if(!card) return
+  const t = card.querySelector('.card-triad-v2')
+  const i = card.querySelector('.card-imrad-v2')
+  const btn = card.querySelector('.btn-triad-toggle')
+  const imToggle = card.querySelector('.imrad-toggle-v2')
+  if(t) t.style.display = s.triad ? 'flex' : 'none'
+  if(i) i.style.display = s.imrad ? 'block' : 'none'
+  if(btn) btn.textContent = s.triad ? 'Dölj analys ↑' : 'Visa TRIAD-analys ↓'
+  if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Visa IMRaD — full vetenskaplig struktur'
+}
+window.toggleCardImrad = function(artId){
+  const s = window.__cardExpansion.get(artId) || {triad:true, imrad:false}
+  s.imrad = !s.imrad
+  window.__cardExpansion.set(artId, s)
+  const card = document.querySelector('.article-card[data-artid="'+CSS.escape(artId)+'"]')
+  if(!card) return
+  const i = card.querySelector('.card-imrad-v2')
+  const imToggle = card.querySelector('.imrad-toggle-v2')
+  if(i) i.style.display = s.imrad ? 'block' : 'none'
+  if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Visa IMRaD — full vetenskaplig struktur'
+}
+
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
   if(!locked){const next=Math.max(freeCount,idx+1);if(next!==freeCount){freeCount=next;writeFreeCount(freeCount)}}
@@ -1837,19 +2104,42 @@ function cardHTML(a,idx){
   const coreClaim=a.core_claim||a.insight||''
   const citCount=a.citation_count||null
 
+  const st = window.__cardExpansion.get(a.id) || {triad:false, imrad:false}
+  const hasGustemaHeadline = !!(a.headline_en || a.headline_sv)
+  const roleHeadline = hasGustemaHeadline ? (lang==='sv' ? (a.headline_sv||a.headline_en) : (a.headline_en||a.headline_sv)) : (a.title||'')
+  const l = k => (lang==='sv' ? ({
+    original:'ORIGINALTITEL', authors:'FÖRFATTARE', journal:'TIDSKRIFT',
+    showTriad:'Visa TRIAD-analys ↓', hideTriad:'Dölj analys ↑',
+    showImrad:'Visa IMRaD — full vetenskaplig struktur',
+    imradHeader:'IMRaD — full vetenskaplig struktur',
+    imradVerify:'AI-extraherad, verifiera mot källa',
+    intro:'INTRODUKTION', methods:'METOD', results:'RESULTAT', discussion:'DISKUSSION',
+    read:'Läs artikeln', save:'Spara', saved:'Sparad',
+    epHead:'vad forskningen fastställer', epNote:'Extraherat från abstract · verifiera mot källa',
+    tcHead:'hur det tillämpas',
+    phHead:'det situerade omdömet',
+    upgradePrompt:'Uppgradera för TRIAD →',
+    triadCta:'Analysera med TRIAD',
+    triadCtaLead:"Den här artikeln har inte analyserats via TRIAD än."
+  }[k]) : ({
+    original:'ORIGINAL TITLE', authors:'AUTHORS', journal:'JOURNAL',
+    showTriad:'Show TRIAD analysis ↓', hideTriad:'Hide analysis ↑',
+    showImrad:'Show IMRaD — full scientific structure',
+    imradHeader:'IMRaD — full scientific structure',
+    imradVerify:'AI-extracted, verify against source',
+    intro:'INTRODUCTION', methods:'METHODS', results:'RESULTS', discussion:'DISCUSSION',
+    read:'Read paper', save:'Save', saved:'Saved',
+    epHead:'what the research establishes', epNote:'Extracted from abstract · verify with source',
+    tcHead:'how to apply in practice',
+    phHead:'the situated judgment',
+    upgradePrompt:'Upgrade for TRIAD →',
+    triadCta:'Analyze with TRIAD',
+    triadCtaLead:"This article hasn't been analysed through TRIAD yet."
+  }[k]))
+
   const inner=`
-    <div class="card-top">
-      <span class="topic-badge">${topicLabel}</span>
-      <span class="source-badge">${a.source_label||''}</span>
-      ${hasTriadPresence?`<div class="triad-micro" style="position:relative" onclick="var p=this.querySelector('.triad-legend-popup');p.classList.toggle('show');event.stopPropagation()" title="TRIAD lenses with analysis">
-        ${sigMark((bridgeET||'').length>10||(bridgeTP||'').length>10)}
-        <div class="triad-legend-popup">
-          <div class="tlp-row"><div class="tlp-dot" style="background:#1A3A5C"></div><div><div class="tlp-label" style="color:#7BA7D4">ε Episteme</div><div class="tlp-desc">What the research actually establishes — the scientific finding</div></div></div>
-          <div class="tlp-row"><div class="tlp-dot" style="background:#2D5016"></div><div><div class="tlp-label" style="color:#7BC47B">τ Techne</div><div class="tlp-desc">How to apply it in your professional practice</div></div></div>
-          <div class="tlp-row"><div class="tlp-dot" style="background:#5C2D00"></div><div><div class="tlp-label" style="color:#C89478">φ Phronesis</div><div class="tlp-desc">Your situated judgment in this specific moment</div></div></div>
-          <div class="tlp-footer">The centre glows when the article articulates the double grip — the integration between the forms · Crichton-Fock (2024)</div>
-        </div>
-      </div>`:''}
+    <div class="card-eyebrow">
+      ${topicLabel?`<span class="topic-badge">${topicLabel}</span>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
       ${role!=='all'&&relevance>0?`<div class="rel-badge-wrap" onmouseenter="this.querySelector('.rel-tooltip').classList.add('show')" onmouseleave="this.querySelector('.rel-tooltip').classList.remove('show')">
         <span class="relevance-badge">${relevance}/10 · ${roleName}</span>
@@ -1861,79 +2151,61 @@ function cardHTML(a,idx){
           <div class="rt-row"><span>TRIAD depth</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:hasTriadPresence?60:30}%"></div></div></div>
           <div class="rt-footer">Citations · recency · AI role match · peer sources only</div>
         </div>
-      </div>`:''
-      }${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
+      </div>`:''}
+      ${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
     </div>
-    ${(a.headline_en||a.headline_sv)?`<div class="gusto-headline">Gustema</div><div class="headline-text">${lang==='sv'?(a.headline_sv||a.headline_en):(a.headline_en||a.headline_sv)}</div><div class="original-title">${a.title||''}</div>`:`<div class="card-title">${a.title||''}</div>`}${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${a.primary_institution.replace(/'/g,"\'")}',event)" title="Filter by institution"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
-    ${a.journal?`<div style="font-size:11px;color:var(--text-tertiary);margin:3px 0 2px;font-weight:500">${a.journal}${a.year?' · '+a.year:''}</div>`:''}
-    ${a.authors?`<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 6px;font-style:italic">${a.authors.slice(0,100)}${a.authors.length>100?'...':''}</div>`:''}
-    ${coreClaim&&!locked?`<div class="core-claim">${coreClaim}</div>`:''}
-    ${!locked?(hasPremiumPayload?`
-    <div class="triad-nav" id="triad-nav-${cid}">
-      <button class="triad-nav-btn e-active" onclick="switchTriad('${cid}','e',this)">ε Episteme</button>
-      <button class="triad-nav-btn" onclick="switchTriad('${cid}','t',this)">τ Techne</button>
-      <button class="triad-nav-btn" onclick="switchTriad('${cid}','p',this)">φ Phronesis</button>
+    <h3 class="card-headline">${roleHeadline}</h3>
+    ${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${(a.primary_institution||'').replace(/'/g,"\\'")}',event)" title="Filter by institution" style="margin-bottom:14px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
+    <dl class="card-meta-list">
+      ${hasGustemaHeadline?`<dt>${l('original')}</dt><dd class="cm-original-title">${a.title||''}</dd>`:''}
+      ${a.authors?`<dt>${l('authors')}</dt><dd>${a.authors}</dd>`:''}
+      ${a.journal?`<dt>${l('journal')}</dt><dd>${a.journal}${a.year?' · '+a.year:''}</dd>`:''}
+    </dl>
+    ${coreClaim&&!locked?`<div class="card-claim-box">${coreClaim}</div>`:''}
+    ${a.limitation&&!locked?`<div class="card-limitation-inline">⚠ ${a.limitation}</div>`:''}
+    <div class="card-actions-v2">
+      ${!locked&&hasPremiumPayload?`<button class="btn-triad-toggle" onclick="toggleCardTriad('${a.id||''}')">${st.triad?l('hideTriad'):l('showTriad')}</button>`:''}
+      ${!locked&&!hasPremiumPayload&&hasTriadPresence?`<button class="btn-triad-toggle" onclick="openModal('upgradeModal')">${l('upgradePrompt')}</button>`:''}
+      ${!locked&&!hasTriadPresence?`<button class="btn-triad-toggle" onclick="event.stopPropagation();(async(id)=>{await openArticleFromId(id);setTimeout(()=>{const b=document.getElementById('triadCtaBtn'); if(b) b.click();},600)})('${a.id||''}')"><svg viewBox="0 0 1500 1500" aria-hidden="true" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px"><use href="#gustema-mark"/></svg>${l('triadCta')}</button>`:''}
+      ${a.url&&!locked?`<a class="btn-read-paper" href="${a.url}" target="_blank" rel="noopener">${l('read')} ↗</a>`:''}
+      <button class="btn-share-v2" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">${lang==='sv'?'Dela':'Share'}</button>
+      <button class="btn-save-v2${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ '+l('saved'):'☆ '+l('save')}</button>
     </div>
-    <div style="display:flex;flex-direction:column;gap:0;margin-top:0" id="triad-blocks-${cid}">
+    ${!locked&&hasPremiumPayload?`
+    <div class="card-triad-v2" style="display:${st.triad?'flex':'none'}">
       ${ep.length>10?`
-      <div id="triad-e-${cid}" style="background:var(--episteme-light);border-left:3px solid var(--episteme);border-radius:0 6px 0 0;padding:12px 14px">
-        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--episteme);text-transform:uppercase;margin-bottom:4px">ε Episteme — what the research establishes</div>
-        <div style="font-size:9px;color:var(--episteme);opacity:.6;margin-bottom:6px;font-style:italic">Extracted from abstract · verify with source</div>
-        <div style="font-size:12px;color:#2A4A6C;line-height:1.7">${ep}</div>
-        ${hasIMRaD?`<div style="margin-top:8px;cursor:pointer;font-size:10px;color:var(--episteme);border:0.5px solid rgba(26,58,92,.2);padding:3px 10px;border-radius:20px;display:inline-block" onclick="document.getElementById('im-${cid}').style.display=document.getElementById('im-${cid}').style.display==='none'?'block':'none'">▸ IMRaD</div>
-        <div id="im-${cid}" style="display:none;margin-top:8px;font-size:11px;color:#2A4A6C;line-height:1.6">
-          ${a.imrad_introduction?`<div style="margin-bottom:6px"><span style="font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.06em">Introduction</span><br>${a.imrad_introduction}</div>`:''}
-          ${a.imrad_methods?`<div style="margin-bottom:6px"><span style="font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.06em">Methods</span><br>${a.imrad_methods}</div>`:''}
-          ${a.imrad_results?`<div style="margin-bottom:6px"><span style="font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.06em">Results</span><br>${a.imrad_results}</div>`:''}
-          ${a.imrad_discussion?`<div><span style="font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.06em">Discussion</span><br>${a.imrad_discussion}</div>`:''}
-        </div>`:''}
-      </div>
-      <div style="padding:6px 14px;background:var(--warm-100);border-left:0.5px solid var(--border);border-right:0.5px solid var(--border);display:flex;gap:8px;align-items:flex-start">
-        <span style="color:var(--text-tertiary);font-size:12px;flex-shrink:0">↓</span>
-        <span style="font-size:11px;font-style:italic;color:var(--text-secondary);line-height:1.5">${bridgeET||'Applied to professional practice:'}</span>
+      <div class="triad-band-v2 triad-band-v2-e">
+        <div class="triad-band-v2-header">ε EPISTEME — ${l('epHead')}</div>
+        <div class="triad-band-v2-body">${ep}</div>
+        <div class="triad-band-v2-note">${l('epNote')}</div>
       </div>`:''}
       ${tc.length>10?`
-      <div id="triad-t-${cid}" style="background:var(--techne-light);border-left:3px solid var(--techne);padding:12px 14px">
-        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--techne);text-transform:uppercase;margin-bottom:4px">τ Techne — how to apply in practice</div>
-        <div style="font-size:9px;color:var(--techne);opacity:.6;margin-bottom:6px;font-style:italic">AI interpretation · not peer-reviewed</div>
-        <div style="font-size:12px;color:#3A6020;line-height:1.7">${tc}</div>
-      </div>
-      <div style="padding:6px 14px;background:var(--warm-100);border-left:0.5px solid var(--border);border-right:0.5px solid var(--border);display:flex;gap:8px;align-items:flex-start">
-        <span style="color:var(--text-tertiary);font-size:12px;flex-shrink:0">↓</span>
-        <span style="font-size:11px;font-style:italic;color:var(--text-secondary);line-height:1.5">${bridgeTP||'In the moment of professional judgment:'}</span>
+      <div class="triad-band-v2 triad-band-v2-t">
+        <div class="triad-band-v2-header">τ TECHNE — ${l('tcHead')}</div>
+        <div class="triad-band-v2-body">${tc}</div>
+        <div class="triad-band-v2-note">AI interpretation · not peer-reviewed</div>
       </div>`:''}
       ${ph.length>10?`
-      <div id="triad-p-${cid}" style="background:var(--phronesis-light);border-left:3px solid var(--phronesis);border-radius:0 0 6px 0;padding:12px 14px">
-        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--phronesis);text-transform:uppercase;margin-bottom:4px">φ Phronesis — the situated judgment</div>
-        <div style="font-size:9px;color:var(--phronesis);opacity:.6;margin-bottom:6px;font-style:italic">AI synthesis · reflective prompt · not prescriptive</div>
-        <div style="font-size:12px;color:#7A3D00;line-height:1.7">${ph}</div>
+      <div class="triad-band-v2 triad-band-v2-p">
+        <div class="triad-band-v2-header">φ PHRONESIS — ${l('phHead')}</div>
+        <div class="triad-band-v2-body">${ph}</div>
+        <div class="triad-band-v2-note">AI synthesis · reflective prompt · not prescriptive</div>
       </div>`:''}
-    </div>
-    `:hasTriadPresence?`<div style="margin-top:8px;padding:14px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;text-align:center">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">ε · τ · φ TRIAD analysis</div>
-      <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px">Unlock the three-lens read for your role — this article plus 5,000+ others.</div>
-      <button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:11px;padding:5px 14px">Upgrade to Pro →</button>
-    </div>`:`<div class="triad-cta" style="margin-top:10px;padding:16px 14px">
-      <div class="triad-cta-lead" style="font-size:12px;margin-bottom:12px">This article hasn't been analysed through TRIAD yet.</div>
-      <button class="triad-btn" onclick="event.stopPropagation();(async(id)=>{await openArticleFromId(id);setTimeout(()=>{const b=document.getElementById('triadCtaBtn'); if(b) b.click();},600)})('${a.id||''}')">
-        <svg class="triad-ico" viewBox="0 0 1500 1500" aria-hidden="true"><use href="#gustema-mark"/></svg>
-        <span>Analysera med TRIAD</span>
-      </button>
-      <div class="triad-caption">Analysen sparas permanent och delas med alla framtida läsare.</div>
-    </div>`):''}
-    ${a.limitation&&!locked?`<div class="card-limitation"><span style="margin-right:4px">⚠</span>${a.limitation}</div>`:''}
-    <div class="art-timestamps">
+      ${hasIMRaD?`<span class="imrad-toggle-v2" onclick="toggleCardImrad('${a.id||''}')">${st.imrad?'▾ ':'▸ '}${l('showImrad')}</span>`:''}
+      ${hasIMRaD?`
+      <div class="card-imrad-v2" style="display:${st.imrad?'block':'none'}">
+        <div class="imrad-header-v2">▾ ${l('imradHeader')} · <em>${l('imradVerify')}</em></div>
+        ${a.imrad_introduction?`<div class="imrad-row-v2"><dt>${l('intro')}</dt><dd>${a.imrad_introduction}</dd></div>`:''}
+        ${a.imrad_methods?`<div class="imrad-row-v2"><dt>${l('methods')}</dt><dd>${a.imrad_methods}</dd></div>`:''}
+        ${a.imrad_results?`<div class="imrad-row-v2"><dt>${l('results')}</dt><dd>${a.imrad_results}</dd></div>`:''}
+        ${a.imrad_discussion?`<div class="imrad-row-v2"><dt>${l('discussion')}</dt><dd>${a.imrad_discussion}</dd></div>`:''}
+      </div>`:''}
+    </div>`:''}
+    <div class="art-timestamps" style="margin-top:12px">
       ${a.year?`<span>Published ${a.year}</span>`:''}
       ${a.fetched_at?`<span>Added ${new Date(a.fetched_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
       ${hasTriadPresence?`<span class="art-ai-tag">TRIAD: AI-generated</span>`:''}
-    </div>
-    <div class="card-footer">
-      <span class="card-meta">${a.authors||''} · ${a.journal||''} · ${a.year||''} ${countryFlags(a.countries||[a.country])}</span>
-      <div class="card-actions">
-        ${a.url&&!locked?`<button class="action-btn primary" onclick="openPaper('${encodeURIComponent(a.url||'')}')">Read paper</button>`:''}
-        <button class="action-btn" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">Share</button>
-        <button class="save-btn${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ Saved':'☆ Save'}</button>
-      </div>
+      ${countryFlags(a.countries||[a.country])?`<span>${countryFlags(a.countries||[a.country])}</span>`:''}
     </div>`
 
   // Micro-moment: visa TRIAD-guide på första kortet för nya användare
@@ -1966,9 +2238,9 @@ function cardHTML(a,idx){
         <button class="upgrade-btn" style="font-size:11px;padding:6px 16px" onclick="openModal('upgradeModal')">Upgrade to Pro →</button>
       </div>
     </div>`:`<div class="lock-cta"><span class="lock-msg">${t('locked')}</span><button class="upgrade-btn" onclick="openModal('upgradeModal')">Upgrade to Pro →</button></div>`
-    return`<div class="article-card locked">${inner}${lockedExtra}</div>`
+    return`<div class="article-card locked" data-artid="${a.id||''}">${inner}${lockedExtra}</div>`
   }
-  return`<div class="article-card${isSaved?' saved-card':''}">${triadGuide}${inner}</div>`
+  return`<div class="article-card${isSaved?' saved-card':''}" data-artid="${a.id||''}">${triadGuide}${inner}</div>`
 }
 
 window.switchTriad = function(cid, key, btn) {
@@ -2130,6 +2402,7 @@ async function loadArticles(){
       const r=await fetch(url,{headers:H})
       articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
+      if(window.__cardExpansion) window.__cardExpansion.clear()
       document.getElementById('feedCount').textContent=`${articles.length} results for "${search}"`
       updateFeedIntro(articles.length)
     } else {
@@ -2150,6 +2423,7 @@ async function loadArticles(){
       const r=await fetch(url,{headers:H})
       articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
+      if(window.__cardExpansion) window.__cardExpansion.clear()
     }
     await enrichWithPremiumIfPro(articles)
     renderFeed()
@@ -3253,8 +3527,10 @@ function openArticleOverlay(article){
   const rRaw = (typeof role!=='undefined' && role && role!=='all') ? role : 'sensory_pro'
   const dbRole = toDbRole(rRaw)
   const topic = (article.topic||'').replace(/_/g,' ')
+  // 2026-07-15: source_label bort ur badges — 11 719 Scopus-taggar från
+  // före OpenAlex-migreringen bär ingen läsarnytta; DOI + journal räcker.
+  // Fältet kvar i DB för intern intern-metadata.
   const badges = (topic?'<span class="topic-badge">'+topic+'</span>':'')+
-    (article.source_label?'<span class="source-badge">'+article.source_label+'</span>':'')+
     (article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
   document.getElementById('artBadges').innerHTML = badges
   document.getElementById('artTitle').textContent = article.title || ''
