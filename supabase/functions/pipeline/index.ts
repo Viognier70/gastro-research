@@ -253,9 +253,33 @@ Deno.serve(async (_req) => {
       // triad räknas som DONE bara om parsningen validerades. Om triad har
       // missing/too_short-fält skrevs ingenting, och artikeln ska plockas
       // igen nästa batch för nytt Sonnet-försök.
+      //
+      // 2026-07-15: bort med "|| !shouldTriad" ur triadDone. Tidigare
+      // markerade vi triad_done=true när vi MEDVETET INTE körde TRIAD
+      // (låg relevans, saknar abstract, TRIAD_ENABLED=0). Det var en
+      // optimistisk lögn — kombinerat med historisk sci-skada gav
+      // 3 762 spöken där status='done' fastän INGENTING skrevs till
+      // articles. Nu: triad_done = TRIAD har faktiskt validerats.
+      // Medvetet-skippade rader stängs som 'skipped' med explicit orsak.
       const sciDone = item.sci_done || !!sci
       const triadOk = !!(triad && !validateTriad(triad))
-      const triadDone = item.triad_done || triadOk || !shouldTriad
+      const triadDone = item.triad_done || triadOk
+
+      // Medveten skip-gren: TRIAD kunde inte / skulle inte köras och
+      // artikeln har inte redan triad_done. Stäng raden som 'skipped'
+      // med orsak — inte en lögnaktig 'done'.
+      if (!shouldTriad && !item.triad_done) {
+        await supabase.from('processing_queue').update({
+          status: 'skipped',
+          sci_done: sciDone,
+          triad_done: false,
+          attempts: newAttempts,
+          last_error: `TRIAD skipped: relevance=${maxRelevance} hasAbstract=${hasAbstract} enabled=${TRIAD_ENABLED}`,
+          updated_at: new Date().toISOString()
+        }).eq('id', item.id)
+        processed++
+        continue
+      }
 
       await supabase.from('processing_queue').update({
         status: sciDone && triadDone ? 'done' : 'pending',
