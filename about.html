@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Name — Gustema</title>
+<meta name="description" content="Gustème, Lévi-Strauss, and the movement between Episteme, Techne, and Phronesis. The name behind Gustema.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gustema-ink:    #3A3226;
+  --gustema-gold:   #A08A55;
+  --gustema-paper:  #FAF7F0;
+  --brodtext:       #3A3628;
+  --fotnot:         #8A7B5E;
+}
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--gustema-paper);
+  color: var(--gustema-ink);
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.about-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid rgba(160,138,85,.12);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--gustema-ink);
+  text-decoration: none;
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -.01em;
+}
+.home-link img {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+.lang-btn {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  color: rgba(58,50,38,.65);
+  border: .5px solid rgba(58,50,38,.22);
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: none;
+  cursor: pointer;
+  letter-spacing: .01em;
+}
+.lang-btn:hover { color: var(--gustema-ink); border-color: rgba(58,50,38,.4) }
+
+/* ── Main / typography ──────────────────────────────── */
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 96px 32px 128px;
+}
+.mark {
+  width: 120px;
+  height: 120px;
+  display: block;
+  margin: 0 0 48px;
+}
+.eyebrow {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gustema-gold);
+  margin: 0 0 16px;
+}
+.rubrik {
+  font-family: 'Playfair Display', serif;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--gustema-ink);
+  margin: 0 0 40px;
+  letter-spacing: -.005em;
+}
+.brodtext {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 620px;
+  color: var(--brodtext);
+  margin: 0 0 20px;
+}
+.brodtext em { font-style: italic }
+.brodtext strong { font-weight: 600 }
+
+.blockrad {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--gustema-ink);
+  max-width: 620px;
+  margin: 28px 0;
+}
+
+.fotnot {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fotnot);
+  max-width: 620px;
+  padding-left: 24px;
+  text-indent: -24px;
+  margin: 56px 0 0;
+}
+.fotnot em { font-style: italic }
+.fotnot a { color: inherit; text-decoration: underline; text-underline-offset: 2px }
+.fotnot a:hover { color: var(--gustema-ink) }
+
+/* ── Språkväxling ───────────────────────────────────── */
+[data-lang] { display: none }
+body[data-lang-active="en"] [data-lang="en"] { display: block }
+body[data-lang-active="sv"] [data-lang="sv"] { display: block }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .about-header { padding: 16px 20px }
+  main { padding: 56px 20px 96px }
+  .mark { width: 96px; height: 96px; margin-bottom: 32px }
+  .rubrik { font-size: 28px }
+  .brodtext { font-size: 15.5px }
+  .blockrad { font-size: 18px }
+}
+</style>
+</head>
+<body data-lang-active="en">
+
+<header class="about-header">
+  <a class="home-link" href="index.html">
+    <img src="gustema-logo.svg" alt="">
+    <span>Gustema</span>
+  </a>
+  <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
+</header>
+
+<main>
+  <img class="mark" src="gustema-logo.svg" alt="Gustema mark">
+
+  <!-- ── SVENSKA ───────────────────────────────────── -->
+  <section data-lang="sv">
+    <p class="eyebrow">Namnet</p>
+    <h1 class="rubrik">Gustema</h1>
+
+    <p class="brodtext">
+      <em>Gustème</em> — smakens minsta betydelsebärande enhet. Claude
+      Lévi-Strauss myntade ordet 1945, när han föreslog att ett kök kan
+      läsas som ett språk: precis som talet bryts ned i fonem, kan en
+      kulturs matlagning brytas ned i enheter som får sin mening genom
+      kontrast. Sött mot surt. Rått mot tillagat. Vardag mot fest.
+    </p>
+
+    <p class="blockrad">Vi gör samma sak med forskningen.</p>
+
+    <p class="brodtext">
+      Varje artikel bryts ned i tre former av kunskap, för varje
+      yrkesroll. <strong>Episteme</strong> — vad forskningen fastställer.
+      <strong>Techne</strong> — hur det tillämpas.
+      <strong>Phronesis</strong> — det situerade omdömet, det som
+      skiljer den som kan reglerna från den som vet när de ska brytas.
+    </p>
+
+    <p class="brodtext">
+      Lévi-Strauss ställde <em>gustema</em> mot <em>tecnema</em>:
+      smakens enhet mot teknikens. Vi lägger till den tredje. För en
+      profession är varken teori eller teknik — den är rörelsen mellan
+      dem, om och om igen.
+    </p>
+
+    <p class="brodtext">
+      Kurvan i vårt märke är den rörelsen. Att den tecknar en åtta är
+      ingen slump: iterationen tar aldrig slut.
+    </p>
+
+    <p class="fotnot">
+      Lévi-Strauss, C. (1945). L'analyse structurale en linguistique et
+      en anthropologie. <em>Word</em>, 1(1), 33–53.
+      <a href="https://doi.org/10.1080/00437956.1945.11659244">https://doi.org/10.1080/00437956.1945.11659244</a>
+    </p>
+  </section>
+
+  <!-- ── ENGLISH ───────────────────────────────────── -->
+  <section data-lang="en">
+    <p class="eyebrow">The Name</p>
+    <h1 class="rubrik">Gustema</h1>
+
+    <p class="brodtext">
+      <em>Gustème</em> — the smallest meaning-bearing unit of taste.
+      Claude Lévi-Strauss coined the word in 1945, proposing that a
+      cuisine can be read like a language: just as speech breaks down
+      into phonemes, a culture's cooking breaks down into units that
+      take on meaning through contrast. Sweet against sour. Raw against
+      cooked. Everyday against feast.
+    </p>
+
+    <p class="blockrad">We do the same with research.</p>
+
+    <p class="brodtext">
+      Every article is broken into three forms of knowledge, for each
+      professional role. <strong>Episteme</strong> — what the research
+      establishes. <strong>Techne</strong> — how it applies.
+      <strong>Phronesis</strong> — the situated judgment that separates
+      those who know the rules from those who know when to break them.
+    </p>
+
+    <p class="brodtext">
+      Lévi-Strauss set <em>gustema</em> against <em>tecnema</em>: the
+      unit of taste against the unit of technique. We add the third. A
+      profession is neither theory nor technique — it is the movement
+      between them, again and again.
+    </p>
+
+    <p class="brodtext">
+      The curve in our mark is that movement. That it traces a figure
+      eight is no accident: the iteration never ends.
+    </p>
+
+    <p class="fotnot">
+      Lévi-Strauss, C. (1945). L'analyse structurale en linguistique et
+      en anthropologie. <em>Word</em>, 1(1), 33–53.
+      <a href="https://doi.org/10.1080/00437956.1945.11659244">https://doi.org/10.1080/00437956.1945.11659244</a>
+    </p>
+  </section>
+</main>
+
+<script>
+(function() {
+  // Läs språk från localStorage om det finns, annars browser-preferens,
+  // annars default 'en'. Persistas så språkval följer med tillbaka till
+  // index.html när vi gör det stödet där också.
+  var saved
+  try { saved = localStorage.getItem('lang') } catch(e) {}
+  var lang = (saved === 'sv' || saved === 'en')
+    ? saved
+    : ((navigator.language || '').toLowerCase().indexOf('sv') === 0 ? 'sv' : 'en')
+  document.body.setAttribute('data-lang-active', lang)
+  document.documentElement.setAttribute('lang', lang)
+  var btn = document.getElementById('langBtn')
+  btn.textContent = lang === 'en' ? 'SV' : 'EN'
+
+  window.toggleLang = function() {
+    lang = lang === 'en' ? 'sv' : 'en'
+    try { localStorage.setItem('lang', lang) } catch(e) {}
+    document.body.setAttribute('data-lang-active', lang)
+    document.documentElement.setAttribute('lang', lang)
+    btn.textContent = lang === 'en' ? 'SV' : 'EN'
+  }
+})()
+</script>
+
+</body>
+</html>
