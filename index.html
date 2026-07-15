@@ -2279,7 +2279,7 @@ function cardHTML(a,idx){
     a.has_episteme_sensory_pro===true||a.has_episteme_culinary_pro===true||
     a.has_episteme_gastronomy_culture===true||a.has_episteme_hospitality_mgmt===true||
     a.has_episteme_educator_researcher===true))
-  const keywords=a.claim_keywords||[]
+  const keywords=a.keywords||[]
   const coreClaim=a.core_claim||a.insight||''
   const citCount=a.citation_count||null
 
@@ -2581,7 +2581,7 @@ async function loadArticles(){
     : `relevance_sci_${dbRole}`
   // articles_public: metadata + has_* presence booleans. Premium TRIAD/IMRAD/core_claim
   // is layered in by enrichWithPremiumIfPro() below when the user is Pro.
-  const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad`
+  const fields=`headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad`
   try {
     if(search && search.length > 1) {
       // SEARCH MODE: query entire database
@@ -3572,7 +3572,7 @@ async function loadExploreArticles(topic){
   const sciCols = dbRole
     ? `relevance_sci_${dbRole}`
     : DB_ROLES_ALL.map(r=>'relevance_sci_'+r).join(',')
-  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,citation_count`
+  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,citation_count`
 
   let url
   if(dbRole){
@@ -5314,7 +5314,7 @@ async function loadMapFocusArticles(filter){
   const sciCols = dbRole
     ? `relevance_sci_${dbRole}`
     : DB_ROLES_ALL.map(r=>'relevance_sci_'+r).join(',')
-  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count`
+  const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count`
   // Institution: OR-filter mot BÅDA institutions text[] OCH institution_coords
   // JSONB.name. Kartans marker byggs från institution_coords[].name (OpenAlex-
   // engelsk stavning), men samma institution kan ligga i articles.institutions
