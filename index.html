@@ -76,11 +76,12 @@
 <style>
 :root{
   /* Gustema-varumärke — accentlager över sajtens varma estetik. */
-  --gustema-ink:    #3A3226;
-  --gustema-gold:   #A08A55;
-  --gustema-paper:  #FAF7F0;
-  --gustema-line:   #E5DECF;
-  --gustema-muted:  #8A7B5E;
+  --gustema-ink:      #3A3226;
+  --gustema-gold:     #A08A55;
+  --gustema-gold-dark:#836428;
+  --gustema-paper:    #FAF7F0;
+  --gustema-line:     #E5DECF;
+  --gustema-muted:    #8A7B5E;
   --gold:#C9A84C;--gold-light:#F5EDD3;--black:#0C0B09;--white:#FDFCF8;
   --warm-100:#F7F4ED;--warm-200:#EDE8DC;
   --text-primary:#0C0B09;--text-secondary:#5C5649;--text-tertiary:#9C9484;
@@ -1536,7 +1537,8 @@ const T={
     forRole:'For',scenarioLabel:'Practical application',limitation:'Limitation',readPaper:'Read paper',share:'Share',
     freeLeft:n=>`${n} free today`,locked:'Upgrade to Pro to continue',
     roles:{all:'All professionals',sommelier:'Sommelier',chef:'Chef',gastronomy:'Meal Creator',fb_manager:'Hospitality Management',food_researcher:'Food Researcher & Educator',creator:'Meal Creator',waiter:'Service staff',educator:'Food Researcher & Educator',researcher:'Food Researcher & Educator',fbmanager:'Hospitality Management',restaurantmanager:'Restaurant manager',hotelier:'Hotelier',winebar:'Wine bar owner',sensory_pro:'Sommelier',culinary_pro:'Chef',gastronomy_culture:'Meal Creator',hospitality_mgmt:'Hospitality Management',educator_researcher:'Food Researcher & Educator'},
-    funnelEyebrow:'SCREENING',funnelTitle:'What survives the screening',funnelSub:'This is about scientific quality, not quantity. That only a fraction makes it through is not a weakness — it is the proof of rigor.',funnelFooterLive:'Live',funnelFooterCorpus:'corpus',funnelFooterSurvivor:n=>`1 in ${n} articles survive`
+    funnelEyebrow:'SCREENING',funnelTitle:'What survives the screening',funnelSub:'This is about scientific quality, not quantity. That only a fraction makes it through is not a weakness — it is the proof of rigor.',funnelFooterLive:'Live',funnelFooterCorpus:'corpus',funnelFooterSurvivor:n=>`1 in ${n} articles survive`,
+    footerAbout:'The Name'
   },
   sv:{
     eyebrow:'Forskningsintelligens för kulinariska proffs',
@@ -1545,7 +1547,8 @@ const T={
     forRole:'För',scenarioLabel:'Praktisk tillämpning',limitation:'Begränsning',readPaper:'Läs artikel',share:'Dela',
     freeLeft:n=>`${n} gratis idag`,locked:'Uppgradera till Pro för att fortsätta',
     roles:{all:'Alla yrkesroller',sommelier:'Sommelier',chef:'Kock',gastronomy:'Måltidsskapare',fb_manager:'Hospitality Management',food_researcher:'Forskare & Utbildare',creator:'Måltidsskapare',waiter:'Servicepersonal',educator:'Forskare & Utbildare',researcher:'Forskare & Utbildare',fbmanager:'Hospitality Management',restaurantmanager:'Restaurangchef',hotelier:'Hotelier',winebar:'Vinbarägare',sensory_pro:'Sommelier',culinary_pro:'Kock',gastronomy_culture:'Måltidsskapare',hospitality_mgmt:'Hospitality Management',educator_researcher:'Forskare & Utbildare'},
-    funnelEyebrow:'SCREENING',funnelTitle:'Vad som överlever granskningen',funnelSub:'Det handlar om vetenskaplig kvalitet, inte kvantitet. Att bara en bråkdel tar sig igenom är inte en svaghet — det är beviset på stringens.',funnelFooterLive:'Uppdateras live',funnelFooterCorpus:'korpus',funnelFooterSurvivor:n=>`1 av ${n} artiklar överlever`
+    funnelEyebrow:'SCREENING',funnelTitle:'Vad som överlever granskningen',funnelSub:'Det handlar om vetenskaplig kvalitet, inte kvantitet. Att bara en bråkdel tar sig igenom är inte en svaghet — det är beviset på stringens.',funnelFooterLive:'Uppdateras live',funnelFooterCorpus:'korpus',funnelFooterSurvivor:n=>`1 av ${n} artiklar överlever`,
+    footerAbout:'Namnet'
   }
 }
 
@@ -1624,6 +1627,7 @@ function updateTexts(){
   const ft=document.getElementById('funnelTitle');   if(ft) ft.innerHTML=t('funnelTitle')
   const fs=document.getElementById('funnelSub');     if(fs) fs.textContent=t('funnelSub')
   if(typeof refreshFunnelLabels==='function') refreshFunnelLabels()
+  const _fa=document.getElementById('footerAbout'); if(_fa) _fa.textContent=t('footerAbout')
   document.getElementById('roleLabel').textContent=t('forRole')
   document.querySelectorAll('.role-chip').forEach(b=>{
     const label=t('roles')[b.dataset.role]||b.dataset.role
@@ -4868,8 +4872,13 @@ function clearMapFocus(){
 
 </script>
 
-<footer style="text-align:center;padding:56px 20px 40px;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gustema-gold,#A08A55);opacity:.75;border-top:1px solid rgba(160,138,85,.1);margin-top:80px">
-  <a href="/about.html" style="color:inherit;text-decoration:none;padding:6px 4px">About</a>
+<style>
+  .site-footer{text-align:center;padding:56px 20px 40px;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border-top:1px solid rgba(160,138,85,.14);margin-top:80px}
+  .site-footer a{color:var(--gustema-gold-dark,#836428);text-decoration:none;padding:6px 4px}
+  .site-footer a:hover{text-decoration:underline;text-underline-offset:3px}
+</style>
+<footer class="site-footer">
+  <a id="footerAbout" href="/about.html">The Name</a>
 </footer>
 
 </body>
