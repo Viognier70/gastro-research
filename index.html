@@ -5315,18 +5315,30 @@ async function loadMapFocusArticles(filter){
     ? `relevance_sci_${dbRole}`
     : DB_ROLES_ALL.map(r=>'relevance_sci_'+r).join(',')
   const fields = `headline_en,headline_sv,id,title,topic,source_label,insight,limitation,study_type,year,authors,journal,url,knowledge_type,country,countries,claim_keywords,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher,has_episteme_sensory_pro,has_episteme_culinary_pro,has_episteme_gastronomy_culture,has_episteme_hospitality_mgmt,has_episteme_educator_researcher,has_core_claim,has_imrad,primary_institution,institution_rank,institution_coords,citation_count`
-  // Institution: text[] containment på institutions — bredare än
-  // institution_coords (som kräver geo-lookup). Fångar alla co-authors,
-  // inklusive preflight/backfill-berikade artiklar utan koordinater.
-  // Country: fortsatt via institution_coords JSONB — countries text[]
-  // är inte alltid populerat på historiska rader; dot-having artiklar
-  // har alltid coords med country_code satt.
+  // Institution: OR-filter mot BÅDA institutions text[] OCH institution_coords
+  // JSONB.name. Kartans marker byggs från institution_coords[].name (OpenAlex-
+  // engelsk stavning), men samma institution kan ligga i articles.institutions
+  // text[] under en annan variant (svensk/lokal). K1.1c-buggen 2026-07-15:
+  // marker "Karolinska Institute" gav 0 träffar mot institutions text[] där
+  // artiklarna listar "Karolinska Institutet". Verifierat:
+  //   institutions cs {"Karolinska Institute"}     → 0
+  //   institutions cs {"Karolinska Institutet"}    → 749
+  //   institution_coords cs [{name:"K. Institute"}]→ 6
+  //   OR-fråga med "Institute"                     → 6 (fångar coord-varianten)
+  //   OR-fråga med "Institutet"                    → 749 (fångar text[]-varianten)
+  // Med OR fångar vi alltid MINST det som markören faktiskt hänvisar till,
+  // plus ev bredare matchningar från text[]-fältet (co-authors, preflight-
+  // berikade utan coords).
+  //
+  // Country: fortsatt via institution_coords JSONB — countries text[] är
+  // inte alltid populerat på historiska rader; dot-having artiklar har
+  // alltid coords med country_code satt.
   //
   // Syntax OBS: text[] cs-värdet är Postgres array-literal `{"..."}`,
   // INTE JSON `["..."]`. JSON.stringify ger fel bracket-typ och 400
   // 'malformed array literal'. JSONB cs däremot tar JSON.
   const filterClause = filter.name
-    ? `institutions=cs.${encodeURIComponent('{"' + filter.name.replace(/(["\\])/g, '\\$1') + '"}')}`
+    ? `or=(institutions.cs.${encodeURIComponent('{"' + filter.name.replace(/(["\\])/g, '\\$1') + '"}')},institution_coords.cs.${encodeURIComponent(JSON.stringify([{ name: filter.name }]))})`
     : `institution_coords=cs.${encodeURIComponent(JSON.stringify([{ country: filter.country }]))}`
   // Institution-vyn är BREDARE än Feed — visar institutionens hela
   // gastronomi-output, inte bara TRIAD-analyserade. Ingen has_episteme-
