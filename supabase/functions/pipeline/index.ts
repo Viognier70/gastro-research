@@ -126,6 +126,7 @@ const MAX_ATTEMPTS = 5
 
 Deno.serve(async (_req) => {
   const startTime = Date.now()
+  console.log('1: start')
   let processed = 0, errors = 0, sciCalls = 0, triadCalls = 0
   let skipped = 0, permanentlyFailed = 0
 
@@ -135,15 +136,19 @@ Deno.serve(async (_req) => {
   // Skip if too many already processing
   const {count:procCount} = await supabase.from('processing_queue')
     .select('*',{count:'exact',head:true}).eq('status','processing')
+  console.log(`2: releaseStuck done, procCount=${procCount ?? 0}`)
   if((procCount||0) > 20) {
+    console.log(`return early: already_running, procCount=${procCount}`)
     return new Response(JSON.stringify({ok:true,skipped:true,reason:'already_running',processing:procCount}),
       {headers:{'Content-Type':'application/json'}})
   }
 
   const batch = await claimBatch(20)
+  console.log(`3: claimed batch.length=${batch.length}`)
   if(!batch.length) {
     const {count:remaining} = await supabase.from('processing_queue')
       .select('id',{count:'exact',head:true}).eq('status','pending')
+    console.log(`return early: empty batch, remaining=${remaining ?? 0}`)
     return new Response(JSON.stringify({ok:true,processed:0,errors:0,remaining:remaining||0,elapsed:Date.now()-startTime}),
       {headers:{'Content-Type':'application/json'}})
   }
@@ -179,7 +184,7 @@ Deno.serve(async (_req) => {
       continue
     }
 
-    console.log('Processing:', item.article_id.slice(0,8), article.title?.slice(0,50))
+    console.log(`4: processing ${item.article_id.slice(0,8)} "${article.title?.slice(0,50)}"`)
 
     try {
       // Step 1: Sci analysis (Haiku) — only if not done
@@ -281,7 +286,7 @@ Deno.serve(async (_req) => {
 
   const {count:remaining} = await supabase.from('processing_queue')
     .select('id',{count:'exact',head:true}).eq('status','pending')
-  console.log(`Done: ${processed} processed, ${errors} errors, ${remaining} remaining`)
+  console.log(`5: done processed=${processed} errors=${errors} sci_calls=${sciCalls} triad_calls=${triadCalls} remaining=${remaining ?? 0}`)
 
   return new Response(JSON.stringify({
     ok: true,
