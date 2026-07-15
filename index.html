@@ -2168,7 +2168,7 @@ function cardHTML(a,idx){
       ${!locked&&!hasPremiumPayload&&hasTriadPresence?`<button class="btn-triad-toggle" onclick="openModal('upgradeModal')">${l('upgradePrompt')}</button>`:''}
       ${!locked&&!hasTriadPresence?`<button class="btn-triad-toggle" onclick="event.stopPropagation();(async(id)=>{await openArticleFromId(id);setTimeout(()=>{const b=document.getElementById('triadCtaBtn'); if(b) b.click();},600)})('${a.id||''}')"><svg viewBox="0 0 1500 1500" aria-hidden="true" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px"><use href="#gustema-mark"/></svg>${l('triadCta')}</button>`:''}
       ${a.url&&!locked?`<a class="btn-read-paper" href="${a.url}" target="_blank" rel="noopener">${l('read')} ↗</a>`:''}
-      <button class="btn-share-v2" onclick="openShareFor(${JSON.stringify({title:a.title,url:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">${lang==='sv'?'Dela':'Share'}</button>
+      <button class="btn-share-v2" onclick="openShareFor(${JSON.stringify({title:a.title,articleId:a.id||'',sourceUrl:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">${lang==='sv'?'Dela':'Share'}</button>
       <button class="btn-save-v2${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ '+l('saved'):'☆ '+l('save')}</button>
     </div>
     ${!locked&&hasPremiumPayload?`
@@ -2687,7 +2687,14 @@ function openShareFor(data){
   openModal('shareModal')
 }
 function doShare(type){
-  const url=currentShare.url||location.href
+  // 2026-07-15: Share pekar på GUSTEMAS vy (TRIAD-analysen), inte
+  // DOI-källan bakom betalvägg. Läs artikeln ↗ pekar fortfarande på
+  // DOI. Om articleId saknas (edge-case, delning från sida utan
+  // uuid), fall tillbaka till sourceUrl/location.href.
+  const gustoUrl = currentShare.articleId
+    ? `${location.origin}${location.pathname}?article=${currentShare.articleId}`
+    : (currentShare.sourceUrl || currentShare.url || location.href)
+  const url = gustoUrl
   const text=`${currentShare.title||''} — ${currentShare.insight||''}`
   if(type==='email') window.open(`mailto:?subject=${encodeURIComponent(currentShare.title||'')}&body=${encodeURIComponent(text+'\n\n'+url)}`)
   if(type==='linkedin') window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`)
@@ -3602,6 +3609,16 @@ function openArticleOverlay(article){
   if(article.url){ rb.href = article.url; rb.style.display='inline-flex' } else rb.style.display='none'
   document.getElementById('artOverlay').classList.add('open')
   document.body.style.overflow='hidden'
+  // Deep-link (2026-07-15): uppdatera URL utan reload så artikeln blir
+  // delbar, back-button-navigerbar och SEO-indexerbar. Rensas i
+  // closeArticleModal + popstate-handler nedan.
+  if(article.id){
+    const target = location.pathname + '?article=' + article.id + location.hash
+    const current = location.pathname + location.search + location.hash
+    if(target !== current){
+      try { history.pushState({articleId: article.id}, '', target) } catch(e) { console.log('pushState failed:', e) }
+    }
+  }
 }
 window.switchArtTriad = function(key){
   if(!_artData) return
@@ -3618,7 +3635,44 @@ window.closeArticleModal = function() {
   const ov = document.getElementById('artOverlay')
   if(ov) ov.classList.remove('open')
   document.body.style.overflow = ''
+  // Deep-link: rensa ?article-param om den finns. Ingen reload.
+  // Använder replaceState istället för pushState så back-button-stacken
+  // inte fylls av manuell-close-events.
+  if(location.search.includes('article=')){
+    try { history.replaceState({}, '', location.pathname + location.hash) } catch(e) {}
+  }
 }
+
+// Deep-link: läs ?article=<uuid> vid page-load. Vänta med anropet tills
+// supabase-klienten och auth är initade (400ms har visat sig räcka på
+// live). openArticleFromId gör sitt eget fetch via get_articles_full-RPC
+// + articles_public så vi behöver inte vänta på Feed.
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search)
+  const artId = params.get('article')
+  if(artId && /^[0-9a-f-]{36}$/i.test(artId)){
+    setTimeout(() => { try { window.openArticleFromId(artId) } catch(e) { console.log('deep-link open failed:', e) } }, 400)
+  }
+})
+
+// Back-button-hantering. Om ny state saknar ?article → stäng overlay
+// (utan att skriva historik). Om den har ?article → öppna den artikeln
+// (för framåt-navigation som återgår till en annan artikel).
+window.addEventListener('popstate', () => {
+  const params = new URLSearchParams(location.search)
+  const artId = params.get('article')
+  const ov = document.getElementById('artOverlay')
+  if(artId && /^[0-9a-f-]{36}$/i.test(artId)){
+    if(!ov || !ov.classList.contains('open')){
+      try { window.openArticleFromId(artId) } catch(e) {}
+    }
+  } else {
+    if(ov && ov.classList.contains('open')){
+      ov.classList.remove('open')
+      document.body.style.overflow = ''
+    }
+  }
+})
 
 // TRIAD on-demand — kallar /functions/v1/triad-on-demand, hanterar
 // alla fyra statuskoder (analyzed/cached/pending/quota_exceeded) + 502
