@@ -1,0 +1,58 @@
+-- =====================================================================
+-- processing_queue: status='done' måste ha båda done-flaggor
+-- =====================================================================
+-- Fix B (komplement till Fix A i pipeline 2026-07-15). Fångar alla
+-- writers — inte bara pipeline-koden i git, utan även claim_pipeline_
+-- batch-RPC:n och ev. framtida triggers. En rad kan inte längre
+-- markeras status='done' om inte BÅDA sci_done och triad_done är
+-- true.
+--
+-- Bakgrund: 3 762 spöken hade status='done' med sci_done=false och
+-- triad_done=true, men articles.relevance_sci_* och phronesis_*
+-- var NULL — kön ljög på båda flaggorna. Pipeline-fixen (Fix A,
+-- commit 9a73927) tog bort optimistiskt "|| !shouldTriad" ur
+-- triad_done. Men 119 av spökena var NYA — läckte in via en okänd
+-- writer utanför git (troligen claim_pipeline_batch-RPC).
+--
+-- DB-constraint är brandväggen. Om något försöker sätta 'done' utan
+-- båda flaggor → 23514 check_violation, felet syns i loggarna
+-- istället för att spöket smyger in.
+--
+-- OBS ORDER: cleanup av existerande 3 762 spöken MÅSTE köras FÖRE
+-- denna migration. Annars misslyckas ADD CONSTRAINT med violation
+-- på existerande data. Anders körde cleanup 2026-07-15 innan denna
+-- migration pushades.
+--
+-- Cleanup-frågan (som referens):
+--   update processing_queue q set status='pending', triad_done=false
+--     from articles a where a.id=q.article_id
+--      and q.status='done' and q.triad_done=true and q.sci_done=false
+--      and a.relevance_sci_sensory_pro is null
+--    returning q.id;
+-- =====================================================================
+
+alter table public.processing_queue
+  add constraint status_done_requires_both_flags
+  check (status <> 'done' or (sci_done and triad_done));
+
+-- =====================================================================
+-- Verifiering (efter apply):
+--
+--   -- 1. Constraint aktiv?
+--   select conname, pg_get_constraintdef(oid)
+--     from pg_constraint
+--    where conrelid = 'public.processing_queue'::regclass
+--      and conname = 'status_done_requires_both_flags';
+--
+--   -- 2. Inga violations i existerande data (räknar rader som skulle
+--   --    ha bruttat constraintet):
+--   select count(*) as violations
+--     from processing_queue
+--    where status = 'done' and (sci_done = false or triad_done = false);
+--   -- expected: 0
+--
+--   -- 3. Framtida försök att skriva done utan flaggor kommer att kasta:
+--   --    ERROR: new row for relation "processing_queue" violates check
+--   --    constraint "status_done_requires_both_flags"
+--   --    DETAIL: Failing row contains (..., done, false, true, ...).
+-- =====================================================================
