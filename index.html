@@ -4918,6 +4918,10 @@ window.loadWorldMapData = async function() {
     })
     const articles = await r.json()
     if(!Array.isArray(articles)) return []
+    // Coverage-siffra för tomstate-meddelandet på markörer utan träffar
+    // (renderMapArticles). Tidigare bakad in som "89 of 1,809" (rad 5371) —
+    // en dålig lögn som stod kvar från 7 juli medan backfill vidare växte.
+    window.__mapCoverageWithCoords = articles.length
     
     const instMap = {}
     for(const a of articles) {
@@ -5365,10 +5369,14 @@ function renderMapArticles(){
     const roleName = role === 'all' ? '' : ` for ${roleLabel(role) || role}`
     // Elegant tomt-läge — förklara coverage-begränsningen så användaren
     // inte tror att systemet är trasigt när institution har få träffar.
+    const covCount = window.__mapCoverageWithCoords
+    const covText = (typeof covCount === 'number' && covCount > 0)
+      ? `Institution coordinates currently cover ${covCount.toLocaleString('en-US')} articles — backfill is ongoing.`
+      : `Institution coordinates are being backfilled — coverage is limited today.`
     pane.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-secondary);font-size:13px;max-width:520px;margin:0 auto">
       <div style="font-size:24px;color:var(--gold);opacity:.5;margin-bottom:10px">◎</div>
       <div style="font-size:15px;color:var(--text-primary);margin-bottom:6px;font-weight:500">No TRIAD analyses from ${focusVal}${roleName} yet</div>
-      <div style="line-height:1.7">Institution coordinates cover only 89 of 1,809 articles today — backfill is ongoing. Try another marker on the map${role!=='all' ? ', or switch role in the Feed tab' : ''}.</div>
+      <div style="line-height:1.7">${covText} Try another marker on the map${role!=='all' ? ', or switch role in the Feed tab' : ''}.</div>
     </div>`
     return
   }
