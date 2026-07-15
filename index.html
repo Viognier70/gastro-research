@@ -904,6 +904,64 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   letter-spacing: .01em;
 }
 .btn-cite-toggle:hover, .btn-share-v2:hover { border-color: var(--gustema-ink) }
+
+/* Citera-box — mörk yta med APA-referens */
+.card-cite-v2 {
+  background: var(--gustema-ink);
+  color: #E8E0CE;
+  border-radius: 6px;
+  padding: 18px 20px;
+  margin-top: 14px;
+}
+.cite-eyebrow-v2 {
+  font-family: 'Inter', 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gustema-gold);
+  margin-bottom: 12px;
+}
+.cite-text-v2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #E8E0CE;
+  margin-bottom: 14px;
+  word-break: break-word;
+}
+.cite-text-v2 em {
+  font-style: italic;
+}
+.cite-actions-v2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cite-copy-btn-v2 {
+  background: rgba(232,224,206,.08);
+  border: 0.5px solid rgba(232,224,206,.35);
+  color: #E8E0CE;
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  letter-spacing: .01em;
+  flex-shrink: 0;
+}
+.cite-copy-btn-v2:hover { background: rgba(232,224,206,.16); border-color: rgba(232,224,206,.55) }
+.cite-copy-btn-v2.copied { background: rgba(160,138,85,.25); border-color: var(--gustema-gold) }
+.cite-note-v2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-style: italic;
+  color: rgba(232,224,206,.55);
+  line-height: 1.45;
+  flex: 1 1 200px;
+}
 .btn-read-paper {
   color: var(--gustema-gold-dark, #836428);
   text-decoration: none;
@@ -2059,7 +2117,7 @@ window.toggleCardTriad = function(artId){
   if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Visa IMRaD — full vetenskaplig struktur'
 }
 window.toggleCardImrad = function(artId){
-  const s = window.__cardExpansion.get(artId) || {triad:true, imrad:false}
+  const s = window.__cardExpansion.get(artId) || {triad:true, imrad:false, cite:false}
   s.imrad = !s.imrad
   window.__cardExpansion.set(artId, s)
   const card = document.querySelector('.article-card[data-artid="'+CSS.escape(artId)+'"]')
@@ -2068,6 +2126,127 @@ window.toggleCardImrad = function(artId){
   const imToggle = card.querySelector('.imrad-toggle-v2')
   if(i) i.style.display = s.imrad ? 'block' : 'none'
   if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Visa IMRaD — full vetenskaplig struktur'
+}
+window.toggleCardCite = function(artId){
+  const s = window.__cardExpansion.get(artId) || {triad:false, imrad:false, cite:false}
+  s.cite = !s.cite
+  window.__cardExpansion.set(artId, s)
+  const card = document.querySelector('.article-card[data-artid="'+CSS.escape(artId)+'"]')
+  if(!card) return
+  const box = card.querySelector('.card-cite-v2')
+  if(box) box.style.display = s.cite ? 'block' : 'none'
+}
+
+// APA 7-referens — ärlig: hittar aldrig på fält som saknas.
+// Volume/issue/pages utelämnas när de saknas (korrekt APA-praktik).
+// Titel = ORIGINALTITELN, inte Gustemas rubrik.
+//
+// Författarparsning: fall tillbaka till rå sträng vid minsta tvekan
+// (non-latin, >3 ord, mellannamn med prefix "van der" osv). Hellre
+// "Sumin Seo" rå än fel "Seo, S. S."
+function _apaParseOneName(name){
+  if(!name) return null
+  const t = name.replace(/\s+/g,' ').trim()
+  if(!t) return null
+  // Non-latin (kinesiska, arabiska, kyrilliska): rå
+  if(/[^\x00-\x7FÀ-ÿŠš'\-.]/u.test(t)) return {raw:true, text:t}
+  // "van", "de la", "von der" etc — bevara raw
+  if(/\b(van|von|de|del|della|di|da|dos|das|la|le|el|al|der|den)\b/i.test(t) && t.split(/\s+/).length > 2) return {raw:true, text:t}
+  // Redan APA-nära: "Surname X" eller "Surname X.Y" eller "Surname XY"
+  //   Yang C. → Yang, C.
+  //   Su J   → Su, J.
+  //   Wang XY → Wang, X. Y.
+  const m1 = /^([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ'\-]+)\s+([A-Z](?:\.?[A-Z])*\.?)$/.exec(t)
+  if(m1){
+    const surname = m1[1]
+    const inits = m1[2].replace(/\./g,'').split('').filter(c=>/[A-Z]/.test(c)).map(c=>c+'.').join(' ')
+    return {raw:false, text: surname + ', ' + inits}
+  }
+  const words = t.split(/\s+/)
+  // Ett ord (endast surname eller endast förnamn): rå
+  if(words.length < 2) return {raw:true, text:t}
+  // Fler än 3 ord: förnamn+mellannamn+efternamn eller mellannamnsprefix — rå
+  if(words.length > 3) return {raw:true, text:t}
+  // "Sumin Seo" (2 ord, förnamn+efternamn) eller "Do-Won Jeong" (bindestreck)
+  // eller "Mary Jane Smith" (3 ord: två förnamn + surname)
+  const surname = words[words.length - 1]
+  if(!/^[A-ZÀ-Ÿ]/.test(surname)) return {raw:true, text:t}  // efternamn måste börja med versal
+  const firsts = words.slice(0, -1)
+  const inits = firsts.map(part => {
+    if(part.includes('-')){
+      return part.split('-').map(p => p && /^[A-ZÀ-Ÿ]/.test(p) ? p[0].toUpperCase()+'.' : p).join('-')
+    }
+    if(part && /^[A-ZÀ-Ÿ]/.test(part)) return part[0].toUpperCase() + '.'
+    return part
+  }).join(' ')
+  return {raw:false, text: surname + ', ' + inits}
+}
+
+function _apaJoinAuthors(rawStr){
+  if(!rawStr || typeof rawStr !== 'string') return ''
+  const s = rawStr.trim()
+  if(!s) return ''
+  // Detektera separator: föredra ; om finns, annars ,
+  const sep = s.includes(';') ? ';' : ','
+  const parts = s.split(sep).map(x=>x.trim()).filter(Boolean)
+  const parsed = parts.map(_apaParseOneName).filter(Boolean)
+  const texts = parsed.map(p => p.text)
+  if(texts.length === 0) return s
+  if(texts.length === 1) return texts[0]
+  if(texts.length === 2) return texts[0] + ', & ' + texts[1]
+  // APA 7: för 21+ författare, lista första 19, sedan "…", sedan sista
+  if(texts.length > 20){
+    return texts.slice(0, 19).join(', ') + ', … ' + texts[texts.length - 1]
+  }
+  return texts.slice(0, -1).join(', ') + ', & ' + texts[texts.length - 1]
+}
+
+function _apaCleanTitle(rawTitle){
+  if(!rawTitle) return ''
+  // Strippa HTML-taggar (<i>, </i>, <sub>, <sup> förekommer)
+  let t = String(rawTitle).replace(/<[^>]+>/g, '')
+  // Normalisera whitespace
+  t = t.replace(/\s+/g, ' ').trim()
+  // Trailing period bort — vi lägger till egen
+  t = t.replace(/\.\s*$/, '')
+  return t
+}
+
+function buildApaCitation(article){
+  if(!article) return ''
+  const authors = _apaJoinAuthors(article.authors || '')
+  const year = article.year ? String(article.year) : 'n.d.'
+  const title = _apaCleanTitle(article.title || '')
+  const journal = (article.journal || '').replace(/\.\s*$/, '').trim()
+  const url = (article.url || '').trim()
+  // Struktur: Författare (År). Titel. Journal. URL
+  // Tomma delar utelämnas snyggt (inga dubbla punkter, inga tomma raderMellanslag).
+  const pieces = []
+  if(authors) pieces.push(authors)
+  pieces.push(`(${year}).`)
+  const rightSide = []
+  if(title) rightSide.push(title + '.')
+  if(journal) rightSide.push(journal + '.')
+  if(url) rightSide.push(url)
+  const authorBlock = pieces.join(' ')
+  const rest = rightSide.join(' ')
+  return (authorBlock + ' ' + rest).replace(/\s+/g, ' ').trim()
+}
+
+function citeCopyToClipboard(artId, btn){
+  const card = document.querySelector('.article-card[data-artid="'+CSS.escape(artId)+'"]')
+  if(!card) return
+  const el = card.querySelector('.cite-text-v2')
+  if(!el) return
+  const text = el.getAttribute('data-plain') || el.textContent || ''
+  navigator.clipboard.writeText(text).then(() => {
+    if(btn){
+      btn.classList.add('copied')
+      const orig = btn.textContent
+      btn.textContent = '✓ Copied'
+      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = orig }, 1400)
+    }
+  }).catch(e => { console.log('cite copy failed:', e); alert('Could not copy — select text manually.') })
 }
 
 function cardHTML(a,idx){
@@ -2167,9 +2346,18 @@ function cardHTML(a,idx){
       ${!locked&&hasPremiumPayload?`<button class="btn-triad-toggle" onclick="toggleCardTriad('${a.id||''}')">${st.triad?l('hideTriad'):l('showTriad')}</button>`:''}
       ${!locked&&!hasPremiumPayload&&hasTriadPresence?`<button class="btn-triad-toggle" onclick="openModal('upgradeModal')">${l('upgradePrompt')}</button>`:''}
       ${!locked&&!hasTriadPresence?`<button class="btn-triad-toggle" onclick="event.stopPropagation();(async(id)=>{await openArticleFromId(id);setTimeout(()=>{const b=document.getElementById('triadCtaBtn'); if(b) b.click();},600)})('${a.id||''}')"><svg viewBox="0 0 1500 1500" aria-hidden="true" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px"><use href="#gustema-mark"/></svg>${l('triadCta')}</button>`:''}
-      ${a.url&&!locked?`<a class="btn-read-paper" href="${a.url}" target="_blank" rel="noopener">${l('read')} ↗</a>`:''}
+      <button class="btn-cite-toggle" onclick="toggleCardCite('${a.id||''}')">${lang==='sv'?'Citera':'Cite'}</button>
       <button class="btn-share-v2" onclick="openShareFor(${JSON.stringify({title:a.title,articleId:a.id||'',sourceUrl:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">${lang==='sv'?'Dela':'Share'}</button>
+      ${a.url&&!locked?`<a class="btn-read-paper" href="${a.url}" target="_blank" rel="noopener">${l('read')} ↗</a>`:''}
       <button class="btn-save-v2${isSaved?' saved':''}" id="sv-${cid}" onclick="toggleSaveArticle('${a.id}',this)">${isSaved?'★ '+l('saved'):'☆ '+l('save')}</button>
+    </div>
+    <div class="card-cite-v2" style="display:${st.cite?'block':'none'}">
+      <div class="cite-eyebrow-v2">APA 7</div>
+      <div class="cite-text-v2" data-plain="${(buildApaCitation(a)||'').replace(/"/g,'&quot;')}">${buildApaCitation(a)}</div>
+      <div class="cite-actions-v2">
+        <div class="cite-note-v2">${lang==='sv'?'Volym & sidor utelämnade när de saknas i källdata (korrekt enligt APA).':'Volume & pages omitted when missing in source data (correct per APA).'}</div>
+        <button class="cite-copy-btn-v2" onclick="citeCopyToClipboard('${a.id||''}',this)">⧉ ${lang==='sv'?'Kopiera':'Copy'}</button>
+      </div>
     </div>
     ${!locked&&hasPremiumPayload?`
     <div class="card-triad-v2" style="display:${st.triad?'flex':'none'}">
