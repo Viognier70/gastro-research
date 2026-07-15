@@ -297,12 +297,21 @@ Deno.serve(async (req) => {
 
   // 2. Räkna affil-kön live. Head-count via count=exact + head=true.
   //    Definition: doi.org-artiklar utan institutions som inte redan
-  //    försökts affilieras.
+  //    försökts affilieras OCH som INTE är markerade irrelevant.
+  //
+  //    irrelevant=false 2026-07-15: (1) irrelevanta rader ska aldrig
+  //    backfillas → ska inte räknas i "kön"; (2) matchar exakt
+  //    idx_backfill_affiliations_queue partial-predikatet så
+  //    planneraren väljer indexet istället för seq scan över 456k.
+  //    OBS: alarm-tröskeln 'affilQueue > 1000' är kalibrerad mot den
+  //    gamla (bredare) räkningen. Nya räkningen är strikt lägre.
+  //    Justera tröskeln om vi missar alarm eller får för många.
   const { count: affilQueueRaw, error: cErr } = await supabase
     .from('articles')
     .select('*', { count: 'exact', head: true })
     .is('institutions', null)
     .is('affiliation_attempted_at', null)
+    .eq('irrelevant', false)
     .ilike('url', '%doi.org%')
   if (cErr)
     return new Response(JSON.stringify({ ok: false, error: `articles count: ${cErr.message}` }), { status: 500, headers: CORS })
