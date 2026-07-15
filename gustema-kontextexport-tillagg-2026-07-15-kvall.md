@@ -15,15 +15,16 @@
   institutions[] (svensk "Institutet") vs 6–12 i coords ("Institute").
   Fix: OR mot båda kolumnerna → markören matchar minst sig själv.
   **DELVIS verifierad i browser (KTH-markör gav 6 art.), men se ny bugg.**
+- **KEYWORD-KOLUMNBUGG LAGAD OCH DEPLOYAD ✅:** `keywords` (18 352, rik
+  data) var kanonisk men frontend läste tomma `claim_keywords` (253, dead
+  column, 0 skrivare) → produkten visade ~0 keywords i månader (lärdom
+  4+5; `|| []`-fallback gjorde den tyst). Fix: articles_public v3
+  exponerar keywords; 4 frontend-rader bytta (rad 2282 renderare + 3
+  FIELDS-strängar). **Verifierat i browser — 18 352 keywords syns nu.**
+  Kvar: migration 2c droppar claim_keywords efter några dagars drift.
 
 ### NYA KÄNDA BUGGAR (upptäckta denna session, EJ lagade)
 
-- **KEYWORD-KOLUMNBUGG (hög prioritet, hela produkten):** `keywords`
-  (18 352 ifyllda, rik data) är kanonisk, men frontend läser
-  `claim_keywords` (253, ~tom) och articles_public exponerar bara den.
-  → produkten visar nästan inga keywords sedan månader. Lärdom 4+5.
-  Fix-order klar: **gustema-order-keyword-kolumnfix.md**. Lagas oavsett
-  kartan.
 - **INSTITUTION_COORDS 62× under-coverage:** Karolinska 749 i
   institutions[] vs 12 i coords. Kartan (Map) underrepresenterar
   systematiskt icke-anglosaxiska institutioner — backfill-institutions
@@ -82,11 +83,12 @@ Bygg INTE förbi gaten — halvdöd karta rapporterar "success" (lärdom 1).
 Denna session spretade över många trådar (Explore-spec + 4–5 kart-buggar
 samtidigt) — samma mönster som födde done-spökena. Nästa session: EN
 tråd i taget. Föreslagen ordning:
-1. Keyword-kolumnfix (avgränsad, hög produktvinst, egen liten session).
-2. K1.5 färgbeslut A/B + konsolidering.
-3. Verifiera coords-feltilldelning (KTH) — kan vara allvarlig.
-4. Institution namn-unifiering (backfill).
-PCA-kartan väntar på gate — rör inte förrän embeddings mognat.
+1. K1.5 färgbeslut A/B + konsolidering till EN shared const.
+2. Verifiera coords-feltilldelning (KTH) — kan vara allvarlig.
+3. Institution namn-unifiering (backfill) + 62×-täckningen.
+4. K1.3 favicon, K1.4 blink, B5 title-tagg (småfixar, bakas in).
+KLART denna session: keyword-kolumnfixen (deployad, verifierad).
+PCA-kartan väntar på GATE A (embeddings ~27 %); GATE B nu öppen.
 
 Anon-curl duger INTE för DB-diagnos av kolumner utanför articles_public
 (blind för allt vyn ej exponerar). SQL Editor för läsfrågor är default;
