@@ -140,6 +140,68 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .synth-card{background:var(--white);border:0.5px solid var(--border-mid);border-radius:8px;padding:16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .synth-card:hover{border-color:var(--gold);box-shadow:0 2px 12px rgba(0,0,0,.04)}
 
+/* Översikt-vyn (2026-07-16, K2.2 nav-refaktor). Skeleton — moduler byggs
+   i nästa session. Bara branding, intro och navigations-genvägar till
+   Feed/Explore/Map/Syntheses. */
+.oversikt-wrap { max-width: 900px; margin: 32px auto; padding: 0 32px 64px }
+.oversikt-hero { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(160,138,85,.15) }
+.oversikt-eyebrow {
+  font-family: 'Inter','Outfit',sans-serif;
+  font-weight: 500; font-size: 10.5px;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--gustema-gold);
+  margin: 0 0 12px;
+}
+.oversikt-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 400; font-size: 34px; line-height: 1.15;
+  color: var(--gustema-ink, #3A3226);
+  margin: 0 0 14px; letter-spacing: -.005em;
+}
+.oversikt-sub {
+  font-size: 16px; line-height: 1.7; color: #3A3628;
+  max-width: 640px; margin: 0;
+}
+.oversikt-sub strong { font-weight: 600; color: var(--gustema-ink) }
+.oversikt-modules { margin: 32px 0 40px }
+.oversikt-module-placeholder {
+  padding: 24px 28px;
+  background: rgba(160,138,85,.06);
+  border: 1px dashed rgba(160,138,85,.3);
+  border-radius: 8px; max-width: 640px;
+}
+.oversikt-note {
+  font-size: 13px; line-height: 1.65;
+  color: var(--text-secondary); font-style: italic;
+  margin: 0;
+}
+.oversikt-nav { margin-top: 40px }
+.oversikt-nav-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 12px; margin-top: 12px;
+}
+.oversikt-nav-card {
+  padding: 18px 20px; background: none;
+  border: 0.5px solid var(--border-mid); border-radius: 8px;
+  cursor: pointer; text-decoration: none; color: inherit;
+  display: block; transition: border-color .15s;
+}
+.oversikt-nav-card:hover { border-color: var(--gustema-gold-dark, #836428) }
+.oversikt-nav-card-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 400;
+  color: var(--gustema-ink); margin-bottom: 6px;
+}
+.oversikt-nav-card-desc {
+  font-size: 12.5px; line-height: 1.5;
+  color: var(--text-secondary);
+}
+@media (max-width: 640px) {
+  .oversikt-wrap { padding: 0 20px 48px }
+  .oversikt-title { font-size: 28px }
+  .oversikt-nav-grid { grid-template-columns: 1fr }
+}
+
 /* EXPLORE — topic-scoped article list under the knowledge map */
 .explore-pane{max-width:1100px;margin:0 auto;padding:24px 32px 48px}
 .explore-pane-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:0.5px solid var(--border);padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap}
@@ -1186,14 +1248,59 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- APP NAV — section switcher (Feed default). Sitter direkt under topbar. -->
 <nav class="app-nav" role="tablist" aria-label="Sections">
-  <button class="app-nav-tab is-active" data-view="feed" onclick="showView('feed')" role="tab" aria-selected="true" aria-controls="view-feed">Feed</button>
+  <button class="app-nav-tab is-active" data-view="oversikt" onclick="showView('oversikt')" role="tab" aria-selected="true" aria-controls="view-oversikt">Översikt</button>
+  <button class="app-nav-tab" data-view="feed" onclick="showView('feed')" role="tab" aria-selected="false" aria-controls="view-feed">Feed</button>
   <button class="app-nav-tab" data-view="explore" onclick="showView('explore')" role="tab" aria-selected="false" aria-controls="view-explore">Explore</button>
-  <button class="app-nav-tab" data-view="syntheses" onclick="showView('syntheses')" role="tab" aria-selected="false" aria-controls="view-syntheses">Syntheses</button>
   <button class="app-nav-tab" data-view="map" onclick="showView('map')" role="tab" aria-selected="false" aria-controls="view-map">Map</button>
 </nav>
 
 <!-- APP VIEWS — Feed default (no [hidden]). Steg 2-4 flyttar innehåll hit. -->
-<div id="view-feed" class="app-view" role="tabpanel" aria-labelledby="feed-tab">
+<!-- APP VIEW: Översikt — landning från 2026-07-16. Skeleton nu; moduler i nästa session. -->
+<div id="view-oversikt" class="app-view" role="tabpanel">
+  <div class="oversikt-wrap">
+    <div class="oversikt-hero">
+      <div class="oversikt-eyebrow">Gustema</div>
+      <h1 class="oversikt-title">Research intelligence for gastronomy</h1>
+      <p class="oversikt-sub">
+        Peer-reviewed forskning översatt till tre kunskapsformer:
+        <strong>Episteme</strong> — vad forskningen fastställer.
+        <strong>Techne</strong> — hur det tillämpas.
+        <strong>Phronesis</strong> — det situerade omdömet.
+      </p>
+    </div>
+
+    <div class="oversikt-modules">
+      <div class="oversikt-module-placeholder">
+        <div class="oversikt-eyebrow">Under bygge</div>
+        <p class="oversikt-note">Översiktens moduler byggs i nästa session — dagens signaler, nya artiklar, kärnfynd per roll och uppgraderingsstatus. Just nu fungerar Översikten som ingång.</p>
+      </div>
+    </div>
+
+    <div class="oversikt-nav">
+      <div class="oversikt-eyebrow">Gå direkt till</div>
+      <div class="oversikt-nav-grid">
+        <a class="oversikt-nav-card" onclick="showView('feed')">
+          <div class="oversikt-nav-card-name">Feed</div>
+          <div class="oversikt-nav-card-desc">Senaste artiklar per yrkesroll — sök, filtrera, spara, cita.</div>
+        </a>
+        <a class="oversikt-nav-card" onclick="showView('explore')">
+          <div class="oversikt-nav-card-name">Explore</div>
+          <div class="oversikt-nav-card-desc">Ämneslandskap och samband. TRIAD-analyser klustrade per ämne.</div>
+        </a>
+        <a class="oversikt-nav-card" onclick="showView('map')">
+          <div class="oversikt-nav-card-name">Map</div>
+          <div class="oversikt-nav-card-desc">Var i världen forskningen görs. Institutioner + samarbeten på världskartan.</div>
+        </a>
+        <a class="oversikt-nav-card" onclick="showView('syntheses')">
+          <div class="oversikt-nav-card-name">Syntheses</div>
+          <div class="oversikt-nav-card-desc">Forskningsöversikter grupperade per ämne för din valda roll.</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="view-feed" class="app-view" role="tabpanel" aria-labelledby="feed-tab" hidden>
 
 <div id="returnBar" style="display:none"></div>
 <div style="background:#F8F5EF;width:100%;padding-bottom:0"><div class="spotlight-wrap" id="spotlightWrap">
@@ -3880,6 +3987,13 @@ window.closeArticleModal = function() {
 // + articles_public så vi behöver inte vänta på Feed.
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(location.search)
+  // Deep-link för vy (2026-07-16): ?view=feed|explore|map|syntheses
+  // (oversikt är default → ingen param). Kör före article-open så
+  // rätt vy syns bakom overlayn om båda är satta.
+  const viewParam = params.get('view')
+  if(viewParam && ['oversikt','feed','explore','syntheses','map'].includes(viewParam) && viewParam !== 'oversikt'){
+    try { window.showView(viewParam) } catch(e) { console.log('deep-link view failed:', e) }
+  }
   const artId = params.get('article')
   if(artId && /^[0-9a-f-]{36}$/i.test(artId)){
     setTimeout(() => { try { window.openArticleFromId(artId) } catch(e) { console.log('deep-link open failed:', e) } }, 400)
@@ -4196,10 +4310,12 @@ window.selectAll = function() {
 // vid första öppningen. _viewLoaded-flaggan sätts EFTER lyckad load — om
 // laddaren fallerar (400, timeout, throw) förblir flaggan false så att
 // ny-öppning retry:ar automatiskt.
-window._appView = 'feed'
-window._viewLoaded = { feed: true, explore: false, syntheses: false, map: false }
+// Default 2026-07-16: Översikt (K2.2). Syntheses stannar som nåbar vy
+// men är inte i tabb-raden — nås via länk från Översikt eller ?view=syntheses.
+window._appView = 'oversikt'
+window._viewLoaded = { oversikt: true, feed: false, explore: false, syntheses: false, map: false }
 window.showView = function(name){
-  const views = ['feed','explore','syntheses','map']
+  const views = ['oversikt','feed','explore','syntheses','map']
   if(!views.includes(name)) return
   window._appView = name
   views.forEach(v => {
@@ -4211,6 +4327,18 @@ window.showView = function(name){
     btn.classList.toggle('is-active', on)
     btn.setAttribute('aria-selected', String(on))
   })
+  // Deep-link (2026-07-16, samma mönster som ?article=<uuid>): uppdatera URL
+  // utan reload. Default oversikt → utan param (kort URL); övriga vyer får ?view=.
+  try {
+    const u = new URL(location.href)
+    if (name === 'oversikt') u.searchParams.delete('view')
+    else u.searchParams.set('view', name)
+    if (u.href !== location.href) history.replaceState({}, '', u)
+  } catch(_) {}
+  // Feed-data initieras automatiskt av initAuth().then(loadArticles) på rad
+  // ~4773 — laddas i bakgrund oavsett default-vy. När användaren klickar
+  // Feed-fliken är listan redan populerad. Ingen lazy-load behövs här.
+  //
   // Scrolla till top när användaren byter vy — förstasidan ska rensas.
   try { window.scrollTo({top: 0, behavior: 'instant'}) } catch(_) { window.scrollTo(0, 0) }
   // Lazy-load: fyra separata hooks. Varje sätter sin flagga bara vid success
