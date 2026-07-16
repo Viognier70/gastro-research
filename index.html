@@ -1787,6 +1787,54 @@ function toDbRole(r){ return DB_ROLE[r] || r }
 // Alla fem science-namn för OR-kedjor mot articles_public.
 const DB_ROLES_ALL = ['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher']
 
+// Shared topic → färg-mappning (2026-07-16). Konsoliderar tre tidigare
+// parallella lokala mappningar (rad 3442 Explore, 5109 worldMap, 5136
+// popup). Palett: dämpad jordnära, 5 familjer × unika nyanser + neutral
+// grå för `uncategorized` OCH global fallback (okända ämnen signalerar
+// "ej kategoriserad", inte falsk familj).
+//
+// Städat 2026-07-16:
+//   - art_food (fantom, aldrig i DB) → art_science (DB-namn)
+//   - nutrition_science borttagen (dupp av nutritional_science)
+//   - fallback #C9A84C/#E8A020 (två versioner) → #8A7B5E (var(--gustema-muted))
+const TOPIC_COLORS = {
+  // GULD-familjen
+  gastronomy:           '#C9A252',
+  flavor_science:       '#D4913E',
+  culinary_science:     '#B08A3E',
+  food_pairing:         '#D8B78A',
+  culinary_education:   '#8F6A28',
+  // LILA-familjen
+  sommellerie:          '#7A4F7E',
+  food_psychology:      '#A48AB4',
+  neurogastronomy:      '#4A2E5E',
+  food_behavior:        '#C089A4',
+  atmospherics:         '#D0B5D5',
+  experiential_dining:  '#6B3D5C',
+  // BLÅ-familjen
+  multisensory:         '#4A7BB0',
+  sensory_evaluation:   '#6C9CB8',
+  nutritional_science:  '#2E4E70',
+  crossmodal:           '#8AA8C0',
+  sensory_training:     '#708A85',
+  molecular_gastronomy: '#506E7A',
+  // GRÖN-familjen (fermentation ≠ hospitality medvetet distinkt)
+  hospitality:          '#6B8E4E',
+  food_science:         '#3A7A55',
+  fermentation_science: '#4F9B72',
+  food_technology:      '#3E5F3E',
+  servicescape:         '#7BA870',
+  // RÖD-familjen (novel_foods dämpad från #E07A4A)
+  appetite_research:    '#C25A3E',
+  novel_foods:          '#B87E58',
+  food_anthropology:    '#A04E38',
+  art_science:          '#E09665',
+  // NEUTRAL (uncategorized + global fallback)
+  uncategorized:        '#8A7B5E'
+}
+const TOPIC_COLOR_FALLBACK = '#8A7B5E'
+const getTopicColor = t => TOPIC_COLORS[t] || TOPIC_COLOR_FALLBACK
+
 // Kanoniska VISADE rollnamn — Anders beslut 2026-07-06. Använd överallt där
 // rollnamnet visas för användaren, alltid via roleLabel()/roleSubtitle(), så
 // vi aldrig får glapp mellan led. Tekniska nycklar (chip-namnen ovan) rörs ej.
@@ -3438,15 +3486,10 @@ function renderLiveMap(){
     const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
     svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
   })
-  // Topic färgkarta efter ämnesgrupp
-  const topicColors = {
-    gastronomy:'#E8A020', flavor_science:'#E8A020', culinary_science:'#E8A020', food_pairing:'#E8A020', culinary_education:'#E8A020',
-    sommellerie:'#B87CC8', food_psychology:'#B87CC8', neurogastronomy:'#B87CC8', food_behavior:'#B87CC8', atmospherics:'#B87CC8', experiential_dining:'#B87CC8',
-    multisensory:'#5A9AE8', sensory_evaluation:'#5A9AE8', nutrition_science:'#5A9AE8', nutritional_science:'#5A9AE8', crossmodal:'#5A9AE8', sensory_training:'#5A9AE8', molecular_gastronomy:'#5A9AE8',
-    hospitality:'#4AAA6A', food_science:'#4AAA6A', fermentation_science:'#4AAA6A', food_technology:'#4AAA6A', servicescape:'#4AAA6A',
-    appetite_research:'#E87040', novel_foods:'#E87040', food_anthropology:'#E87040', art_food:'#E87040'
-  }
-  const getTopicColor = t => topicColors[t] || '#C9A84C'
+  // Topic → färg: använder shared TOPIC_COLORS + getTopicColor (definierad
+  // vid rad ~1791). Tidigare lokal topicColors + fallback #C9A84C konsoli-
+  // derad 2026-07-16 så samma ämne får samma färg överallt (Explore,
+  // worldMap, popup, Feed).
 
   // Center: profession node
   // Använder roleLabel() (canonical helper från DEL A) istället för den lokala
@@ -5106,8 +5149,9 @@ window.renderWorldDots = function() {
     .attr('cy', d => worldMapProjection([d.lng, d.lat])?.[1])
     .attr('r', d => rScale(d.count))
     .attr('fill', d => {
-      const topicColors = {gastronomy:'#E8A020',sommellerie:'#B87CC8',multisensory:'#5A9AE8',hospitality:'#4AAA6A',flavor_science:'#E8A020',sensory_evaluation:'#5A9AE8',appetite_research:'#E87040',food_science:'#4AAA6A',culinary_science:'#E8A020',food_psychology:'#B87CC8',fermentation_science:'#4AAA6A',nutrition_science:'#5A9AE8',neurogastronomy:'#B87CC8',novel_foods:'#E87040',crossmodal:'#5A9AE8'}
-      return topicColors[d.dominant_topic] || '#E8A020'
+      // Använder shared getTopicColor (rad ~1836). Tidigare inline mappning
+      // + fallback #E8A020 konsoliderad 2026-07-16.
+      return getTopicColor(d.dominant_topic)
     })
     .attr('fill-opacity', d => 0.6 + 0.4 * Math.min(d.count / 20, 1))
     .attr('stroke', 'rgba(0,0,0,0.3)')
@@ -5133,7 +5177,8 @@ window.showInstPopup = function(d, event) {
   document.getElementById('instPopup')?.remove()
   const topics = d.topics || {}
   const sortedTopics = Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,6)
-  const topicColors = {gastronomy:'#C9A84C',sommellerie:'#9B6B9B',multisensory:'#4A7BC4',hospitality:'#3A8A5A',flavor_science:'#C9A84C',sensory_evaluation:'#4A7BC4',appetite_research:'#E07A4A',food_science:'#3A8A5A',fermentation_science:'#3A8A5A',neurogastronomy:'#9B6B9B',novel_foods:'#E07A4A',crossmodal:'#4A7BC4'}
+  // Använder shared getTopicColor (rad ~1836). Tidigare inline mappning
+  // + fallback #C9A84C konsoliderad 2026-07-16.
 
   const popup = document.createElement('div')
   popup.id = 'instPopup'
@@ -5150,7 +5195,7 @@ window.showInstPopup = function(d, event) {
       <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.6);text-transform:uppercase;margin-bottom:8px">Research areas</div>
       ${sortedTopics.map(([t,n])=>`
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-          <div style="width:8px;height:8px;border-radius:50%;background:${topicColors[t]||'#C9A84C'};flex-shrink:0"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:${getTopicColor(t)};flex-shrink:0"></div>
           <div style="flex:1;font-size:11px;color:rgba(255,255,255,.8)">${t.replace(/_/g,' ')}</div>
           <div style="font-size:10px;color:rgba(255,255,255,.6)">${n}</div>
         </div>
