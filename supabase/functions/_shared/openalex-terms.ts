@@ -23,6 +23,40 @@ export const MIN_TERMS = 4
 const CONCEPT_LEVEL_MIN = 2
 const CONCEPT_SCORE_MIN = 0.3
 
+// Brus-blacklist för primär (topics + OpenAlex-keywords-fältet). Observerat
+// i post-deploy-15 + dry-run-100 (2026-07-17): OpenAlex keywords-fältet
+// innehåller själv generiska ord som blir hub-noder i keyword-nätverket
+// utan att bära ämnesinformation ("Chemistry" på 80% av alla food-science-
+// artiklar bidrar inget). Filtreras bort case-insensitive.
+//
+// Concepts-fallback filtreras EJ av blacklisten — dess L>=2 + score>=0.3-
+// gate hanterar redan sin egen brus-nivå, och fallback triggar sällan
+// (0/15 post-deploy, 0/100 dry-run före filter).
+const NOISE_BLACKLIST_EXACT = new Set([
+  'chemistry',
+  'biology',
+  'food science',
+  'materials science',
+  'medicine',
+  'physics',
+  'engineering',
+  'business',
+  'marketing',
+])
+
+// Paren-brus: display_names på formen "X (disambiguering)" är typiskt
+// Wikidata-disambigueringar från OpenAlex keywords-fältet ("Quality
+// (philosophy)", "Pulp (tooth)", "Consumption (sociology)") och är
+// nästan alltid off-topic för mat/gastronomi. Filtreras med regex.
+const PAREN_NOISE_RE = /\s\([^)]+\)$/
+
+function isNoiseTerm(name: string): boolean {
+  const trimmed = name.trim()
+  if (NOISE_BLACKLIST_EXACT.has(trimmed.toLowerCase())) return true
+  if (PAREN_NOISE_RE.test(trimmed)) return true
+  return false
+}
+
 export interface OpenAlexTerm {
   display_name?: string
 }
@@ -47,7 +81,20 @@ export interface OpenAlexWorkTerms {
 export function openAlexToKeywords(work: OpenAlexWorkTerms | null | undefined): string[] {
   if (!work) return []
   const seen = new Map<string, string>()
-  const push = (name: string | undefined) => {
+
+  // Primär-push: filtrerar bort NOISE_BLACKLIST-termer och paren-brus.
+  // Se NOISE_BLACKLIST_EXACT / PAREN_NOISE_RE / isNoiseTerm ovan.
+  const pushPrimary = (name: string | undefined) => {
+    const clean = (name || '').trim()
+    if (!clean) return
+    if (isNoiseTerm(clean)) return
+    const key = clean.toLowerCase()
+    if (!seen.has(key)) seen.set(key, clean)
+  }
+
+  // Fallback-push: INGEN blacklist-filtrering (concepts har egen L/score-
+  // gate och triggar sällan; se blacklist-kommentaren).
+  const pushFallback = (name: string | undefined) => {
     const clean = (name || '').trim()
     if (!clean) return
     const key = clean.toLowerCase()
@@ -55,16 +102,17 @@ export function openAlexToKeywords(work: OpenAlexWorkTerms | null | undefined): 
   }
 
   // Primär: topics (bredare ankaretiketter) före keywords (precisare).
-  if (Array.isArray(work.topics)) for (const t of work.topics) push(t?.display_name)
-  if (Array.isArray(work.keywords)) for (const t of work.keywords) push(t?.display_name)
+  // Filter körs EFTER läsning, FÖRE fallback räknar MIN_TERMS-golvet.
+  if (Array.isArray(work.topics)) for (const t of work.topics) pushPrimary(t?.display_name)
+  if (Array.isArray(work.keywords)) for (const t of work.keywords) pushPrimary(t?.display_name)
 
-  // Fallback: bara om primär är gles.
+  // Fallback: bara om primär (efter filter) är gles.
   if (seen.size < MIN_TERMS && Array.isArray(work.concepts)) {
     for (const c of work.concepts) {
       if (seen.size >= MIN_TERMS) break
       if ((c.level ?? 0) < CONCEPT_LEVEL_MIN) continue
       if ((c.score ?? 0) < CONCEPT_SCORE_MIN) continue
-      push(c.display_name)
+      pushFallback(c.display_name)
     }
   }
 
