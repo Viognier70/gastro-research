@@ -7,29 +7,22 @@
 ---
 
 ## STATUS 2026-07-17 (pausad här — återuppta utvilad)
-Grupp A DEPLOYAD + verifierad (Del 1 get_most_cited gate→ranking, Del 2
-framåt-fix + guard + merge — alla bevisade live). Del 3 EJ påbörjad.
+Grupp A DEPLOYAD + verifierad PÅ TOPICS+KEYWORDS-GRUND (concepts→topics-bytet
+klart). Del 1 (get_most_cited gate→ranking), Del 2 (framåt-fix + guard + merge)
+— alla bevisade live, merge verifierad mot nya grunden. Del 3 EJ påbörjad.
 
-## TVÅ OLÖSTA BESLUT INNAN DEL 3 BYGGS (avgör grunden)
-1. **raw_data finns INTE** — bekräftat (två gånger idag). Concepts kan inte
-   läsas lokalt; måste re-fetchas LIVE från OpenAlex per DOI (~273 anrop
-   batch 50). Del 3-scriptet bygger på live-fetch, inte lokal parse.
-2. **concepts → topics+keywords?** OpenAlex deprecerar `concepts`. Del 2
-   (deployad) använder concepts → fungerar nu men döende grund. Sida-vid-sida
-   på 5 artiklar visade: topics = få rena hierarkiska, keywords = precisa
-   mellanting, concepts = många men brusiga ("Constant (computer programming)").
-   ÖPPEN FRÅGA (nästa session): ger topics+keywords tillräckligt MÅNGA termer
-   (~5-7) för keyword-nätverkets kopplingar, eller behövs concepts bredd
-   (~10-15) trots bruset? KRÄVER: live OpenAlex-fetch på 5 artiklar med
-   TERMANTAL per fält (concepts-filtrerat / topics / keywords / topics+keywords
-   deduped). Anders väljer mot den datan.
-   → Om topics+keywords räcker: byt grund. Då REVIDERAS Del 2 (skriv om
-   _shared/openalex-concepts.ts mot topics+keywords, bygg om daily-fetch +
-   pipeline, verifiera merge kvarstår) OCH Del 3 byggs mot samma. Tröskel-
-   konstanten (L>=2/0.3) kan då FÖRSVINNA — topics/keywords är kuraterade,
-   inget filter behövs. Löser Del 2:s brus-problem vid roten.
-   → Om concepts behövs för volym: behåll, men vet att det dör; planera
-   topics-migration separat.
+**Grund-beslut LÅST:** topics + keywords (primär) + concepts som FALLBACK när
+< MIN_TERMS (=4). Ren där topics+keywords räcker, concepts-brus bara i glesa
+artiklar. Modul: _shared/openalex-terms.ts (gamla openalex-concepts.ts raderad).
+Fallback är LÄST-verifierad men EJ empiriskt utlöst (0/5 i stickprov, alla var
+≥4). Bevisas empiriskt när Del 3 kör mot 13k (glesa finns garanterat där).
+
+**TVÅ SAKER ATT HANTERA I NÄSTA SESSION (före/under Del 3):**
+1. MELLANSKIKT: artiklar som fick keywords under GAMLA concepts-koden (mellan
+   första Grupp A-deploy och topics-bytet). Mät antal + brus-stickprov. Om få
+   + lite brus → ignorera. Om många/tydligt brus → rensa om via nya logiken
+   (de har DOI). Egen liten fråga, ej blockerande.
+2. DEL 3 backfill (nedan) — mot topics+keywords-grunden.
 
 ---
 
