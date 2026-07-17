@@ -2846,7 +2846,7 @@ async function loadTrending(){
 async function loadMostCited(){
   try{
     const body={limit_n:5}
-    if(role&&role!=='all') body.filter_role=role
+    if(role&&role!=='all') body.filter_role=toDbRole(role)
     const r=await fetch(`${SB_URL}/rest/v1/rpc/get_most_cited`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify(body)})
     const data=await r.json()
     const el=document.getElementById('citedList')
