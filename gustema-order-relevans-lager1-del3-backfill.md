@@ -24,6 +24,20 @@ Fallback är LÄST-verifierad men EJ empiriskt utlöst (0/5 i stickprov, alla va
    (de har DOI). Egen liten fråga, ej blockerande.
 2. DEL 3 backfill (nedan) — mot topics+keywords-grunden.
 
+**INFLÖDE VERIFIERAT FRISKT 2026-07-17 (korrigering):** En felaktig slutsats
+uppstod ("daily-fetch kör inte sedan igår") baserad på EN nyaste-artikel-
+timestamp. Buckets-vy (artiklar per minut/timme) visade att daily-fetch KÖR
+i sin normala PERIODISKA takt — inflödet är friskt, backfillen öser inte ur
+läckande båt. Lärdom 1 igen: en datapunkt är inte en takt; buckets avslöjade
+mönstret timestampen dolde. Merge-verifieringen var troligen giltig (post-
+deploy-artiklar fanns). Del 3 EJ blockerad.
+
+**SCRIPT MÅSTE SKRIVAS OM:** backfill-openalex-concepts.ts (otrackad på disk)
+är byggd mot GAMLA concepts. Skriv om mot _shared/openalex-terms.ts
+(topics+keywords + concepts-fallback < MIN_TERMS=4) INNAN körning. Kör INTE
+gamla scriptet. Dry-run 100 först (fallback bevisas empiriskt där), sedan
+13k med guard (keywords IS NULL, idempotent, batchat, returning).
+
 ---
 
 ## MÅL
