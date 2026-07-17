@@ -40,6 +40,40 @@
 > meningslöst. Därför MÅSTE roll kombineras med keyword/ämne för att vara
 > vasst. De två linserna hör ihop.
 
+## TVÅ ANVÄNDNINGSLÄGEN (bärande UX-modell, Anders 2026-07-17)
+
+Gustema har TVÅ distinkta sätt att möta forskningen — inte en funktion med
+inställningar, utan två lägen med olika UX-krav. All navigering ska stödja
+båda.
+
+### Läge 1 — BEVAKNING (roll + flöde)
+Användaren kommer med nyfikenhet och tid, vill hålla sig à jour. Väljer roll,
+får flödet (senaste ELLER mest relevant). Detta är Översikt/newsboard —
+passivt "vad är nytt i mitt fält". Man bläddrar och följer.
+- Ingång: roll + flödessortering (senaste/relevans)
+- Motsvarar: Översikt, feed
+
+### Läge 2 — UPPSLAG (uppgift → svar)
+Användaren kommer med en KONKRET UPPGIFT och brådska. Ex: en kock ska torka
+örter idag → söker "torkning" + "örter" (väljer ämnen ELLER skriver i
+semantiskt sökfält) → får artiklar rankade på ROLL × ÄMNE × TEKNIK, det mest
+direkt tillämpbara överst. PLUS relaterade trådar att följa beroende på var
+hen är i uppgiften. Nästa gång: "rödvinssås temperatur" — samma läge, ny
+uppgift.
+- Ingång: semantiskt sökfält (ämne + teknik), roll som kontext
+- Rankning: KOMBINATION roll × ämne × teknik — skärningen, inte endera
+- Relaterat: keyword-nätverk med SYFTE = nästa steg i uppgiften (inte
+  dekorativt "du kanske gillar"). Utövaren följer trådar: örttorkning →
+  torktemperatur → mögelrisk → smakbevarande.
+- Motsvarar: sök + relaterat-nätverk (lager 3)
+
+### Nyckelinsikt
+Läge 1 = läsa en tidning. Läge 2 = slå upp i en uppslagsbok. Relevans i
+läge 2 uppstår i SKÄRNINGEN roll × uppgift — rollen är kontext, sökningen är
+uppgiften. Detta är varför roll-som-enda-axel skavde: den försökte göra något
+statiskt av något kontextuellt. Relevans är relationell (keyword-överlapp) och
+kontextuell (vad du söker NU), inte en fast roll-etikett.
+
 ## PRODUKTVISION (ursprunglig)
 
 > **UPPDATERING 2026-07-16 — REDESIGNEN ÄR OMFLYTTNING, INTE NYBYGGE.**
