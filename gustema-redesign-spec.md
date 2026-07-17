@@ -12,6 +12,36 @@
 
 ## PRODUKTVISION (den bärande idén)
 
+> **RELEVANS-ARKITEKTUR — BESLUTAD 2026-07-17 (modell 2: innehåll som ryggrad).**
+> Roll är INTE rätt primär axel — den är en lins. Beslutad modell:
+> **Innehåll (artiklar) är ryggraden, alltid sökbart. Roll och keyword är
+> kombinerbara linser man lägger på/tar av.** Score RANKAR prominens,
+> GATE:ar inte existens. Inget blir permanent osynligt.
+>
+> Bekräftat av relevans-diagnosen (gustema-relevans-diagnos.md): 46% av
+> artiklar nådde ingen rolls tröskel och blev osynliga — det är gate-buggen.
+> Och Anders insikt: tväraxlade ämnen (produktutveckling, hållbarhet,
+> fermentering, nutrition) är KEYWORD-LINSER, inte roller — de är relevanta
+> tvärs över alla roller. LÄGG INTE till fler roller; lägg till linser.
+>
+> **Byggs i tre lager (beslutade, sekventiella):**
+> 1. **Score → ranking, inte gate.** Sökning når ALLA artiklar oavsett
+>    score. Löser 46%-osynligheten. Halvvägs byggt (keywords-kolumn återställd
+>    2026-07-15). Minsta steg, störst effekt.
+> 2. **Multi-roll.** Användaren väljer FLERA roller, flödet = union (OR över
+>    relevance_sci_*-kolumner). Billigt (ingen ny data), löser gränsfallen
+>    (vinservice når den som valt sommelier+hospitality), speglar verkligheten
+>    (många är flera saker). Första steget in i modell 2.
+> 3. **Full modell 2.** Innehåll som ryggrad, roll + keyword som kombinerbara
+>    linser (F-O8 + PCA-karta). Roll = vem du är; keyword = vad du söker nu.
+>    Störst bygge, dit redesignen redan lutar.
+>
+> Varning lager 2: väljer man alla fem roller får man allt → filtret
+> meningslöst. Därför MÅSTE roll kombineras med keyword/ämne för att vara
+> vasst. De två linserna hör ihop.
+
+## PRODUKTVISION (ursprunglig)
+
 > **UPPDATERING 2026-07-16 — REDESIGNEN ÄR OMFLYTTNING, INTE NYBYGGE.**
 > Skärmdumpar under navigations-sessionen avslöjade att Feed REDAN har
 > MOST CITED, TOP TOPICS, JOURNALS, RESEARCH PULSE, trendmoduler och ASK
