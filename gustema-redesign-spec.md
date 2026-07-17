@@ -12,6 +12,13 @@
 
 ## PRODUKTVISION (den bärande idén)
 
+> **UPPDATERING 2026-07-16 — REDESIGNEN ÄR OMFLYTTNING, INTE NYBYGGE.**
+> Skärmdumpar under navigations-sessionen avslöjade att Feed REDAN har
+> MOST CITED, TOP TOPICS, JOURNALS, RESEARCH PULSE, trendmoduler och ASK
+> THE RESEARCH — byggda och fungerande. Översikt ska FLYTTA dessa moduler
+> från Feed, inte bygga dem från noll. Billigare och tryggare. Undersök
+> vad som finns FÖRE bygge; återuppfinn inte det som redan fungerar.
+
 **Gustema är inte en söktjänst man besöker — det är en levande fält-bevakning
 man FÖLJER.** Som börsappen eller nyhetsappen man öppnar på morgonen. Man
 laddar ner den på telefonen för att hålla sig à jour med sitt gastronomiska
@@ -78,6 +85,15 @@ staplas och prioriteras för en tumme på ~380px.
 5. **Mest citerade:** tidsfönster månad/år/5 år (växlingsbart). KRÄVER
    citeringsdata per artikel — VERIFIERA mot DB innan låsning (OpenAlex har
    citeringar; kan vara backfill). Kopplar K2.3.
+   **SKÄRPNING 2026-07-16:** citeringsdata FINNS (verifierat live: Bailey's
+   3056, Ultra-Processing 2190…). MEN sannolikt bara ETT totalt
+   citation_count per artikel, INTE en tidsserie. Innan intervallen byggs:
+   verifiera om vi har citeringar-ÖVER-TID eller bara total. Om bara total →
+   "senaste månaden" kan inte betyda "citeringar under månaden"; det blir
+   "artiklar PUBLICERADE i fönstret, sorterat på total-citeringar". Bekräfta
+   med Anders vad intervallet ska betyda innan bygge. get_most_cited-RPC:n
+   (lagad + i git 2026-07-16, b5e76ee) tar redan limit + topic/keyword/roll
+   men INTE tidsfönster — det ska läggas till här.
 6. **Granskade i dag:** räknare med växande stapel (databasen andas).
 7. **Internationella samarbeten:** samförfattar-nätverk mellan institutioner.
    USP-huvudelement. Bygger på collab-data (finns i Map) — VERIFIERA att
