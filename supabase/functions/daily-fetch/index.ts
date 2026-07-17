@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { conceptsToKeywords } from '../_shared/openalex-concepts.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
@@ -207,6 +208,11 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       primary_institution: article.primary_institution || null,
       country: article.country || null,
       countries: article.countries?.length ? article.countries : null,
+      // Keywords från källan (OpenAlex-concepts, filtrerade i fetchOpenAlex-
+      // Page). PubMed/S2/Scopus skickar inte article.keywords → null →
+      // pipeline runSci fyller senare via merge. Så framåt-fixen påverkar
+      // bara OpenAlex-vägen; övriga källor får samma beteende som förr.
+      keywords: article.keywords?.length ? article.keywords : null,
       fetched_at: new Date().toISOString()
     })
     if (error) console.log('Save error:', error.message)
@@ -415,6 +421,9 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
       const affiliations = [...new Set(
         authorships.flatMap((a: any) => a.raw_affiliation_strings || []).filter(Boolean)
       )] as string[]
+      // OpenAlex-concepts → keywords. Filter L≥2 + score≥0.3 (delad tröskel
+      // med Del 3-backfillen). Se _shared/openalex-concepts.ts.
+      const conceptKeywords = conceptsToKeywords(w.concepts)
       return {
         title: w.title || '',
         // OpenAlex returns abstract as abstract_inverted_index, not as a
@@ -433,6 +442,7 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
         countries,
         affiliations,
         primary_institution: institutions[0] || null,
+        keywords: conceptKeywords,
         source: 'openalex', source_label: 'OpenAlex'
       }
     }).filter((a: any) => a.title.length > 5 && !isBlockedJournal(a.journal||'', a.title||'', a.abstract||''))
