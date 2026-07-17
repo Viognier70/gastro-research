@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildTriadPrompt, parseLabeledProse, validateTriad, fieldsToDbUpdate } from '../_shared/labeled-triad.ts'
-import { mergeKeywordsCaseInsensitive } from '../_shared/openalex-concepts.ts'
+import { mergeKeywordsCaseInsensitive } from '../_shared/openalex-terms.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
@@ -95,7 +95,7 @@ async function save(article: any, sci: any, triad: ReturnType<typeof parseLabele
       // Merge OpenAlex-keywords (från daily-fetch INSERT via article.keywords,
       // levererat till pipeline via claim_pipeline_batch's row_to_json(a))
       // med Haiku-genererade sci.keywords. Case-insensitive dedup i
-      // _shared/openalex-concepts.ts. Löser samtidigt buggen där tidigare
+      // _shared/openalex-terms.ts. Löser samtidigt buggen där tidigare
       // `sci.keywords || []` skrev över med tom array när Haiku returnerade
       // tomt eller parseerror.
       u.keywords = mergeKeywordsCaseInsensitive(article.keywords, sci.keywords)
