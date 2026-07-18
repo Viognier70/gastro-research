@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildTriadPrompt, parseLabeledProse, validateTriad, fieldsToDbUpdate } from '../_shared/labeled-triad.ts'
 import { mergeKeywordsCaseInsensitive } from '../_shared/openalex-terms.ts'
+import { runSci, ROLES } from '../_shared/haiku-sci.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
@@ -19,14 +20,6 @@ const HARD_TIMEOUT_MS = 100000
 // måste re-enqueueas separat.
 const TRIAD_ENABLED = Deno.env.get('TRIAD_ENABLED') !== '0'
 
-const ROLES = [
-  {role_key:'sensory_pro', role_label:'Sommelier'},
-  {role_key:'culinary_pro', role_label:'Chef'},
-  {role_key:'gastronomy_culture', role_label:'Gastronomy'},
-  {role_key:'hospitality_mgmt', role_label:'F&B Manager'},
-  {role_key:'educator_researcher', role_label:'Food Researcher & Educator'}
-]
-
 async function claimBatch(n: number) {
   const { data, error } = await supabase.rpc('claim_pipeline_batch', { batch_size: n })
   if (error) {
@@ -34,31 +27,6 @@ async function claimBatch(n: number) {
     return []
   }
   return Array.isArray(data) ? data : []
-}
-
-async function runSci(article: any) {
-  try {
-    const roleList = ROLES.map(r => `"${r.role_key}":"${r.role_label}"`).join(',')
-    const prompt = `Analyze for Gusto Science (culinary/hospitality platform).
-Title: "${(article.title||'').slice(0,200)}"
-Abstract: "${(article.abstract||'').slice(0,400)}"
-Journal: "${article.journal||''}"
-Score relevance 0-10. BE STRICT: only high if professional can directly apply in daily work.
-8-10: directly addresses core tasks. 5-7: clear indirect application. 1-4: marginal. 0: irrelevant.
-Roles: {${roleList}}
-Return ONLY JSON: {"role_scores":{"sensory_pro":0,"culinary_pro":0,"gastronomy_culture":0,"hospitality_mgmt":0,"educator_researcher":0},"keywords":["k1","k2"],"core_claim":"one precise factual finding","headline_en":"max 8 words no punctuation","study_type":"experimental|observational|review|meta-analysis|qualitative"}`
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:500, messages:[{role:'user',content:prompt}]})
-    })
-    if(!resp.ok) { const err = await resp.json().catch(()=>{}); console.log('Haiku error:', resp.status, JSON.stringify(err)); return null }
-    const d = await resp.json()
-    let t = (d.content?.[0]?.text||'{}').trim()
-    t = t.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```[\s\S]*$/,'').trim()
-    return JSON.parse(t)
-  } catch(e) { console.log('runSci error:', e.message); return null }
 }
 
 // Prompt-format, parser, validering och DB-mapping ligger i
@@ -198,7 +166,7 @@ Deno.serve(async (_req) => {
       let sci: any = null
       if (!item.sci_done && article.abstract && article.abstract.length > 50) {
         sciCalls++
-        sci = await runSci(article)
+        sci = await runSci(article, ANTHROPIC_KEY)
       }
 
       // Step 2: Determine max relevance
