@@ -320,3 +320,42 @@ Nyckel-lärdomar:
 Backfill-fn dry-run går alltid, live kräver server-side re-enable.
 
 ## Del 3 KLART. Nästa initiativ öppet.
+
+---
+
+## SYNLIGHET LEVERERAD 2026-07-19 (efter backfill)
+
+**Upptäckt:** Data-skrivningen (12 948 artiklar) landade i DB men artiklarna
+var OSYNLIGA i feeden. Rotorsak: feed-filtret (loadArticles) läste
+has_episteme_${role}=is.true, som kräver episteme_* IFYLLD — men episteme_*
+fylls bara av TRIAD (Sonnet), som Metod B avsiktligt blockerade. Backfillen
+satte relevance_sci + keywords + core_claim, inte episteme. Så alla
+sci-scored artiklar (has_episteme=false) filtrerades bort från feed. De syntes
+i trending (läser keywords direkt) men inte i feed. Slutverifieringen (99%,
+20/20 rena) mätte DATA, inte SYNLIGHET — gapet fångades bara av
+produktfrågan "är det live?" verifierad mot browser.
+
+**Fix (alt B — två separata flaggor, ej OR-packning):**
+- articles_public v4 (migration 20260719150000, commit b78a8ac): lade till
+  has_sci_${role} = (relevance_sci_${role} >= 5) för alla 5 roller.
+  has_episteme_${role} OFÖRÄNDRAD (fortsatt "full TRIAD").
+  Varför separata flaggor: OR-packning (has_episteme = episteme OR sci) skulle
+  gett Pro-users fel "Upgrade for TRIAD"-knapp på sci-only artiklar. Separata
+  flaggor bevarar card:s 3-läges-CTA: hasPremiumPayload→"Show TRIAD",
+  has_episteme+ej premium→"Upgrade" (Free), ej has_episteme→"Analyze with
+  TRIAD" (on-demand). Sci-only faller rätt i sista branschen.
+- Frontend loadArticles (commit 10b9953): feed-filter has_episteme=is.true →
+  or=(has_episteme.is.true,has_sci.is.true). Två URL-strängar (roll-läge +
+  all-läge). INGEN card-render-ändring — koden gav redan rätt CTA.
+
+**Blast radius:** ~27 111 artiklar synliga (13k backfillade + ~15 983 ÄLDRE
+pipeline-sci-scored som också varit osynliga i feeden i månader, score>=5 men
+aldrig TRIAD:ade). Stickprov 5 äldre: alla gastro-relevanta. Feed per roll
+~5053 → 20922-32110. Sci-only dominerar topp-200 (63-93% per roll); TRIAD
+behåller allra-toppen (senso 9.5-10 via score.desc-sortering). Ingen
+sorteringsändring behövd.
+
+**Verifierat i BROWSER 2026-07-19:** feed visar backfillade artiklar korrekt.
+Data-i-DB och synlig-för-användare är olika påståenden; endast browser-
+verifieringen bevisade leveransen. LÄRDOM: slutverifiering mot data ≠
+verifiering mot produktionsvägen. "Klart" kräver browsern, inte bara DB.
