@@ -390,3 +390,9 @@ när en Sonnet-analys faktiskt körs (artikel utan imrad_methods).
 Konsekvens: Free-nivån är mer generös än det låter. När Pro-users triggar
 nya analyser växer cachen → Free får mer TRIAD-läsning gratis över tid.
 Kvoten är prissignal för "generera NY analys", inte för "läsa TRIAD".
+
+> **NB (2026-07-19):** Kvot-semantiken ovan beskriver NULÄGET i koden (Modell A
+> — cache-läsningar gratis, kvot dras bara vid ny Sonnet-generering). Detta är
+> ÖVERSPELAT av ett beslut: se gustema-prismodell-spec.md (commit 425e365), som
+> beslutar Modell B (räkna TRIAD-VISNINGAR mot Free-X, cache eller ny). Denna
+> not uppdateras när Modell B implementeras.
