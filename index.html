@@ -2752,13 +2752,23 @@ async function loadArticles(){
       // BROWSE MODE: show most relevant for current role
       let url
       if(role!=='all'){
-        // Get top articles by relevance for this role (science-namn)
+        // Get top articles by relevance for this role (science-namn).
+        // Feed-filter läser has_episteme (full TRIAD) ELLER has_sci
+        // (score>=5, Del 3-backfill 2026-07-19). Sci-only artiklar
+        // renderar rätt CTA via card:s !hasTriadPresence-branch:
+        // "Analyze with TRIAD" (triggerar on-demand Sonnet, kvoterat).
         const orderCol = `relevance_sci_${dbRole}`
-        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&has_episteme_${dbRole}=is.true&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
+        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(has_episteme_${dbRole}.is.true,has_sci_${dbRole}.is.true)&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
-        const orClause = DB_ROLES_ALL.map(r=>'has_episteme_'+r+'.is.true').join(',')
+        // All-läge: union av has_episteme + has_sci över alla 5 roller.
+        // Två separata map-anrop (matchar lint-undantag DB_ROLES_ALL.map,
+        // säker iterator över science-namn-konstanter, ej chip-slug).
+        const orClause = [
+          ...DB_ROLES_ALL.map(r=>'has_episteme_'+r+'.is.true'),
+          ...DB_ROLES_ALL.map(r=>'has_sci_'+r+'.is.true')
+        ].join(',')
         url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(${orClause})&order=year.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
