@@ -359,3 +359,34 @@ sorteringsändring behövd.
 Data-i-DB och synlig-för-användare är olika påståenden; endast browser-
 verifieringen bevisade leveransen. LÄRDOM: slutverifiering mot data ≠
 verifiering mot produktionsvägen. "Klart" kräver browsern, inte bara DB.
+
+---
+
+## KOSTNADSSKYDD & KVOT-SEMANTIK 2026-07-19 (efter synlighet)
+
+Med ~27 111 sci-only artiklar synliga i feed med "Analyze with TRIAD"-CTA
+följer en on-demand-kostnadsexponering. Två noter:
+
+**Fix — global daglig budget-cap:** triad_budget_claim-RPC låg i git sedan
+2026-07-16 (migration 20260716120000) MEN utan call site (dead RPC).
+Aktiverad i triad-on-demand-fn (commit aa6c368) med DAILY_BUDGET=500 →
+~$17.50/dag Sonnet-max = ~$525/mån hard-cap. Frontend hanterar HTTP 503
+(commit 27d034b) med vänligt "tillfälligt otillgänglig idag"-meddelande.
+
+Placering: FÖRE kvot-claim, EFTER lock-reserv. Cache-hits (steg 5) räknas
+ALDRIG mot cappen (returnerar tidigare, kostar $0). Vid cap-hit frigörs
+lock så artikel kan analyseras nästa dag. Vid cap-hit hoppas kvot-claim
+över helt så Free-users kvot INTE spills på cap-blockad.
+
+**Kvot-semantik (fakta-kollad i kod 2026-07-19):** "3 TRIAD/månad" för Free
+betyder **3 NYA GENERERINGAR + obegränsade cache-läsningar**, inte 3
+läsningar totalt. Verifierat via kod-ordning i triad-on-demand:
+  - Rad 145-164 (cache-hit): if imrad_methods → return 'cached'
+  - Rad 233 (kvot-claim): triad_quota_claim anropad EFTER cache-return
+Cache-hit slutar utan att röra kvot. Free-user kan öppna hundratals
+redan-analyserade artiklar utan att röra sina 3/månad; kvot dras BARA
+när en Sonnet-analys faktiskt körs (artikel utan imrad_methods).
+
+Konsekvens: Free-nivån är mer generös än det låter. När Pro-users triggar
+nya analyser växer cachen → Free får mer TRIAD-läsning gratis över tid.
+Kvoten är prissignal för "generera NY analys", inte för "läsa TRIAD".
