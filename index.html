@@ -4124,13 +4124,16 @@ window.requestTriadAnalysis = async function(articleId){
     }
     return
   }
-  // Kvot slut = HTTP 402 (bekräftat i test 4). INGEN Sonnet startas.
+  // Kvot slut = HTTP 402. Modell B (2026-07-20): räknas per VISNING (cache
+  //  ELLER ny generering). Meddelandet måste därför säga "analyser" utan att
+  //  antyda "3 nya" — cachade visningar dras också. "Kostnadsfria" gör
+  //  Free-nivån explicit, "denna månad" markerar rullande period.
   if(resp.status === 402){
     stopCycle()
     btn.classList.remove('spinning')
     btn.style.display = 'none'
     if(errBox){
-      errBox.innerHTML = 'Din kvot är slut den här månaden (3 av 3). <a href="#" onclick="closeArticleModal();openModal(\'upgradeModal\');return false;">Pro ger obegränsad analys →</a>'
+      errBox.innerHTML = 'Du har använt dina 3 kostnadsfria TRIAD-analyser denna månad. <a href="#" onclick="closeArticleModal();openModal(\'upgradeModal\');return false;">Pro ger obegränsad analys →</a>'
       errBox.style.display = 'block'
     }
     return
