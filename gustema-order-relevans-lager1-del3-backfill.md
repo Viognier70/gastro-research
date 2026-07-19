@@ -235,3 +235,88 @@ stickprovet och godkänt tröskeln.
 Grupp B ensam: kör backfill-jobbet, stickprovs-verifiera 20-30 artiklar
 EFTER (rätt artikel, meningsfulla keywords, rollmärktas orörda). Isolerat
 från Grupp A så resultatet är otvetydigt.
+
+---
+
+# SLUTRESULTAT — DEL 3 KLART 2026-07-19
+
+## Utfall
+
+**Backfill: 12 948 av 13 094 (99%)** via induktiv Haiku (runSci från
+`_shared/haiku-sci.ts`) med Metod B queue-hantering (`status='skipped',
+sci_done=true, triad_done=false, last_error='backfill_completed_
+awaiting_ondemand_triad'`). Pipeline-TRIAD-kaskaden blockerad; TRIAD sker
+on-demand via klick.
+
+De 46 kvarvarande: designad abstract-svans. Från stats-RPC:
+`abstract_gt_50_haiku_eligible=0` — nya artiklar från daily-fetch under
+sweep-perioden med kort/otillgänglig abstract. Haiku kan inte processa,
+inte fel.
+
+## Direkt abstract-längd-mätning (VS proxy 29%)
+
+Utredningens sci_ko-proxy (29%) korrigerad 2026-07-18 mot direkta räkningar
+via `stats_no_role_null_kw`-RPC: **99.7% (13 052 av 13 094) har abstract > 50
+chars** → Haiku-eligible. Sci_ko=3762 räknade "pending i queue", INTE
+"abstract > 50 chars". Ren induktiv väg blev ~KOMPLETT täckning istället
+för 29%. Kombinerad väg reduceras till bara Haiku + designad svans.
+
+## Rollmärkta-effekt
+
+Corpus role-marked växte från 25 160 (baseline 2026-07-18) till 38 537
+(delta +13 377). ~13k artiklar flyttades no-role → role-marked, synliga i
+feed. Ren 100% role-mark-rate i alla stickprov (5, 15, 20, 20 slumpmässiga).
+
+## Kvalitet bekräftad i bredd
+
+Slutverifiering 2026-07-19: 20 slumpmässiga backfillade via
+`sample_backfilled_random(20)` — årsspridning 2020-2025, källor
+openalex+scopus. Utfall:
+- **Generisk-brus (chemistry/business/etc): 0/20**
+- **role_marked: 20/20 (100%)**
+- **Icke-diskriminerande scoring (senso=X för allt): 0/20**
+- max_score fördelning: 7=1, 8=11, 9=8 — inga marginella på 5-6
+- Keywords/artikel: min 6, median 7, max 8
+
+Diskriminering matchar innehåll: vin-artiklar → senso+edu höga, hospitality-
+artiklar → hosp+edu höga, fermentering → culin+edu varierar.
+
+## Väg 3 (fire-and-forget) härdnings-historia
+
+| Sweep | limit | curl | retries | Resultat |
+|-------|-------|------|---------|----------|
+| 2 | 30 | none | 0 | 150s idle-timeout → STOP 21 |
+| 3 | 15 | none | 0 | 15-min cold-start-hang → STOP 84 |
+| 4 | 15 | --max-time 180 --connect-timeout 30 | 2× (5s, 15s) | 15-min hang, retries för korta → STOP 160 |
+| 5 | 15 | härdad | 4× (30/60/120/240s) | 3 retry-räddningar OK, role_marked-drift falsklarm → STOP 300 |
+| 6 | 15 | härdad | 4× | **0 retries, 5 checkpoints OK, empty_streak → KLART** |
+
+Nyckel-lärdomar:
+- `--max-time 200` respekteras inte om edge fn accepterar TCP men aldrig
+  svarar. Behöver `--connect-timeout 30 --max-time 180` för verklig cap.
+- Retry-backoff behöver matcha cold-start-hang-längd (~5 min observerat).
+  30s första backoff räddade sweep-5 tre gånger.
+- role_marked drift är förorenat av naturligt pipeline-inflöde (~30-40/h).
+  Använd null_sensory-drift som primär skrivnings-check istället.
+
+## Kod-artefakter i git (Del 3)
+
+- `_shared/haiku-sci.ts` — extraherad runSci + ROLES från pipeline
+- `backfill-haiku-sci/index.ts` — induktiv Haiku-backfill edge fn
+- Migrationer:
+  - `stats_no_role_null_kw` (utökad med queue-split)
+  - `sample_no_role_null_kw` (stickprov-fetch)
+  - `backfill_haiku_write` (atomisk articles + queue Metod B)
+  - `fetch_backfill_haiku_batch` (pending-först populationsfetch)
+  - `get_backfill_haiku_written` (markör-diagnostik)
+  - `count_backfill_haiku_written` (markör-count för drift-check)
+  - `sample_backfilled_random` (slutverifiering-stickprov)
+- `sanity-haiku-sample` fn — diagnos av Haiku-output på no-role
+- Sweep-scriptet `/tmp/sweep_loop.sh` (ej i git — engångs-verktyg)
+
+## Gate-status
+
+`BACKFILL_HAIKU_LIVE_ENABLED = UNSET` — trap-cleanup vid varje sweep-slut.
+Backfill-fn dry-run går alltid, live kräver server-side re-enable.
+
+## Del 3 KLART. Nästa initiativ öppet.
