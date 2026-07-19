@@ -139,15 +139,30 @@ Deno.serve(async (req) => {
     .eq('id', article_id).maybeSingle()
   if (aErr || !article) return json({ status: 'error', error: 'article not found' }, 404)
 
-  // 5. Cache-hit. Ingen kvot, ingen låsning. Hämta content för aktiv roll
-  //    så frontend kan rendera direkt — annars skulle free-user se sin
-  //    just-analyserade artikel som "no TRIAD yet" när de öppnar den igen.
+  // 5. Cache-hit. Modell B (2026-07-20): Free-users räknas per VISNING,
+  //    inte per generering — cachad TRIAD är samma "produkt" som ny för
+  //    användaren och kostar oss serverresurser (DB-läs) + försätter dem
+  //    i ett upplevelseläge som annars kräver Pro. Pro-users obegränsat
+  //    (triad_quota_claim returnerar 999999 för is_pro=true).
+  //    Ingen låsning (redan färdig data, ingen Sonnet-cost, ingen race).
   if (article.imrad_methods) {
+    let cacheQuotaRemaining: number | null = null
+    if (!isPro) {
+      const { data: qRem, error: qErr } = await supabase.rpc('triad_quota_claim', {
+        p_user_id: userId, p_is_pro: false
+      })
+      if (qErr) return json({ status: 'error', error: `quota_claim: ${qErr.message}` }, 500)
+      if (qRem === -1) {
+        return json({ status: 'quota_exceeded', quota_remaining: 0 }, 402)
+      }
+      cacheQuotaRemaining = qRem as number
+    }
     const { data: content } = await supabase.from('articles')
       .select(`imrad_introduction, imrad_methods, imrad_results, imrad_discussion, knowledge_explanation, episteme_${dbRole}, techne_${dbRole}, phronesis_${dbRole}`)
       .eq('id', article_id).maybeSingle()
     return json({
       status: 'cached',
+      quota_remaining: cacheQuotaRemaining,
       duration_ms: Date.now() - startedAt,
       role: dbRole,
       triad: {
