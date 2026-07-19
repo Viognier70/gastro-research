@@ -4110,6 +4110,20 @@ window.requestTriadAnalysis = async function(articleId){
     resetButton('Nätverksfel. Försök igen om en stund.')
     return
   }
+  // Global daglig budget slut = HTTP 503 (backend budget-cap, 2026-07-19).
+  // Både Free och Pro påverkas — INGEN Pro-upsell (Pro har samma tak).
+  // Meddelande på svenska; en generic "försök imorgon"-fras utan
+  // användarspecifik åtgärd.
+  if(resp.status === 503){
+    stopCycle()
+    btn.classList.remove('spinning')
+    btn.style.display = 'none'
+    if(errBox){
+      errBox.innerHTML = 'TRIAD-analys är tillfälligt otillgänglig idag (dagens budget nådd). Försök igen imorgon.'
+      errBox.style.display = 'block'
+    }
+    return
+  }
   // Kvot slut = HTTP 402 (bekräftat i test 4). INGEN Sonnet startas.
   if(resp.status === 402){
     stopCycle()
