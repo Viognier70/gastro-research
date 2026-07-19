@@ -195,11 +195,45 @@ Deno.serve(async (req) => {
     return json({ status: 'pending', pending_since_ms: 0 })
   }
 
-  // 8. Kvot-claim EFTER lås. Anthropic-cost är gate:ad bakom både lock och
-  //    quota — lock först eftersom ingen skulle vara ute efter att analysera
-  //    en artikel som just blir analyserad. Vid Sonnet-fel konsumeras kvot
-  //    ändå (accepterat trade-off — release-RPC läggs till om fel-frekvens
-  //    blir hög). Om kvot slut → RELEASE lock innan return.
+  // 7.5. Global daglig budget-cap FÖRE kvot-claim (2026-07-19). Skydd mot
+  //      systematisk klick eller komprometterad Pro-token (Pro har
+  //      kvot=999999 = i praktiken obegränsat, cache-hit-modellen
+  //      absorberar allt legitimt bruk). triad_budget_claim (migration
+  //      20260716120000) räknar dagligt via triad_budget_log.
+  //
+  //      Cache-hits (steg 5, rad 145-164) returnerar FÖRE denna punkt —
+  //      räknas ALDRIG mot dagsbudgeten (de kostar $0).
+  //
+  //      FÖRE kvot-claim (inte efter, trots att Sonnet ligger efter kvot):
+  //      om cap slår ihjäl anropet, Free-user förlorar INTE en av sina
+  //      3/mån-kvot. Kvot är ekonomisk resurs, ska inte spillas på
+  //      analys som inte utförs.
+  //
+  //      Lock frigörs vid både bErr och cap-slut så artikeln kan analyseras
+  //      nästa dag utan att fastna i triad_pending-state.
+  const DAILY_BUDGET = 500  // ~$17.50/dag max Sonnet-kostnad = ~$525/mån hard-cap
+  const { data: bRemaining, error: bErr } = await supabase.rpc('triad_budget_claim', {
+    p_budget: DAILY_BUDGET
+  })
+  if (bErr) {
+    await supabase.from('articles').update({ triad_pending: false, triad_pending_at: null }).eq('id', article_id)
+    return json({ status: 'error', error: `budget_claim: ${bErr.message}` }, 500)
+  }
+  if (bRemaining === -1) {
+    await supabase.from('articles').update({ triad_pending: false, triad_pending_at: null }).eq('id', article_id)
+    return json({
+      status: 'budget_exceeded',
+      error: 'Daily TRIAD analysis budget reached. Try again tomorrow.',
+      budget_remaining: 0
+    }, 503)
+  }
+
+  // 8. Kvot-claim EFTER lås OCH budget-cap. Anthropic-cost är gate:ad bakom
+  //    både lock, budget och quota — lock först eftersom ingen skulle vara
+  //    ute efter att analysera en artikel som just blir analyserad, budget
+  //    innan kvot så cap-blockad inte spiller Free-users kvot. Vid Sonnet-fel
+  //    konsumeras kvot ändå (accepterat trade-off — release-RPC läggs till om
+  //    fel-frekvens blir hög). Om kvot slut → RELEASE lock innan return.
   const { data: qRemaining, error: qErr } = await supabase.rpc('triad_quota_claim', {
     p_user_id: userId, p_is_pro: isPro
   })
