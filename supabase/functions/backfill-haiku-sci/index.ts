@@ -46,7 +46,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { runSci } from '../_shared/haiku-sci.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
-const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+const SB_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const ANTHROPIC_KEY  = Deno.env.get('ANTHROPIC_API_KEY') || ''
 const RATE_LIMIT_MS  = 100
 const DEFAULT_DRYRUN_LIMIT = 20

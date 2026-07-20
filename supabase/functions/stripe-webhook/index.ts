@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
-const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+const SB_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const STRIPE_SECRET = Deno.env.get('stripe_secret_key') || ''
 const STRIPE_WEBHOOK_SECRET = Deno.env.get('stripe_webhook_secret') || ''
 

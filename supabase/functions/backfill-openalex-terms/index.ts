@@ -33,7 +33,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { openAlexToKeywords, MIN_TERMS } from '../_shared/openalex-terms.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
-const SB_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+const SB_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const MAILTO = 'anders@crichton-fock.com'
 const BATCH_SIZE = 50
 const RATE_LIMIT_MS = 150
