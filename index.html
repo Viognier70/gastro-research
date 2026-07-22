@@ -164,17 +164,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 }
 .oversikt-sub strong { font-weight: 600; color: var(--gustema-ink) }
 .oversikt-modules { margin: 32px 0 40px }
-.oversikt-module-placeholder {
-  padding: 24px 28px;
-  background: rgba(160,138,85,.06);
-  border: 1px dashed rgba(160,138,85,.3);
-  border-radius: 8px; max-width: 640px;
-}
-.oversikt-note {
-  font-size: 13px; line-height: 1.65;
-  color: var(--text-secondary); font-style: italic;
-  margin: 0;
-}
 .oversikt-nav { margin-top: 40px }
 .oversikt-nav-grid {
   display: grid; grid-template-columns: repeat(2, 1fr);
@@ -200,6 +189,144 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   .oversikt-wrap { padding: 0 20px 48px }
   .oversikt-title { font-size: 28px }
   .oversikt-nav-grid { grid-template-columns: 1fr }
+}
+
+/* Översikt-modulerna (B1, 2026-07-22 — UX/IA-omstrukturering).
+   Nya id:n (#oversikt*) för att undvika krock med Feed-vyns Spotlight/Ask/
+   Pulse under övergången. B3 tar bort dubletterna. */
+.oversikt-watchbar {
+  background: linear-gradient(135deg, rgba(201,168,76,.08), rgba(160,138,85,.04));
+  border: 0.5px solid rgba(201,168,76,.25);
+  border-radius: 8px; padding: 14px 18px; margin-bottom: 24px;
+  font-family: 'Outfit', sans-serif; font-size: 13px; line-height: 1.55;
+  color: var(--text-primary);
+}
+.oversikt-watch-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gustema-gold, #A08A55); margin-bottom: 6px;
+}
+.oversikt-watch-line { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.oversikt-watch-signal { color: var(--text-secondary); }
+.oversikt-watch-signal strong { color: var(--gustema-ink, #3A3226); font-weight: 600; }
+.oversikt-watch-loading { font-size: 12px; color: var(--text-tertiary); font-style: italic; }
+
+.oversikt-lead-wrap {
+  padding: 20px 0 26px; margin-bottom: 28px;
+  border-bottom: 0.5px solid rgba(160,138,85,.2);
+}
+.oversikt-lead-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gustema-gold, #A08A55); margin-bottom: 10px;
+}
+.oversikt-lead-journal {
+  font-family: 'Outfit', sans-serif; font-size: 11px;
+  color: var(--text-tertiary); margin-bottom: 6px;
+}
+.oversikt-lead-headline {
+  font-family: 'Playfair Display', serif; font-weight: 400;
+  font-size: 26px; line-height: 1.22;
+  color: var(--gustema-ink, #3A3226); margin: 0 0 8px;
+}
+.oversikt-lead-title {
+  font-family: 'Outfit', sans-serif; font-size: 11px; color: var(--text-tertiary);
+  border-left: 2px solid rgba(160,138,85,.4); padding-left: 8px;
+  margin-bottom: 12px; line-height: 1.5;
+}
+.oversikt-lead-relevance {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--episteme, #1A3A5C); background: #E8EFF6;
+  border-radius: 3px; padding: 3px 8px; margin-bottom: 12px;
+}
+.oversikt-lead-claim {
+  font-family: 'Outfit', sans-serif; font-size: 14px; line-height: 1.65;
+  color: var(--text-primary); margin: 0 0 14px;
+}
+.oversikt-lead-cta {
+  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600;
+  color: var(--episteme, #1A3A5C); text-decoration: none;
+  border: 0.5px solid var(--episteme, #1A3A5C);
+  padding: 6px 14px; border-radius: 3px; cursor: pointer;
+  display: inline-block; transition: background .15s, color .15s;
+}
+.oversikt-lead-cta:hover { background: var(--episteme, #1A3A5C); color: #fff; }
+.oversikt-lead-loading { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 12px 0; }
+
+.oversikt-ask {
+  background: linear-gradient(135deg, rgba(26,58,92,.06), rgba(45,80,22,.04));
+  border: 0.5px solid rgba(201,168,76,.3);
+  border-radius: 10px; padding: 20px;
+  margin-bottom: 32px;
+}
+.oversikt-ask-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gustema-gold, #A08A55); margin-bottom: 6px;
+}
+.oversikt-ask-help {
+  font-size: 12px; line-height: 1.5; color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.oversikt-ask-input {
+  width: 100%; box-sizing: border-box;
+  border: 0.5px solid var(--border-mid); border-radius: 6px;
+  padding: 11px 14px; font-size: 14px;
+  font-family: 'Outfit', sans-serif;
+  background: var(--white); color: var(--text-primary); outline: none;
+}
+.oversikt-ask-input:focus { border-color: var(--gustema-gold-dark, #836428); }
+.oversikt-ask-btn {
+  margin-top: 10px; font-size: 12px; font-weight: 600;
+  color: #fff; background: var(--gustema-ink, #3A3226);
+  border: none; padding: 8px 18px; border-radius: 3px;
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+}
+.oversikt-ask-btn:hover { background: #000; }
+.oversikt-ask-results:not(:empty) { margin-top: 14px; }
+
+.oversikt-pulse-wrap { margin-bottom: 32px; }
+.oversikt-pulse-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gustema-gold, #A08A55);
+}
+.oversikt-pulse-note {
+  font-size: 10px; color: var(--text-tertiary); font-style: italic;
+  margin: 4px 0 10px;
+}
+.oversikt-pulse-item {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 8px 0; border-bottom: 0.5px solid var(--border);
+  font-family: 'Outfit', sans-serif; font-size: 13px;
+}
+.oversikt-pulse-rank {
+  font-family: 'Playfair Display', serif;
+  color: var(--gustema-gold, #A08A55);
+  font-size: 15px; min-width: 20px;
+}
+.oversikt-pulse-kw { color: var(--text-primary); font-weight: 500; flex: 1; }
+.oversikt-pulse-trend { font-size: 11px; font-weight: 600; white-space: nowrap; }
+.oversikt-pulse-trend.rising { color: #3B6D11; }
+.oversikt-pulse-trend.declining { color: #A32D2D; }
+.oversikt-pulse-trend.new { color: #185FA5; }
+.oversikt-pulse-trend.stable { color: var(--text-tertiary); }
+.oversikt-pulse-loading { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 12px 0; }
+
+.oversikt-nav-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.oversikt-nav-more {
+  margin-top: 16px; font-size: 12px; color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+}
+.oversikt-nav-link {
+  color: var(--gustema-gold-dark, #836428); cursor: pointer;
+  text-decoration: none; font-weight: 500;
+}
+.oversikt-nav-link:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  .oversikt-nav-grid--3 { grid-template-columns: 1fr; }
+  .oversikt-lead-headline { font-size: 22px; }
+  .oversikt-ask { padding: 16px; }
+  .oversikt-watchbar { padding: 12px 14px; font-size: 12.5px; }
 }
 
 /* EXPLORE — topic-scoped article list under the knowledge map */
@@ -1270,18 +1397,41 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
 
     <div class="oversikt-modules">
-      <div class="oversikt-module-placeholder">
-        <div class="oversikt-eyebrow">Under bygge</div>
-        <p class="oversikt-note">Översiktens moduler byggs i nästa session — dagens signaler, nya artiklar, kärnfynd per roll och uppgraderingsstatus. Just nu fungerar Översikten som ingång.</p>
+      <!-- 1. Bevaknings-rad. Inloggad → delta sedan besök. Anonym → static intro. -->
+      <div class="oversikt-watchbar" id="oversiktWatchBar">
+        <div class="oversikt-watch-loading">Laddar bevakning…</div>
+      </div>
+
+      <!-- 2. Dagens huvudfynd (Spotlight-lead för vald roll). -->
+      <div class="oversikt-lead-wrap" id="oversiktSpotlightLead">
+        <div class="oversikt-lead-loading">Hämtar dagens huvudfynd…</div>
+      </div>
+
+      <!-- 3. Fråga forskningen (Ask, flyttad hit; dublett i Feed under övergången). -->
+      <div class="oversikt-ask" id="oversiktAskWrap">
+        <div class="oversikt-ask-label">◆ Fråga forskningen</div>
+        <div class="oversikt-ask-help">Skriv din arbetsfråga — få relevanta artiklar med TRIAD-analys för din roll.</div>
+        <input class="oversikt-ask-input" id="oversiktSemanticInput"
+               placeholder="t.ex. Hur påverkar musik smakupplevelsen?"
+               onkeydown="if(event.key==='Enter')doSemanticSearch('oversiktSemanticInput','oversiktSemanticResults')">
+        <button class="oversikt-ask-btn"
+                onclick="doSemanticSearch('oversiktSemanticInput','oversiktSemanticResults')">Sök forskningen →</button>
+        <div class="oversikt-ask-results" id="oversiktSemanticResults"></div>
+      </div>
+
+      <!-- 4. Forskningspuls. get_trending_keywords är rollagnostisk — samma topp-4 för alla roller (FLAGGA framtida: filter_role-param). -->
+      <div class="oversikt-pulse-wrap" id="oversiktPulse">
+        <div class="oversikt-pulse-loading">Läser fältets puls…</div>
       </div>
     </div>
 
+    <!-- 5. Gå vidare. Trimmad 4→3 nav-kort (K2.2-beslut); Syntheses blir textlänk. -->
     <div class="oversikt-nav">
-      <div class="oversikt-eyebrow">Gå direkt till</div>
-      <div class="oversikt-nav-grid">
+      <div class="oversikt-eyebrow">Gå vidare</div>
+      <div class="oversikt-nav-grid oversikt-nav-grid--3">
         <a class="oversikt-nav-card" onclick="showView('feed')">
           <div class="oversikt-nav-card-name">Feed</div>
-          <div class="oversikt-nav-card-desc">Senaste artiklar per yrkesroll — sök, filtrera, spara, cita.</div>
+          <div class="oversikt-nav-card-desc">Hela arkivet — sök, filtrera, spara och cita per yrkesroll.</div>
         </a>
         <a class="oversikt-nav-card" onclick="showView('explore')">
           <div class="oversikt-nav-card-name">Explore</div>
@@ -1289,12 +1439,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         </a>
         <a class="oversikt-nav-card" onclick="showView('map')">
           <div class="oversikt-nav-card-name">Map</div>
-          <div class="oversikt-nav-card-desc">Var i världen forskningen görs. Institutioner + samarbeten på världskartan.</div>
+          <div class="oversikt-nav-card-desc">Var i världen forskningen görs. Institutioner + samarbeten.</div>
         </a>
-        <a class="oversikt-nav-card" onclick="showView('syntheses')">
-          <div class="oversikt-nav-card-name">Syntheses</div>
-          <div class="oversikt-nav-card-desc">Forskningsöversikter grupperade per ämne för din valda roll.</div>
-        </a>
+      </div>
+      <div class="oversikt-nav-more">
+        Se även: <a class="oversikt-nav-link" onclick="showView('syntheses')">Syntheses →</a>
       </div>
     </div>
   </div>
@@ -2151,6 +2300,10 @@ function setRole(r,btn){
   }
   updateSectionIntros(r)
   updateLensPanel(r)
+  // Håll Översikt i sync med aktiv roll (bevakning + huvudfynd rerenderas
+  // per roll; pulsen är rollagnostisk men rerendas cheap). Samma pattern
+  // som loadSpotlight ovan — fyras oavsett aktiv vy för att förenkla.
+  if(typeof window.renderOversikt === 'function') window.renderOversikt()
 }
 
 /* ===== LENS SYSTEM: the moment + selector ===== */
@@ -2993,6 +3146,8 @@ async function loadCounts(){
     const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal);window._triadCount=triadTotal;loadTrending()}
     if(total>0){
+      window._totalCount = total  // Stashad för Översikts anonym-fallback (B1).
+      if(typeof window.renderOversiktWatchBar === 'function') window.renderOversiktWatchBar()
       animateCount(document.getElementById('totalCount'), total)
       const obSub=document.getElementById('obSubText')
       if(obSub){
@@ -4340,7 +4495,7 @@ window.selectAll = function() {
 // Default 2026-07-16: Översikt (K2.2). Syntheses stannar som nåbar vy
 // men är inte i tabb-raden — nås via länk från Översikt eller ?view=syntheses.
 window._appView = 'oversikt'
-window._viewLoaded = { oversikt: true, feed: false, explore: false, syntheses: false, map: false }
+window._viewLoaded = { oversikt: false, feed: false, explore: false, syntheses: false, map: false }
 window.showView = function(name){
   const views = ['oversikt','feed','explore','syntheses','map']
   if(!views.includes(name)) return
@@ -4370,6 +4525,12 @@ window.showView = function(name){
   try { window.scrollTo({top: 0, behavior: 'instant'}) } catch(_) { window.scrollTo(0, 0) }
   // Lazy-load: fyra separata hooks. Varje sätter sin flagga bara vid success
   // så vi kan retry:a genom att klicka bort och tillbaka.
+  if(name === 'oversikt' && !window._viewLoaded.oversikt){
+    Promise.resolve()
+      .then(() => (typeof window.renderOversikt === 'function') ? window.renderOversikt() : Promise.resolve())
+      .then(() => { window._viewLoaded.oversikt = true })
+      .catch(e => { console.log('Oversikt lazy-load failed', e) })
+  }
   if(name === 'explore' && !window._viewLoaded.explore){
     Promise.resolve()
       .then(() => (typeof loadKnowledgeMap === 'function') ? loadKnowledgeMap() : Promise.resolve())
@@ -4451,9 +4612,12 @@ window.showReturnSignal = async function(user) {
     bar.style.display = 'block'
   } catch(e) { console.log('Return signal error:', e) }
 }
-window.doSemanticSearch = async function() {
-  const input = document.getElementById('semanticInput')
-  const results = document.getElementById('semanticResults')
+window.doSemanticSearch = async function(inputId, resultsId) {
+  // Default = Feed-vyns id:n. Översikt anropar med sina egna id:n
+  // ('oversiktSemanticInput'/'oversiktSemanticResults') så samma edge-fn
+  // driver båda platserna utan ID-duplikat (B1, 2026-07-22).
+  const input = document.getElementById(inputId || 'semanticInput')
+  const results = document.getElementById(resultsId || 'semanticResults')
   const query = input?.value?.trim()
   if(!query || query.length < 3) return
 
@@ -4645,6 +4809,145 @@ window.loadHotProducts = async function() {
   if(!el) return
 }
 
+// === Översikt-modulerna (B1, 2026-07-22, UX/IA-omstrukturering) =========
+// Fyra sub-renders (watchbar / lead / puls) mot NYA #oversikt*-id:n. Ask-
+// widgeten delar doSemanticSearch via inputId/resultsId-params. B3 rensar
+// bort Feed-dubletterna och 5-min-loopen på rad ~4804 då.
+//
+// Data-mönster (matchar loadSpotlight): chip-slug från window.role/local-
+// Storage.gs_role → toDbRole() för DB-kolumner, roleLabel() för visning.
+// ALDRIG chip-slug rakt mot DB (bug 2026-07-12).
+//
+// Kända begränsningar:
+// - get_trending_keywords är rollagnostisk → samma topp-4 för alla roller.
+//   Not-raden i UI säger det ärligt. FRAMTIDA: lägg filter_role i RPC.
+// - Watchbar-deltat kräver inloggad + last_visit. Anonym → statisk intro
+//   (den nya besökaren ÄR utloggad; det är precis den vy vi optimerar).
+function escapeHtmlOversikt(s) {
+  if(s == null) return ''
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+}
+
+window.renderOversiktWatchBar = async function() {
+  const el = document.getElementById('oversiktWatchBar')
+  if(!el) return
+  const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'all')
+  const rLabel = rRaw === 'all' ? 'alla yrkesroller' : ((window.roleLabel && window.roleLabel(rRaw)) || rRaw)
+  const triadStr = (window._triadCount || 9714).toLocaleString('sv-SE')
+
+  let user = null
+  try { user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null } catch(_) {}
+
+  if(user) {
+    try {
+      const {data: profile} = await sb.from('profiles').select('last_visit').eq('id', user.id).single()
+      if(profile?.last_visit) {
+        const daysSince = Math.max(1, Math.floor((Date.now() - new Date(profile.last_visit).getTime()) / 86400000))
+        // Rollfiltrera bara när en riktig roll är vald; 'all' → alla nya artiklar.
+        let q = sb.from('articles_public').select('*', {count:'exact', head:true}).gt('fetched_at', profile.last_visit)
+        if(rRaw !== 'all') q = q.eq('has_episteme_' + toDbRole(rRaw), true)
+        const {count} = await q
+        el.innerHTML =
+          '<div class="oversikt-watch-eyebrow">Din bevakning · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+          '<div class="oversikt-watch-line">' +
+            '<span class="oversikt-watch-signal"><strong>' + (count || 0).toLocaleString('sv-SE') + '</strong> nya sedan ditt besök (' + (daysSince === 1 ? 'igår' : daysSince + ' dagar sedan') + ')</span>' +
+            '<span class="oversikt-watch-signal">·</span>' +
+            '<span class="oversikt-watch-signal"><strong>' + triadStr + '</strong> TRIAD-djupanalyser totalt</span>' +
+          '</div>'
+        return
+      }
+    } catch(e) { console.log('Oversikt watchbar profile fetch failed:', e) }
+    // Fall through till anonym-fallback om profil saknar last_visit.
+  }
+
+  // Anonym / första besök. Statisk introrad — den vy vi optimerar.
+  const totalStr = window._totalCount ? window._totalCount.toLocaleString('sv-SE') : null
+  const introLead = totalStr
+    ? 'Utforska <strong>' + totalStr + '</strong> artiklar inom gastronomisk forskning'
+    : 'Utforska <strong>hela beståndet</strong> av gastronomisk forskning'
+  el.innerHTML =
+    '<div class="oversikt-watch-eyebrow">Utforska · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+    '<div class="oversikt-watch-line">' +
+      '<span class="oversikt-watch-signal">' + introLead + '</span>' +
+      '<span class="oversikt-watch-signal">·</span>' +
+      '<span class="oversikt-watch-signal"><strong>' + triadStr + '</strong> TRIAD-djupanalyser</span>' +
+    '</div>'
+}
+
+window.renderOversiktLead = async function() {
+  const el = document.getElementById('oversiktSpotlightLead')
+  if(!el) return
+  el.innerHTML = '<div class="oversikt-lead-loading">Hämtar dagens huvudfynd…</div>'
+  try {
+    const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
+    const dbRole = toDbRole(rRaw)
+    const relCol = 'relevance_sci_' + dbRole
+    const rLabel = (window.roleLabel && window.roleLabel(rRaw)) || rRaw
+    const url = SB_URL + '/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,core_claim,' + relCol + ',has_episteme_' + dbRole +
+                '&has_episteme_' + dbRole + '=is.true&' + relCol + '=gte.5&order=year.desc,fetched_at.desc&limit=1'
+    const r = await fetch(url, {headers: {'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON}})
+    const arts = await r.json()
+    if(!Array.isArray(arts) || !arts.length) {
+      el.innerHTML =
+        '<div class="oversikt-lead-eyebrow">Dagens huvudfynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+        '<div class="oversikt-lead-loading">Inga TRIAD-analyserade artiklar för denna roll än — <a class="oversikt-nav-link" onclick="showView(\'feed\')">bläddra i Feed →</a></div>'
+      return
+    }
+    const a = arts[0]
+    const rel = a[relCol] || 0
+    const headline = a.headline_en || (a.title || '').slice(0, 140)
+    const showOriginal = !!a.headline_en && a.title && a.title !== a.headline_en
+    el.innerHTML =
+      '<div class="oversikt-lead-eyebrow">Dagens huvudfynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+      '<div class="oversikt-lead-journal">' + escapeHtmlOversikt(a.journal || '') + (a.year ? ' · ' + a.year : '') + '</div>' +
+      '<h2 class="oversikt-lead-headline">' + escapeHtmlOversikt(headline) + '</h2>' +
+      (showOriginal ? '<div class="oversikt-lead-title">' + escapeHtmlOversikt(a.title.slice(0, 180)) + '</div>' : '') +
+      '<span class="oversikt-lead-relevance">Relevans ' + rel + '/10</span>' +
+      (a.core_claim ? '<p class="oversikt-lead-claim">' + escapeHtmlOversikt(a.core_claim.length > 260 ? a.core_claim.slice(0, 260) + '…' : a.core_claim) + '</p>' : '') +
+      '<a class="oversikt-lead-cta" onclick="openArticleFromId(\'' + a.id + '\')">Läs analysen →</a>'
+  } catch(e) { console.log('Oversikt lead error:', e); el.innerHTML = '' }
+}
+
+window.renderOversiktPulse = async function() {
+  const el = document.getElementById('oversiktPulse')
+  if(!el) return
+  el.innerHTML = '<div class="oversikt-pulse-loading">Läser fältets puls…</div>'
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/get_trending_keywords', {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: JSON.stringify({limit_n: 4})
+    })
+    const data = await r.json()
+    if(!Array.isArray(data) || !data.length) { el.innerHTML = ''; return }
+    const rows = data.slice(0, 4).map((k, i) => {
+      const dir = k.trend_direction || 'stable'
+      const label = dir === 'rising' ? '↑ +' + (k.trend_pct || 0) + '% vs 2024'
+                  : dir === 'declining' ? '↓ ' + (k.trend_pct || 0) + '% vs 2024'
+                  : dir === 'new' ? '✦ ny 2025'
+                  : '→ stabil'
+      return '<div class="oversikt-pulse-item">' +
+        '<span class="oversikt-pulse-rank">' + (i + 1) + '</span>' +
+        '<span class="oversikt-pulse-kw">' + escapeHtmlOversikt((k.keyword || '').replace(/_/g, ' ')) + '</span>' +
+        '<span class="oversikt-pulse-trend ' + dir + '">' + label + '</span>' +
+      '</div>'
+    }).join('')
+    el.innerHTML =
+      '<div class="oversikt-pulse-eyebrow">Forskningspuls</div>' +
+      '<div class="oversikt-pulse-note">Topp-4 nyckelord i TRIAD-analyserade artiklar · samma över roller · 2025 vs 2024</div>' +
+      rows
+  } catch(e) { console.log('Oversikt pulse error:', e) }
+}
+
+window.renderOversikt = function() {
+  // Orkestrerar de tre sub-renders. Async parallellt, ingen await mellan
+  // dem — samma pattern som loadSpotlight/loadTrending/loadMostCited i
+  // renderFeed-pipelinen.
+  try { window.renderOversiktWatchBar() } catch(e) { console.log('watchbar throw', e) }
+  try { window.renderOversiktLead() } catch(e) { console.log('lead throw', e) }
+  try { window.renderOversiktPulse() } catch(e) { console.log('pulse throw', e) }
+}
+
 window.loadSpotlight = async function() {
   const el = document.getElementById('spotlightGrid')
   if(!el) return
@@ -4800,7 +5103,12 @@ window.loadSyntheses = async function() {
 // loadKnowledgeMap (Explore) och initWorldMap (Map) triggas av showView() vid
 // första öppning. Sparar ~2s på förstasidan + Anthropic-kvot om användaren
 // aldrig öppnar de tunga vyerna.
-initAuth().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u)})
+initAuth().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u);
+  // Översikt är default-vy: fyras direkt vid boot (showView triggas inte
+  // för default). loadCounts→renderOversiktWatchBar re-renderar watchbar
+  // med riktiga siffror när fetchen landat (B1, 2026-07-22).
+  if(typeof window.renderOversikt === 'function'){ window.renderOversikt(); window._viewLoaded.oversikt = true }
+})
 setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 </script>
 <!-- TRIAD MODAL — paste this block into index.html -->
