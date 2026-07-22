@@ -1402,12 +1402,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <div class="oversikt-watch-loading">Laddar bevakning…</div>
       </div>
 
-      <!-- 2. Dagens huvudfynd (Spotlight-lead för vald roll). -->
-      <div class="oversikt-lead-wrap" id="oversiktSpotlightLead">
-        <div class="oversikt-lead-loading">Hämtar dagens huvudfynd…</div>
-      </div>
-
-      <!-- 3. Fråga forskningen (Ask, flyttad hit; dublett i Feed under övergången). -->
+      <!-- 2. Fråga forskningen (PRIMÄR — upplyft till toppen, ögats första fokus).
+           Dublett i Feed under övergången; städas i B3. -->
       <div class="oversikt-ask" id="oversiktAskWrap">
         <div class="oversikt-ask-label">◆ Fråga forskningen</div>
         <div class="oversikt-ask-help">Skriv din arbetsfråga — få relevanta artiklar med TRIAD-analys för din roll.</div>
@@ -1417,6 +1413,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <button class="oversikt-ask-btn"
                 onclick="doSemanticSearch('oversiktSemanticInput','oversiktSemanticResults')">Sök forskningen →</button>
         <div class="oversikt-ask-results" id="oversiktSemanticResults"></div>
+      </div>
+
+      <!-- 3. Aktuella fynd — kurerad aptitretare (hybrid: 6m fetched_at + year-tiebreaker). -->
+      <div class="oversikt-lead-wrap" id="oversiktSpotlightLead">
+        <div class="oversikt-lead-loading">Hämtar aktuella fynd…</div>
       </div>
 
       <!-- 4. Forskningspuls. get_trending_keywords är rollagnostisk — samma topp-4 för alla roller (FLAGGA framtida: filter_role-param). -->
@@ -4837,10 +4838,15 @@ window.renderOversiktWatchBar = async function() {
 
   let user = null
   try { user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null } catch(_) {}
+  // Diagnos-logg (tillfällig 2026-07-22): om inloggad hamnar i anon-fallback
+  // vill vi kunna skilja "getUser=null" från "profile.last_visit=null" —
+  // showReturnSignal skriver last_visit fire-and-forget, race möjlig.
+  console.log('[watchbar] user=', !!user, 'role=', rRaw)
 
   if(user) {
     try {
       const {data: profile} = await sb.from('profiles').select('last_visit').eq('id', user.id).single()
+      console.log('[watchbar] profile.last_visit=', profile?.last_visit)
       if(profile?.last_visit) {
         const daysSince = Math.max(1, Math.floor((Date.now() - new Date(profile.last_visit).getTime()) / 86400000))
         // Rollfiltrera bara när en riktig roll är vald; 'all' → alla nya artiklar.
@@ -4877,33 +4883,62 @@ window.renderOversiktWatchBar = async function() {
 window.renderOversiktLead = async function() {
   const el = document.getElementById('oversiktSpotlightLead')
   if(!el) return
-  el.innerHTML = '<div class="oversikt-lead-loading">Hämtar dagens huvudfynd…</div>'
+  el.innerHTML = '<div class="oversikt-lead-loading">Hämtar aktuella fynd…</div>'
   try {
     const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
     const dbRole = toDbRole(rRaw)
     const relCol = 'relevance_sci_' + dbRole
     const rLabel = (window.roleLabel && window.roleLabel(rRaw)) || rRaw
-    const url = SB_URL + '/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,core_claim,' + relCol + ',has_episteme_' + dbRole +
-                '&has_episteme_' + dbRole + '=is.true&' + relCol + '=gte.5&order=year.desc,fetched_at.desc&limit=1'
+    // Använd samma källa som Feed:s artikellista (loadArticles, rad ~2914).
+    // Feed-filtret läser or=(has_episteme, has_sci) sedan Del 3-backfillen
+    // 2026-07-19 — has_sci-only artiklar (score≥5, ingen full TRIAD-payload
+    // än) surfas där. loadSpotlights strikta has_episteme-filter missar dem
+    // och är tom för roller med få full-TRIAD:ar (t.ex. Chef). Lärdom 3:
+    // det som ska visa samma sak måste dela källa (2026-07-22 fix).
+    //
+    // core_claim-texten ligger utanför articles_public-view; insight+limitation
+    // ligger i view och används som ingress-fallback för anon. Pro får
+    // core_claim via enrichWithPremiumIfPro efter fetch.
+    // AKTUELLA FYND — kurerad aptitretare (godkänd 2026-07-22):
+    // - Filter: added_at (fetched_at) senaste 12m — samma regel för alla roller
+    // - Sortering: relevans desc (primär) → publication_year desc (mjuk
+    //   tiebreaker för aktualitetskänsla) → fetched_at desc (final)
+    // Val av 12m istf 6m: per-roll browser-test visade Hospitality faller
+    // till 4/10 vid 6m; vid 12m: 7/10. "Senaste året" är ärligt aktuellt
+    // för forskningstips (forskning rör sig långsammare än nyheter).
+    // Enklare än adaptivt-per-roll (Alt C, marginell vinst men olika
+    // osynliga fönster per roll).
+    // core_claim-texten ligger utanför articles_public-view; insight/limitation
+    // används som ingress-fallback för anon. Pro får core_claim via
+    // enrichWithPremiumIfPro efter fetch.
+    const cutoff = new Date(Date.now() - 12 * 30 * 86400000).toISOString()
+    const url = SB_URL + '/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,insight,limitation,' + relCol + ',has_core_claim,has_episteme_' + dbRole + ',has_sci_' + dbRole +
+                '&irrelevant=is.false&or=(has_episteme_' + dbRole + '.is.true,has_sci_' + dbRole + '.is.true)' +
+                '&fetched_at=gte.' + cutoff +
+                '&order=' + relCol + '.desc.nullslast,year.desc.nullslast,fetched_at.desc&limit=1'
     const r = await fetch(url, {headers: {'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON}})
     const arts = await r.json()
     if(!Array.isArray(arts) || !arts.length) {
       el.innerHTML =
-        '<div class="oversikt-lead-eyebrow">Dagens huvudfynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
-        '<div class="oversikt-lead-loading">Inga TRIAD-analyserade artiklar för denna roll än — <a class="oversikt-nav-link" onclick="showView(\'feed\')">bläddra i Feed →</a></div>'
+        '<div class="oversikt-lead-eyebrow">Aktuella fynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+        '<div class="oversikt-lead-loading">Inga aktuella TRIAD-analyserade artiklar för denna roll — <a class="oversikt-nav-link" onclick="showView(\'feed\')">bläddra i Feed →</a></div>'
       return
     }
+    // Pro-berikning: fyller a.core_claim + full TRIAD för Pro-användare.
+    // Ingen effekt för anon; then-fallback till insight/limitation.
+    if(typeof enrichWithPremiumIfPro === 'function') { try { await enrichWithPremiumIfPro(arts) } catch(_){} }
     const a = arts[0]
     const rel = a[relCol] || 0
     const headline = a.headline_en || (a.title || '').slice(0, 140)
     const showOriginal = !!a.headline_en && a.title && a.title !== a.headline_en
+    const ingress = a.core_claim || a.insight || a.limitation || ''
     el.innerHTML =
-      '<div class="oversikt-lead-eyebrow">Dagens huvudfynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+      '<div class="oversikt-lead-eyebrow">Aktuella fynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
       '<div class="oversikt-lead-journal">' + escapeHtmlOversikt(a.journal || '') + (a.year ? ' · ' + a.year : '') + '</div>' +
       '<h2 class="oversikt-lead-headline">' + escapeHtmlOversikt(headline) + '</h2>' +
       (showOriginal ? '<div class="oversikt-lead-title">' + escapeHtmlOversikt(a.title.slice(0, 180)) + '</div>' : '') +
       '<span class="oversikt-lead-relevance">Relevans ' + rel + '/10</span>' +
-      (a.core_claim ? '<p class="oversikt-lead-claim">' + escapeHtmlOversikt(a.core_claim.length > 260 ? a.core_claim.slice(0, 260) + '…' : a.core_claim) + '</p>' : '') +
+      (ingress ? '<p class="oversikt-lead-claim">' + escapeHtmlOversikt(ingress.length > 260 ? ingress.slice(0, 260) + '…' : ingress) + '</p>' : '') +
       '<a class="oversikt-lead-cta" onclick="openArticleFromId(\'' + a.id + '\')">Läs analysen →</a>'
   } catch(e) { console.log('Oversikt lead error:', e); el.innerHTML = '' }
 }
