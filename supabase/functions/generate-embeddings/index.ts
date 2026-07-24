@@ -1,4 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { buildEmbeddingText, EMBEDDING_COLUMNS, TEXT_SLICE, type EmbeddingSource } from '../_shared/embedding-text.ts'
+
+type QueueRow = EmbeddingSource & { id: string }
 
 const OPENAI_KEY = Deno.env.get('OPENAI_API_KEY')
 const SB_URL = Deno.env.get('SUPABASE_URL')
@@ -6,7 +9,6 @@ const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 const DEFAULT_BATCH = 300         // avg 3.6k chars/artikel → 269k tokens (avg), säker mot 300k cap
 const HARD_TOKENS = 275000        // runtime-tak; om texts[] estimerar över, avvisa
-const TEXT_SLICE = 8000           // per-text cap (används endast som säkerhetsbälte; max i DB är 6 219)
 const DB_UPDATE_CONCURRENCY = 20  // parallella per-rad-updates
 
 Deno.serve(async (req) => {
@@ -19,10 +21,11 @@ Deno.serve(async (req) => {
 
   const { data: articles, error } = await supabase
     .from('articles')
-    .select('id, title, core_claim, topic, episteme_sensory_pro, episteme_culinary_pro, episteme_gastronomy_culture, episteme_hospitality_mgmt, episteme_educator_researcher')
+    .select(EMBEDDING_COLUMNS.join(','))
     .not('episteme_sensory_pro', 'is', null)
     .is('embedding', null)
     .limit(batchSize)
+    .returns<QueueRow[]>()
   console.log(`2: fetched ${articles?.length ?? 0}${error ? ` error=${error.message}` : ''}`)
 
   if (error || !articles?.length) {
@@ -53,11 +56,7 @@ Deno.serve(async (req) => {
 
   for (let i = 0; i < articles.length; i++) {
     const a = articles[i]
-    let t = [
-      a.title, a.core_claim, a.topic,
-      a.episteme_sensory_pro, a.episteme_culinary_pro, a.episteme_gastronomy_culture,
-      a.episteme_hospitality_mgmt, a.episteme_educator_researcher
-    ].filter(Boolean).join(' ').slice(0, TEXT_SLICE)
+    let t = buildEmbeddingText(a)
 
     // Patologisk artikel: >HARD_TOKENS ensam. Hård-kapa så kön inte fastnar
     // för alltid. Kan inte inträffa med TEXT_SLICE=8000 (max ~2000 tokens)
