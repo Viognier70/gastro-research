@@ -831,6 +831,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .art-triad-content.e{background:var(--episteme-light);border-left:3px solid var(--episteme)}
 .art-triad-content.t{background:var(--techne-light);border-left:3px solid var(--techne)}
 .art-triad-content.p{background:var(--phronesis-light);border-left:3px solid var(--phronesis)}
+/* Header + note i overlay: matchar triad-band-v2-header/note (Feed-korten)
+   så etiketterna läser likadant i båda vyerna. Färgen ärvs från
+   .art-triad-content.e/.t/.p via currentColor på wrappern nedan. */
+.art-triad-headnote{font-family:'Inter','Outfit',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;opacity:.85}
+.art-triad-body{font-size:13px;line-height:1.8;color:var(--text-secondary)}
+.art-triad-note{font-size:9.5px;font-style:italic;margin-top:12px;opacity:.55}
+.art-triad-content.e .art-triad-headnote,.art-triad-content.e .art-triad-note{color:var(--episteme)}
+.art-triad-content.t .art-triad-headnote,.art-triad-content.t .art-triad-note{color:var(--techne)}
+.art-triad-content.p .art-triad-headnote,.art-triad-content.p .art-triad-note{color:var(--phronesis)}
 /* TRIAD on-demand-knapp — visas när episteme_* saknas för artikeln. */
 .triad-cta{padding:22px 20px;text-align:center;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px}
 .triad-cta-lead{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;font-family:'Outfit',sans-serif}
@@ -2408,6 +2417,41 @@ function triadBlock(text,label,bc,bg,lc){
   </div>`
 }
 
+// Shared TRIAD-etiketter: sub-tagline (efter "ε EPISTEME — ...") och den
+// lilla noten under kroppen. Feed-korten och overlayen läser BÅDA härifrån
+// så de inte kan divergera — det var buggen som gjorde Techne dubbelt
+// hedgad och overlayen svagare märkt än Feed innan denna refaktor.
+//
+// Techne har MEDVETET ingen note: "AI interpretation · not peer-reviewed"
+// upprepade sig med Phronesis + footer-taggen "TRIAD: AI-generated" tre
+// gånger per kort. AI-modelleringen står precis en gång, i footern.
+// Phronesis note säger nu var i TRIAD-modellen läsaren står (reflektiv
+// prompt, inte föreskrift) — substans, ingen brasklapp.
+function triadHead(key){
+  const map = {
+    e: {sv:'vad forskningen fastställer',       en:'what the research establishes'},
+    t: {sv:'hur det tillämpas',                 en:'how to apply in practice'},
+    p: {sv:'det situerade omdömet',             en:'the situated judgment'}
+  }
+  return (map[key]||{})[lang] || (map[key]||{}).en || ''
+}
+function triadNote(key){
+  const map = {
+    e: {sv:'Extraherat från abstract · verifiera mot källa', en:'Extracted from abstract · verify with source'},
+    t: null,
+    p: {sv:'Reflektiv fråga · inte föreskrivande',           en:'Reflective prompt · not prescriptive'}
+  }
+  const m = map[key]
+  if(!m) return ''
+  return m[lang] || m.en || ''
+}
+function triadCap(key){
+  return key==='e' ? 'EPISTEME' : key==='t' ? 'TECHNE' : 'PHRONESIS'
+}
+function triadSym(key){
+  return key==='e' ? 'ε' : key==='t' ? 'τ' : 'φ'
+}
+
 function sigMark(hasBridge){
   // Both outer triangles always coloured (every article has episteme + phronesis).
   // The third form — the double grip / integration — glows sienna only when the
@@ -2622,9 +2666,6 @@ function cardHTML(a,idx){
     imradVerify:'AI-extraherad, verifiera mot källa',
     intro:'INTRODUKTION', methods:'METOD', results:'RESULTAT', discussion:'DISKUSSION',
     read:'Läs artikeln', save:'Spara', saved:'Sparad',
-    epHead:'vad forskningen fastställer', epNote:'Extraherat från abstract · verifiera mot källa',
-    tcHead:'hur det tillämpas',
-    phHead:'det situerade omdömet',
     upgradePrompt:'Uppgradera för TRIAD →',
     triadCta:'Analysera med TRIAD',
     triadCtaLead:"Den här artikeln har inte analyserats via TRIAD än."
@@ -2636,9 +2677,6 @@ function cardHTML(a,idx){
     imradVerify:'AI-extracted, verify against source',
     intro:'INTRODUCTION', methods:'METHODS', results:'RESULTS', discussion:'DISCUSSION',
     read:'Read paper', save:'Save', saved:'Saved',
-    epHead:'what the research establishes', epNote:'Extracted from abstract · verify with source',
-    tcHead:'how to apply in practice',
-    phHead:'the situated judgment',
     upgradePrompt:'Upgrade for TRIAD →',
     triadCta:'Analyze with TRIAD',
     triadCtaLead:"This article hasn't been analysed through TRIAD yet."
@@ -2691,21 +2729,21 @@ function cardHTML(a,idx){
     <div class="card-triad-v2" style="display:${st.triad?'flex':'none'}">
       ${ep.length>10?`
       <div class="triad-band-v2 triad-band-v2-e">
-        <div class="triad-band-v2-header">ε EPISTEME — ${l('epHead')}</div>
+        <div class="triad-band-v2-header">${triadSym('e')} ${triadCap('e')} — ${triadHead('e')}</div>
         <div class="triad-band-v2-body">${ep}</div>
-        <div class="triad-band-v2-note">${l('epNote')}</div>
+        ${triadNote('e')?`<div class="triad-band-v2-note">${triadNote('e')}</div>`:''}
       </div>`:''}
       ${tc.length>10?`
       <div class="triad-band-v2 triad-band-v2-t">
-        <div class="triad-band-v2-header">τ TECHNE — ${l('tcHead')}</div>
+        <div class="triad-band-v2-header">${triadSym('t')} ${triadCap('t')} — ${triadHead('t')}</div>
         <div class="triad-band-v2-body">${tc}</div>
-        <div class="triad-band-v2-note">AI interpretation · not peer-reviewed</div>
+        ${triadNote('t')?`<div class="triad-band-v2-note">${triadNote('t')}</div>`:''}
       </div>`:''}
       ${ph.length>10?`
       <div class="triad-band-v2 triad-band-v2-p">
-        <div class="triad-band-v2-header">φ PHRONESIS — ${l('phHead')}</div>
+        <div class="triad-band-v2-header">${triadSym('p')} ${triadCap('p')} — ${triadHead('p')}</div>
         <div class="triad-band-v2-body">${ph}</div>
-        <div class="triad-band-v2-note">AI synthesis · reflective prompt · not prescriptive</div>
+        ${triadNote('p')?`<div class="triad-band-v2-note">${triadNote('p')}</div>`:''}
       </div>`:''}
       ${hasIMRaD?`<span class="imrad-toggle-v2" onclick="toggleCardImrad('${a.id||''}')">${st.imrad?'▾ ':'▸ '}${l('showImrad')}</span>`:''}
       ${hasIMRaD?`
@@ -4135,8 +4173,8 @@ function openArticleOverlay(article){
   if(frameEl){
     if(hasPremium){
       frameEl.textContent = lang==='sv'
-        ? 'Analysen speglar denna studies anspråk, inte konsensus.'
-        : "The analysis reflects this study's claims, not consensus."
+        ? 'Analysen speglar denna studies anspråk, inte konsensus. Jämför med relaterad forskning nedan.'
+        : "The analysis reflects this study's claims, not consensus. Compare with related research below."
       frameEl.classList.add('on')
     } else {
       frameEl.classList.remove('on')
@@ -4164,7 +4202,18 @@ window.switchArtTriad = function(key){
   if(!_artData) return
   const content = document.getElementById('artTriadContent')
   const text = key==='e' ? _artData._ep : key==='t' ? _artData._tc : _artData._ph
-  content.textContent = text || (key==='e'?'Episteme not yet generated.':key==='t'?'Techne not yet generated.':'Phronesis not yet generated.')
+  const body = text || (key==='e'?'Episteme not yet generated.':key==='t'?'Techne not yet generated.':'Phronesis not yet generated.')
+  const note = triadNote(key)
+  // Etikett + body + (ev) note. Samma textkälla som Feed-korten (helpers
+  // triadHead/triadNote), samma stil (art-triad-headnote/note klasserna
+  // matchar triad-band-v2-header/note). Innehållet är från pipeline
+  // (Sonnet-genererad) och konsekvent behandlat som trusted både här och
+  // i card-triad-v2, så innerHTML är precedent-korrekt.
+  content.innerHTML = `
+    <div class="art-triad-headnote">${triadSym(key)} ${triadCap(key)} — ${triadHead(key)}</div>
+    <div class="art-triad-body">${body}</div>
+    ${note?`<div class="art-triad-note">${note}</div>`:''}
+  `
   content.className = 'art-triad-content '+key
   ;['E','T','P'].forEach(x => {
     const b = document.getElementById('artBtn'+x)
