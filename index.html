@@ -849,6 +849,25 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* Efter analyze: fade in de nya fälten ett-i-taget (translateY 6→0). */
 .triad-in{animation:triadIn 0.5s ease-out both}
 @keyframes triadIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* Relaterad forskning — pgvector-grannar under TRIAD (match_related-RPC).
+   Ämnesnära, INTE evidentiellt bekräftande — därför neutral rubrik "Relaterad
+   forskning" och inga procent-siffror eller "stöd för slutsats"-formuleringar. */
+.art-related{margin-top:20px;padding-top:18px;border-top:0.5px solid var(--border);display:none}
+.art-related.open{display:block}
+.art-related-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px}
+.art-related-list{display:flex;flex-direction:column;gap:0}
+.art-related-item{padding:10px 0;border-top:0.5px solid var(--border);cursor:pointer;transition:opacity .12s}
+.art-related-item:first-child{border-top:none}
+.art-related-item:hover{opacity:.72}
+.art-related-title{font-size:12.5px;color:var(--text-primary);line-height:1.5;margin-bottom:3px}
+.art-related-meta{font-size:10.5px;color:var(--text-tertiary);letter-spacing:.02em}
+.art-related-more{margin-top:12px;font-size:11px;color:var(--text-tertiary);background:none;border:0.5px solid var(--border-mid);padding:5px 14px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif}
+.art-related-more:hover{color:var(--gold);border-color:var(--gold)}
+/* Ramtext ovanför TRIAD-analysen — klargör att analysen återger vad artikeln
+   gör anspråk på, inte en fastställd sanning. Ger 'The study establishes…'
+   epistemisk hemvist. */
+.art-triad-frame{font-size:11.5px;color:var(--text-tertiary);line-height:1.6;margin-bottom:10px;font-style:italic;display:none}
+.art-triad-frame.on{display:block}
 .art-imrad{margin-top:20px;border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
 .art-imrad-toggle{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--text-tertiary);padding:10px 16px;cursor:pointer;background:var(--warm-100);border:none;width:100%;text-align:left;text-transform:uppercase}
 .art-imrad-body{padding:16px;display:none}
@@ -4109,6 +4128,23 @@ function openArticleOverlay(article){
     document.getElementById('artImrad').style.display='block'
     document.getElementById('artImradBody').innerHTML = ['introduction','methods','results','discussion'].map(k=>article['imrad_'+k]?'<div class="art-imrad-row"><div class="art-imrad-label">'+k+'</div><div class="art-imrad-text">'+article['imrad_'+k]+'</div></div>':'').join('')
   } else document.getElementById('artImrad').style.display='none'
+  // Ramtext + Relaterad forskning: bara meningsfullt när det finns en TRIAD
+  // att rama in. För CTA-vyn (branch 3) och upgrade-vyn (branch 2) skulle
+  // ramen bli falsk och grannlistan bli en distraktion från själva CTA:n.
+  const frameEl = document.getElementById('artTriadFrame')
+  if(frameEl){
+    if(hasPremium){
+      frameEl.textContent = lang==='sv'
+        ? 'Analysen speglar denna studies anspråk, inte konsensus.'
+        : "The analysis reflects this study's claims, not consensus."
+      frameEl.classList.add('on')
+    } else {
+      frameEl.classList.remove('on')
+      frameEl.textContent = ''
+    }
+  }
+  if(hasPremium && article.id) loadRelated(article.id)
+  else hideRelated()
   const rb = document.getElementById('artReadBtn')
   if(article.url){ rb.href = article.url; rb.style.display='inline-flex' } else rb.style.display='none'
   document.getElementById('artOverlay').classList.add('open')
@@ -4135,6 +4171,71 @@ window.switchArtTriad = function(key){
     if(b) b.className = 'art-triad-btn'+(x.toLowerCase()===key?' active-'+key:'')
   })
 }
+
+// ---- Relaterad forskning ----
+// match_related returnerar upp till 25 grannar (floor 0.70). Vi visar 10
+// direkt och gömmer 11-25 bakom "Visa fler". Klick öppnar grannen i samma
+// overlay via openArticleFromId (deep-link hanteras där).
+// Tomma svar (verkligt tunna ämnen där ALLT hamnar under 0.70) tystar
+// hela sektionen — hellre inget än en "vi hittade inga liknande"-not.
+window._relatedRows = []
+window._relatedShown = 10
+function hideRelated(){
+  const box = document.getElementById('artRelated')
+  const more = document.getElementById('artRelatedMore')
+  const list = document.getElementById('artRelatedList')
+  if(box) box.classList.remove('open')
+  if(more) more.style.display = 'none'
+  if(list) list.innerHTML = ''
+  window._relatedRows = []
+  window._relatedShown = 10
+}
+async function loadRelated(articleId){
+  hideRelated()
+  window._relatedFor = articleId
+  try {
+    const {data, error} = await sb.rpc('match_related', {p_article_id: articleId, p_k: 25, p_floor: 0.70})
+    // Race-skydd: användaren kan öppna en annan artikel medan RPC:n väntar
+    // (särskilt vid grannklick). Släpp tyst om vi inte längre är aktuell.
+    if(window._relatedFor !== articleId) return
+    if(error || !Array.isArray(data) || data.length === 0) return
+    window._relatedRows = data
+    window._relatedShown = Math.min(10, data.length)
+    renderRelated()
+    document.getElementById('artRelated').classList.add('open')
+    document.getElementById('artRelatedLabel').textContent =
+      lang==='sv' ? 'Relaterad forskning' : 'Related research'
+    const more = document.getElementById('artRelatedMore')
+    if(data.length > 10){
+      more.style.display = 'inline-block'
+      more.textContent = lang==='sv'
+        ? `Visa fler (${data.length - 10})`
+        : `Show more (${data.length - 10})`
+    } else {
+      more.style.display = 'none'
+    }
+  } catch(e) { /* stay silent — grannlistan är kompletterande, inte kritisk */ }
+}
+function renderRelated(){
+  const list = document.getElementById('artRelatedList')
+  if(!list) return
+  const rows = window._relatedRows.slice(0, window._relatedShown)
+  list.innerHTML = rows.map(r => {
+    const meta = [r.journal, r.year].filter(Boolean).join(' · ')
+    const title = (r.title||'').replace(/</g,'&lt;')
+    return `<div class="art-related-item" onclick="openArticleFromId('${r.id}')">
+      <div class="art-related-title">${title}</div>
+      ${meta?`<div class="art-related-meta">${meta}</div>`:''}
+    </div>`
+  }).join('')
+}
+window.expandRelated = function(){
+  window._relatedShown = window._relatedRows.length
+  renderRelated()
+  const more = document.getElementById('artRelatedMore')
+  if(more) more.style.display = 'none'
+}
+
 window.closeArticleModal = function() {
   const ov = document.getElementById('artOverlay')
   if(ov) ov.classList.remove('open')
@@ -5207,12 +5308,18 @@ setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*10
     </div>
     <div class="art-body">
       <div class="art-claim" id="artClaim" style="display:none"></div>
+      <div class="art-triad-frame" id="artTriadFrame"></div>
       <div class="art-triad-nav">
         <button class="art-triad-btn active-e" id="artBtnE" onclick="switchArtTriad('e')">ε Episteme</button>
         <button class="art-triad-btn" id="artBtnT" onclick="switchArtTriad('t')">τ Techne</button>
         <button class="art-triad-btn" id="artBtnP" onclick="switchArtTriad('p')">φ Phronesis</button>
       </div>
       <div class="art-triad-content e" id="artTriadContent"></div>
+      <div class="art-related" id="artRelated">
+        <div class="art-related-label" id="artRelatedLabel">Relaterad forskning</div>
+        <div class="art-related-list" id="artRelatedList"></div>
+        <button class="art-related-more" id="artRelatedMore" onclick="expandRelated()" style="display:none"></button>
+      </div>
       <div class="art-imrad" id="artImrad" style="display:none">
         <button class="art-imrad-toggle" onclick="toggleImrad()">IMRaD - Full Scientific Structure</button>
         <div class="art-imrad-body" id="artImradBody"></div>
