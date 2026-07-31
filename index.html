@@ -2587,6 +2587,9 @@ function _apaCleanTitle(rawTitle){
   t = t.replace(/\s+/g, ' ').trim()
   // Trailing period bort — vi lägger till egen
   t = t.replace(/\.\s*$/, '')
+  // APA 7 sentence case: versal efter kolon (subtitle). Ingestion har redan
+  // gemenerat resten, men missar ":" — capitalize första bokstaven efter ": ".
+  t = t.replace(/(:\s+)(\p{Ll})/gu, (_m, sep, ch) => sep + ch.toUpperCase())
   return t
 }
 
@@ -2596,7 +2599,11 @@ function buildApaCitation(article){
   const year = article.year ? String(article.year) : 'n.d.'
   const title = _apaCleanTitle(article.title || '')
   const journal = (article.journal || '').replace(/\.\s*$/, '').trim()
-  const url = (article.url || '').trim()
+  let url = (article.url || '').trim()
+  // Defensivt mot dubbel-prefix ('https://doi.org/https://doi.org/10.xxx/…')
+  // sett i ingestion-korrupta rader — behåll bara sista http(s)://-segmentet.
+  const httpIdx = Math.max(url.lastIndexOf('http://'), url.lastIndexOf('https://'))
+  if(httpIdx > 0) url = url.slice(httpIdx)
   // Struktur: Författare (År). Titel. Journal. URL
   // Tomma delar utelämnas snyggt (inga dubbla punkter, inga tomma raderMellanslag).
   const pieces = []
@@ -4713,6 +4720,14 @@ window.toggleImradOverlay = function(){
   document.getElementById('artImradBody')?.classList.toggle('open')
 }
 
+window.toggleArtApa = function(){
+  const box = document.getElementById('artApa')
+  const txt = document.getElementById('artApaText')
+  if(!box || !txt) return
+  if(box.hidden && _artData) txt.textContent = buildApaCitation(_artData) || ''
+  box.hidden = !box.hidden
+}
+
 window.selectObRole = function(el, r) {
   document.querySelectorAll('.ob-role').forEach(b => b.classList.remove('selected'))
   if(el) el.classList.add('selected')
@@ -5432,13 +5447,13 @@ setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*10
         <button class="art-imrad-toggle" onclick="toggleImradOverlay()">IMRaD - Full Scientific Structure</button>
         <div class="art-imrad-body" id="artImradBody"></div>
       </div>
-      <div id="artApa" style="margin-top:16px;padding:12px 16px;background:var(--warm-100);border-radius:6px;font-size:11px;color:var(--text-secondary);line-height:1.6;display:none">
+      <div id="artApa" hidden style="margin-top:16px;padding:12px 16px;background:var(--warm-100);border-radius:6px;font-size:11px;color:var(--text-secondary);line-height:1.6">
         <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px">Reference (APA 7)</div>
         <div id="artApaText"></div>
       </div>
       <div class="art-footer">
         <a href="#" id="artReadBtn" class="art-read-btn" target="_blank">Read paper</a>
-        <button onclick="document.getElementById('artApa').style.display=document.getElementById('artApa').style.display==='none'?'block':'none'" style="font-size:11px;color:var(--text-tertiary);background:none;border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Cite</button>
+        <button onclick="toggleArtApa()" style="font-size:11px;color:var(--text-tertiary);background:none;border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Cite</button>
       </div>
     </div>
   </div>
