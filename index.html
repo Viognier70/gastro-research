@@ -283,6 +283,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   cursor: pointer; font-family: 'Outfit', sans-serif;
 }
 .oversikt-ask-btn:hover { background: #000; }
+/* Klickbara [N]-citations i Ask-svar — B2-revideat, 2026-07-22 */
+.ask-cite {
+  display: inline-block; padding: 0 3px;
+  color: var(--gustema-gold-dark, #836428);
+  font-weight: 600; cursor: pointer;
+  border-radius: 2px; text-decoration: none;
+  transition: background .12s;
+}
+.ask-cite:hover { background: rgba(201,168,76,.15); text-decoration: underline; }
+.ask-source { scroll-margin-top: 80px; }
 .oversikt-ask-results:not(:empty) { margin-top: 14px; }
 
 .oversikt-pulse-wrap { margin-bottom: 32px; }
@@ -1803,10 +1813,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E87040;display:inline-block"></span>Appetite &amp; novel foods</span>
       </div>
     </div>
-    <div id="worldMapFilterBanner" style="display:none;background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.3);border-radius:6px;padding:8px 14px;margin-top:8px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <span id="worldMapFilterText" style="font-size:12px;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif"></span>
-      <button onclick="clearWorldMapFilter()" style="font-size:11px;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.4);padding:3px 10px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">× Clear filter</button>
-    </div>
     <div id="worldMapSidebar" style="width:240px;flex-shrink:0;display:none">
       <div id="worldMapCountryTitle" style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px"></div>
       <div id="worldMapInstitutions" style="background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;max-height:280px;overflow-y:auto"></div>
@@ -2488,7 +2494,7 @@ window.toggleCardTriad = function(artId){
   if(btn) btn.textContent = s.triad ? 'Dölj analys ↑' : 'Visa TRIAD-analys ↓'
   if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Visa IMRaD — full vetenskaplig struktur'
 }
-window.toggleCardImrad = function(artId){
+window.toggleImradCard = function(artId){
   const s = window.__cardExpansion.get(artId) || {triad:true, imrad:false, cite:false}
   s.imrad = !s.imrad
   window.__cardExpansion.set(artId, s)
@@ -2745,7 +2751,7 @@ function cardHTML(a,idx){
         <div class="triad-band-v2-body">${ph}</div>
         ${triadNote('p')?`<div class="triad-band-v2-note">${triadNote('p')}</div>`:''}
       </div>`:''}
-      ${hasIMRaD?`<span class="imrad-toggle-v2" onclick="toggleCardImrad('${a.id||''}')">${st.imrad?'▾ ':'▸ '}${l('showImrad')}</span>`:''}
+      ${hasIMRaD?`<span class="imrad-toggle-v2" onclick="toggleImradCard('${a.id||''}')">${st.imrad?'▾ ':'▸ '}${l('showImrad')}</span>`:''}
       ${hasIMRaD?`
       <div class="card-imrad-v2" style="display:${st.imrad?'block':'none'}">
         <div class="imrad-header-v2">▾ ${l('imradHeader')} · <em>${l('imradVerify')}</em></div>
@@ -4703,9 +4709,8 @@ window.showView = function(name){
   }
 }
 
-window.toggleImrad = function(id) {
-  const el = document.getElementById('imrad-'+id)
-  if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none'
+window.toggleImradOverlay = function(){
+  document.getElementById('artImradBody')?.classList.toggle('open')
 }
 
 window.selectObRole = function(el, r) {
@@ -4716,28 +4721,6 @@ window.selectObRole = function(el, r) {
   if(btn) { btn.removeAttribute('disabled'); btn.style.opacity='1'; btn.style.cursor='pointer' }
   const exploreBtn = document.getElementById('obExploreBtn')
   if(exploreBtn) { exploreBtn.removeAttribute('disabled'); exploreBtn.style.opacity='1'; exploreBtn.style.cursor='pointer' }
-}
-
-window.filterByCountry = function(countryName, articleCount) {
-  const banner = document.getElementById('worldMapFilterBanner')
-  const text = document.getElementById('worldMapFilterText')
-  if(banner && text) {
-    text.textContent = `Showing ${articleCount||'some'} articles from ${countryName}`
-    banner.style.display = 'flex'
-  }
-  // Scrolla till feed
-  const feed = document.getElementById('feedPane')
-  if(feed) feed.scrollIntoView({behavior:'smooth', block:'start'})
-  // Sätt country-filter
-  window._countryFilter = countryName
-  loadArticles()
-}
-
-window.clearWorldMapFilter = function() {
-  window._countryFilter = null
-  const banner = document.getElementById('worldMapFilterBanner')
-  if(banner) banner.style.display = 'none'
-  loadArticles()
 }
 
 window.showReturnSignal = async function(user) {
@@ -4763,76 +4746,152 @@ window.showReturnSignal = async function(user) {
     bar.style.display = 'block'
   } catch(e) { console.log('Return signal error:', e) }
 }
+// B2-revideat, STEG 1 (2026-07-22): Ask blir fråga→syntetiserat svar.
+// Kallar ny ask-synth-edge-fn (Sonnet 4.6) istället för semantic-search.
+// Renderar: SVAR (klickbara [N]-citations) + ärlighetsrad + KÄLLOR-lista.
+// INGEN per-user-kvot i denna steg — kommer i STEG 2 (ask_quota). Global
+// daily budget cap är AKTIV på server (ask_budget_claim).
+//
+// Namn på funktionen behålls (doSemanticSearch) eftersom alla HTML-onclicks
+// kallar den; body är helt omskriven.
 window.doSemanticSearch = async function(inputId, resultsId) {
-  // Default = Feed-vyns id:n. Översikt anropar med sina egna id:n
-  // ('oversiktSemanticInput'/'oversiktSemanticResults') så samma edge-fn
-  // driver båda platserna utan ID-duplikat (B1, 2026-07-22).
   const input = document.getElementById(inputId || 'semanticInput')
   const results = document.getElementById(resultsId || 'semanticResults')
   const query = input?.value?.trim()
-  if(!query || query.length < 3) return
+  if(!query || query.length < 5) return
+
+  // Prefix för element-id:n så feed- och översikt-instanser inte krockar.
+  const rid = (resultsId || 'semanticResults').replace(/[^a-zA-Z0-9]/g,'')
 
   results.style.display = 'block'
-  results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Searching research...</div>'
+  results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0;font-style:italic">Syntetiserar svar från peer-reviewed forskning… (kan ta 3-5 sek)</div>'
 
-  // Stabil anon-identitet för rate-limit-räkning (mjuk gräns — går att
-  // nolla genom att rensa localStorage; hård gräns kräver auth ändå).
-  let anonId = localStorage.getItem('gs_anon_id')
-  if(!anonId){ anonId = crypto.randomUUID(); localStorage.setItem('gs_anon_id', anonId) }
-
-  // Skicka user-JWT om inloggad så edge-fn kan avgöra Pro-status via profiles.
+  // Auth-token om inloggad (för framtida Pro-detektion i STEG 3).
   let token = SB_ANON
   try {
     const {data:{session}} = await sb.auth.getSession()
     if(session?.access_token) token = session.access_token
-  } catch(_) { /* fall back to anon key */ }
+  } catch(_) {}
+
+  const roleForApi = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sommelier')
+  const rLabel = (window.roleLabel && window.roleLabel(roleForApi)) || roleForApi
 
   try {
-    const resp = await fetch('https://igmkzhdovyhbfgjomrsc.supabase.co/functions/v1/semantic-search', {
+    const resp = await fetch(SB_URL + '/functions/v1/ask-synth', {
       method: 'POST',
       headers: {
         'apikey': SB_ANON,
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query, role: window.role || 'all', limit: 5, anonId })
+      body: JSON.stringify({ query, role: roleForApi, top_k: 6 })
     })
 
-    const data = await resp.json()
+    let data
+    try { data = await resp.json() } catch(_) { data = null }
 
-    if(data?.limit === true){
-      results.innerHTML = `<div style="padding:16px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;text-align:center">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Daily free limit reached</div>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">You've used today's 3 free semantic searches. Pro unlocks unlimited semantic search across 5,000+ articles.</div>
-        <button class="upgrade-btn" onclick="openModal('upgradeModal')" style="font-size:11px;padding:6px 16px">Upgrade to Pro →</button>
+    // Global daily budget hit — visar underhållsmeddelande.
+    if(data?.status === 'budget_exceeded') {
+      results.innerHTML = `<div style="padding:16px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Ask tillfälligt otillgänglig</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7">Daglig kapacitet uppnådd. Försök igen imorgon.</div>
       </div>`
       return
     }
 
-    const hits = Array.isArray(data?.results) ? data.results : []
-    if(!hits.length) {
-      results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">No results found. Try different search terms.</div>'
+    // Otillräckligt underlag — visa träffar som lista så användaren kan bläddra.
+    if(data?.status === 'insufficient_coverage') {
+      const hits = Array.isArray(data.hits_summary) ? data.hits_summary : []
+      const hitsList = hits.slice(0, 5).map((h, i) =>
+        `<div style="padding:8px 0;border-bottom:0.5px solid var(--border)">
+          <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:2px">Match ${Math.round((h.similarity||0)*100)}%</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text-primary);cursor:pointer" onclick="openArticleFromId('${h.article_id}')">${escapeHtmlOversikt((h.title||'').slice(0,140))}</div>
+        </div>`
+      ).join('')
+      results.innerHTML = `
+        <div style="padding:14px 16px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;margin-bottom:12px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold-dark,#836428);margin-bottom:6px">Otillräckligt underlag</div>
+          <div style="font-size:12.5px;color:var(--text-primary);line-height:1.6">${escapeHtmlOversikt(data.message || 'De hittade artiklarna räcker inte för att besvara frågan säkert.')}</div>
+        </div>
+        ${hits.length ? `<div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Bläddra manuellt (${hits.length} närmaste träffar)</div>${hitsList}` : ''}`
       return
     }
 
-    const cardsHtml = hits.map(a => `
-      <div style="padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id||''}')">
-        <div style="font-size:10px;color:var(--gold);margin-bottom:3px">${a.journal||''} · ${a.year||''} · <span style="color:var(--episteme)">Match: ${Math.round((a.similarity||0)*100)}%</span></div>
-        <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">${a.title?.slice(0,120)||''}</div>
-        ${(isPro && a.core_claim)?`<div style="font-size:11px;color:var(--text-secondary);line-height:1.5;font-style:italic">${a.core_claim.slice(0,150)}</div>`:''}
+    // Fel-status från edge-fn eller nätverksfel.
+    if(data?.status === 'error' || !data || data.status !== 'answer') {
+      results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">Ask är tillfälligt otillgänglig. Försök igen om en stund.${data?.error ? '<div style="font-size:10px;color:var(--text-tertiary);opacity:.6;margin-top:4px">('+escapeHtmlOversikt(String(data.error))+')</div>' : ''}</div>`
+      return
+    }
+
+    // === STATUS: 'answer' ===
+    const answer = String(data.answer || '')
+    const citations = Array.isArray(data.citations) ? data.citations : []
+    const sources = Array.isArray(data.sources) ? data.sources : []
+    const confidence = data.confidence || 'medium'
+
+    // Escapa answer-text FÖRE citation-inline-wrapping. Escape berör inte
+    // [N]-mönster, så vi kan säkert regexpa dem efteråt.
+    const escaped = escapeHtmlOversikt(answer)
+    // Wrappa [N] till klickbar span som scrollar till motsvarande källa.
+    // Endast N:n som finns i sources blir länkar; övriga lämnas som text.
+    const validRefs = new Set(sources.map(s => s.idx))
+    const answerWithLinks = escaped.replace(/\[(\d+)\]/g, (m, n) => {
+      const ref = parseInt(n, 10)
+      if(!validRefs.has(ref)) return m
+      return `<a class="ask-cite" onclick="window.__askScrollToSource('${rid}',${ref})">[${ref}]</a>`
+    })
+
+    const confBadge = {
+      high:   {label: 'Hög konfidens',   color: '#3B6D11', bg: '#E8F1DA'},
+      medium: {label: 'Medel konfidens', color: '#836428', bg: '#F5EDE3'},
+      low:    {label: 'Låg konfidens',   color: '#A32D2D', bg: '#F5E3E3'}
+    }[confidence] || {label: confidence, color: 'var(--text-tertiary)', bg: 'var(--warm-100)'}
+
+    const answerHtml = `<div style="padding:16px 18px;background:#FDFBF6;border:0.5px solid rgba(160,138,85,.3);border-radius:8px;margin-bottom:14px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;padding-bottom:8px;border-bottom:0.5px solid rgba(160,138,85,.2)">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold,#A08A55)">Svar · ${escapeHtmlOversikt(rLabel)}</span>
+        <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${confBadge.color};background:${confBadge.bg};border-radius:3px;padding:2px 8px">${confBadge.label}</span>
       </div>
-    `).join('')
+      <div style="font-family:'Outfit',sans-serif;font-size:14px;line-height:1.7;color:var(--text-primary);white-space:pre-wrap">${answerWithLinks}</div>
+    </div>`
 
-    const remaining = typeof data?.remaining === 'number' ? data.remaining : null
-    const nudge = (remaining !== null && remaining >= 0 && remaining < 3)
-      ? `<div style="font-size:10px;color:var(--text-tertiary);text-align:center;padding:8px 0;font-style:italic">${remaining} free semantic ${remaining===1?'search':'searches'} left today · <span style="color:var(--gold);cursor:pointer" onclick="openModal('upgradeModal')">unlock unlimited with Pro →</span></div>`
-      : ''
+    const honestyHtml = `<div style="margin-bottom:14px;font-size:10px;line-height:1.6;color:var(--text-tertiary);font-family:'Outfit',sans-serif;font-style:italic">
+      AI-syntes av ${sources.length} peer-reviewed artiklar · Ej peer-review-granskad · Kontrollera mot källorna nedan · <a href="/foundation#methodology" style="color:var(--gustema-gold-dark,#836428);text-decoration:none;font-style:normal">Så genereras svaret →</a>
+    </div>`
 
-    results.innerHTML = cardsHtml + nudge
+    const sourcesHeader = `<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--border-mid)">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold,#A08A55)">Källor (${sources.length})</span>
+      <span style="font-size:11px;color:var(--text-tertiary);font-family:'Outfit',sans-serif">Klicka [N] i svaret för att hoppa hit</span>
+    </div>`
+
+    const sourcesHtml = sources.map(s => {
+      const sim = Math.round((s.similarity || 0) * 100)
+      return `<div id="askSource_${rid}_${s.idx}" class="ask-source" style="padding:12px 0;border-bottom:0.5px solid var(--border);transition:background .5s">
+        <div style="display:flex;align-items:baseline;gap:8px;font-size:10px;color:var(--text-tertiary);margin-bottom:3px">
+          <span style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gustema-gold,#A08A55);min-width:22px">[${s.idx}]</span>
+          <span>${escapeHtmlOversikt(s.journal||'')}${s.year?' · '+s.year:''} · <span style="color:var(--episteme)">Match: ${sim}%</span></span>
+        </div>
+        <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px;padding-left:30px;cursor:pointer" onclick="openArticleFromId('${s.id}')">${escapeHtmlOversikt((s.title||'').slice(0, 140))}</div>
+        ${s.core_claim ? `<div style="font-size:11px;color:var(--text-secondary);line-height:1.55;padding-left:30px;font-style:italic">${escapeHtmlOversikt(s.core_claim.length > 180 ? s.core_claim.slice(0, 180) + '…' : s.core_claim)}</div>` : ''}
+      </div>`
+    }).join('')
+
+    results.innerHTML = answerHtml + honestyHtml + sourcesHeader + sourcesHtml
   } catch(e) {
-    results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0">Search unavailable. Try again.</div>'
-    console.log('Semantic search error:', e)
+    results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">Ask är tillfälligt otillgänglig. Kontrollera nätverket eller försök igen.</div>'
+    console.log('ask-synth error:', e)
   }
+}
+
+// Scroll+highlight-hjälpare för klickbara [N]-citations i Ask-svar.
+window.__askScrollToSource = function(rid, ref) {
+  const el = document.getElementById('askSource_' + rid + '_' + ref)
+  if(!el) return
+  el.scrollIntoView({behavior: 'smooth', block: 'center'})
+  // Kort gul highlight-puls så användaren ser vart de landade.
+  const orig = el.style.background
+  el.style.background = 'rgba(201,168,76,.18)'
+  setTimeout(() => { el.style.background = orig || '' }, 1200)
 }
 
 window.renderMyLibrary = async function() {
@@ -5370,7 +5429,7 @@ setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*10
         <button class="art-related-more" id="artRelatedMore" onclick="expandRelated()" style="display:none"></button>
       </div>
       <div class="art-imrad" id="artImrad" style="display:none">
-        <button class="art-imrad-toggle" onclick="toggleImrad()">IMRaD - Full Scientific Structure</button>
+        <button class="art-imrad-toggle" onclick="toggleImradOverlay()">IMRaD - Full Scientific Structure</button>
         <div class="art-imrad-body" id="artImradBody"></div>
       </div>
       <div id="artApa" style="margin-top:16px;padding:12px 16px;background:var(--warm-100);border-radius:6px;font-size:11px;color:var(--text-secondary);line-height:1.6;display:none">
@@ -5696,7 +5755,7 @@ function setWorldFilter(f) {
   renderWorldDots()
 }
 
-function filterByCountry(countryCode) {
+window.filterByCountry = function(countryCode) {
   selectedCountry = countryCode
   const sidebar = document.getElementById('worldMapSidebar')
   if(!countryCode) {
