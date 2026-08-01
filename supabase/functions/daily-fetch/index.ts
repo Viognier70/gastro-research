@@ -245,10 +245,20 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
 // behaviour); use the search year in researcher-fetch so an entry without
 // prism:coverDate at least stays inside the requested year window.
 function mapScopusEntry(e: any, defaultJournal: string, yearFallback: number): any {
-  const authorList = e['authors']?.author || []
-  const authors = authorList.map((a: any) =>
-    `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
-  ).filter(Boolean).join(', ') || e['dc:creator'] || ''
+  // Scopus author-lista finns bara i COMPLETE view (se URL-parametern i
+  // fetchScopusPage/fetchResearchers). STANDARD view ger enbart dc:creator,
+  // vilket gav 100 % singelförfattare i 13 540 rader från prod juli 2026 —
+  // hela APA-referensen blev fel. Läses defensivt: top-level e.author
+  // (COMPLETE), sen nested e.authors.author (äldre svarformat), sen
+  // dc:creator som sista fallback. Wrap enkelfall — Scopus returnerar
+  // objekt (inte enelements-array) när det bara finns en författare.
+  const rawAuthors = e['author'] ?? e['authors']?.author ?? []
+  const authorList = Array.isArray(rawAuthors) ? rawAuthors : [rawAuthors]
+  const authors = authorList.map((a: any) => {
+    const given = (a['given-name'] || a['ce:given-name'] || a['initials'] || '').trim()
+    const surname = (a['surname'] || '').trim()
+    return `${given} ${surname}`.trim()
+  }).filter(Boolean).join(', ') || e['dc:creator'] || ''
   const doi = normalizeDoi(e['prism:doi'] || '')
   const affilsRaw = e['affiliation'] || []
   const affilArr = Array.isArray(affilsRaw) ? affilsRaw : [affilsRaw]
@@ -293,7 +303,11 @@ async function fetchScopusPage(journal: string, year: number, page: number): Pro
   const start = page * 25
   try {
     const query = encodeURIComponent(`SRCTITLE("${journal}") AND PUBYEAR IS ${year}`)
-    const url = `https://api.elsevier.com/content/search/scopus?query=${query}&count=25&start=${start}&sort=-coverDate&apiKey=${SCOPUS_KEY}&httpAccept=application%2Fjson`
+    // view=COMPLETE krävs för att få hela författararrayen (annars bara
+    // dc:creator = första författaren). Kräver institutional/subscription
+    // access; utan det svarar Scopus 400. Vid re-enable av SCOPUS_ENABLED
+    // efter juli-2026-pausen: verifiera att SCOPUS_KEY har COMPLETE-rätt.
+    const url = `https://api.elsevier.com/content/search/scopus?query=${query}&count=25&start=${start}&sort=-coverDate&view=COMPLETE&apiKey=${SCOPUS_KEY}&httpAccept=application%2Fjson`
 
     const r = await fetch(url)
     if (!r.ok) {
@@ -672,7 +686,7 @@ async function fetchResearchers(): Promise<number> {
 
       let query = `AU-ID(${researcher.scopus_author_id})`
 
-      const url = `https://api.elsevier.com/content/search/scopus?query=${encodeURIComponent(query)}&count=25&start=${start}&sort=-coverDate&apiKey=${SCOPUS_KEY}&httpAccept=application%2Fjson`
+      const url = `https://api.elsevier.com/content/search/scopus?query=${encodeURIComponent(query)}&count=25&start=${start}&sort=-coverDate&view=COMPLETE&apiKey=${SCOPUS_KEY}&httpAccept=application%2Fjson`
 
       const r = await fetch(url)
       if (!r.ok) {
