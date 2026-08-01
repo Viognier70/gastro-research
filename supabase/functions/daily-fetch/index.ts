@@ -37,6 +37,19 @@ function isBlockedJournal(journal: string, title: string, abstract: string): boo
   if(BROAD.includes(j) && !FOOD_KEYWORDS.test(title + ' ' + (abstract||''))) return true
   return false
 }
+
+// Vissa upstream-flöden (Scopus, PubMed, Semantic Scholar) returnerar ibland
+// DOI-fältet som full URL istället för raw DOI. Utan strippning blev
+// `url = https://doi.org/${doi}` dubbelprefixat → 1 019 korrupta rader i prod
+// juli 2026 innan detta fångades. While-loopen tål även flerfaldig prefix
+// (rader som redan ingesterats innan fixen och hämtats tillbaka).
+function normalizeDoi(raw: string): string {
+  let s = (raw || '').trim()
+  while(/^https?:\/\/(?:dx\.)?doi\.org\//i.test(s)) {
+    s = s.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '')
+  }
+  return s
+}
 const SCOPUS_KEY = Deno.env.get('SCOPUS_KEY') || ''
 
 // Kommersiell produkt fr.o.m. 2026-07-10: Scopus akademiska API-nyckel får
@@ -236,7 +249,7 @@ function mapScopusEntry(e: any, defaultJournal: string, yearFallback: number): a
   const authors = authorList.map((a: any) =>
     `${a['given-name'] || ''} ${a['surname'] || ''}`.trim()
   ).filter(Boolean).join(', ') || e['dc:creator'] || ''
-  const doi = e['prism:doi'] || ''
+  const doi = normalizeDoi(e['prism:doi'] || '')
   const affilsRaw = e['affiliation'] || []
   const affilArr = Array.isArray(affilsRaw) ? affilsRaw : [affilsRaw]
 
@@ -328,7 +341,7 @@ async function fetchPubMedPage(query: string, year: number, page: number): Promi
       const title = articleXml.match(/<ArticleTitle>([\s\S]*?)<\/ArticleTitle>/)?.[1]?.replace(/<[^>]+>/g, '') || ''
       const abstract = articleXml.match(/<AbstractText[^>]*>([\s\S]*?)<\/AbstractText>/)?.[1]?.replace(/<[^>]+>/g, '') || ''
       const journal = articleXml.match(/<Title>([\s\S]*?)<\/Title>/)?.[1] || ''
-      const doi = articleXml.match(/<ELocationID EIdType="doi"[^>]*>([\s\S]*?)<\/ELocationID>/)?.[1] || ''
+      const doi = normalizeDoi(articleXml.match(/<ELocationID EIdType="doi"[^>]*>([\s\S]*?)<\/ELocationID>/)?.[1] || '')
       const authorMatches = articleXml.match(/<Author[^>]*>[\s\S]*?<\/Author>/g) || []
       const authors = authorMatches.map(a => {
         const last = a.match(/<LastName>(.*?)<\/LastName>/)?.[1] || ''
@@ -434,7 +447,7 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
         abstract: reconstructAbstract(w.abstract_inverted_index),
         journal: w.primary_location?.source?.display_name || '',
         year: w.publication_year || year,
-        doi: w.doi?.replace('https://doi.org/', '') || '',
+        doi: normalizeDoi(w.doi || ''),
         url: w.doi || w.id || '',
         authors: authorships.map((a: any) => a.author?.display_name || '').filter(Boolean).join(', '),
         country: countries[0] || '',
@@ -471,16 +484,19 @@ async function fetchSemanticScholar(query: string, year: number): Promise<any[]>
     const r = await fetch(url, { headers: { 'User-Agent': 'GustoScience/1.0' } })
     if (!r.ok) return []
     const d = await r.json()
-    return (d.data || []).map((p: any) => ({
-      title: p.title || '',
-      abstract: p.abstract || '',
-      journal: p.venue || '',
-      year: p.year || year,
-      doi: p.externalIds?.DOI || '',
-      url: p.externalIds?.DOI ? `https://doi.org/${p.externalIds.DOI}` : '',
-      authors: (p.authors || []).map((a: any) => a.name || '').filter(Boolean).join(', '),
-      source: 'semantic_scholar', source_label: 'Semantic Scholar'
-    })).filter((a: any) => a.title.length > 5)
+    return (d.data || []).map((p: any) => {
+      const doi = normalizeDoi(p.externalIds?.DOI || '')
+      return {
+        title: p.title || '',
+        abstract: p.abstract || '',
+        journal: p.venue || '',
+        year: p.year || year,
+        doi,
+        url: doi ? `https://doi.org/${doi}` : '',
+        authors: (p.authors || []).map((a: any) => a.name || '').filter(Boolean).join(', '),
+        source: 'semantic_scholar', source_label: 'Semantic Scholar'
+      }
+    }).filter((a: any) => a.title.length > 5)
   } catch(e: any) {
     console.log('SemanticScholar error:', e.message)
     return []
