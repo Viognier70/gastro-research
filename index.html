@@ -1794,7 +1794,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div class="section-intro si-dark">
     <span class="si-what">Where gastronomy research is produced.</span>
     <span class="si-sep">·</span>
-    <span class="si-coverage">Institution coordinates: <strong>89 of 1,809 articles</strong> — backfilling ongoing.</span>
+    <span class="si-coverage">Institution coordinates: <strong>loading…</strong></span>
     <span class="si-sep">·</span>
     <span class="si-not">Source: OpenAlex institution data</span>
   </div>
@@ -5682,33 +5682,83 @@ window.worldMapProjection = null
 window.currentWorldFilter = 'all'
 window.selectedCountry = null
 
+// Map-load fetchar HELA non-irrelevant biblioteket för att räkna verkliga
+// per-institution + per-country artikelantal client-side. Universum matchar
+// focusMapInstitution/focusMapCountry-fetchen — sidbaren och flödet visar då
+// samma tal. Prickpositionerna byggs fortfarande från institution_coords[]
+// (kan inte rita utan koordinater); coverage-copyn förklarar diskrepansen
+// mellan dot-antal och artikelantal.
+//
+// Bandwidth: fields per rad ~120 bytes för icke-coord-rader, ~300 bytes för
+// coord-rader. 10 000 rader ≈ 1,5 MB. limit=30000 är initialt tak; en
+// console.warn fyrar när svaret träffar taket så tyst underskattning
+// upptäcks (samma familj av fel som PostgREST-filtret som föll bort i
+// authors-backfillen — silent truncation i en count-visning är oacceptabel).
+const MAP_LOAD_LIMIT = 30000
 window.loadWorldMapData = async function() {
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=institution_coords,primary_institution,institution_rank,topic&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&limit=3000`, {
+    const url = `${SB_URL}/rest/v1/articles_public?select=id,institutions,institution_coords,primary_institution,institution_rank,topic,country,countries&irrelevant=is.false&limit=${MAP_LOAD_LIMIT}`
+    const r = await fetch(url, {
       headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
     })
     const articles = await r.json()
     if(!Array.isArray(articles)) return []
-    // Coverage-siffra för tomstate-meddelandet på markörer utan träffar
-    // (renderMapArticles). Tidigare bakad in som "89 of 1,809" (rad 5371) —
-    // en dålig lögn som stod kvar från 7 juli medan backfill vidare växte.
-    window.__mapCoverageWithCoords = articles.length
-    
+
+    if(articles.length === MAP_LOAD_LIMIT){
+      console.warn(`worldMap: fetch träffade limit=${MAP_LOAD_LIMIT} — biblioteket är större än map-vyns aggregeringstak. Sidebar- och country-siffror kan vara underskattade. Höj MAP_LOAD_LIMIT eller flytta aggregeringen till en RPC.`)
+    }
+
+    // Sparas för filterByCountry-dedup + coverage-copy-uppdatering.
+    window._mapArticlesRaw = articles
+
+    // Två parallella dicts byggs i samma pass:
+    //   instMap    — nyckel via institution_coords[].name → driver dot-positioner
+    //                (lat/lng/country/rank/dominant_topic)
+    //   instCounts — nyckel via institutions[] ∪ institution_coords[].name
+    //                → driver sidebar/tooltip/dot-size (unika artiklar per institution)
+    //   countryArticles — code → Set av article ids (unika, samma OR-logik
+    //                     som feed-flödets country-filter)
     const instMap = {}
+    const instCounts = {}
+    const countryArticles = {}
     for(const a of articles) {
-      if(!Array.isArray(a.institution_coords)) continue
-      for(const inst of a.institution_coords) {
-        if(!inst.name || !inst.lat || !inst.lng) continue
-        const key = inst.name
-        if(!instMap[key]) {
-          instMap[key] = {
-            name: inst.name, lat: inst.lat, lng: inst.lng,
-            country: inst.country||'', count: 0,
-            rank: null, topics: {}
+      // Institution-räknare: unionen av text[]- och coord.name-fälten.
+      // Matchar exakt feed-flödets or=(institutions.cs,institution_coords.cs).
+      const names = new Set()
+      if(Array.isArray(a.institutions)) for(const n of a.institutions) if(n) names.add(n)
+      if(Array.isArray(a.institution_coords)) for(const c of a.institution_coords) if(c?.name) names.add(c.name)
+      for(const name of names){
+        if(!instCounts[name]) instCounts[name] = new Set()
+        instCounts[name].add(a.id)
+      }
+
+      // Country-räknare: samma tre signaler som feed-flödets OR-fråga
+      // (country/countries/institution_coords.country). Endast koder — Scopus-
+      // historiska rader med namn ("Sweden") fångas inte, men de faller ur
+      // konsistent på båda sidor (sidebar och flöde matchar).
+      const codes = new Set()
+      if(a.country) codes.add(a.country)
+      if(Array.isArray(a.countries)) for(const c of a.countries) if(c) codes.add(c)
+      if(Array.isArray(a.institution_coords)) for(const c of a.institution_coords) if(c?.country) codes.add(c.country)
+      for(const code of codes){
+        if(!countryArticles[code]) countryArticles[code] = new Set()
+        countryArticles[code].add(a.id)
+      }
+
+      // Positioner (oförändrat — bara coord-having-rader landar på kartan).
+      if(Array.isArray(a.institution_coords)){
+        for(const inst of a.institution_coords) {
+          if(!inst.name || !inst.lat || !inst.lng) continue
+          const key = inst.name
+          if(!instMap[key]) {
+            instMap[key] = {
+              name: inst.name, lat: inst.lat, lng: inst.lng,
+              country: inst.country||'',
+              rank: null, topics: {}
+            }
           }
+          if(a.topic) instMap[key].topics[a.topic] = (instMap[key].topics[a.topic]||0) + 1
         }
-        instMap[key].count++
-        if(a.topic) instMap[key].topics[a.topic] = (instMap[key].topics[a.topic]||0) + 1
       }
       if(a.primary_institution && a.institution_rank) {
         if(instMap[a.primary_institution]) {
@@ -5716,11 +5766,28 @@ window.loadWorldMapData = async function() {
         }
       }
     }
-    // Beräkna dominerande topic per institution
+
+    // Överför verkligt count till varje dock + dominant topic.
     for(const key of Object.keys(instMap)){
+      instMap[key].count = instCounts[key]?.size || 0
       const t = instMap[key].topics
       instMap[key].dominant_topic = Object.keys(t).sort((a,b)=>t[b]-t[a])[0] || 'gastronomy'
     }
+
+    // Country-counts som slagbar dict — filterByCountry slår upp i O(1).
+    window._mapCountryCounts = Object.fromEntries(
+      Object.entries(countryArticles).map(([k, v]) => [k, v.size])
+    )
+
+    // Coverage-copyn: X coord-having av Y totala non-irrelevant. Ersätter
+    // den hårdkodade "89 of 1,809" som stod kvar från 7 juli medan
+    // biblioteket växte.
+    window.__mapCoverageWithCoords = articles.filter(a =>
+      Array.isArray(a.institution_coords) && a.institution_coords.length
+    ).length
+    window.__mapCoverageTotal = articles.length
+    updateMapCoverageCopy()
+
     const collabMap = {}
     for(const a of articles) {
       if(!Array.isArray(a.institution_coords) || a.institution_coords.length < 2) continue
@@ -5744,7 +5811,21 @@ window.loadWorldMapData = async function() {
     window.worldMapCollabs = Object.values(collabMap)
     console.log('Collabs:', window.worldMapCollabs.length)
     return Object.values(instMap).filter(i => i.count > 0).sort((a,b) => b.count - a.count)
-  } catch(e) { console.log('World map error:', e); return [] }
+  } catch(e) {
+    console.log('World map error:', e)
+    const el = document.querySelector('.si-coverage')
+    if(el) el.innerHTML = 'Institution coordinates: <strong>unavailable</strong>'
+    return []
+  }
+}
+
+function updateMapCoverageCopy(){
+  const el = document.querySelector('.si-coverage')
+  if(!el) return
+  const w = window.__mapCoverageWithCoords, t = window.__mapCoverageTotal
+  if(w == null || t == null) return
+  const fmt = n => n.toLocaleString('en-US')
+  el.innerHTML = `Institution coordinates: <strong>${fmt(w)} of ${fmt(t)} articles</strong> — backfilling ongoing.`
 }
 
 window.getNodeColor = function(rank, count) {
@@ -5791,8 +5872,13 @@ window.filterByCountry = function(countryCode) {
     })
   
   const countryName = insts[0]?.country || countryCode
-  document.getElementById('worldMapCountryTitle').innerHTML = 
-    `<span style="color:var(--gold)">${countryCode}</span> · ${insts.length} institutions · ${insts.reduce((s,i)=>s+i.count,0)} articles`
+  // Unika artiklar för landet enligt samma OR-logik som feed-flödet
+  // (country/countries/institution_coords.country). Ersätter den tidigare
+  // reduce((s,i)=>s+i.count,0) som dubbelräknade artiklar affilierade med
+  // flera institutioner i samma land.
+  const countryTotal = (window._mapCountryCounts && window._mapCountryCounts[countryCode]) || 0
+  document.getElementById('worldMapCountryTitle').innerHTML =
+    `<span style="color:var(--gold)">${countryCode}</span> · ${insts.length} institutions · ${countryTotal} article${countryTotal===1?'':'s'}`
   
   document.getElementById('worldMapInstitutions').innerHTML = insts.slice(0,20).map(i => `
     <div style="padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer" onclick="focusMapInstitution('${i.name.replace(/'/g,"\'")}')">
@@ -5845,7 +5931,14 @@ window.renderWorldDots = function() {
   document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
   
   const maxCount = d3.max(data, d => d.count) || 1
-  const rScale = () => 5  // Fast storlek, skalas vid zoom
+  // Sqrt-skalning så att ytan (inte radien) blir proportionell mot antal
+  // artiklar. Linjär skalning skulle göra Karolinska Institutet 100× större
+  // än Grythyttan på breda intervall — sqrt bäddar in log-liknande
+  // dämpning så både små och stora institutioner blir läsbara. rMin=3
+  // säkrar att glesa institutioner syns; rMax=14 att stora inte kväver
+  // grannar i tätorter (Sverige/Storbritannien).
+  const rMin = 3, rMax = 14
+  const rScale = c => rMin + (rMax - rMin) * Math.sqrt(Math.min(c, maxCount) / maxCount)
   const tooltip = document.getElementById('worldMapTooltip')
   
   const zg = window.worldMapG || window.worldMapSvg
@@ -5875,7 +5968,10 @@ window.renderWorldDots = function() {
     .attr('class', 'winst')
     .attr('cx', d => worldMapProjection([d.lng, d.lat])?.[0])
     .attr('cy', d => worldMapProjection([d.lng, d.lat])?.[1])
-    .attr('r', d => rScale(d.count))
+    // Basradien cachas på datumet så zoom-handlern kan skala om den
+    // proportionellt utan att räkna om rScale (5 / event.transform.k
+    // skulle förlora sqrt-skillnaden mellan små och stora institutioner).
+    .attr('r', d => { d._r = rScale(d.count); return d._r })
     .attr('fill', d => {
       // Använder shared getTopicColor (rad ~1836). Tidigare inline mappning
       // + fallback #E8A020 konsoliderad 2026-07-16.
@@ -6000,8 +6096,9 @@ window.initWorldMap = async function() {
     .on('zoom', (event) => {
       g.attr('transform', event.transform)
       window.worldMapZoomLevel = event.transform.k
-      // Skala om noder vid zoom
-      g.selectAll('.winst').attr('r', 5 / event.transform.k)
+      // Skala om noder vid zoom — bevarar sqrt-proportionerna från
+      // renderWorldDots via d._r-cachen (5/k skulle platta alla dots).
+      g.selectAll('.winst').attr('r', d => (d._r || 5) / event.transform.k)
       g.selectAll('.collab').attr('stroke-width', d => Math.min(d.count * 0.4, 2.5) / event.transform.k)
       g.selectAll('.inst-collab').attr('stroke-width', d => (d.count >= 20 ? 4 : d.count >= 10 ? 2.5 : d.count >= 3 ? 1.5 : 0.8) / event.transform.k)
     })
@@ -6110,9 +6207,16 @@ async function loadMapFocusArticles(filter){
   // Syntax OBS: text[] cs-värdet är Postgres array-literal `{"..."}`,
   // INTE JSON `["..."]`. JSON.stringify ger fel bracket-typ och 400
   // 'malformed array literal'. JSONB cs däremot tar JSON.
+  // Country-filtret bredare än coord-only sedan 2026-08-02: en användare
+  // som klickar SE undrar vilken svensk forskning som finns, inte vilka
+  // svenska artiklar som råkat bli geokodade. OR över country/countries/
+  // institution_coords.country matchar samma universum som sidbaren aggregerar
+  // client-side — så sidbarens tal och feedens tal alltid överensstämmer.
+  // Scopus-historiska rader använder country-NAMN ("Sweden") i stället för
+  // koder ("SE") och fångas inte här; de faller ur konsistent på båda sidor.
   const filterClause = filter.name
     ? `or=(institutions.cs.${encodeURIComponent('{"' + filter.name.replace(/(["\\])/g, '\\$1') + '"}')},institution_coords.cs.${encodeURIComponent(JSON.stringify([{ name: filter.name }]))})`
-    : `institution_coords=cs.${encodeURIComponent(JSON.stringify([{ country: filter.country }]))}`
+    : `or=(country.eq.${encodeURIComponent(filter.country)},countries.cs.${encodeURIComponent('{"' + filter.country + '"}')},institution_coords.cs.${encodeURIComponent(JSON.stringify([{ country: filter.country }]))})`
   // Institution-vyn är BREDARE än Feed — visar institutionens hela
   // gastronomi-output, inte bara TRIAD-analyserade. Ingen has_episteme-
   // gate. cardHTML renderar TRIAD-lösa kort rent (title/authors/journal/
