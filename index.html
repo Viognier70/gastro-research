@@ -1422,7 +1422,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- APP NAV — section switcher (Feed default). Sitter direkt under topbar. -->
 <nav class="app-nav" role="tablist" aria-label="Sections">
-  <button class="app-nav-tab is-active" data-view="oversikt" onclick="showView('oversikt')" role="tab" aria-selected="true" aria-controls="view-oversikt">Översikt</button>
+  <button class="app-nav-tab is-active" data-view="oversikt" onclick="showView('oversikt')" role="tab" aria-selected="true" aria-controls="view-oversikt">Overview</button>
   <button class="app-nav-tab" data-view="feed" onclick="showView('feed')" role="tab" aria-selected="false" aria-controls="view-feed">Feed</button>
   <button class="app-nav-tab" data-view="explore" onclick="showView('explore')" role="tab" aria-selected="false" aria-controls="view-explore">Explore</button>
   <button class="app-nav-tab" data-view="map" onclick="showView('map')" role="tab" aria-selected="false" aria-controls="view-map">Map</button>
@@ -1436,17 +1436,17 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div class="oversikt-eyebrow">Gustema</div>
       <h1 class="oversikt-title">Research intelligence for gastronomy</h1>
       <p class="oversikt-sub">
-        Peer-reviewed forskning översatt till tre kunskapsformer:
-        <strong>Episteme</strong> — vad forskningen fastställer.
-        <strong>Techne</strong> — hur det tillämpas.
-        <strong>Phronesis</strong> — det situerade omdömet.
+        Peer-reviewed research translated into three forms of knowledge:
+        <strong>Episteme</strong> — what the research establishes.
+        <strong>Techne</strong> — how to apply it.
+        <strong>Phronesis</strong> — the situated judgment.
       </p>
     </div>
 
     <div class="oversikt-modules">
       <!-- 1. Bevaknings-rad. Inloggad → delta sedan besök. Anonym → static intro. -->
       <div class="oversikt-watchbar" id="oversiktWatchBar">
-        <div class="oversikt-watch-loading">Laddar bevakning…</div>
+        <div class="oversikt-watch-loading">Loading watch…</div>
       </div>
 
       <!-- 2. Fråga forskningen (PRIMÄR — upplyft till toppen, ögats första fokus).
@@ -1464,34 +1464,34 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
       <!-- 3. Aktuella fynd — kurerad aptitretare (hybrid: 6m fetched_at + year-tiebreaker). -->
       <div class="oversikt-lead-wrap" id="oversiktSpotlightLead">
-        <div class="oversikt-lead-loading">Hämtar aktuella fynd…</div>
+        <div class="oversikt-lead-loading">Loading current findings…</div>
       </div>
 
       <!-- 4. Forskningspuls. get_trending_keywords är rollagnostisk — samma topp-4 för alla roller (FLAGGA framtida: filter_role-param). -->
       <div class="oversikt-pulse-wrap" id="oversiktPulse">
-        <div class="oversikt-pulse-loading">Läser fältets puls…</div>
+        <div class="oversikt-pulse-loading">Reading the field's pulse…</div>
       </div>
     </div>
 
     <!-- 5. Gå vidare. Trimmad 4→3 nav-kort (K2.2-beslut); Syntheses blir textlänk. -->
     <div class="oversikt-nav">
-      <div class="oversikt-eyebrow">Gå vidare</div>
+      <div class="oversikt-eyebrow">Continue</div>
       <div class="oversikt-nav-grid oversikt-nav-grid--3">
         <a class="oversikt-nav-card" onclick="showView('feed')">
           <div class="oversikt-nav-card-name">Feed</div>
-          <div class="oversikt-nav-card-desc">Hela arkivet — sök, filtrera, spara och cita per yrkesroll.</div>
+          <div class="oversikt-nav-card-desc">The full archive — search, filter, save and cite by profession.</div>
         </a>
         <a class="oversikt-nav-card" onclick="showView('explore')">
           <div class="oversikt-nav-card-name">Explore</div>
-          <div class="oversikt-nav-card-desc">Ämneslandskap och samband. TRIAD-analyser klustrade per ämne.</div>
+          <div class="oversikt-nav-card-desc">Topic landscape and connections. TRIAD analyses clustered by topic.</div>
         </a>
         <a class="oversikt-nav-card" onclick="showView('map')">
           <div class="oversikt-nav-card-name">Map</div>
-          <div class="oversikt-nav-card-desc">Var i världen forskningen görs. Institutioner + samarbeten.</div>
+          <div class="oversikt-nav-card-desc">Where in the world the research is done. Institutions + collaborations.</div>
         </a>
       </div>
       <div class="oversikt-nav-more">
-        Se även: <a class="oversikt-nav-link" onclick="showView('syntheses')">Syntheses →</a>
+        See also: <a class="oversikt-nav-link" onclick="showView('syntheses')">Syntheses →</a>
       </div>
     </div>
   </div>
@@ -1855,7 +1855,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <button class="modal-close" onclick="closeModal('knowledgeModal')">×</button>
     <div class="modal-eyebrow">Dr. Anders Crichton-Fock · Örebro University</div>
     <div class="modal-title">TRIAD — The Epistemological Model</div>
-    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:8px;font-style:italic">Aristoteliska kunskapsformer och det dubbla greppet</p>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:8px;font-style:italic">Aristotelian forms of knowledge and the Double Grip</p>
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:24px;font-weight:300">The TRIAD model applies Aristotle's three forms of knowledge to culinary and hospitality practice — forming a developmental hierarchy toward professional mastery. Every article in this library is translated into all three levels for your profession.</p>
 
     <!-- TRIAD TRIANGLE -->
@@ -1869,47 +1869,47 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <line x1="22" y1="378" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
         <line x1="478" y1="378" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
         <circle cx="250" cy="228" r="52" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.2"/>
-        <text x="250" y="216" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">DET DUBBLA</text>
-        <text x="250" y="228" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">GREPPET</text>
+        <text x="250" y="216" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">THE DOUBLE</text>
+        <text x="250" y="228" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">GRIP</text>
         <path d="M224,242 C224,236 232,232 240,238 C248,244 252,244 260,238 C268,232 276,236 276,242 C276,248 268,252 260,246 C252,240 248,240 240,246 C232,252 224,248 224,242Z" fill="none" stroke="#C9A84C" stroke-width="1.3"/>
-        <text x="237" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">ANALYS</text>
-        <text x="263" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">UPPLEVELSE</text>
+        <text x="237" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">ANALYSIS</text>
+        <text x="263" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">EXPERIENCE</text>
         <text x="250" y="65" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">1.</text>
-        <text x="250" y="82" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">SINNLIG REALISERING</text>
+        <text x="250" y="82" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">SENSORY REALISATION</text>
         <text x="250" y="97" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
-        <text x="250" y="113" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">Smak · doft · ljud · textur · estetisk balans</text>
+        <text x="250" y="113" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">Taste · smell · sound · texture · aesthetic balance</text>
         <text x="136" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">2.</text>
-        <text x="136" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRAKTISK</text>
-        <text x="136" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORKESTRERING</text>
+        <text x="136" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRACTICAL</text>
+        <text x="136" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORCHESTRATION</text>
         <text x="136" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
-        <text x="136" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Matlagning · servering · arbetsflöden</text>
+        <text x="136" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Cooking · service · workflows</text>
         <text x="364" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">3.</text>
-        <text x="364" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLISK</text>
-        <text x="364" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">INRAMNING</text>
+        <text x="364" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLIC</text>
+        <text x="364" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">FRAMING</text>
         <text x="364" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
-        <text x="364" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Ritualer · identitet · värdskap</text>
-        <text x="250" y="372" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.5">Episteme isolerar · Techne realiserar · Phronesis integrerar</text>
+        <text x="364" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Rituals · identity · hospitality</text>
+        <text x="250" y="372" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.5">Episteme isolates · Techne realises · Phronesis integrates</text>
       </svg>
     </div>
 
     <div class="knowledge-card phronesis">
-      <div class="kc-title phronesis">1. Sinnlig realisering — Phronesis · φρόνησις</div>
-      <div class="kc-greek">Det situerade omdömet — där kunskap blir erfaren sanning</div>
+      <div class="kc-title phronesis">1. Sensory realisation — Phronesis · φρόνησις</div>
+      <div class="kc-greek">The situated judgment — where knowledge becomes lived truth</div>
       <div class="kc-text">The apex and integration principle. Phronesis is the aesthetic and ethical wisdom to act well in a specific, unrepeatable situation — knowing when the dish is ready, when the wine is right for this guest, when the room calls for silence. It is not a third option alongside Episteme and Techne. It is what gives the other two their meaning. The Double Grip — moving between "What is in the glass?" (analytical) and "What does this evoke?" (analogical) — is Phronesis in action.</div>
     </div>
     <div class="knowledge-card techne">
-      <div class="kc-title techne">2. Praktisk orkestrering — Techne · τέχνη</div>
-      <div class="kc-greek">Det utförande kunnandet — där kunskap blir handling</div>
-      <div class="kc-text">Craft knowledge that lives in the body and hands. Cannot be learned from textbooks alone — it requires practice, repetition and feedback. Techne mediates between theory and wisdom: the trained skill that makes analytical knowledge actionable, and experiential judgment repeatable. Servering, temperatur, glasval, sensoriska protokoll, träningsmetoder.</div>
+      <div class="kc-title techne">2. Practical orchestration — Techne · τέχνη</div>
+      <div class="kc-greek">The executing know-how — where knowledge becomes action</div>
+      <div class="kc-text">Craft knowledge that lives in the body and hands. Cannot be learned from textbooks alone — it requires practice, repetition and feedback. Techne mediates between theory and wisdom: the trained skill that makes analytical knowledge actionable, and experiential judgment repeatable. Service, temperature, glassware, sensory protocols, training methods.</div>
     </div>
     <div class="knowledge-card episteme">
-      <div class="kc-title episteme">3. Symbolisk inramning — Episteme · ἐπιστήμη</div>
-      <div class="kc-greek">Det analytiska vetandet — där kunskap blir begrepp och struktur</div>
-      <div class="kc-text">The foundation — universal, provable, teachable knowledge. Episteme isolates and describes: flavour chemistry, sensory physiology, hospitality theory, the IMRaD structure. Every professional begins here. But mastery cannot end here. Syranivå, tanninstruktur, aromkategorier, QDA, klassificeringar.</div>
+      <div class="kc-title episteme">3. Symbolic framing — Episteme · ἐπιστήμη</div>
+      <div class="kc-greek">The analytical knowing — where knowledge becomes concept and structure</div>
+      <div class="kc-text">The foundation — universal, provable, teachable knowledge. Episteme isolates and describes: flavour chemistry, sensory physiology, hospitality theory, the IMRaD structure. Every professional begins here. But mastery cannot end here. Acidity level, tannin structure, aroma categories, QDA, classifications.</div>
     </div>
 
     <div style="background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.2);border-radius:6px;padding:14px 16px;margin-top:8px;font-size:12px;color:var(--text-secondary);line-height:1.8">
-      <strong style="color:var(--gold)">The Double Grip — Det dubbla greppet</strong><br>
+      <strong style="color:var(--gold)">The Double Grip</strong><br>
       The oscillation between "What is in the glass?" (Episteme) and "What does this evoke?" (Phronesis), enabled by Techne. The mark of professional mastery is fluency in both directions — simultaneously analytical and experiential.<br>
       <em style="font-size:11px;color:var(--text-tertiary)">Crichton-Fock & Spence (2024) · Herdenstam (2011, 2024) · Aristotle (trans. 2000)</em>
     </div>
@@ -2472,8 +2472,8 @@ window.toggleCardTriad = function(artId){
   const imToggle = card.querySelector('.imrad-toggle-v2')
   if(t) t.style.display = s.triad ? 'flex' : 'none'
   if(i) i.style.display = s.imrad ? 'block' : 'none'
-  if(btn) btn.textContent = s.triad ? 'Dölj analys ↑' : 'Visa TRIAD-analys ↓'
-  if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Visa IMRaD — full vetenskaplig struktur'
+  if(btn) btn.textContent = s.triad ? 'Hide analysis ↑' : 'Show TRIAD analysis ↓'
+  if(imToggle) imToggle.textContent = (s.imrad ? '▾ ' : '▸ ') + 'Show IMRaD — full scientific structure'
 }
 window.toggleImradCard = function(artId){
   const s = window.__cardExpansion.get(artId) || {triad:true, imrad:false, cite:false}
@@ -3065,7 +3065,7 @@ async function loadMostCited(){
 function animateCount(el, target){
   if(!el) return
   let c=0, step=Math.ceil(target/60)
-  const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('sv-SE');if(c>=target)clearInterval(timer)},25)
+  const timer=setInterval(()=>{c=Math.min(c+step,target);el.textContent=c.toLocaleString('en-US');if(c>=target)clearInterval(timer)},25)
 }
 // SCREENING FUNNEL — läser aggregerad vy public.screening_funnel vid
 // sidladdning. Vyn räknar om varje request (ingen materialized), så
@@ -3144,7 +3144,7 @@ async function loadScreeningFunnel(){
     const logMax=Math.log(max)
     const logMin=Math.log(min)
     const logSpan=(logMax-logMin)||1
-    const fmt=n=>Number(n).toLocaleString('sv-SE')
+    const fmt=n=>Number(n).toLocaleString('en-US')
     bars.innerHTML=''
     FUNNEL_STEPS.forEach((s,i)=>{
       const val=values[i]
@@ -3211,16 +3211,16 @@ async function loadCounts(){
     const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
     const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
     const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
-    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('sv-SE');const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=totalForDb.toLocaleString('sv-SE')
-    const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('sv-SE')+' new today'
-    const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('sv-SE');const pyA=document.getElementById('pyAnalysed');if(pyA)pyA.textContent=analyzed.toLocaleString('sv-SE')
-    const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('sv-SE')
-    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('sv-SE');const pyTr=document.getElementById('pyTriad');if(pyTr)pyTr.textContent=triad.toLocaleString('sv-SE')
+    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('en-US');const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=totalForDb.toLocaleString('en-US')
+    const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('en-US')+' new today'
+    const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('en-US');const pyA=document.getElementById('pyAnalysed');if(pyA)pyA.textContent=analyzed.toLocaleString('en-US')
+    const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('en-US')
+    const dbTriad=document.getElementById('dbTriad');if(dbTriad)dbTriad.textContent=triad.toLocaleString('en-US');const pyTr=document.getElementById('pyTriad');if(pyTr)pyTr.textContent=triad.toLocaleString('en-US')
     // Syntes-count för toppen av pyramiden
     try{
       const synthR=await fetch(`${SB_URL}/rest/v1/research_syntheses?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
       const synthCount=parseInt(synthR.headers.get('content-range')?.split('/')[1]||'0')
-      const pyS=document.getElementById('pyScenario');if(pyS)pyS.textContent=synthCount.toLocaleString('sv-SE')
+      const pyS=document.getElementById('pyScenario');if(pyS)pyS.textContent=synthCount.toLocaleString('en-US')
     }catch(e){}
     const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
     const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
@@ -4136,9 +4136,9 @@ function openArticleOverlay(article){
           <div class="triad-cta-lead">This article hasn't been analysed through TRIAD yet.</div>
           <button class="triad-btn" id="triadCtaBtn" onclick="requestTriadAnalysis('${(article.id||'').replace(/'/g,'')}')">
             <svg class="triad-ico" viewBox="0 0 1500 1500" aria-hidden="true"><use href="#gustema-mark"/></svg>
-            <span id="triadCtaText">Analysera med TRIAD</span>
+            <span id="triadCtaText">Analyse with TRIAD</span>
           </button>
-          <div class="triad-caption">Analysen sparas permanent och delas med alla framtida läsare.</div>
+          <div class="triad-caption">The analysis is saved permanently and shared with all future readers.</div>
           <div id="triadPhaseHint" class="triad-phase-hint" style="display:none"></div>
           <div id="triadQuotaHint" class="triad-quota-hint" style="display:none"></div>
           <div id="triadErrorBox" class="triad-err" style="display:none"></div>
@@ -4338,12 +4338,12 @@ window.requestTriadAnalysis = async function(articleId){
   if(quotaHt) { quotaHt.style.display = 'none'; quotaHt.textContent = '' }
   btn.disabled = true
   btn.classList.add('spinning')
-  txt.textContent = 'Analyserar…'
+  txt.textContent = 'Analysing…'
   phase.style.display = 'block'
   phase.textContent   = ''
   // Fas 2: text-cykel som startar vid t=8s, byter var 4:e s.
   // Mätt Sonnet-latens: 56–59s. Räkna med 60–65s wall.
-  const phases = ['Läser abstract','Bedömer episteme','Formulerar techne','Väger phronesis']
+  const phases = ['Reading abstract','Assessing episteme','Formulating techne','Weighing phronesis']
   let phaseIdx = 0, cycleTimer = null
   const cycleStart = setTimeout(()=>{
     phase.textContent = phases[0]
@@ -4362,7 +4362,7 @@ window.requestTriadAnalysis = async function(articleId){
     stopCycle()
     btn.classList.remove('spinning')
     btn.disabled = false
-    txt.textContent = 'Försök igen'
+    txt.textContent = 'Try again'
     if(errBox && msg){ errBox.textContent = msg; errBox.style.display = 'block' }
   }
   // POST-anrop med 502-retry (cold-start upptäcktes i test).
@@ -4392,7 +4392,7 @@ window.requestTriadAnalysis = async function(articleId){
     }
   } catch(e){
     console.error('triad-on-demand: fetch error', e)
-    resetButton('Nätverksfel. Försök igen om en stund.')
+    resetButton('Network error. Please try again in a moment.')
     return
   }
   // Global daglig budget slut = HTTP 503 (backend budget-cap, 2026-07-19).
@@ -4404,7 +4404,7 @@ window.requestTriadAnalysis = async function(articleId){
     btn.classList.remove('spinning')
     btn.style.display = 'none'
     if(errBox){
-      errBox.innerHTML = 'TRIAD-analys är tillfälligt otillgänglig idag (dagens budget nådd). Försök igen imorgon.'
+      errBox.innerHTML = 'TRIAD analysis is temporarily unavailable today (daily budget reached). Please try again tomorrow.'
       errBox.style.display = 'block'
     }
     return
@@ -4418,7 +4418,7 @@ window.requestTriadAnalysis = async function(articleId){
     btn.classList.remove('spinning')
     btn.style.display = 'none'
     if(errBox){
-      errBox.innerHTML = 'Du har använt dina 3 kostnadsfria TRIAD-analyser denna månad. <a href="#" onclick="closeArticleModal();openModal(\'upgradeModal\');return false;">Pro ger obegränsad analys →</a>'
+      errBox.innerHTML = 'You\'ve used your 3 free TRIAD analyses this month. <a href="#" onclick="closeArticleModal();openModal(\'upgradeModal\');return false;">Pro gives unlimited analyses →</a>'
       errBox.style.display = 'block'
     }
     return
@@ -4426,7 +4426,7 @@ window.requestTriadAnalysis = async function(articleId){
   let body = {}
   try { body = await resp.json() } catch(e){
     console.error('triad-on-demand: unparseable body', e)
-    resetButton('Oväntat svar från servern.')
+    resetButton('Unexpected response from the server.')
     return
   }
   const status = body.status
@@ -4438,7 +4438,7 @@ window.requestTriadAnalysis = async function(articleId){
     stopCycle()
     btn.classList.remove('spinning')
     if(typeof body.quota_remaining === 'number'){
-      console.log('TRIAD: analys klar. Kvot kvar denna månad:', body.quota_remaining)
+      console.log('TRIAD: analysis complete. Quota remaining this month:', body.quota_remaining)
     }
     // Fas 3: rendera INLINE i öppna overlayn. Ingen refetch — svaret från
     // triad-on-demand innehåller roll-specifikt content och IMRaD. Refetch
@@ -4450,15 +4450,15 @@ window.requestTriadAnalysis = async function(articleId){
   }
   // 'pending' → polla var 3:e s tills det finns TRIAD (max 30 polls = 90s)
   if(status === 'pending'){
-    txt.textContent = 'Analyseras just nu…'
-    phase.textContent = 'Väntar på annan användares analys'
+    txt.textContent = 'Analysing right now…'
+    phase.textContent = 'Waiting for another user\'s analysis'
     let polls = 0
     const pollTimer = setInterval(async ()=>{
       polls++
       if(polls > 30){
         clearInterval(pollTimer)
         console.error('triad-on-demand: polling timeout after 90s')
-        resetButton('Analysen tar längre tid än väntat. Försök igen om en stund.')
+        resetButton('The analysis is taking longer than expected. Please try again in a moment.')
         return
       }
       try {
@@ -4480,7 +4480,7 @@ window.requestTriadAnalysis = async function(articleId){
   }
   // Övrigt (400/404/500/502-efter-retry/etc): logga och visa error-box
   console.error('triad-on-demand: unexpected status', resp.status, body)
-  const errMsg = body?.error || `Oväntat svar (HTTP ${resp.status})`
+  const errMsg = body?.error || `Unexpected response (HTTP ${resp.status})`
   resetButton(errMsg)
 }
 
@@ -5039,8 +5039,8 @@ window.renderOversiktWatchBar = async function() {
   const el = document.getElementById('oversiktWatchBar')
   if(!el) return
   const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'all')
-  const rLabel = rRaw === 'all' ? 'alla yrkesroller' : ((window.roleLabel && window.roleLabel(rRaw)) || rRaw)
-  const triadStr = (window._triadCount || 9714).toLocaleString('sv-SE')
+  const rLabel = rRaw === 'all' ? 'all professionals' : ((window.roleLabel && window.roleLabel(rRaw)) || rRaw)
+  const triadStr = (window._triadCount || 9714).toLocaleString('en-US')
 
   let user = null
   try { user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null } catch(_) {}
@@ -5060,11 +5060,11 @@ window.renderOversiktWatchBar = async function() {
         if(rRaw !== 'all') q = q.eq('has_episteme_' + toDbRole(rRaw), true)
         const {count} = await q
         el.innerHTML =
-          '<div class="oversikt-watch-eyebrow">Din bevakning · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+          '<div class="oversikt-watch-eyebrow">Your watch · ' + escapeHtmlOversikt(rLabel) + '</div>' +
           '<div class="oversikt-watch-line">' +
-            '<span class="oversikt-watch-signal"><strong>' + (count || 0).toLocaleString('sv-SE') + '</strong> nya sedan ditt besök (' + (daysSince === 1 ? 'igår' : daysSince + ' dagar sedan') + ')</span>' +
+            '<span class="oversikt-watch-signal"><strong>' + (count || 0).toLocaleString('en-US') + '</strong> new since your last visit (' + (daysSince === 1 ? 'yesterday' : daysSince + ' days ago') + ')</span>' +
             '<span class="oversikt-watch-signal">·</span>' +
-            '<span class="oversikt-watch-signal"><strong>' + triadStr + '</strong> TRIAD-djupanalyser totalt</span>' +
+            '<span class="oversikt-watch-signal"><strong>' + triadStr + '</strong> TRIAD deep analyses total</span>' +
           '</div>'
         return
       }
@@ -5073,23 +5073,23 @@ window.renderOversiktWatchBar = async function() {
   }
 
   // Anonym / första besök. Statisk introrad — den vy vi optimerar.
-  const totalStr = window._totalCount ? window._totalCount.toLocaleString('sv-SE') : null
+  const totalStr = window._totalCount ? window._totalCount.toLocaleString('en-US') : null
   const introLead = totalStr
-    ? 'Utforska <strong>' + totalStr + '</strong> artiklar inom gastronomisk forskning'
-    : 'Utforska <strong>hela beståndet</strong> av gastronomisk forskning'
+    ? 'Explore <strong>' + totalStr + '</strong> articles across gastronomy research'
+    : 'Explore <strong>the full corpus</strong> of gastronomy research'
   el.innerHTML =
-    '<div class="oversikt-watch-eyebrow">Utforska · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+    '<div class="oversikt-watch-eyebrow">Explore · ' + escapeHtmlOversikt(rLabel) + '</div>' +
     '<div class="oversikt-watch-line">' +
       '<span class="oversikt-watch-signal">' + introLead + '</span>' +
       '<span class="oversikt-watch-signal">·</span>' +
-      '<span class="oversikt-watch-signal"><strong>' + triadStr + '</strong> TRIAD-djupanalyser</span>' +
+      '<span class="oversikt-watch-signal"><strong>' + triadStr + '</strong> TRIAD deep analyses</span>' +
     '</div>'
 }
 
 window.renderOversiktLead = async function() {
   const el = document.getElementById('oversiktSpotlightLead')
   if(!el) return
-  el.innerHTML = '<div class="oversikt-lead-loading">Hämtar aktuella fynd…</div>'
+  el.innerHTML = '<div class="oversikt-lead-loading">Loading current findings…</div>'
   try {
     const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
     const dbRole = toDbRole(rRaw)
@@ -5126,8 +5126,8 @@ window.renderOversiktLead = async function() {
     const arts = await r.json()
     if(!Array.isArray(arts) || !arts.length) {
       el.innerHTML =
-        '<div class="oversikt-lead-eyebrow">Aktuella fynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
-        '<div class="oversikt-lead-loading">Inga aktuella TRIAD-analyserade artiklar för denna roll — <a class="oversikt-nav-link" onclick="showView(\'feed\')">bläddra i Feed →</a></div>'
+        '<div class="oversikt-lead-eyebrow">Recent findings · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+        '<div class="oversikt-lead-loading">No recent TRIAD-analysed articles for this role — <a class="oversikt-nav-link" onclick="showView(\'feed\')">browse in Feed →</a></div>'
       return
     }
     // Pro-berikning: fyller a.core_claim + full TRIAD för Pro-användare.
@@ -5139,20 +5139,20 @@ window.renderOversiktLead = async function() {
     const showOriginal = !!a.headline_en && a.title && a.title !== a.headline_en
     const ingress = a.core_claim || a.insight || a.limitation || ''
     el.innerHTML =
-      '<div class="oversikt-lead-eyebrow">Aktuella fynd · ' + escapeHtmlOversikt(rLabel) + '</div>' +
+      '<div class="oversikt-lead-eyebrow">Recent findings · ' + escapeHtmlOversikt(rLabel) + '</div>' +
       '<div class="oversikt-lead-journal">' + escapeHtmlOversikt(a.journal || '') + (a.year ? ' · ' + a.year : '') + '</div>' +
       '<h2 class="oversikt-lead-headline">' + escapeHtmlOversikt(headline) + '</h2>' +
       (showOriginal ? '<div class="oversikt-lead-title">' + escapeHtmlOversikt(a.title.slice(0, 180)) + '</div>' : '') +
-      '<span class="oversikt-lead-relevance">Relevans ' + rel + '/10</span>' +
+      '<span class="oversikt-lead-relevance">Relevance ' + rel + '/10</span>' +
       (ingress ? '<p class="oversikt-lead-claim">' + escapeHtmlOversikt(ingress.length > 260 ? ingress.slice(0, 260) + '…' : ingress) + '</p>' : '') +
-      '<a class="oversikt-lead-cta" onclick="openArticleFromId(\'' + a.id + '\')">Läs analysen →</a>'
+      '<a class="oversikt-lead-cta" onclick="openArticleFromId(\'' + a.id + '\')">Read the analysis →</a>'
   } catch(e) { console.log('Oversikt lead error:', e); el.innerHTML = '' }
 }
 
 window.renderOversiktPulse = async function() {
   const el = document.getElementById('oversiktPulse')
   if(!el) return
-  el.innerHTML = '<div class="oversikt-pulse-loading">Läser fältets puls…</div>'
+  el.innerHTML = '<div class="oversikt-pulse-loading">Reading the field\'s pulse…</div>'
   try {
     const r = await fetch(SB_URL + '/rest/v1/rpc/get_trending_keywords', {
       method: 'POST',
@@ -5165,8 +5165,8 @@ window.renderOversiktPulse = async function() {
       const dir = k.trend_direction || 'stable'
       const label = dir === 'rising' ? '↑ +' + (k.trend_pct || 0) + '% vs 2024'
                   : dir === 'declining' ? '↓ ' + (k.trend_pct || 0) + '% vs 2024'
-                  : dir === 'new' ? '✦ ny 2025'
-                  : '→ stabil'
+                  : dir === 'new' ? '✦ new 2025'
+                  : '→ stable'
       return '<div class="oversikt-pulse-item">' +
         '<span class="oversikt-pulse-rank">' + (i + 1) + '</span>' +
         '<span class="oversikt-pulse-kw">' + escapeHtmlOversikt((k.keyword || '').replace(/_/g, ' ')) + '</span>' +
@@ -5174,8 +5174,8 @@ window.renderOversiktPulse = async function() {
       '</div>'
     }).join('')
     el.innerHTML =
-      '<div class="oversikt-pulse-eyebrow">Forskningspuls</div>' +
-      '<div class="oversikt-pulse-note">Topp-4 nyckelord i TRIAD-analyserade artiklar · samma över roller · 2025 vs 2024</div>' +
+      '<div class="oversikt-pulse-eyebrow">Research pulse</div>' +
+      '<div class="oversikt-pulse-note">Top-4 keywords in TRIAD-analysed articles · same across roles · 2025 vs 2024</div>' +
       rows
   } catch(e) { console.log('Oversikt pulse error:', e) }
 }
