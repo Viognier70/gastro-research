@@ -3178,14 +3178,21 @@ async function loadCounts(){
   try{
     const r1=await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
-    // TRIAD count. has_episteme_sensory_pro fungerar som GLOBAL "har-TRIAD"-
-    // räknare på hela korpusen (~6425 artiklar) — INTE en användarroll.
-    // sensory_pro finns inte som chip eller onboarding-alternativ; kolumnen är
-    // en teknisk aggregat-markör som pipeline sätter för varje TRIAD-analyserad
-    // artikel oavsett roll-lens. Rollmodellen har 5 riktiga roller: sommelier,
-    // chef, gastronomy, fb_manager, food_researcher.
-    const r3=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_episteme_sensory_pro=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
-    const triadTotal=parseInt(r3.headers.get('content-range')?.split('/')[1]||'0')
+    // TRIAD-count läses från screening_funnel.triad_analyserade — samma
+    // definition som tratten (relevance_checked = true AND irrelevant = false
+    // AND phronesis_educator_researcher is not null, kumulativa filter per
+    // migration 20260802160000). Enda källan till sanning för "hur många
+    // TRIAD-analyserade artiklar finns det" — så #triadCount, Research Pulse,
+    // Översikt watchbar och obSubText-onboarding visar identiskt tal med
+    // trattens sista steg.
+    //
+    // Tidigare räknades här via has_episteme_sensory_pro=is.true (utan
+    // irrelevant-gate, utan canary-fältet phronesis) och drev fram olika tal
+    // på samma sida. MV refreshas var 10 min via pg_cron 'refresh-screening-
+    // funnel' — några minuter staleness accepterat i utbyte mot konsistens.
+    const r3=await fetch(`${SB_URL}/rest/v1/screening_funnel?select=triad_analyserade`,{headers:{'apikey':SB_ANON,'Authorization':`Bearer ${SB_ANON}`}})
+    const r3Data=await r3.json().catch(()=>null)
+    const triadTotal=Array.isArray(r3Data)&&r3Data[0]?.triad_analyserade!=null?Number(r3Data[0].triad_analyserade):0
     if(triadTotal>0){const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal);window._triadCount=triadTotal;loadTrending()}
     if(total>0){
       window._totalCount = total  // Stashad för Översikts anonym-fallback (B1).
