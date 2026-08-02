@@ -1064,7 +1064,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   color: var(--gustema-ink);
   margin: 0 0 18px;
   letter-spacing: -.005em;
+  cursor: pointer;
+  transition: color .12s;
 }
+.card-headline:hover { color: var(--gustema-gold, #A08A55) }
 .card-meta-list {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -2684,7 +2687,7 @@ function cardHTML(a,idx){
       </div>`:''}
       ${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
     </div>
-    <h3 class="card-headline">${roleHeadline}</h3>
+    <h3 class="card-headline" onclick="openArticleFromId('${a.id||''}')" title="Open article">${roleHeadline}</h3>
     ${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${(a.primary_institution||'').replace(/'/g,"\\'")}',event)" title="Filter by institution" style="margin-bottom:14px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
     <dl class="card-meta-list">
       ${hasGustemaHeadline?`<dt>${l('original')}</dt><dd class="cm-original-title">${a.title||''}</dd>`:''}
