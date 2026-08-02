@@ -1,0 +1,72 @@
+-- =============================================================================
+-- uq_articles_url — partial unique index på articles.url (2026-08-02)
+-- =============================================================================
+-- Kört direkt mot prod 2026-08-02. KÖR INTE OM — filen finns för git-paritet.
+--
+-- ⚠️  CREATE INDEX CONCURRENTLY kan INTE köras via `supabase db push` — CLI:t
+--     sveper migrationer i en transaktion och CONCURRENTLY är otillåtet där.
+--     Applicera manuellt i SQL-editorn om den någonsin behöver replayas.
+--
+-- BAKGRUND:
+--
+--   articles hade ingen uniqueness-garanti på url. daily-fetch/saveArticle
+--   körde en isDuplicate-pre-check (line ~171), men två samtidiga cron-
+--   körningar kunde båda passera checken och sedan racea samma DOI in i
+--   tabellen. Prod-stickprov 2026-08-02: 10 rader dubblerade (samma DOI,
+--   inhämtade från både OpenAlex och Scopus, ~sekunder isär).
+--
+--   Rensning innan constraint applicerades:
+--     - 10 dubbletter raderade — OpenAlex-raden behölls genomgående (mer
+--       kompletta författarlistor, korrekt formaterade titlar)
+--     - 283 tomma url-strängar normaliserade till NULL (empty string
+--       tolkas som ett värde och skulle annars kollidera i mängd)
+--
+-- WHERE url IS NOT NULL:
+--
+--   Partial index. NULL-urlar (openalex-rader utan DOI, source som inte
+--   returnerar länk) förblir tillåtna i valfri mängd — de har inget att
+--   kollidera på. Endast rader med faktisk url deduplikeras.
+--
+-- DOWNSTREAM:
+--
+--   supabase/functions/daily-fetch/index.ts:
+--     - saveArticle bytt från .insert() → .upsert(..., { onConflict: 'url',
+--       ignoreDuplicates: true }). Konflikt räknas i skippedDuplicate och
+--       rapporteras i slutsvaret (nytt fält: skipped_duplicate).
+--     - url: article.url || '' → article.url || null (så partial-indexet
+--       fångar upp dem — tom sträng skulle bygga tillbaka de 283 raderna).
+--   isDuplicate-pre-checken (line 171) är kvar — den sparar analyzeWithClaude-
+--   anropet innan insert för normala dubbletter, och constrainten är racets
+--   säkerhetsnät.
+--
+--   Inga andra insert-vägar mot articles finns i repot (verifierat med
+--   grep över supabase/functions/ + scripts/).
+-- =============================================================================
+
+create unique index concurrently if not exists uq_articles_url
+  on public.articles (url)
+  where url is not null;
+
+
+-- =============================================================================
+-- Verifiering (körd 2026-08-02 efter apply):
+--
+--   -- Indexet finns och är partial?
+--   select indexname, indexdef
+--     from pg_indexes
+--    where schemaname='public' and tablename='articles'
+--      and indexname='uq_articles_url';
+--   -- expected: indexdef innehåller "WHERE (url IS NOT NULL)"
+--
+--   -- Inga kvarvarande dubbletter?
+--   select url, count(*) c
+--     from public.articles
+--    where url is not null
+--    group by url
+--   having count(*) > 1;
+--   -- expected: 0 rader
+--
+--   -- Inga tomma url-strängar?
+--   select count(*) from public.articles where url = '';
+--   -- expected: 0
+-- =============================================================================

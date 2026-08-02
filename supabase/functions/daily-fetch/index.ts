@@ -52,6 +52,12 @@ function normalizeDoi(raw: string): string {
 }
 const SCOPUS_KEY = Deno.env.get('SCOPUS_KEY') || ''
 
+// Per-invocation räknare för url-konflikter (uq_articles_url, partial index
+// where url is not null). Nollställs överst i Deno.serve — modulscopet håller
+// annars kvar värdet mellan cron-körningar. Rapporteras i slutsvaret så en
+// plötslig ökning avslöjar att någon inhämtningsväg börjat dubbelhämta.
+let skippedDuplicate = 0
+
 // Kommersiell produkt fr.o.m. 2026-07-10: Scopus akademiska API-nyckel får
 // inte längre användas för hämtning. Alla call sites som träffar
 // api.elsevier.com short-circuitar när SCOPUS_ENABLED = false. Koden för
@@ -206,7 +212,16 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       console.log(`Author-sanity: singel-namn "${rawAuthors}" [${article.source}] ${article.title.slice(0, 60)}`)
     }
 
-    const { error } = await supabase.from('articles').insert({
+    // upsert med ignoreDuplicates i stället för ren insert: uq_articles_url
+    // (partial unique på url where url is not null) faller ut i konflikt när
+    // isDuplicate-pre-checken racas av två samtidiga cron-körningar.
+    // ignoreDuplicates behåller den befintliga raden orörd — den kan ha blivit
+    // TRIAD-analyserad eller ha bättre författarlista från annan källa. .select
+    // ('id') låter oss skilja på insert (data=[{id}]) och konflikt (data=[]).
+    //
+    // url: null (inte tom sträng) eftersom partial-indexet ignorerar null; tom
+    // sträng räknas som ett värde och 283 sådana kolliderade i prod 2026-08-02.
+    const { data, error } = await supabase.from('articles').upsert({
       title: article.title,
       authors: article.authors || '',
       journal: article.journal || '',
@@ -214,7 +229,7 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       topic,
       source: article.source,
       source_label: article.source_label,
-      url: article.url || '',
+      url: article.url || null,
       abstract: article.abstract || '',
       insight: analysis.insight || '',
       application: analysis.application || '',
@@ -237,9 +252,11 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       // bara OpenAlex-vägen; övriga källor får samma beteende som förr.
       keywords: article.keywords?.length ? article.keywords : null,
       fetched_at: new Date().toISOString()
-    })
-    if (error) console.log('Save error:', error.message)
-    return !error
+    }, { onConflict: 'url', ignoreDuplicates: true })
+      .select('id')
+    if (error) { console.log('Save error:', error.message); return false }
+    if (!data?.length) { skippedDuplicate++; return false }
+    return true
   } catch(e: any) {
     console.log('saveArticle error:', e.message)
     return false
@@ -744,6 +761,7 @@ async function fetchResearchers(): Promise<number> {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}))
+  skippedDuplicate = 0
 
   const researcherAdded = await fetchResearchers()
   const freshAdded = await fetchFresh()
@@ -771,6 +789,7 @@ Deno.serve(async (req) => {
     researchers: researcherAdded,
     fresh: freshAdded,
     backfill: backfillAdded,
+    skipped_duplicate: skippedDuplicate,
     total_articles: count,
     next_jobs: remaining
   }), { headers: { 'Content-Type': 'application/json' } })
