@@ -60,6 +60,15 @@ const json = (b: unknown, status = 200) =>
 // SYSTEM_PROMPT bakas per anrop så language-direktivet (rule 8) speglar
 // användarens UI-språk. TRIAD-källorna är på engelska oavsett — bara
 // answer-texten (och coverage_note-strängen) ska följa språkvalet.
+//
+// LANG-PARAMETERN 2026-08-02: bevaras avsiktligt trots att frontend inte
+// längre skickar den. Beslut samma dag: engelska är grundspråk (TRIAD är
+// på engelska, målgruppen arbetar på engelska, halvöversatt UI togs bort).
+// Klienten skickar aldrig lang idag → body.lang är alltid undefined →
+// buildSystemPrompt får 'en' via defaulten nedan. När/om i18n återinförs
+// senare behövs bara frontendens body-fält igen; kontraktet står kvar
+// server-side. RENSA INTE utan att också ta bort motsvarande server-
+// fallback i buildSystemPrompt/L() nedan.
 function buildSystemPrompt(lang: 'sv' | 'en'): string {
   const langLine = lang === 'sv'
     ? 'Respond in SWEDISH. All prose in "answer" must be Swedish. Do NOT translate source titles or journal names when quoting.'
