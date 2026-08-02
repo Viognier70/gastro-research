@@ -4778,8 +4778,19 @@ window.doSemanticSearch = async function(inputId, resultsId) {
   // Prefix för element-id:n så feed- och översikt-instanser inte krockar.
   const rid = (resultsId || 'semanticResults').replace(/[^a-zA-Z0-9]/g,'')
 
+  // UI-lang är källa till sanning — samma val som skickas till servern så
+  // Sonnet-syntesen kommer tillbaka på rätt språk. TRIAD-källor förblir
+  // engelska i DB och i källa-listan; det är svarstexten och UI-strängarna
+  // runt den som följer språkvalet.
+  const askLang = (typeof lang !== 'undefined' && lang) ? lang : 'en'
+  const L = (sv, en) => askLang === 'sv' ? sv : en
+
+  // Prominent laddindikator (samma spinner-pattern som Feed/Map/Explore).
+  // Föregående textrad var 12px grå kursiv — lätt att missa när man
+  // scrollat ned i förra svaret. Med spinner + loading-state ser man
+  // tydligt att sökningen kickat igång.
   results.style.display = 'block'
-  results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:8px 0;font-style:italic">Syntetiserar svar från peer-reviewed forskning… (kan ta 3-5 sek)</div>'
+  results.innerHTML = `<div class="loading-state"><div class="spinner"></div><span>${L('Syntetiserar svar från peer-reviewed forskning…', 'Synthesising an answer from peer-reviewed research…')}</span></div>`
 
   // Auth-token om inloggad (för framtida Pro-detektion i STEG 3).
   let token = SB_ANON
@@ -4799,7 +4810,7 @@ window.doSemanticSearch = async function(inputId, resultsId) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query, role: roleForApi, top_k: 6 })
+      body: JSON.stringify({ query, role: roleForApi, top_k: 6, lang: askLang })
     })
 
     let data
@@ -4808,8 +4819,8 @@ window.doSemanticSearch = async function(inputId, resultsId) {
     // Global daily budget hit — visar underhållsmeddelande.
     if(data?.status === 'budget_exceeded') {
       results.innerHTML = `<div style="padding:16px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Ask tillfälligt otillgänglig</div>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7">Daglig kapacitet uppnådd. Försök igen imorgon.</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">${L('Ask tillfälligt otillgänglig', 'Ask temporarily unavailable')}</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7">${L('Daglig kapacitet uppnådd. Försök igen imorgon.', 'Daily capacity reached. Please try again tomorrow.')}</div>
       </div>`
       return
     }
@@ -4819,22 +4830,22 @@ window.doSemanticSearch = async function(inputId, resultsId) {
       const hits = Array.isArray(data.hits_summary) ? data.hits_summary : []
       const hitsList = hits.slice(0, 5).map((h, i) =>
         `<div style="padding:8px 0;border-bottom:0.5px solid var(--border)">
-          <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:2px">Match ${Math.round((h.similarity||0)*100)}%</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:2px">${L('Match', 'Match')} ${Math.round((h.similarity||0)*100)}%</div>
           <div style="font-size:12px;font-weight:500;color:var(--text-primary);cursor:pointer" onclick="openArticleFromId('${h.article_id}')">${escapeHtmlOversikt((h.title||'').slice(0,140))}</div>
         </div>`
       ).join('')
       results.innerHTML = `
         <div style="padding:14px 16px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px;margin-bottom:12px">
-          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold-dark,#836428);margin-bottom:6px">Otillräckligt underlag</div>
-          <div style="font-size:12.5px;color:var(--text-primary);line-height:1.6">${escapeHtmlOversikt(data.message || 'De hittade artiklarna räcker inte för att besvara frågan säkert.')}</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold-dark,#836428);margin-bottom:6px">${L('Otillräckligt underlag', 'Insufficient evidence')}</div>
+          <div style="font-size:12.5px;color:var(--text-primary);line-height:1.6">${escapeHtmlOversikt(data.message || L('De hittade artiklarna räcker inte för att besvara frågan säkert.', 'The retrieved articles are not sufficient to answer this question reliably.'))}</div>
         </div>
-        ${hits.length ? `<div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Bläddra manuellt (${hits.length} närmaste träffar)</div>${hitsList}` : ''}`
+        ${hits.length ? `<div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">${L(`Bläddra manuellt (${hits.length} närmaste träffar)`, `Browse manually (${hits.length} closest matches)`)}</div>${hitsList}` : ''}`
       return
     }
 
     // Fel-status från edge-fn eller nätverksfel.
     if(data?.status === 'error' || !data || data.status !== 'answer') {
-      results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">Ask är tillfälligt otillgänglig. Försök igen om en stund.${data?.error ? '<div style="font-size:10px;color:var(--text-tertiary);opacity:.6;margin-top:4px">('+escapeHtmlOversikt(String(data.error))+')</div>' : ''}</div>`
+      results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">${L('Ask är tillfälligt otillgänglig. Försök igen om en stund.', 'Ask is temporarily unavailable. Please try again in a moment.')}${data?.error ? '<div style="font-size:10px;color:var(--text-tertiary);opacity:.6;margin-top:4px">('+escapeHtmlOversikt(String(data.error))+')</div>' : ''}</div>`
       return
     }
 
@@ -4857,26 +4868,26 @@ window.doSemanticSearch = async function(inputId, resultsId) {
     })
 
     const confBadge = {
-      high:   {label: 'Hög konfidens',   color: '#3B6D11', bg: '#E8F1DA'},
-      medium: {label: 'Medel konfidens', color: '#836428', bg: '#F5EDE3'},
-      low:    {label: 'Låg konfidens',   color: '#A32D2D', bg: '#F5E3E3'}
+      high:   {label: L('Hög konfidens',   'High confidence'),   color: '#3B6D11', bg: '#E8F1DA'},
+      medium: {label: L('Medel konfidens', 'Medium confidence'), color: '#836428', bg: '#F5EDE3'},
+      low:    {label: L('Låg konfidens',   'Low confidence'),    color: '#A32D2D', bg: '#F5E3E3'}
     }[confidence] || {label: confidence, color: 'var(--text-tertiary)', bg: 'var(--warm-100)'}
 
     const answerHtml = `<div style="padding:16px 18px;background:#FDFBF6;border:0.5px solid rgba(160,138,85,.3);border-radius:8px;margin-bottom:14px">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;padding-bottom:8px;border-bottom:0.5px solid rgba(160,138,85,.2)">
-        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold,#A08A55)">Svar · ${escapeHtmlOversikt(rLabel)}</span>
+        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold,#A08A55)">${L('Svar', 'Answer')} · ${escapeHtmlOversikt(rLabel)}</span>
         <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${confBadge.color};background:${confBadge.bg};border-radius:3px;padding:2px 8px">${confBadge.label}</span>
       </div>
       <div style="font-family:'Outfit',sans-serif;font-size:14px;line-height:1.7;color:var(--text-primary);white-space:pre-wrap">${answerWithLinks}</div>
     </div>`
 
     const honestyHtml = `<div style="margin-bottom:14px;font-size:10px;line-height:1.6;color:var(--text-tertiary);font-family:'Outfit',sans-serif;font-style:italic">
-      AI-syntes av ${sources.length} peer-reviewed artiklar · Ej peer-review-granskad · Kontrollera mot källorna nedan · <a href="/foundation#methodology" style="color:var(--gustema-gold-dark,#836428);text-decoration:none;font-style:normal">Så genereras svaret →</a>
+      ${L(`AI-syntes av ${sources.length} peer-reviewed artiklar · Ej peer-review-granskad · Kontrollera mot källorna nedan`, `AI synthesis of ${sources.length} peer-reviewed articles · Not itself peer-reviewed · Verify against the sources below`)} · <a href="/foundation#methodology" style="color:var(--gustema-gold-dark,#836428);text-decoration:none;font-style:normal">${L('Så genereras svaret →', 'How the answer is generated →')}</a>
     </div>`
 
     const sourcesHeader = `<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--border-mid)">
-      <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold,#A08A55)">Källor (${sources.length})</span>
-      <span style="font-size:11px;color:var(--text-tertiary);font-family:'Outfit',sans-serif">Klicka [N] i svaret för att hoppa hit</span>
+      <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gustema-gold,#A08A55)">${L('Källor', 'Sources')} (${sources.length})</span>
+      <span style="font-size:11px;color:var(--text-tertiary);font-family:'Outfit',sans-serif">${L('Klicka [N] i svaret för att hoppa hit', 'Click [N] in the answer to jump here')}</span>
     </div>`
 
     const sourcesHtml = sources.map(s => {
@@ -4884,7 +4895,7 @@ window.doSemanticSearch = async function(inputId, resultsId) {
       return `<div id="askSource_${rid}_${s.idx}" class="ask-source" style="padding:12px 0;border-bottom:0.5px solid var(--border);transition:background .5s">
         <div style="display:flex;align-items:baseline;gap:8px;font-size:10px;color:var(--text-tertiary);margin-bottom:3px">
           <span style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gustema-gold,#A08A55);min-width:22px">[${s.idx}]</span>
-          <span>${escapeHtmlOversikt(s.journal||'')}${s.year?' · '+s.year:''} · <span style="color:var(--episteme)">Match: ${sim}%</span></span>
+          <span>${escapeHtmlOversikt(s.journal||'')}${s.year?' · '+s.year:''} · <span style="color:var(--episteme)">${L('Match', 'Match')}: ${sim}%</span></span>
         </div>
         <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px;padding-left:30px;cursor:pointer" onclick="openArticleFromId('${s.id}')">${escapeHtmlOversikt((s.title||'').slice(0, 140))}</div>
         ${s.core_claim ? `<div style="font-size:11px;color:var(--text-secondary);line-height:1.55;padding-left:30px;font-style:italic">${escapeHtmlOversikt(s.core_claim.length > 180 ? s.core_claim.slice(0, 180) + '…' : s.core_claim)}</div>` : ''}
@@ -4893,7 +4904,7 @@ window.doSemanticSearch = async function(inputId, resultsId) {
 
     results.innerHTML = answerHtml + honestyHtml + sourcesHeader + sourcesHtml
   } catch(e) {
-    results.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">Ask är tillfälligt otillgänglig. Kontrollera nätverket eller försök igen.</div>'
+    results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">${L('Ask är tillfälligt otillgänglig. Kontrollera nätverket eller försök igen.', 'Ask is temporarily unavailable. Please check your network or try again.')}</div>`
     console.log('ask-synth error:', e)
   }
 }
