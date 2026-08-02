@@ -241,6 +241,13 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       // institution-vy queryable per institution (see migration
       // 20260707120000_affiliations_column.sql).
       institutions: article.institutions?.length ? article.institutions : null,
+      // OpenAlex-vägen fyller institution_openalex_ids parallellt med
+      // institutions[] (samma index). Scopus/PubMed/S2 skickar inte fältet
+      // → null → backfill-affiliations kan i teorin fylla det senare
+      // (predikat institutions IS NULL — så bara icke-OA-vägar där institutions
+      // är tom). För OA-vägen är detta enda skrivningen; utan den återväxer
+      // populationen "TRIAD-artikel utan institution_openalex_ids" varje dag.
+      institution_openalex_ids: article.institution_openalex_ids?.length ? article.institution_openalex_ids : null,
       institution_coords: article.institution_coords?.length ? article.institution_coords : null,
       affiliations: article.affiliations?.length ? article.affiliations : null,
       primary_institution: article.primary_institution || null,
@@ -464,11 +471,32 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
     const articles = (d.results || []).map((w: any) => {
       const authorships = w.authorships || []
       const flatInsts = authorships.flatMap((a: any) => a.institutions || [])
-      const institutions = [...new Set(flatInsts.map((i: any) => i.display_name).filter(Boolean))] as string[]
-      const institution_coords = flatInsts
-        .filter((i: any) => i.geo?.latitude)
-        .map((i: any) => ({ name: i.display_name, lat: i.geo.latitude, lng: i.geo.longitude, country: i.country_code }))
-        .filter((v: any, i: number, a: any[]) => a.findIndex((x: any) => x.name === v.name) === i)
+      // institutions[] och institution_openalex_ids[] byggs som PARALLELLA
+      // arrays deduped på display_name — samma index i båda refererar till
+      // samma institution. Utan id-listan har vi ingen väg att slå upp
+      // geo-koordinater (OpenAlex /works/-svaret returnerar INTE geo på
+      // nested institutions, bara id/name/country_code — geo ligger på
+      // /institutions/{id}). Backfill-affiliations skriver samma parallell-
+      // array; matcha logiken exakt så alla vägar in i articles har
+      // konsistent format. Kort form (strippad openalex.org/-prefix) för
+      // renare lagring; API:t tar båda.
+      const seen = new Set<string>()
+      const institutions: string[] = []
+      const institution_openalex_ids: string[] = []
+      for (const inst of flatInsts) {
+        const name = inst?.display_name
+        if (!name || seen.has(name)) continue
+        seen.add(name)
+        institutions.push(name)
+        const rawId = (inst?.id || '') as string
+        institution_openalex_ids.push(rawId.replace(/^https?:\/\/openalex\.org\//, ''))
+      }
+      // institution_coords lämnas null — /works/ har inte geo. Fylls
+      // separat via bulk-UPDATE mot openalex_institutions-tabellen (Fas 3
+      // 2026-08-02) som resolverar id → lat/lng. Den gamla flatInsts.filter
+      // (i => i.geo?.latitude)-koden var tyst felkälla (skrev alltid tom
+      // array) och togs bort samtidigt som backfill-affiliations fick
+      // samma fix.
       const countries = [...new Set(flatInsts.map((i: any) => i.country_code).filter(Boolean))] as string[]
       // raw_affiliation_strings preserves department/campus text ("Örebro
       // University, Grythyttan Campus") that display_name flattens away.
@@ -493,7 +521,8 @@ async function fetchOpenAlexPage(query: string, year: number, page: number): Pro
         authors: authorships.map((a: any) => a.author?.display_name || '').filter(Boolean).join(', '),
         country: countries[0] || '',
         institutions,
-        institution_coords,
+        institution_openalex_ids,
+        institution_coords: null,
         countries,
         affiliations,
         primary_institution: institutions[0] || null,

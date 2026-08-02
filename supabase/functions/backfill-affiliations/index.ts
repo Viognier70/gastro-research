@@ -94,16 +94,13 @@ async function fetchOpenAlex(doi: string): Promise<Outcome> {
     // institutional signal. Attempted, missed — no fallback in fas 1.
     if (!institutions.length) return { kind: 'missed' }
 
-    const institution_coords = flatInsts
-      .filter((i: any) => i.geo?.latitude)
-      .map((i: any) => ({
-        name: i.display_name,
-        lat: i.geo.latitude,
-        lng: i.geo.longitude,
-        country: i.country_code
-      }))
-      .filter((v: any, i: number, a: any[]) =>
-        a.findIndex((x: any) => x.name === v.name) === i)
+    // NOTE 2026-08-02: institution_coords härleds INTE här längre.
+    // OpenAlex /works/-endpointen returnerar bara id/display_name/country_code
+    // på nested institutions — INTE geo. Den tidigare `flatInsts.filter(i =>
+    // i.geo?.latitude)`-koden var tyst felkälla och skrev alltid null (bekräftat
+    // via curl 2026-08-02). Coords fylls separat via bulk-UPDATE mot
+    // openalex_institutions-tabellen som resolverar id → lat/lng via
+    // /institutions/{id}-endpointen (fas 2-3, migration 20260802).
 
     const countries = [...new Set(
       flatInsts.map((i: any) => i.country_code).filter(Boolean)
@@ -118,8 +115,8 @@ async function fetchOpenAlex(doi: string): Promise<Outcome> {
       data: {
         institutions,
         institution_openalex_ids,
-        institution_coords: institution_coords.length ? institution_coords : null,
-        affiliations:       affiliations.length       ? affiliations       : null,
+        institution_coords:  null,
+        affiliations:        affiliations.length ? affiliations : null,
         primary_institution: institutions[0],
         country:  countries[0] || '',
         countries
@@ -168,6 +165,11 @@ Deno.serve(async (req) => {
   let transient_errors = 0
   let rpc_errors = 0
   let stopped_on_429 = false
+  // Diagnostikräknare 2026-08-02: tre jobb i vecka 31-32 rapporterade
+  // "succeeded" utan att producera något (silent 0-batch). Med denna kan vi
+  // se om det beror på tom targetpopulation (batch_size=0) eller på misslyckad
+  // extraction (ids_written=0 trots ok-svar). Ska matcha updated för ok-vägen.
+  let ids_written = 0
 
   for (const article of articles) {
     const doi = extractDoi(article.url)
@@ -217,8 +219,10 @@ Deno.serve(async (req) => {
       continue
     }
 
-    if (outcome.kind === 'ok') updated++
-    else missed++
+    if (outcome.kind === 'ok') {
+      updated++
+      ids_written += outcome.data.institution_openalex_ids.length
+    } else missed++
 
     await new Promise(r => setTimeout(r, CALL_DELAY_MS))
   }
@@ -239,6 +243,7 @@ Deno.serve(async (req) => {
     batch_size: articles.length,
     updated,
     missed,
+    ids_written,     // totalt antal institution_openalex_ids skrivna i denna körning
     transient_errors,
     rpc_errors,
     stopped_on_429,
