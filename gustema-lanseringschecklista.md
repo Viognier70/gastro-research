@@ -59,6 +59,53 @@
 
 ---
 
+## 🔴 PRIO 1 — TRIAD-KVALITET (blockerare — se `gustema-kvalitetssakring-spec.md` + `gustema-triad-eftermatning.md`)
+
+### L6.1 FÖRE-mätning ✅ KLAR 2026-07-23
+- 25 slumpade stickprovsartiklar granskade av Anders mot originalartiklarna.
+- **Fynd:** konsekvent fabricering av specifika värden (pH 6.8, 150°C, ingrediens-
+  namn, platsnamn) attribuerade till artiklar som inte innehöll dem. Trogen på
+  övergripande innehåll, fabricerade specifika detaljer. 6 av 25 hade minst en
+  bekräftad/sannolik fabricering.
+- **Rotorsak:** TRIAD-genereringen matades med max 300 tecken (`insight`-parafras)
+  och prompten krävde "60–80 ord instruktionell 2:a person" per techne-fält.
+  Otillräckligt underlag + krav på konkretion → strukturellt frampressad
+  fabricering.
+
+### L6.2 Prompt-fix ✅ IMPLEMENTERAD 2026-07-23 (v4)
+- `_shared/labeled-triad.ts` v4, deployad till `pipeline` (v131), `triad-on-demand` (v40), `triad-background` (v32).
+- Ändringar: (a) källordning `abstract || insight` med cap 2000 (var 300), (b) 5 STRICT RULES mot fabricering, (c) techne-instruktion omformulerad, (d) `MIN_LEN` 180 → 120.
+- **Bevisad på 3 av 6 fabriceringspunkter** (nr 2 fisksås pH, nr 3 hot pot 150°C, nr 21 getost furaner/pyraziner) via triad-on-demand-regenerering — alla fabricerade siffror borta, ersatta med "as reported" eller ärlig generalitet.
+
+### L6.3 Batch-regenerering av hela korpusen ⬜ KÖR
+- Script: `scripts/batch-regen-triad.ts` + `scripts/README-batch-regen-triad.md`.
+- Anthropic Batches API (50% rabatt), **33 305 artiklar** (5 285 befintliga TRIAD + 28 020 i kö, `irrelevant is not true`).
+- Estimerad kostnad: **~$425** (dry-run ger exakt). ETA: några timmar upp till 24h.
+- **Täckningsvinst:** produktens analyserade bibliotek går från 5 285 → 33 305 (6,3×). Utan denna batch betas kön aldrig av — inflöde > throughput (48/dag) bevisat via kö-tillväxt 26 957 → 28 020 på timmar 2026-07-23.
+- Anders kör med `ANTHROPIC_KEY` + `SUPABASE_SERVICE_ROLE_KEY` i egen miljö.
+
+### L6.3b Klassificerings-drift (fynd 2026-07-23) — separat data-hygien
+- Av ~9 700 befintliga TRIAD-analyser sitter **~4 400 (45%) på irrelevant-flaggade artiklar**. Dessa är osynliga för användaren (Feed filtrerar `irrelevant=is.false`) men konsumerade Sonnet-budget vid generering. Relevance-check och TRIAD-pipeline har systematiskt olika uppfattning om vilka artiklar som "hör hemma".
+- Utredning kvarstår: sätts `irrelevant=true` FÖRE eller EFTER TRIAD-generering? Om efter → klassificeringsdrift över tid; om före → race condition mellan gates.
+- Åtgärd: (a) L6.3-batchen exkluderar redan `irrelevant=true`, så nya analyser blir konsistenta framåt; (b) engångs-rensning av TRIAD på befintligt `irrelevant=true` är egen liten uppgift (SQL — `update articles set episteme_* = null, ... where irrelevant is true and episteme_sensory_pro is not null`), frigör lagringsutrymme och gör datat konsekvent.
+
+### L6.4 EFTER-mätning ⬜ VÄNTAR (blockerare för Free-lansering)
+- Se `gustema-triad-eftermatning.md`. Nytt slumpurval 25 artiklar (ej samma som FÖRE).
+- **Trösklar satta INNAN mätning:**
+  - core_claim + Episteme ≥ 90% Korrekt
+  - Techne ≥ 75% Korrekt/Delvis **OCH noll fabricerade numeriska värden** (absolut krav)
+  - Phronesis ≥ 70% Korrekt/Delvis
+- Under tröskel → iterera prompten, kör om batch, mät om. Ingen Free-lansering
+  förrän grönt.
+
+### L6.5 Kö-throughput 28 020 väntande + växer — separat sprint (kandidat för blockerare)
+- Background processar 1 artikel per 30-min-invocation = 48/dag. Kön (**28 020**, växer med ~1 000/timmar enligt observation 2026-07-23) skulle ta ~583 dagar att beta av.
+- **Inflöde > throughput bevisat:** kö växte 26 957 → 28 020 på några timmar samma dag. Utan åtgärd växer kön monotont, batchen (L6.3) köper bara tid.
+- **Åtgärd:** höj batch-parallellism i background (nuvarande HARD_TIMEOUT_MS 100s + Sonnet 75s = 1 artikel/tick), eller ny fn `triad-batch-worker` med högre `max_articles_per_invocation`. Alternativ: schema:a batch-jobb via `scripts/batch-regen-triad.ts` som cron (tar automatiskt hand om kön).
+- **Överväg som blockerare för lansering nr 2:** om inflödet fortsätter växa kön kan vi bara stödja "5 285 relevant artiklar analyserade" som stabil siffra över tid, ej "hela korpusen". Egen sprint efter L6.4-grönt — men beslut om det ska blockera Free-CTA behövs innan lansering.
+
+---
+
 ## 🔴 PRIO 1 — INTÄKTSKEDJA (blockerare)
 
 ### L2.1 Stripe end-to-end skarpt
@@ -69,6 +116,11 @@
 ### L2.2 Free-user-flöde
 - Bekräfta att kvotdragning (3 TRIAD/månad free) ger ANALYS, inte betalvägg.
 - En free-användare ska få sina 3 utan att stötas in i paywall felaktigt.
+- **Utökning 2026-07-23:** Ask-fn (deploy 2026-07-22) saknar per-user-kvot
+  by design — steg 2 (`ask_quota`-tabell + JWT-läsning i edge-fn + frontend-UI
+  "N av 3 gratis svar kvar denna månad") krävs innan Free-CTA exponeras.
+  Se `project_ask_synth_steg1_vs_steg2.md`. Bygger på samma mönster som
+  `triad_quota` (migration `20260716120000_adopt_orphan_rpcs.sql` rad 330-356).
 
 ### L2.3 Städa föräldralösa profiles-rader
 - 6 st noterade. Rensa före lansering.
@@ -88,6 +140,19 @@
 ### L3.3 Datakvalitets-transparens (K3.4)
 - Av hur många? Hur många återstår? När senast uppdaterad? Ärligt om vad
   vi levererar OCH inte levererar.
+
+### L3.4 OG-meta uppdatering före publik delning (2026-08-02)
+- `index.html:27` har hårdkodad OG-description: "5,200+ studies analyzed
+  in depth through the TRIAD framework, drawn from 453,000+ scanned
+  publications." — visas i LinkedIn/X/FB-preview när någon delar
+  gustema.com-länken.
+- Baseline 2026-08-02: verkliga tal är **32,728+ TRIAD-analyzed** (från
+  screening_funnel.triad_analyserade) och **466,908+ scanned** (r1-count
+  på articles_public).
+- Uppdatera OG-meta manuellt före publik lansering och därefter var 6-12
+  månad — det är ett statiskt tal som aldrig blir helt aktuellt, men bör
+  vara i rätt storleksordning (annars framstår produkten som mindre än
+  den är i första intryck).
 
 ---
 
@@ -194,9 +259,14 @@ som förbättrar men inte hårt blockerar. Ta ETT block i taget — samma
 disciplin som höll done-spökena borta.
 
 ### Föreslagen ordning
-1. Säkerhetspass (L1.1 + L1.2) — utvilad, egen session, korsar Stripe.
-2. Intäktsverifiering (L2) — skarp genomkörning.
-3. Copy-pass (L3) — snabbt, hög trovärdighetsvinst.
-4. Nyhetsbrev-grundfix (L4.1) → sätt tillbaka Subscribe-knappen.
-5. Väktar-blindfläckar (L5) — löpande.
-6. Domänbyte (domän) — när allt ovan står stabilt.
+1. **TRIAD-kvalitet (L6)** — batch-regen kör nu, EFTER-mätning blockerar Free-CTA
+   tills grönt utfall mot förbestämda trösklar.
+2. Säkerhetspass (L1.1 + L1.2) — utvilad, egen session, korsar Stripe.
+3. Intäktsverifiering (L2) — skarp genomkörning. **Inkl. ask-synth steg 2**
+   (per-user-kvot, mönster från triad_quota).
+4. Copy-pass (L3) — snabbt, hög trovärdighetsvinst. Uppdatera copy att spegla
+   L6-utfallet ärligt (t.ex. "~9 av 10 korrekta · rapportera fel via [flagga]").
+5. Nyhetsbrev-grundfix (L4.1) → sätt tillbaka Subscribe-knappen.
+6. Väktar-blindfläckar (L5) — löpande.
+7. Kö-throughput (L6.5) — egen sprint efter L6.4-grönt.
+8. Domänbyte (domän) — när allt ovan står stabilt.
