@@ -196,6 +196,16 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
     const analysis = article.abstract?.length > 50 ?
       await analyzeWithClaude(article.title, article.abstract, topic) : {}
 
+    // Sanity: en trunkerad Scopus-parser gav 13 540 rader med bara ett namn
+    // i authors innan commit ffa7ab7. Backfillades via OpenAlex, men
+    // upptäcktes månader efter det att APA-referenser blivit fel i
+    // produkten. Logga varje singel-namns-write så nästa parser-regression
+    // syns i loggen direkt — inte via en användarrapport.
+    const rawAuthors = (article.authors || '').trim()
+    if (rawAuthors && !rawAuthors.includes(',')) {
+      console.log(`Author-sanity: singel-namn "${rawAuthors}" [${article.source}] ${article.title.slice(0, 60)}`)
+    }
+
     const { error } = await supabase.from('articles').insert({
       title: article.title,
       authors: article.authors || '',
