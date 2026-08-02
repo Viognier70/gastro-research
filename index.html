@@ -4115,7 +4115,7 @@ function openArticleOverlay(article){
     (article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
   document.getElementById('artBadges').innerHTML = badges
   document.getElementById('artTitle').textContent = article.title || ''
-  document.getElementById('artMeta').textContent = [article.authors?article.authors.split(',')[0]:null, article.journal, article.year].filter(Boolean).join(' · ')
+  document.getElementById('artMeta').textContent = [article.authors||null, article.journal, article.year].filter(Boolean).join(' · ')
   const claim = article.core_claim || article.insight || ''
   const claimEl = document.getElementById('artClaim')
   if(claim){ claimEl.textContent = claim; claimEl.style.display='block' } else { claimEl.style.display='none' }
