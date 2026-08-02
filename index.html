@@ -264,6 +264,17 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   letter-spacing: .12em; text-transform: uppercase;
   color: var(--gustema-gold, #A08A55); margin-bottom: 6px;
 }
+/* Diamant-ikonen pulserar medan ask-synth kör (embed → vektorsök →
+   Sonnet). 1.8s cadence matchar mapPulse; opacity 0.35↔1 är tydligt
+   nog för att synas i periferin utan att bli distraherande under de
+   5-10 s ett anrop typiskt tar. Applied inline via .pulse-klass från
+   doSemanticSearch, removed i try/finally. */
+.ask-diamond { display: inline-block }
+.ask-diamond.pulse { animation: askDiamondPulse 1.8s ease-in-out infinite }
+@keyframes askDiamondPulse {
+  0%, 100% { opacity: 1; transform: scale(1) }
+  50%      { opacity: .35; transform: scale(.9) }
+}
 .oversikt-ask-help {
   font-size: 12px; line-height: 1.5; color: var(--text-secondary);
   margin-bottom: 12px;
@@ -1443,7 +1454,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <!-- 2. Fråga forskningen (PRIMÄR — upplyft till toppen, ögats första fokus).
            Dublett i Feed under övergången; städas i B3. -->
       <div class="oversikt-ask" id="oversiktAskWrap">
-        <div class="oversikt-ask-label">◆ Fråga forskningen</div>
+        <div class="oversikt-ask-label"><span class="ask-diamond">◆</span> Fråga forskningen</div>
         <div class="oversikt-ask-help">Skriv din arbetsfråga — få relevanta artiklar med TRIAD-analys för din roll.</div>
         <input class="oversikt-ask-input" id="oversiktSemanticInput"
                placeholder="t.ex. Hur påverkar musik smakupplevelsen?"
@@ -1664,7 +1675,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="main-layout">
   <div class="feed-pane">
     <div class="semantic-search-wrap" id="semanticSearchWrap">
-      <div class="semantic-search-label">◈ Ask the research</div>
+      <div class="semantic-search-label"><span class="ask-diamond">◈</span> Ask the research</div>
       <input class="semantic-search-input" id="semanticInput" placeholder="e.g. How does music affect taste perception?" onkeydown="if(event.key==='Enter')doSemanticSearch()">
       <button class="semantic-search-btn" onclick="doSemanticSearch()">Search →</button>
       <div class="semantic-results" id="semanticResults"></div>
@@ -4792,6 +4803,14 @@ window.doSemanticSearch = async function(inputId, resultsId) {
   results.style.display = 'block'
   results.innerHTML = `<div class="loading-state"><div class="spinner"></div><span>${L('Syntetiserar svar från peer-reviewed forskning…', 'Synthesising an answer from peer-reviewed research…')}</span></div>`
 
+  // Diamant-ikonen i widget-labeln pulserar under hela anropet så
+  // användaren har en aktivitetssignal även efter att ha scrollat
+  // förbi laddningsdiven. .closest() letar upp rätt widget oavsett om
+  // det är Översikt- eller Feed-instansen (båda har .ask-diamond span).
+  const askWidget = results.closest('.oversikt-ask, .semantic-search-wrap')
+  const askDiamond = askWidget?.querySelector('.ask-diamond')
+  if (askDiamond) askDiamond.classList.add('pulse')
+
   // Auth-token om inloggad (för framtida Pro-detektion i STEG 3).
   let token = SB_ANON
   try {
@@ -4906,6 +4925,10 @@ window.doSemanticSearch = async function(inputId, resultsId) {
   } catch(e) {
     results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">${L('Ask är tillfälligt otillgänglig. Kontrollera nätverket eller försök igen.', 'Ask is temporarily unavailable. Please check your network or try again.')}</div>`
     console.log('ask-synth error:', e)
+  } finally {
+    // Stoppa diamant-pulsen oavsett hur try-blocket slutade (svar, insufficient,
+    // budget, error). Utan detta skulle diamanten fastna och pulsa för evigt.
+    if (askDiamond) askDiamond.classList.remove('pulse')
   }
 }
 
