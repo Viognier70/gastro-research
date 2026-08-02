@@ -3153,8 +3153,15 @@ async function loadScreeningFunnel(){
       const width=val>0
         ? 38 + 62 * ((Math.log(val)-logMin)/logSpan)
         : 38
-      // Procent AV TOTALEN (steg 1), inte av föregående steg. Steg 1 visar ingenting.
-      const pctText=(i===0 || max===0) ? '' : ((val/max)*100).toFixed(1)+'%'
+      // Procent AV FÖREGÅENDE STEG — standard tratt-semantik ("hur mycket
+      // överlever detta filter"). Tidigare räknades procent AV TOTALEN vilket
+      // gjorde närliggande steg oläsbara ("Relevant 7.0%" följt av
+      // "TRIAD analysed 7.0%" ser ut som noll bortfall när det egentligen
+      // är 99.5% survival). Kumulativa dropoff-siffran lever kvar i
+      // fotraden ("1 in N articles survive" via renderFunnelFooter).
+      // Steg 1 visar ingenting — 100% av sig själv säger inget.
+      const prev=i>0?values[i-1]:0
+      const pctText=(i===0 || prev===0) ? '' : ((val/prev)*100).toFixed(1)+'%'
       const lbl=s.en
       const li=document.createElement('li')
       li.className='funnel-row'+(s.qualified?' is-qualified':'')
