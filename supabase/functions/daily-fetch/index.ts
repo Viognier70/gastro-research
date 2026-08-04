@@ -51,11 +51,18 @@ function normalizeDoi(raw: string): string {
 }
 const SCOPUS_KEY = Deno.env.get('SCOPUS_KEY') || ''
 
-// Per-invocation räknare för url-konflikter (uq_articles_url, partial index
-// where url is not null). Nollställs överst i Deno.serve — modulscopet håller
-// annars kvar värdet mellan cron-körningar. Rapporteras i slutsvaret så en
-// plötslig ökning avslöjar att någon inhämtningsväg börjat dubbelhämta.
-let skippedDuplicate = 0
+// Per-invocation räknare för saveArticle:s rejection-paths. Nollställs
+// överst i Deno.serve — modulscopet håller annars kvar värdet mellan
+// cron-körningar. Rapporteras i slutsvaret så tyst 0-avkastning har
+// diagnos-signaler.
+//
+// Namnen är precisa: förra generationens "skipped_duplicate" täckte bara
+// upsert-race-fallet och lästes felaktigt som "hittade dups" (rota till
+// två-dygns-stillestånd 2026-08-04 där isDuplicate-avvisningar var tysta).
+let skippedShortTitle = 0     // rad 191: title < 10 tecken
+let skippedRelevance  = 0     // rad 194: relevanceReject-gate (BROAD-journal, off-topic, blocked)
+let duplicateInDb     = 0     // rad 200: isDuplicate pre-check hittade existerande DOI/titel
+let skippedUrlConflict = 0    // rad 265: upsert onConflict='url' → ignoreDuplicates hit (race)
 
 // Kommersiell produkt fr.o.m. 2026-07-10: Scopus akademiska API-nyckel får
 // inte längre användas för hämtning. Alla call sites som träffar
@@ -163,16 +170,23 @@ async function isDuplicate(doi: string, title: string): Promise<boolean> {
 // ─── SAVE ARTICLE ─────────────────────────────────────────────────────────────
 async function saveArticle(article: any, topic: string): Promise<boolean> {
   try {
-    if (!article.title || article.title.length < 10) return false
+    if (!article.title || article.title.length < 10) {
+      skippedShortTitle++
+      return false
+    }
 
     // ── RELEVANSGRIND (gäller ALLA källor) ──
     const reject = relevanceReject(article)
     if (reject) {
       console.log(`Skipped (${reject}): ${article.title.slice(0,60)} [${article.journal || '-'}]`)
+      skippedRelevance++
       return false
     }
 
-    if (await isDuplicate(article.doi || '', article.title)) return false
+    if (await isDuplicate(article.doi || '', article.title)) {
+      duplicateInDb++
+      return false
+    }
 
     // insight/application/limitation/limit_type/study_type fylls INTE här
     // längre. Tidigare analyzeWithClaude-anrop här inne gav 1-2 s per ny
@@ -249,7 +263,7 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
     }, { onConflict: 'url', ignoreDuplicates: true })
       .select('id')
     if (error) { console.log('Save error:', error.message); return false }
-    if (!data?.length) { skippedDuplicate++; return false }
+    if (!data?.length) { skippedUrlConflict++; return false }
     return true
   } catch(e: any) {
     console.log('saveArticle error:', e.message)
@@ -561,15 +575,21 @@ async function fetchSemanticScholar(query: string, year: number): Promise<any[]>
 }
 
 // ─── UPDATE PROGRESS ──────────────────────────────────────────────────────────
+// Kumulativ total_fetched via RPC (migration 20260804170000). Tidigare
+// direkt-upsert skrev `total_fetched: added` → värdet från senaste körningen,
+// inte kumulativt. Sex öppna openalex-jobb visade total_fetched=0 trots att
+// current_page rört sig i veckor, för att alla senaste tick var dups.
+// RPC:n gör `total_fetched = existing + added` server-side.
 async function updateProgress(source: string, identifier: string, year: number, page: number, added: number, completed = false) {
-  await supabase.from('backfill_progress').upsert({
-    source, identifier,
-    current_year: year,
-    current_page: page,
-    total_fetched: added,
-    completed,
-    last_run: new Date().toISOString()
-  }, { onConflict: 'source,identifier' })
+  const { error } = await supabase.rpc('advance_backfill_progress', {
+    p_source: source,
+    p_identifier: identifier,
+    p_year: year,
+    p_page: page,
+    p_added: added,
+    p_completed: completed,
+  })
+  if (error) console.log(`updateProgress RPC error ${source}/${identifier}: ${error.message}`)
 }
 
 // ─── FRESH FETCH (last 7 days) ────────────────────────────────────────────────
@@ -777,7 +797,10 @@ async function fetchResearchers(): Promise<number> {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}))
-  skippedDuplicate = 0
+  skippedShortTitle = 0
+  skippedRelevance  = 0
+  duplicateInDb     = 0
+  skippedUrlConflict = 0
 
   const researcherAdded = await fetchResearchers()
   const freshAdded = await fetchFresh()
@@ -805,7 +828,16 @@ Deno.serve(async (req) => {
     researchers: researcherAdded,
     fresh: freshAdded,
     backfill: backfillAdded,
-    skipped_duplicate: skippedDuplicate,
+    // Per-invocation rejection-räknare (renamed 2026-08-04 för att lösa
+    // "skipped_duplicate"-tvetydigheten som doldes tyst 0-avkastning i
+    // två dygn). added=0 + duplicate_in_db > 0 = källa returnerar men allt
+    // finns redan (backfill uttömd). added=0 + skipped_relevance > 0 =
+    // källa returnerar off-topic. added=0 + samtliga räknare 0 = källa
+    // returnerar tomt (safety-net decrementerar year i runBackfill).
+    duplicate_in_db:      duplicateInDb,
+    skipped_relevance:    skippedRelevance,
+    skipped_url_conflict: skippedUrlConflict,
+    skipped_short_title:  skippedShortTitle,
     total_articles: count,
     next_jobs: remaining
   }), { headers: { 'Content-Type': 'application/json' } })
