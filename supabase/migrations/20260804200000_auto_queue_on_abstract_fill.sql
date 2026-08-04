@@ -93,16 +93,13 @@ create trigger queue_on_abstract_fill
 
 
 -- =============================================================================
--- Verifiering + engångskörning för historiska rader (efter apply):
+-- Verifiering (efter apply):
 --
--- === STEG A: mät hålet från INSERT-guarden ===
+-- === MÄTFRÅGA: hur många artiklar har abstract men saknar queue-rad? ===
 --
---   -- Hur många artiklar har giltigt abstract men saknar processing_queue-rad?
---   -- Detta är exakt populationen som föll mellan stolarna: post-guard-insert
---   -- utan abstract → aldrig enqueuead → backfill-abstracts fyllde in →
---   -- INGEN reagerar (utan denna migration). Räknar även äldre historiska
---   -- rader som aldrig blev enqueuead av andra orsaker (t.ex. före
---   -- queue_new_article-triggern skapades).
+--   -- Kör för att förstå läget. Rader som matchar är antingen (a) pre-
+--   -- trigger-historik eller (b) framåt-fall som denna migrations trigger
+--   -- fångar från och med nu.
 --   select count(*) as unqueued_with_valid_abstract
 --     from public.articles a
 --    where a.abstract is not null
@@ -112,28 +109,29 @@ create trigger queue_on_abstract_fill
 --        select 1 from public.processing_queue q where q.article_id = a.id
 --      );
 --
--- === STEG B: engångs-catchup av populationen från STEG A ===
+-- === INGEN ENGÅNGSKÖRNING ==================================================
 --
---   -- Om STEG A visar en icke-trivial siffra (>100), kör denna INSERT
---   -- en gång för att köa dem alla. Idempotent (ON CONFLICT DO NOTHING).
---   -- Priority 5 (lägre än nya trigger-inserts på 10) så pipelinen inte
---   -- kväver framåt-inflödet av catchup:en.
---   --
---   -- OBS: kör i transaktion + observera storleken. Om det är >10 000 rader
---   -- överväg att batcha (LIMIT + OFFSET) för att inte spika pipeline-load.
---   insert into public.processing_queue
---     (article_id, status, priority, sci_done, triad_done, attempts)
---   select a.id, 'pending', 5, false, false, 0
---     from public.articles a
---    where a.abstract is not null
---      and length(a.abstract) > 50
---      and a.abstract <> '[unavailable]'
---      and not exists (
---        select 1 from public.processing_queue q where q.article_id = a.id
---      )
---   on conflict (article_id) do nothing;
+--   Mätningen 2026-08-04 gav 9 437 rader utan processing_queue-rad. Instinktiv
+--   åtgärd: engångs-INSERT som köar dem. GÖR INTE DET.
 --
--- === STEG C: verifiera triggern ===
+--   Verifiering av samma population (2026-08-04):
+--     - 9 437 av 9 437 har core_claim ifyllt
+--     - 9 421 av 9 437 har TRIAD-analys (has_episteme_*)
+--     - fetched_at-fönster: 2026-05-14 → 2026-06-06
+--
+--   De är alltså REDAN BEARBETADE — genom en tidigare pipeline-väg som
+--   existerade före queue_new_article-triggern skapades. Att köa dem nu
+--   skulle trigga claim_pipeline_batch → Haiku sci-scoring + Sonnet TRIAD-
+--   generering för färdiga artiklar. Betala tusentals dollar för att skriva
+--   över befintligt arbete med (förhoppningsvis) identiskt arbete.
+--
+--   FRAMTIDA POST-QUERY-DIVERGENS: om siffran STIGER från 9 437 månader
+--   framöver, är det ett nytt hål (t.ex. någon ny insert-väg utan trigger).
+--   Om den STÅR STILL är den historik som ska förbli i fred. Om den SJUNKER
+--   är det troligen att någon rensat historiska rader — undersök men rör
+--   inte processing_queue.
+--
+-- === VERIFIERA TRIGGERN ===
 --
 --   -- 1. Trigger existerar?
 --   select tgname, pg_get_triggerdef(oid) as def
