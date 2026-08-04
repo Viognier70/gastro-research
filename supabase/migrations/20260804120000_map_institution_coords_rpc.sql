@@ -63,6 +63,31 @@
 --          alla dots har positiva count. Semantiken är dessutom mer
 --          intuitiv för kartan ("hur många forskningsartiklar är
 --          associerade med denna institution i kartan").
+--
+-- SECURITY DEFINER + SET search_path (fixat 2026-08-04 efter manuell alter
+-- i prod — utan detta returnerar RPC:erna [] till anon):
+--
+--   Båda funktionerna läser public.articles DIREKT (via cross join lateral
+--   jsonb_to_recordset(a.institution_coords)). Anon har GRANT SELECT bara
+--   på public.articles_public (view:en), inte på public.articles-tabellen
+--   (verifierat 20260731120000: grant select on public.articles to
+--   authenticated — anon utelämnad avsiktligt).
+--
+--   Som INVOKER körs RPC:erna med anons rättigheter → permission denied
+--   på public.articles → PostgREST 500 → callMapRpc returnerar [].
+--   Som DEFINER körs de med function-ägarens rättigheter (postgres/
+--   supabase_admin) → läser articles fritt.
+--
+--   Säkerhetsanalys: OK att göra DEFINER här eftersom bägge funktionerna
+--   returnerar AGGREGATED counts + koordinater — ingen row-exponering av
+--   RLS-skyddade fält, ingen SQL-injection-yta (inga parametrar). Samma
+--   mönster som map_institution_stats/map_country_stats manuellt patchades
+--   till 2026-08-02.
+--
+--   search_path fixeras till public, pg_temp för att stänga
+--   sökväg-hijack-attacker (schema-shadowing på icke-schema-qualificerade
+--   namn). All access i kroppen är public.-qualified redan, så detta är
+--   defence-in-depth mer än strikt nödvändigt.
 -- =============================================================================
 
 
@@ -82,6 +107,8 @@ CREATE OR REPLACE FUNCTION public.map_institution_coords()
 RETURNS jsonb
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $function$
   with inst_articles as (
     select
@@ -160,6 +187,8 @@ CREATE OR REPLACE FUNCTION public.map_institution_collabs()
 RETURNS jsonb
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $function$
   with coord_rows as (
     select

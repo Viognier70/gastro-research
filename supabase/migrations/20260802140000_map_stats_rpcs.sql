@@ -35,6 +35,26 @@
 --   primary_institution-produktion), inte 10 (bara TRIAD-analyserad).
 --   Coverage-copyn har SIN egen TRIAD-gate via head-count-queries, det
 --   är en separat "hur långt har vi kommit"-metric.
+--
+-- SECURITY DEFINER + SET search_path (retro-fixat 2026-08-04 i git efter
+-- manuell alter i prod — utan detta returnerar RPC:erna [] till anon):
+--
+--   Bägge funktionerna läser public.articles DIREKT. Anon har GRANT SELECT
+--   bara på public.articles_public (view:en), inte på tabellen (20260731-
+--   120000: grant select on public.articles to authenticated — anon
+--   utelämnad avsiktligt). Som INVOKER → permission denied → PostgREST 500
+--   → callMapRpc:s try/catch sväljer det och returnerar [] → sidebar och
+--   country-tal blir tomma utan felmeddelande.
+--
+--   OK att göra DEFINER här: bägge returnerar AGGREGATED counts, ingen
+--   row-exponering av RLS-skyddade fält, ingen SQL-injection-yta (inga
+--   parametrar). search_path fixeras för defence-in-depth mot schema-
+--   shadowing (kroppen är public.-qualified redan).
+--
+--   Samma mönster som map_institution_coords/map_institution_collabs
+--   fick från början i 20260804120000. Andra gången samma bugg — spara
+--   som tumregel: RPC som läser articles direkt + grantas till anon =
+--   måste vara DEFINER.
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -51,6 +71,8 @@ CREATE OR REPLACE FUNCTION public.map_institution_stats()
 RETURNS jsonb
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $function$
   select coalesce(
     jsonb_agg(
@@ -89,6 +111,8 @@ CREATE OR REPLACE FUNCTION public.map_country_stats()
 RETURNS jsonb
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $function$
   select coalesce(
     jsonb_agg(
