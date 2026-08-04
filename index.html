@@ -5700,36 +5700,40 @@ window.worldMapProjection = null
 window.currentWorldFilter = 'all'
 window.selectedCountry = null
 
-// Map-load — tre parallella källor:
+// Map-load — tre RPC:er, all aggregering server-side.
 //
-//   1. map_institution_stats() RPC — per primary_institution artikelantal.
-//      SQL-aggregering i serverledet, JSONB-svar (en rad → bypass av
-//      PostgREST db-max-rows-cappet på 1 000 rader, se docs/postgrest-
-//      caps.md). Client-side aggregering över 38 897 articles var omöjlig
-//      innan RPC:erna — servern kapade tyst vid 1 000 rader oavsett
-//      klientens limit-argument (verifierat 2026-08-02).
+//   1. map_institution_coords() — en rad per unik OA-canonical institution
+//      (från institution_coords[].name), med lat/lng/country/article_count/
+//      rank/topics. Ersatte 2026-08-04 den paginerade articles_public-fetchen
+//      som slog i PostgREST db-max-rows=1000 (mätt: 20 994 coord-artiklar
+//      → kartan visade bara 1 006 institutioner). Coord-fetchen paginerade
+//      i sidor om 1 000 men något efter sida 1 fallerade tyst, så fjärde
+//      gången samma trunkeringsbugg den här veckan.
 //
-//   2. map_country_stats() RPC — per country artikel- och institutionsantal.
+//   2. map_institution_collabs() — inter-country institutionspar med
+//      count. Ersatte den client-side O(n²) collabMap-loopen som byggdes
+//      från samma trunkerade coord-fetch.
 //
-//   3. Paginerad position-fetch — coord-havande articles för dot-positioner,
-//      topics och collabs. Cirka 2,4k rader idag = 3 sidor à 1 000. Måste
-//      vara paginerad även den, samma cap.
+//   3. map_country_stats() — per country artikel- och institutionsantal
+//      för sidebar-titeln.
 //
-// Räknarna filtrerar på irrelevant is not true, INGEN TRIAD-gate — sidbaren
-// räknar hela primary_institution-produktionen (33 för Örebro), inte bara
-// TRIAD-analyserade (10). Coverage-copyn har sin egen TRIAD-gate för "hur
-// långt har vi kommit"-metricen.
+// map_institution_stats() (per primary_institution) används inte längre
+// av kartan — dot-count kommer nu från map_institution_coords.article_
+// count vilket också fixar K1.1c-namnvarianten (institutioner vars OA-
+// canonical namn skiljer sig från primary_institution-strängen fick
+// tidigare count=0 och filtrerades bort). Behålls i DB:n för framtida
+// per-primary-vyer.
+//
+// Räknarna filtrerar på irrelevant is not true, INGEN TRIAD-gate — kartan
+// visar hela pipeline-outputen, inte bara TRIAD-analyserade. Coverage-
+// copyn har sin egen TRIAD-gate för "hur långt har vi kommit"-metricen.
 window.loadWorldMapData = async function() {
   try {
-    const [instStats, countryStats, posArts] = await Promise.all([
-      callMapRpc('map_institution_stats'),
-      callMapRpc('map_country_stats'),
-      loadCoordArticles()
+    const [instRows, collabRows, countryStats] = await Promise.all([
+      callMapRpc('map_institution_coords'),
+      callMapRpc('map_institution_collabs'),
+      callMapRpc('map_country_stats')
     ])
-
-    // instCounts som O(1)-dict för dot-merge nedan.
-    const instCounts = {}
-    for(const s of instStats || []) instCounts[s.institution] = s.article_count
 
     // countryArticles + countryInstCounts för sidebar-titeln.
     const countryCounts = {}, countryInstCounts = {}
@@ -5740,69 +5744,33 @@ window.loadWorldMapData = async function() {
     window._mapCountryCounts = countryCounts
     window._mapCountryInstCounts = countryInstCounts
 
-    // instMap byggs från coord-fetchen — en dot per unik institution i
-    // institution_coords[].name. Topic-fördelning + institution_rank
-    // överlagras per artikel.
+    // instMap direkt från RPC:n — en rad per institution, count redan
+    // aggregerat serversidan. dominant_topic beräknas här (RPC:n lämnar
+    // topics som object → dominans är en trivial keys.sort()).
     const instMap = {}
-    for(const a of posArts) {
-      if(Array.isArray(a.institution_coords)){
-        for(const inst of a.institution_coords) {
-          if(!inst.name || !inst.lat || !inst.lng) continue
-          const key = inst.name
-          if(!instMap[key]) {
-            instMap[key] = {
-              name: inst.name, lat: inst.lat, lng: inst.lng,
-              country: inst.country||'',
-              rank: null, topics: {}
-            }
-          }
-          if(a.topic) instMap[key].topics[a.topic] = (instMap[key].topics[a.topic]||0) + 1
-        }
+    for(const r of instRows || []){
+      if(!r.name || r.lat == null || r.lng == null) continue
+      const topics = r.topics || {}
+      instMap[r.name] = {
+        name: r.name,
+        lat: Number(r.lat),
+        lng: Number(r.lng),
+        country: r.country || '',
+        rank: r.rank ?? null,
+        count: r.article_count || 0,
+        topics,
+        dominant_topic: Object.keys(topics).sort((a,b) => topics[b] - topics[a])[0] || 'gastronomy'
       }
-      if(a.primary_institution && a.institution_rank) {
-        if(instMap[a.primary_institution]) {
-          instMap[a.primary_institution].rank = a.institution_rank
-        }
-      }
-    }
-
-    // Merga primary-baserat count från RPC:n. Fall-through: institutioner
-    // vars coord-namn (OA-canonical) skiljer sig från primary-strängen
-    // (K1.1c-namnvarianten, t.ex. "Karolinska Institute" vs "Karolinska
-    // Institutet") får count=0 här och filtreras bort.
-    for(const key of Object.keys(instMap)){
-      instMap[key].count = instCounts[key] || 0
-      const t = instMap[key].topics
-      instMap[key].dominant_topic = Object.keys(t).sort((a,b)=>t[b]-t[a])[0] || 'gastronomy'
     }
 
     // Coverage-copyn: separata head-count-queries med TRIAD-gate.
     updateMapCoverageCopy()
 
-    // Collabs — inter-country institutionspar per artikel med ≥2 coords.
-    // Byggs från coord-fetchen (samma per-artikel-data som positionerna).
-    const collabMap = {}
-    for(const a of posArts) {
-      if(!Array.isArray(a.institution_coords) || a.institution_coords.length < 2) continue
-      const coords = a.institution_coords.filter(i => i.lat && i.lng)
-      for(let i = 0; i < coords.length; i++) {
-        for(let j = i+1; j < coords.length; j++) {
-          if(coords[i].country === coords[j].country) continue
-          const key = [coords[i].name, coords[j].name].sort().join('||')
-          if(!collabMap[key]) {
-            collabMap[key] = {
-              lat1: coords[i].lat, lng1: coords[i].lng,
-              lat2: coords[j].lat, lng2: coords[j].lng,
-              inst_a: coords[i].name, inst_b: coords[j].name,
-              count: 0
-            }
-          }
-          collabMap[key].count++
-        }
-      }
-    }
-    window.worldMapCollabs = Object.values(collabMap)
-    console.log(`Map: ${Object.keys(instMap).length} coord-institutions, ${Object.keys(instCounts).length} primary-counted, ${Object.keys(countryCounts).length} countries, ${window.worldMapCollabs.length} collabs`)
+    // Collabs direkt från RPC:n — server-side har redan filtrerat på
+    // olika country + ≥2 coords per artikel och grupperat på sorterade
+    // namnpar.
+    window.worldMapCollabs = (collabRows || []).filter(c => c.inst_a && c.inst_b && c.lat1 != null && c.lat2 != null)
+    console.log(`Map: ${Object.keys(instMap).length} coord-institutions, ${Object.keys(countryCounts).length} countries, ${window.worldMapCollabs.length} collabs`)
     return Object.values(instMap).filter(i => i.count > 0).sort((a,b) => b.count - a.count)
   } catch(e) {
     console.log('World map error:', e)
@@ -5830,33 +5798,6 @@ async function callMapRpc(name){
   }
   const j = await r.json()
   return Array.isArray(j) ? j : []
-}
-
-// Paginerad position-fetch. Coord-havande articles (~2,4k) överstiger
-// PostgREST db-max-rows=1000 → måste hämtas i sidor. break när svaret
-// är kortare än pageSize (sista sidan). Safety-cap PAGE_MAX om
-// populationen växer förbi rimligt.
-async function loadCoordArticles(){
-  const pageSize = 1000, PAGE_MAX = 20
-  const fields = 'institution_coords,primary_institution,institution_rank,topic'
-  const base = `select=${fields}&irrelevant=is.false&institution_coords=not.is.null&institution_coords=not.eq.%5B%5D&order=id`
-  const all = []
-  for(let page = 0; page < PAGE_MAX; page++){
-    const url = `${SB_URL}/rest/v1/articles_public?${base}&limit=${pageSize}&offset=${page * pageSize}`
-    const r = await fetch(url, { headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`} })
-    if(!r.ok){
-      console.log(`loadCoordArticles page ${page} HTTP ${r.status}`)
-      break
-    }
-    const batch = await r.json()
-    if(!Array.isArray(batch) || batch.length === 0) break
-    all.push(...batch)
-    if(batch.length < pageSize) break
-    if(page === PAGE_MAX - 1){
-      console.warn(`loadCoordArticles: nådde PAGE_MAX=${PAGE_MAX} (${PAGE_MAX * pageSize} rader) — bump om coord-populationen har växt.`)
-    }
-  }
-  return all
 }
 
 async function updateMapCoverageCopy(){
