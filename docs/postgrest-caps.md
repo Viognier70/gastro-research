@@ -35,6 +35,20 @@ Tre incidenter i vecka 31–32 2026 spårade till detta:
    som returnerar JSONB (en rad — bypass av per-row-cappet). Se
    `20260802140000_map_stats_rpcs.sql`.
 
+4. **Map-vy coord-fetchen (2026-08-04):** paginerad client-side hämtning
+   av 20 994 coord-havande artiklar fallerade tyst efter första 1 000-
+   raden-sidan. Örebro visade 3 av 28 artiklar; K1.1c-namnvarianten fick
+   count=0 och filtrerades bort. Löst genom `map_institution_coords()` +
+   `map_institution_collabs()` — server-side unnest + aggregat. Se
+   `20260804120000_map_institution_coords_rpc.sql`.
+
+5. **Map-RPC:er timeoutade parallellt (2026-08-04):** `map_institution_
+   coords()` tog 5 824 ms i EXPLAIN. Solo hann den precis, tillsammans
+   med två andra RPC:er via `Promise.all` sprängde totalen PostgREST-
+   timeout 57014. Löst genom att flytta aggregatet till materialiserad
+   vy med daglig CONCURRENTLY-refresh; RPC blev en tunn SELECT (~1 ms).
+   Se `20260804130000_map_mvs_and_rpc_wrappers.sql`.
+
 ## Regel
 
 **Om en client-side operation kräver mer än 1 000 rader → antingen:**
@@ -47,6 +61,30 @@ Tre incidenter i vecka 31–32 2026 spårade till detta:
   rader.
 - **Aldrig** förlita sig på ett `limit=X` (X > 1000) och anta att servern
   respekterar det — den ignorerar tyst.
+
+**Om RPC:n aggregerar över mer än några tusen rader → börja direkt som
+materialiserad vy.** RPC:er som EXPLAIN ANALYZE:s på >3-5 s på egen hand
+kommer att slå PostgREST-timeout 57014 så snart de körs parallellt via
+`Promise.all` med andra RPC:er (två gånger sedd 2026-08-04). Standard-
+mönster:
+
+```sql
+create materialized view public.foo_mv as <query>;
+create unique index on public.foo_mv (nyckel);          -- för REFRESH CONCURRENTLY
+
+create or replace function public.foo() returns jsonb
+language sql stable security definer set search_path = public, pg_temp
+as $$ select coalesce(jsonb_agg(...), '[]'::jsonb) from public.foo_mv $$;
+
+-- refresh från cron enligt hur ofta datat ändras
+select cron.schedule('foo_mv_refresh', '15 4 * * *',
+  $$refresh materialized view concurrently public.foo_mv$$);
+```
+
+Kartans coord/collab-MV:er (`20260804130000_map_mvs_and_rpc_wrappers.sql`)
+är kanoniska exempel. Refresh-schemat väljs efter hur ofta underliggande
+data ändras — kartans coord-data är eventual-consistent per dygn, så
+daglig refresh räcker.
 
 ## Skydd
 
