@@ -3,7 +3,6 @@ import { openAlexToKeywords } from '../_shared/openalex-terms.ts'
 
 const SB_URL = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
 const SB_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') || ''
 
 const BLOCKED_JOURNALS = new Set([
   'environment development and sustainability','discover psychology',
@@ -143,35 +142,11 @@ function relevanceReject(article: any): string | null {
   return null
 }
 
-// ─── GEMINI ANALYSIS ──────────────────────────────────────────────────────────
-async function analyzeWithClaude(title: string, abstract: string, topic: string): Promise<any> {
-  const prompt = `You are a research analyst for gastronomy and food science. Return ONLY valid JSON (no markdown):
-
-Title: "${title.slice(0, 150)}"
-Topic: ${topic.replace(/_/g, ' ')}
-Abstract: "${abstract.slice(0, 400)}"
-
-{"insight":"1-2 sentences key finding for culinary professionals","application":"1 sentence how to apply","limitation":"1 sentence main limitation","limit_type":"sample_size|methodology|context|generalizability|other","study_type":"experimental|observational|review|meta-analysis|case-study|other"}`
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    })
-    const d = await resp.json()
-    const txt = (d.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim()
-    return JSON.parse(txt)
-  } catch(e) { return {} }
-}
+// analyzeWithClaude flyttades ut 2026-08-04 till supabase/functions/
+// fill-daily-analysis/index.ts. Se saveArticle-kommentaren nedan. Fn:en
+// och ANTHROPIC_KEY-importen borttagna som död kod — enda kvarvarande
+// externa AI-call i denna fn är extraktion (openAlexToKeywords) som är
+// deterministisk mappning.
 
 // ─── DUPLICATE CHECK ──────────────────────────────────────────────────────────
 async function isDuplicate(doi: string, title: string): Promise<boolean> {
@@ -199,8 +174,20 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
 
     if (await isDuplicate(article.doi || '', article.title)) return false
 
-    const analysis = article.abstract?.length > 50 ?
-      await analyzeWithClaude(article.title, article.abstract, topic) : {}
+    // insight/application/limitation/limit_type/study_type fylls INTE här
+    // längre. Tidigare analyzeWithClaude-anrop här inne gav 1-2 s per ny
+    // artikel → daily-fetch:s wallclock klev över Supabase-gatewayens
+    // 150 s IDLE_TIMEOUT vid burstar av nya artiklar, skrev partiellt,
+    // sex tysta fel före upptäckt (2026-08-04).
+    //
+    // fill-daily-analysis (skapad + rollbackad samma dag, se migration
+    // 20260804160000_drop_fill_daily_analysis.sql) skulle täcka fältet men
+    // mätning visade att 98,7 % av populationen redan har core_claim som
+    // dominerar renderingen. study_type sätts av pipeline och backfill-
+    // haiku-sci; application används inte i frontend; insight är fallback
+    // till core_claim i alla renderingar. Nya rader landar med tomma
+    // strängar för dessa fält — frontend hanterar det.
+    const analysis: any = {}
 
     // Sanity: en trunkerad Scopus-parser gav 13 540 rader med bara ett namn
     // i authors innan commit ffa7ab7. Backfillades via OpenAlex, men
