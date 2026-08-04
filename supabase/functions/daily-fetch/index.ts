@@ -444,25 +444,55 @@ function reconstructAbstract(inv: Record<string, number[]> | null | undefined): 
 }
 
 // ─── OPENALEX FETCH (with year + pagination) ──────────────────────────────────
-async function fetchOpenAlexPage(query: string, year: number, page: number): Promise<{articles: any[], hasMore: boolean}> {
+// direction ('backward'|'forward'):
+//   - Styr sort på fritext-vägen (backward=cited_by_count, forward=publication_date)
+//     så nya papers hittas först i forward-lägen. Source-id-vägen har alltid
+//     publication_date:desc.
+//   - Aktiverar from_publication_date-filter i forward + lastRun-satt.
+//     ANSTÄNDIGHETSFRÅGA MOT OPENALEX: utan detta filter refetchas sida 0
+//     varje tick när ett forward-jobb ligger på innevarande år (uttömt) —
+//     ~67 000 anrop/dygn för 7 jobb var 3:e min. Med filtret hämtas bara
+//     det som publicerats sedan senaste sväng (1-dygns överlapp mot
+//     klockglidning, url-unique-constraint fångar dubbletter).
+async function fetchOpenAlexPage(
+  query: string,
+  year: number,
+  page: number,
+  direction: 'backward'|'forward' = 'backward',
+  lastRun?: string | null,
+): Promise<{articles: any[], hasMore: boolean}> {
   try {
     const perPage = 20
     // Dual-mode. Identifierare som matchar ^S\d+$ tolkas som OpenAlex
     // source-id och ger journal-scoped svep (exakt tidskrift, år för år,
     // deterministisk paginering via publication_date:desc). Allt annat
-    // är fritext-svep som förr (topic-backfill via search=, sortering
-    // på cited_by_count för att få kärnan först).
+    // är fritext-svep (topic-backfill via search=).
     const isSourceId = /^S\d+$/.test(query)
-    let url: string
     // mailto → OpenAlex "polite pool": högre kvot, snabbare svar, gratis.
     const mailto = 'anders@crichton-fock.com'
+
+    const filters: string[] = []
     if (isSourceId) {
-      const filter = `primary_location.source.id:${query},publication_year:${year}`
-      url = `https://api.openalex.org/works?per-page=${perPage}&page=${page + 1}&filter=${filter}&sort=publication_date:desc&mailto=${mailto}`
+      filters.push(`primary_location.source.id:${query}`)
+      filters.push(`publication_year:${year}`)
     } else {
-      const filter = `type:article,publication_year:${year}`
-      url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per-page=${perPage}&page=${page + 1}&filter=${filter}&sort=cited_by_count:desc&mailto=${mailto}`
+      filters.push('type:article')
+      filters.push(`publication_year:${year}`)
     }
+    if (direction === 'forward' && lastRun) {
+      // Publikationsdatum ≥ last_run - 1 dag. 1-dygns marginal fångar
+      // rader som publicerats mellan senaste svepets fetch och now().
+      const d = new Date(lastRun)
+      d.setUTCDate(d.getUTCDate() - 1)
+      filters.push(`from_publication_date:${d.toISOString().slice(0, 10)}`)
+    }
+
+    const sort = (direction === 'backward' && !isSourceId)
+      ? 'cited_by_count:desc'   // klassiskt bakåt-fritext: kärnan först
+      : 'publication_date:desc'  // alla andra kombinationer: nyaste först
+    const searchParam = isSourceId ? '' : `&search=${encodeURIComponent(query)}`
+
+    const url = `https://api.openalex.org/works?per-page=${perPage}&page=${page + 1}${searchParam}&filter=${filters.join(',')}&sort=${sort}&mailto=${mailto}`
     const r = await fetch(url, { headers: { 'User-Agent': 'GustoScience/1.0 (gusto.science)' } })
     if (!r.ok) return { articles: [], hasMore: false }
     const d = await r.json()
@@ -580,7 +610,11 @@ async function fetchSemanticScholar(query: string, year: number): Promise<any[]>
 // inte kumulativt. Sex öppna openalex-jobb visade total_fetched=0 trots att
 // current_page rört sig i veckor, för att alla senaste tick var dups.
 // RPC:n gör `total_fetched = existing + added` server-side.
-async function updateProgress(source: string, identifier: string, year: number, page: number, added: number, completed = false) {
+async function updateProgress(source: string, identifier: string, year: number, page: number, added: number, completed = false, direction: 'backward'|'forward' = 'backward') {
+  // p_direction default 'backward' i RPC-signaturen (migration 20260805120000)
+  // så gamla anropare utan direction fortsätter fungera. Vi skickar alltid
+  // eftersom on-conflict-target är (source, identifier, direction) — utan
+  // direction skulle vi kunna trigga fel unique-target vid race.
   const { error } = await supabase.rpc('advance_backfill_progress', {
     p_source: source,
     p_identifier: identifier,
@@ -588,8 +622,9 @@ async function updateProgress(source: string, identifier: string, year: number, 
     p_page: page,
     p_added: added,
     p_completed: completed,
+    p_direction: direction,
   })
-  if (error) console.log(`updateProgress RPC error ${source}/${identifier}: ${error.message}`)
+  if (error) console.log(`updateProgress RPC error ${source}/${identifier} [${direction}]: ${error.message}`)
 }
 
 // ─── FRESH FETCH (last 7 days) ────────────────────────────────────────────────
@@ -638,7 +673,10 @@ async function runBackfill(): Promise<number> {
   }
 
   for (const job of jobs) {
-    const { source, identifier, current_year: year, current_page: page } = job
+    const {
+      source, identifier, current_year: year, current_page: page,
+      direction = 'backward', last_run: lastRun = null,
+    } = job
     let newAdded = 0
     let nextYear = year
     let nextPage = page
@@ -688,32 +726,40 @@ async function runBackfill(): Promise<number> {
     }
 
     else if (source === 'openalex') {
-      const { articles, hasMore } = await fetchOpenAlexPage(identifier, year, page)
+      const { articles, hasMore } = await fetchOpenAlexPage(identifier, year, page, direction, lastRun)
       for (const a of articles) {
         const topic = detectTopic(a.title, a.abstract, a.journal)
         if (await saveArticle(a, topic)) newAdded++
         await new Promise(r => setTimeout(r, 200))
       }
-      // Diagnostik för att kunna reda ut framtida stuck-sweep-fall.
-      console.log(`Backfill openalex/${identifier} ${year} p${page}: articles=${articles.length} hasMore=${hasMore} newAdded=${newAdded}`)
-      // Safety net: om OpenAlex returnerade 0 artiklar för denna sida,
-      // backa alltid året (även om hasMore påstår motsatsen). Detta
-      // förhindrar stuck sweeps där meta.count och effektiv page-content
-      // divergerar. Ett svep får aldrig fastna på ett år.
-      if (articles.length === 0) {
-        nextPage = 0
-        nextYear = year - 1
-        if (nextYear < MIN_YEAR) completed = true
-      } else if (hasMore) {
-        nextPage = page + 1
+      console.log(`Backfill openalex/${identifier} [${direction}] ${year} p${page}: articles=${articles.length} hasMore=${hasMore} newAdded=${newAdded}`)
+
+      if (direction === 'forward') {
+        // Forward: sida uttömd → nästa år om vi ligger bakom current;
+        // annars stanna på samma år så from_publication_date-filtret
+        // fångar nya publikationer nästa cron-tick. Aldrig completed —
+        // forward-jobb är eviga bevakningar.
+        if (articles.length === 0 || !hasMore) {
+          const currentYr = new Date().getFullYear()
+          nextPage = 0
+          nextYear = year < currentYr ? year + 1 : year
+        } else {
+          nextPage = page + 1
+        }
       } else {
-        nextPage = 0
-        nextYear = year - 1
-        if (nextYear < MIN_YEAR) completed = true
+        // Backward: safety net vid 0 artiklar (samma som !hasMore) — svep
+        // får aldrig fastna på ett år.
+        if (articles.length === 0 || !hasMore) {
+          nextPage = 0
+          nextYear = year - 1
+          if (nextYear < MIN_YEAR) completed = true
+        } else {
+          nextPage = page + 1
+        }
       }
     }
 
-    await updateProgress(source, identifier, nextYear, nextPage, newAdded, completed)
+    await updateProgress(source, identifier, nextYear, nextPage, newAdded, completed, direction)
     added += newAdded
     console.log(`Backfill ${source}/${identifier} ${year} p${page}: +${newAdded} (next: ${nextYear} p${nextPage})`)
     await new Promise(r => setTimeout(r, 300))
