@@ -82,6 +82,16 @@ const MIN_YEAR = 1970
 const supabase = createClient(SB_URL, SB_SERVICE_KEY)
 
 // ─── TOPIC DETECTION ──────────────────────────────────────────────────────────
+// KÄLLA TILL SANNING: public.topic_keywords-tabellen (migration 20260805140000
+// + tillägg i 150000 + 160000). Läses vid varje Deno.serve-invocation och
+// cachas i modul-scope (CURRENT_TOPICS). Reclassify-migrationen 20260805200000
+// använder samma tabell för sin argmax — DAILY-FETCH OCH RECLASSIFY DELAR
+// KÄLLA SÅ KLASSNINGEN INTE GLIDER ISÄR från dag ett.
+//
+// Fallback: TOPICS-const nedan är seed-datat från runda 1. Aktiveras BARA om
+// tabell-fetchen misslyckas (extension saknas, connection issue). Frusen 2026-
+// 08-05 — nya keywords läggs BARA till i tabellen framåt. Om hardcoded och
+// tabell glider isär > 3 månader, riv fallback:en eller resynca.
 const TOPICS: Record<string, string[]> = {
   sommellerie: ['sommelier', 'wine tasting', 'wine evaluation', 'oenology', 'wine sensory', 'viticulture'],
   gastronomy: ['gastronomy', 'haute cuisine', 'culinary arts', 'fine dining', 'gourmet'],
@@ -111,6 +121,30 @@ const TOPICS: Record<string, string[]> = {
   art_science: ['food design', 'plating aesthetics', 'food aesthetics', 'culinary art'],
 }
 
+// Runtime-cache. Fylls i loadTopicsFromDB() vid Deno.serve-start; om det
+// misslyckas eller om vi kallar detectTopic INNAN load har körts (fanns
+// tidigare kod-vägar med sync-anrop utanför main-request-scope), faller vi
+// tillbaka till TOPICS ovan.
+let CURRENT_TOPICS: Record<string, string[]> = TOPICS
+
+async function loadTopicsFromDB(): Promise<void> {
+  try {
+    const r = await supabase.from('topic_keywords').select('topic, keyword')
+    if (r.error) throw new Error(r.error.message)
+    if (!r.data || r.data.length === 0) throw new Error('empty topic_keywords')
+    const dict: Record<string, string[]> = {}
+    for (const row of r.data) {
+      if (!dict[row.topic]) dict[row.topic] = []
+      dict[row.topic].push(row.keyword)
+    }
+    CURRENT_TOPICS = dict
+    console.log(`loadTopicsFromDB: ${Object.keys(dict).length} topics, ${r.data.length} keywords laddade`)
+  } catch (e: any) {
+    console.log(`loadTopicsFromDB failed (${e.message}) — fallback till hardcoded TOPICS`)
+    CURRENT_TOPICS = TOPICS
+  }
+}
+
 function detectTopic(title: string, abstract: string, journal: string): string {
   const text = `${title} ${abstract} ${journal}`.toLowerCase()
   // Default 'uncategorized' istället för 'gastronomy'. Tidigare fick allt
@@ -122,7 +156,7 @@ function detectTopic(title: string, abstract: string, journal: string): string {
   // så inget kraschar; det syns bara som "uncategorized" i etiketter.
   let bestTopic = 'uncategorized'
   let bestScore = 0
-  for (const [topic, keywords] of Object.entries(TOPICS)) {
+  for (const [topic, keywords] of Object.entries(CURRENT_TOPICS)) {
     const score = keywords.filter(k => text.includes(k.toLowerCase())).length
     if (score > bestScore) { bestScore = score; bestTopic = topic }
   }
@@ -847,6 +881,11 @@ Deno.serve(async (req) => {
   skippedRelevance  = 0
   duplicateInDb     = 0
   skippedUrlConflict = 0
+
+  // Ladda topic_keywords från DB innan detectTopic anropas i pipeline-vägarna.
+  // Cachas i CURRENT_TOPICS (modul-scope) för hela denna invocation.
+  // Fallback till hardcoded TOPICS om DB-fetch fails — se loadTopicsFromDB.
+  await loadTopicsFromDB()
 
   const researcherAdded = await fetchResearchers()
   const freshAdded = await fetchFresh()
