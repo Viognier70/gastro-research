@@ -3689,38 +3689,29 @@ function interpolateColor(hex1, hex2, t){
 }
 
 async function loadKnowledgeMap(){
+  // Server-side aggregering via knowledge_map_topics()-RPC:n (migration
+  // 20260805130000). Client-side-versionen fetchade articles_public med
+  // limit=5000 men PostgREST kapade tyst vid 1 000 → aggregeringen körde
+  // över 0.2 % av korpusen. RPC:n returnerar JSONB-array (en rad → bypass
+  // per-row-cappet), färdigt aggregerad över hela non-irrelevant-populationen
+  // (~466k rader, EXPLAIN 892 ms). Se docs/postgrest-caps.md incident 6.
+  //
+  // Svars-fältnamn (rel_sommelier/chef/creator/waiter/educator) matchar
+  // getTopicRelevance:s `t['rel_'+role]`-lookup direkt. label saknas i
+  // RPC-svaret — fylls här från TOPIC_LABELS-dict.
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=topic,fetched_at,relevance_sci_sensory_pro,relevance_sci_culinary_pro,relevance_sci_gastronomy_culture,relevance_sci_hospitality_mgmt,relevance_sci_educator_researcher&limit=5000`,{headers:H})
-    const arts = await r.json()
-    if(!Array.isArray(arts)||arts.length===0) return
-
-    const topicMap = {}
-    arts.forEach(a=>{
-      if(!a.topic) return
-      const sevenDaysAgo = new Date(Date.now()-7*24*60*60*1000).toISOString()
-      if(!topicMap[a.topic]) topicMap[a.topic]={topic:a.topic,count:0,recent:0,rs:[],rc:[],rCr:[],rW:[],rE:[]}
-
-      const t=topicMap[a.topic]
-      t.count++
-      if(a.fetched_at && a.fetched_at > sevenDaysAgo) t.recent++
-      // Science-namn direkt från articles_public. Legacy fallback-chip-namn
-      // (relevance_sommelier/relevance_chef m.fl.) togs bort ur vyn 2026-07-12.
-      const num=f=>a[f]!=null?parseFloat(a[f]):null
-      const vs =num('relevance_sci_sensory_pro');         if(vs !=null) t.rs.push(vs)
-      const vc =num('relevance_sci_culinary_pro');        if(vc !=null) t.rc.push(vc)
-      const vcr=num('relevance_sci_gastronomy_culture');  if(vcr!=null) t.rCr.push(vcr)
-      const vw =num('relevance_sci_hospitality_mgmt');    if(vw !=null) t.rW.push(vw)
-      const ve =num('relevance_sci_educator_researcher'); if(ve !=null) t.rE.push(ve)
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/knowledge_map_topics`, {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: '{}'
     })
+    const rows = await r.json()
+    if(!Array.isArray(rows) || rows.length === 0) return
 
-    const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0
-    mapTopicData=Object.values(topicMap).map(t=>({
-      topic:t.topic, count:t.count, recent:t.recent||0,
-      label:TOPIC_LABELS[t.topic]||t.topic.replace(/_/g,' '),
-      rel_sommelier:avg(t.rs), rel_chef:avg(t.rc),
-      rel_creator:avg(t.rCr), rel_waiter:avg(t.rW), rel_educator:avg(t.rE)
-    })).filter(t=>t.count>0).sort((a,b)=>b.count-a.count)
-
+    mapTopicData = rows.map(t => ({
+      ...t,
+      label: TOPIC_LABELS[t.topic] || (t.topic || '').replace(/_/g,' ')
+    }))
     renderLiveMap()
   } catch(e){ console.log('Map error:',e) }
 }
