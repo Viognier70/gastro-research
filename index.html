@@ -4051,6 +4051,7 @@ function showTopicCollabs(topic){
 const _baseSetRole=setRole
 window.setRole=function(r,btn){
   _baseSetRole(r,btn)
+  updateMytopicsButtonState()  // synk enable/disable innan re-render
   setTimeout(()=>{
     if(mapTopicData.length>0) renderLiveMap()
     if(window._explore?.topic) loadExploreArticles(window._explore.topic)
@@ -4058,8 +4059,35 @@ window.setRole=function(r,btn){
       const f = window._mapFocus
       loadMapFocusArticles(f.kind === 'inst' ? { name: f.value } : { country: f.value })
     }
+    // Även världskartans dots — role-filtret påverkar mytopics-vyn
+    if(typeof window.renderWorldDots === 'function' && window.worldMapSvg) {
+      window.renderWorldDots()
+    }
   },150)
 }
+
+// Enable/disable My topics-knappen baserat på role. role === 'all' → knappen
+// har ingen mening (ingen roll att filtrera på). Tidigare hade den QS-rank-
+// proxy som fungerade oavsett, men det var en falsk affordance — samma
+// familj av bug som språkknappen (looks aktiv, gör inget).
+function updateMytopicsButtonState() {
+  const btn = document.querySelector('[data-wf="mytopics"]')
+  if(!btn) return
+  const isDisabled = (typeof role !== 'undefined' && role === 'all')
+  btn.disabled = isDisabled
+  btn.style.opacity = isDisabled ? '0.35' : ''
+  btn.style.cursor = isDisabled ? 'not-allowed' : 'pointer'
+  btn.title = isDisabled
+    ? 'Välj en roll först — My topics filtrerar på rollens ämnesområden'
+    : ''
+  // Om filtret var aktivt när användaren återgick till All: reset:a till 'all'
+  if(isDisabled && currentWorldFilter === 'mytopics') {
+    if(typeof window.setWorldFilter === 'function') window.setWorldFilter('all')
+  }
+}
+// Init: kör en gång vid page load så btn börjar i rätt state.
+if(document.readyState !== 'loading') updateMytopicsButtonState()
+else document.addEventListener('DOMContentLoaded', updateMytopicsButtonState)
 
 // ─── COUNTRY FLAGS ───────────────────────────────────────────────────────────
 const COUNTRY_FLAGS = {'Sweden':'🇸🇪','United Kingdom':'🇬🇧','United States':'🇺🇸',
@@ -5750,6 +5778,10 @@ window.loadWorldMapData = async function() {
         rank: r.rank ?? null,
         count: r.article_count || 0,
         topics,
+        // Set av science-rollnamn där MINST EN artikel matchar (or=has_
+        // episteme_${role}, has_sci_${role}). Set → O(1)-lookup i mytopics-
+        // filtret. Se migration 20260805210000.
+        roles: new Set(Array.isArray(r.roles) ? r.roles : []),
         dominant_topic: Object.keys(topics).sort((a,b) => topics[b] - topics[a])[0] || 'gastronomy'
       }
     }
@@ -5920,8 +5952,18 @@ window.renderWorldDots = function() {
   
   let data = worldMapData
   if(currentWorldFilter === 'mytopics') {
-    // My topics — visa institutioner med hög ranking (proxy för roll-relevans tills vi har topic-data per institution)
-    data = data.filter(i => i.rank && i.rank <= 200)
+    // My topics — filtrera på användarens aktiva roll. Institutionen är
+    // med om MINST EN av dess artiklar har full TRIAD (has_episteme) ELLER
+    // sci-score ≥ 5 för rollen (samma OR-logik som Feed). roles-Set:et
+    // laddas från map_institution_coords_mv.roles (migration 20260805210000).
+    //
+    // role === 'all' → knappen är disabled (setRole:s _updateMytopicsBtnState)
+    // så vi kommer normalt inte hit i det läget. Om vi ändå gör det (t.ex.
+    // aktivt filter kvar från förra rollen), visa alla — bättre än tom karta.
+    if(role !== 'all') {
+      const dbRole = toDbRole(role)
+      data = data.filter(i => i.roles && i.roles.has(dbRole))
+    }
   }
   if(currentWorldFilter === 'collabs') {
     // Collaborations — bara institutioner som faktiskt förekommer i minst en
