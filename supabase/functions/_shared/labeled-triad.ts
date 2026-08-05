@@ -32,30 +32,53 @@ export const EXPECTED_LABELS = [
   'EPISTEME_EDUCATOR_RESEARCHER', 'TECHNE_EDUCATOR_RESEARCHER', 'PHRONESIS_EDUCATOR_RESEARCHER',
 ] as const
 
-// Min-tecken per fält. Sonnet skriver 60-80 ord = ~300-450 tecken för roll-
-// fält. Min 180 = ~30 ord (halva målet). IMRaD-fält kortare mål (~40-60 ord).
-// Om ett fält är kortare än detta räknas hela analysen som ofullständig.
+// Min-tecken per fält. Efter prompt-revision 2026-07-23 accepterar vi kortare
+// svar (30-50 ord ~ 150-250 tecken) när abstract inte stödjer längre påstående
+// — ärlig kortfattadhet är bättre än uppdiktad utfyllnad. Utan denna sänkning
+// skulle validateTriad avvisa kortare-men-sanna svar som too_short och vi
+// skulle byta fabricering mot tomhet.
 export const MIN_LEN: Record<string, number> = {
   KNOWLEDGE_EXPLANATION: 30,
   IMRAD_INTRODUCTION: 60, IMRAD_METHODS: 60, IMRAD_RESULTS: 60, IMRAD_DISCUSSION: 60,
-  EPISTEME_SENSORY_PRO: 180,          TECHNE_SENSORY_PRO: 180,          PHRONESIS_SENSORY_PRO: 180,
-  EPISTEME_CULINARY_PRO: 180,         TECHNE_CULINARY_PRO: 180,         PHRONESIS_CULINARY_PRO: 180,
-  EPISTEME_GASTRONOMY_CULTURE: 180,   TECHNE_GASTRONOMY_CULTURE: 180,   PHRONESIS_GASTRONOMY_CULTURE: 180,
-  EPISTEME_HOSPITALITY_MGMT: 180,     TECHNE_HOSPITALITY_MGMT: 180,     PHRONESIS_HOSPITALITY_MGMT: 180,
-  EPISTEME_EDUCATOR_RESEARCHER: 180,  TECHNE_EDUCATOR_RESEARCHER: 180,  PHRONESIS_EDUCATOR_RESEARCHER: 180,
+  EPISTEME_SENSORY_PRO: 120,          TECHNE_SENSORY_PRO: 120,          PHRONESIS_SENSORY_PRO: 120,
+  EPISTEME_CULINARY_PRO: 120,         TECHNE_CULINARY_PRO: 120,         PHRONESIS_CULINARY_PRO: 120,
+  EPISTEME_GASTRONOMY_CULTURE: 120,   TECHNE_GASTRONOMY_CULTURE: 120,   PHRONESIS_GASTRONOMY_CULTURE: 120,
+  EPISTEME_HOSPITALITY_MGMT: 120,     TECHNE_HOSPITALITY_MGMT: 120,     PHRONESIS_HOSPITALITY_MGMT: 120,
+  EPISTEME_EDUCATOR_RESEARCHER: 120,  TECHNE_EDUCATOR_RESEARCHER: 120,  PHRONESIS_EDUCATOR_RESEARCHER: 120,
 }
 
 // ─── Prompt-bygge ────────────────────────────────────────────────────────────
 export function buildTriadPrompt(article: { title?: string, insight?: string, abstract?: string }): string {
-  return `TRIAD: EPISTEME=universal truth 3rd person. TECHNE=craft skill 2nd person instructional. PHRONESIS=situated judgement 2nd person present.
+  // Källordning: abstract (originalet) föredras. insight är en Haiku-genererad
+  // 1-2 meningars parafras av abstract (daily-fetch rad ~135) — om vi använde
+  // insight först skulle vi generera TRIAD från AI-sammanfattning av AI-käll-
+  // material, en dubbel-abstraktion som suddar detaljer innan Sonnet ser dem.
+  // Fall bara tillbaka till insight om abstract är kort/saknas (edge case:
+  // artiklar från Scopus som väntar på backfill-abstracts).
+  const source = article.abstract && article.abstract.length >= 200
+    ? article.abstract
+    : (article.insight || article.abstract || '')
+
+  return `TRIAD: EPISTEME=universal truth 3rd person. TECHNE=craft skill 2nd person. PHRONESIS=situated judgement 2nd person present.
 Roles: sensory_pro=Sommelier/sensory scientist, culinary_pro=Chef/fermentation, gastronomy_culture=Food anthropologist/stylist, hospitality_mgmt=F&B manager/hotelier, educator_researcher=Researcher/culinary educator
-Title: "${(article.title || '').slice(0, 150)}"
-Finding: "${(article.insight || article.abstract || '').slice(0, 300)}"
+
+STRICT RULES (violation = ruined analysis):
+1. Ground every claim in the Title+Abstract below. Never invent specifics not present in the source.
+2. NEVER fabricate numeric values (pH, temperature, timing, percentage, quantity), ingredient names, place names, or step-by-step procedures. If the source lacks them, do NOT supply them. Write "as reported by the study" or "consult the source for exact values" instead.
+3. TECHNE fields may be ARRIVED-AT-GENERALLY when the abstract lacks quantitative protocol. Describe the CLASS of application (what a practitioner should watch for, what dimension the finding informs) — do not fabricate a step-by-step recipe from a study that didn't publish one.
+4. If a role cannot be substantively addressed from the abstract, write "The abstract does not provide role-specific application detail; the study's [finding] informs [dimension] but no protocol is derivable" — 30-50 words is acceptable when the source constrains it.
+5. Prefer honest generality over confident specificity. A vague-but-true statement outperforms a specific-but-invented one.
+6. EPISTEME OPENING: Do not use a repeating template across the 5 Epistemes. Start with the substantive finding itself, not with "The study establishes/finds/demonstrates/reports/identifies" or equivalent report-frame verbs.
+7. HEDGING MUST NAME WHAT IS UNCERTAIN. If you write "may", "could", "might", "potentially", or "could indicate", specify in the same sentence WHAT is uncertain — sample size, single-study finding, correlational (not causal) design, restricted context, absence of replication, etc. Example: "may hold in commercial kitchens, though tested only in a lab setting." Vague hedges without stated grounds are noise; either name the source of uncertainty in-line or state the finding plainly.
+8. EXPLAIN DOMAIN TERMS THE TARGET ROLE WOULDN'T KNOW. Each role has its own working vocabulary. A sommelier reads "crossmodal correspondences" as jargon; a food anthropologist reads "Rayleigh scattering" the same way; a chef reads "hedonic valence" the same way. When a term from the source study isn't part of the target role's day-to-day language, define it in one clause on first use (parenthetical or by rephrasing entirely in the role's own words). Test: could a working practitioner in this role act on your sentence without a dictionary? If no, rewrite.
+
+Title: "${(article.title || '').slice(0, 200)}"
+Abstract: "${source.slice(0, 2000)}"
 
 Write your analysis using EXACTLY these labels, in this exact order. Each label on its own line, followed by the field's text. Do NOT use square brackets in prose. Do NOT omit any label. Close with [END].
 
 [KNOWLEDGE_EXPLANATION]
-one-sentence essential summary of what this study establishes
+one-sentence essential summary of the study's central finding
 
 [IMRAD_INTRODUCTION]
 research question and context, ~40-60 words
@@ -64,55 +87,55 @@ research question and context, ~40-60 words
 key methodological features that determine what can be concluded, ~40-60 words
 
 [IMRAD_RESULTS]
-the finding as a claim with effect size or direction, ~40-60 words
+the finding as a claim with effect size or direction if reported (do not invent numbers), ~40-60 words
 
 [IMRAD_DISCUSSION]
 what the result means and its limits, ~40-60 words
 
 [EPISTEME_SENSORY_PRO]
-60-80 words 3rd person analytical, for Sommelier/sensory scientist
+40-90 words 3rd person analytical, for Sommelier/sensory scientist. Present the finding as a substantive claim relevant to sensory expertise.
 
 [TECHNE_SENSORY_PRO]
-60-80 words 2nd person instructional, for Sommelier/sensory scientist
+40-90 words 2nd person, for Sommelier/sensory scientist. Describe how a sensory professional applies the finding. State only values/protocols that appear in the abstract; otherwise describe the applicable dimension.
 
 [PHRONESIS_SENSORY_PRO]
-60-80 words 2nd person present vivid, for Sommelier/sensory scientist
+40-90 words 2nd person present, for Sommelier/sensory scientist. Situated judgment grounded in the abstract, not generic wisdom.
 
 [EPISTEME_CULINARY_PRO]
-60-80 words 3rd person analytical, for Chef/fermentation
+40-90 words 3rd person analytical, for Chef/fermentation. Present the finding as a substantive claim relevant to culinary work.
 
 [TECHNE_CULINARY_PRO]
-60-80 words 2nd person instructional, for Chef/fermentation
+40-90 words 2nd person, for Chef/fermentation. Describe how a chef applies the finding. State only values/protocols/ingredients that appear in the abstract; otherwise describe the applicable dimension.
 
 [PHRONESIS_CULINARY_PRO]
-60-80 words 2nd person present vivid, for Chef/fermentation
+40-90 words 2nd person present, for Chef/fermentation. Situated judgment grounded in the abstract.
 
 [EPISTEME_GASTRONOMY_CULTURE]
-60-80 words 3rd person analytical, for Food anthropologist/stylist
+40-90 words 3rd person analytical, for Food anthropologist/stylist. Present the finding as a substantive claim relevant to cultural or stylistic interpretation.
 
 [TECHNE_GASTRONOMY_CULTURE]
-60-80 words 2nd person instructional, for Food anthropologist/stylist
+40-90 words 2nd person, for Food anthropologist/stylist. Describe how the finding informs cultural or stylistic practice. State only specifics that appear in the abstract.
 
 [PHRONESIS_GASTRONOMY_CULTURE]
-60-80 words 2nd person present vivid, for Food anthropologist/stylist
+40-90 words 2nd person present, for Food anthropologist/stylist.
 
 [EPISTEME_HOSPITALITY_MGMT]
-60-80 words 3rd person analytical, for F&B manager/hotelier
+40-90 words 3rd person analytical, for F&B manager/hotelier. Present the finding as a substantive claim relevant to management or operations.
 
 [TECHNE_HOSPITALITY_MGMT]
-60-80 words 2nd person instructional, for F&B manager/hotelier
+40-90 words 2nd person, for F&B manager/hotelier. Describe how the finding informs management or operations. State only specifics that appear in the abstract.
 
 [PHRONESIS_HOSPITALITY_MGMT]
-60-80 words 2nd person present vivid, for F&B manager/hotelier
+40-90 words 2nd person present, for F&B manager/hotelier.
 
 [EPISTEME_EDUCATOR_RESEARCHER]
-60-80 words 3rd person analytical, for Researcher/culinary educator
+40-90 words 3rd person analytical, for Researcher/culinary educator. Present the finding as a substantive claim relevant to teaching or further research.
 
 [TECHNE_EDUCATOR_RESEARCHER]
-60-80 words 2nd person instructional, for Researcher/culinary educator
+40-90 words 2nd person, for Researcher/culinary educator. Describe how the finding informs teaching or further research. State only specifics that appear in the abstract.
 
 [PHRONESIS_EDUCATOR_RESEARCHER]
-60-80 words 2nd person present vivid, for Researcher/culinary educator
+40-90 words 2nd person present, for Researcher/culinary educator.
 
 [END]`
 }
