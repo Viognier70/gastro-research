@@ -1799,7 +1799,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="worldMapFilters">
       <input type="text" id="mapInstSearch" placeholder="Search institution by name…" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.04);color:rgba(255,255,255,.9);width:200px;font-family:'Outfit',sans-serif" onkeydown="if(event.key==='Enter'){const v=this.value.trim();if(v) focusMapInstitution(v)}">
       <button onclick="setWorldFilter('all')" data-wf="all" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(201,168,76,.4);background:var(--gold);color:#000;cursor:pointer">All research</button>
-      <button onclick="setWorldFilter('mytopics')" data-wf="mytopics" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">My topics</button>
       <button onclick="setWorldFilter('collabs')" data-wf="collabs" style="font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid rgba(255,255,255,.28);background:none;color:rgba(255,255,255,.7);cursor:pointer">Collaborations</button>
     </div>
   </div>
@@ -1816,19 +1815,26 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
         <span style="font-size:10px;color:rgba(255,255,255,.5)">Each dot = an institution &nbsp;·&nbsp; brighter = more articles here &nbsp;·&nbsp; lines = international collaboration &nbsp;·&nbsp; hover for QS rank</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap">
-        <span style="font-size:10px;color:rgba(255,255,255,.4)">Colour = main research field:</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E8A020;display:inline-block"></span>Gastronomy &amp; flavour</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#5A9AE8;display:inline-block"></span>Sensory &amp; multisensory</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#4AAA6A;display:inline-block"></span>Hospitality &amp; food science</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#B87CC8;display:inline-block"></span>Sommellerie &amp; psychology</span>
-        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E87040;display:inline-block"></span>Appetite &amp; novel foods</span>
+      <!-- Aktivt nyckelords-filter — visas när ett keyword klickats i
+           institutionspanelen (map_institutions_by_keyword-RPC filtrerar dots
+           till institutioner som har detta keyword i minst en artikel). -->
+      <div id="mapKeywordFilter" style="display:none;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em">Keyword filter</span>
+        <span id="mapKeywordFilterLabel" style="font-size:12px;padding:3px 10px;border-radius:20px;background:rgba(201,168,76,.16);color:var(--gold);border:0.5px solid rgba(201,168,76,.4)"></span>
+        <button onclick="clearKeywordFilter()" style="font-size:11px;color:rgba(255,255,255,.6);background:none;border:none;cursor:pointer;padding:0">× Clear</button>
       </div>
+      <!-- Topic-pills — additivt urval, top 10 rangordnat på artikelantal
+           fallande, resten under "Show all"-fällare. Dots filtreras på
+           i.topics ∩ selectedTopics (institution med minst en artikel i
+           någon vald topic). Se renderTopicPills(). -->
+      <div id="mapTopicPills" style="display:none;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;padding-top:12px;border-top:0.5px solid rgba(255,255,255,.08)"></div>
     </div>
-    <div id="worldMapSidebar" style="width:240px;flex-shrink:0;display:none">
-      <div id="worldMapCountryTitle" style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px"></div>
-      <div id="worldMapInstitutions" style="background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;max-height:280px;overflow-y:auto"></div>
-      <button onclick="filterByCountry(null)" style="margin-top:8px;font-size:11px;color:rgba(201,168,76,.7);background:none;border:none;cursor:pointer;padding:0">← Back to all</button>
+    <!-- Multi-mode sidebar. filterByCountry() fyller den med land + inst-lista;
+         showInstitutionPanel() fyller den med institutionens panel (topics-
+         stapelrad + klickbara nyckelord). closeMapSidebar() nollar båda. -->
+    <div id="worldMapSidebar" style="width:280px;flex-shrink:0;display:none">
+      <div id="worldMapSidebarContent"></div>
+      <button onclick="closeMapSidebar()" style="margin-top:8px;font-size:11px;color:rgba(201,168,76,.7);background:none;border:none;cursor:pointer;padding:0">← Back to all</button>
     </div>
   </div>
 </div>
@@ -4051,7 +4057,6 @@ function showTopicCollabs(topic){
 const _baseSetRole=setRole
 window.setRole=function(r,btn){
   _baseSetRole(r,btn)
-  updateMytopicsButtonState()  // synk enable/disable innan re-render
   setTimeout(()=>{
     if(mapTopicData.length>0) renderLiveMap()
     if(window._explore?.topic) loadExploreArticles(window._explore.topic)
@@ -4059,35 +4064,10 @@ window.setRole=function(r,btn){
       const f = window._mapFocus
       loadMapFocusArticles(f.kind === 'inst' ? { name: f.value } : { country: f.value })
     }
-    // Även världskartans dots — role-filtret påverkar mytopics-vyn
-    if(typeof window.renderWorldDots === 'function' && window.worldMapSvg) {
-      window.renderWorldDots()
-    }
+    // Rollen påverkar mapPane:s (artikel-listan) sci-kolumnval, men inte
+    // dot-datat — kartan filtreras nu via topic-pills (renderTopicPills).
   },150)
 }
-
-// Enable/disable My topics-knappen baserat på role. role === 'all' → knappen
-// har ingen mening (ingen roll att filtrera på). Tidigare hade den QS-rank-
-// proxy som fungerade oavsett, men det var en falsk affordance — samma
-// familj av bug som språkknappen (looks aktiv, gör inget).
-function updateMytopicsButtonState() {
-  const btn = document.querySelector('[data-wf="mytopics"]')
-  if(!btn) return
-  const isDisabled = (typeof role !== 'undefined' && role === 'all')
-  btn.disabled = isDisabled
-  btn.style.opacity = isDisabled ? '0.35' : ''
-  btn.style.cursor = isDisabled ? 'not-allowed' : 'pointer'
-  btn.title = isDisabled
-    ? 'Välj en roll först — My topics filtrerar på rollens ämnesområden'
-    : ''
-  // Om filtret var aktivt när användaren återgick till All: reset:a till 'all'
-  if(isDisabled && currentWorldFilter === 'mytopics') {
-    if(typeof window.setWorldFilter === 'function') window.setWorldFilter('all')
-  }
-}
-// Init: kör en gång vid page load så btn börjar i rätt state.
-if(document.readyState !== 'loading') updateMytopicsButtonState()
-else document.addEventListener('DOMContentLoaded', updateMytopicsButtonState)
 
 // ─── COUNTRY FLAGS ───────────────────────────────────────────────────────────
 const COUNTRY_FLAGS = {'Sweden':'🇸🇪','United Kingdom':'🇬🇧','United States':'🇺🇸',
@@ -5718,6 +5698,17 @@ window.worldMapSvg = null
 window.worldMapProjection = null
 window.currentWorldFilter = 'all'
 window.selectedCountry = null
+// Topic-pill-filter — Set av topic-strängar. Institutionsdot passerar om
+// någon topic i i.topics tillhör setet (minst en artikel i vald topic).
+// Empty set = "All research" (ingen begränsning).
+window.selectedMapTopics = new Set()
+// Pills visar först top 10 rangordnat på artikelantal fallande. "Show all
+// (N more)" öppnar hela listan. Persistent tills användaren toggle:ar den.
+window._mapTopicPillsExpanded = false
+// Keyword-drill-down. När satt: keywordFilterInstitutions = Set av institutions-
+// namn från map_institutions_by_keyword-RPC:n. Dots filtreras till samma set.
+window.keywordFilter = null
+window.keywordFilterInstitutions = null
 
 // Map-load — tre RPC:er, all aggregering server-side.
 //
@@ -5779,8 +5770,10 @@ window.loadWorldMapData = async function() {
         count: r.article_count || 0,
         topics,
         // Set av science-rollnamn där MINST EN artikel matchar (or=has_
-        // episteme_${role}, has_sci_${role}). Set → O(1)-lookup i mytopics-
-        // filtret. Se migration 20260805210000.
+        // episteme_${role}, has_sci_${role}). Kartfilterna är nu topic-pill-
+        // baserade (renderTopicPills); roles-fältet ligger kvar i RPC:n för
+        // framtida re-instansiering av rollbaserat filter. Se migration
+        // 20260805210000.
         roles: new Set(Array.isArray(r.roles) ? r.roles : []),
         dominant_topic: Object.keys(topics).sort((a,b) => topics[b] - topics[a])[0] || 'gastronomy'
       }
@@ -5895,9 +5888,7 @@ window.filterByCountry = function(countryCode) {
   selectedCountry = countryCode
   const sidebar = document.getElementById('worldMapSidebar')
   if(!countryCode) {
-    sidebar.style.display = 'none'
-    clearMapFocus()
-    renderWorldDots()
+    closeMapSidebar()
     return
   }
   // Öppna artikel-listan för landet direkt — sidebar visar institutioner
@@ -5910,18 +5901,14 @@ window.filterByCountry = function(countryCode) {
       if(b.rank) return 1
       return b.count - a.count
     })
-  
-  const countryName = insts[0]?.country || countryCode
+
   // Unika artiklar för landet enligt samma OR-logik som feed-flödet
   // (country/countries/institution_coords.country). Ersätter den tidigare
   // reduce((s,i)=>s+i.count,0) som dubbelräknade artiklar affilierade med
   // flera institutioner i samma land.
   const countryTotal = (window._mapCountryCounts && window._mapCountryCounts[countryCode]) || 0
-  document.getElementById('worldMapCountryTitle').innerHTML =
-    `<span style="color:var(--gold)">${countryCode}</span> · ${insts.length} institutions · ${countryTotal} article${countryTotal===1?'':'s'}`
-  
-  document.getElementById('worldMapInstitutions').innerHTML = insts.slice(0,20).map(i => `
-    <div style="padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer" onclick="focusMapInstitution('${i.name.replace(/'/g,"\'")}')">
+  const listHtml = insts.slice(0,20).map(i => `
+    <div style="padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,.06);cursor:pointer" onclick="event.stopPropagation();focusMapInstitution('${i.name.replace(/'/g,"\\'")}')">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.3">${i.name}</span>
         <span style="font-size:11px;color:${getNodeColor(i.rank)};font-weight:500;flex-shrink:0;margin-left:8px">${i.rank&&i.rank<999?'#'+i.rank:''}</span>
@@ -5929,8 +5916,29 @@ window.filterByCountry = function(countryCode) {
       <span style="font-size:10px;color:rgba(255,255,255,.55)">${i.count} article${i.count>1?'s':''}</span>
     </div>
   `).join('')
-  
+
+  document.getElementById('worldMapSidebarContent').innerHTML = `
+    <div style="font-size:13px;font-weight:500;color:#fff;margin-bottom:8px">
+      <span style="color:var(--gold)">${countryCode}</span> · ${insts.length} institutions · ${countryTotal} article${countryTotal===1?'':'s'}
+    </div>
+    <div style="background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;max-height:340px;overflow-y:auto">
+      ${listHtml}
+    </div>
+  `
   sidebar.style.display = 'block'
+  renderWorldDots()
+}
+
+// Multi-mode sidebar-close. Nollar sidebar-innehåll + kartan-focus.
+window.closeMapSidebar = function() {
+  selectedCountry = null
+  const sidebar = document.getElementById('worldMapSidebar')
+  if(sidebar) {
+    sidebar.style.display = 'none'
+    const c = document.getElementById('worldMapSidebarContent')
+    if(c) c.innerHTML = ''
+  }
+  clearMapFocus()
   renderWorldDots()
 }
 
@@ -5951,19 +5959,21 @@ window.renderWorldDots = function() {
   if(!worldMapSvg || !worldMapData.length) return
   
   let data = worldMapData
-  if(currentWorldFilter === 'mytopics') {
-    // My topics — filtrera på användarens aktiva roll. Institutionen är
-    // med om MINST EN av dess artiklar har full TRIAD (has_episteme) ELLER
-    // sci-score ≥ 5 för rollen (samma OR-logik som Feed). roles-Set:et
-    // laddas från map_institution_coords_mv.roles (migration 20260805210000).
-    //
-    // role === 'all' → knappen är disabled (setRole:s _updateMytopicsBtnState)
-    // så vi kommer normalt inte hit i det läget. Om vi ändå gör det (t.ex.
-    // aktivt filter kvar från förra rollen), visa alla — bättre än tom karta.
-    if(role !== 'all') {
-      const dbRole = toDbRole(role)
-      data = data.filter(i => i.roles && i.roles.has(dbRole))
-    }
+  // Topic-pill-filter (additivt urval). En institution är med om MINST EN
+  // av dess artiklar tillhör någon vald topic — samma OR-semantik som Feed
+  // OR över roller. Empty set → ingen begränsning ("All research").
+  if(window.selectedMapTopics && window.selectedMapTopics.size > 0) {
+    const sel = window.selectedMapTopics
+    data = data.filter(i => {
+      const t = i.topics || {}
+      for(const k in t) if(sel.has(k)) return true
+      return false
+    })
+  }
+  // Keyword-drill-down — filtrera dots till institutioner som RPC:n
+  // (map_institutions_by_keyword) returnerat för det klickade nyckelordet.
+  if(window.keywordFilterInstitutions) {
+    data = data.filter(i => window.keywordFilterInstitutions.has(i.name))
   }
   if(currentWorldFilter === 'collabs') {
     // Collaborations — bara institutioner som faktiskt förekommer i minst en
@@ -6176,9 +6186,229 @@ window.initWorldMap = async function() {
     })
 
   window.renderWorldDots()
+  window.renderTopicPills()
   document.getElementById('worldMapSubtitle').textContent = `${data.length} institutions · click country to explore`
   // Återställ zoom
   window.worldMapSvg.call(zoom.transform, d3.zoomIdentity)
+}
+
+// ─── TOPIC PILLS ────────────────────────────────────────────────────────────
+//
+// Rangordnat på artikelantal (summera i.topics[topic] över alla institutions).
+// Top 10 visas alltid; resten under "Show all (N more)"-fällare. Klick på
+// pill togglar den i selectedMapTopics-setet — additivt urval, dots filtreras
+// på ∩ av set + i.topics. "Clear (N)" nollställer. Ersatte färg-legenden
+// (rad 1819 i förra revisionen) — färgen på dotten avslöjar dominant_topic
+// utan en dedikerad legend, och pills fungerar samtidigt som legend
+// (nyckelfärgen syns i pillen) och filter.
+// ============================================================================
+window.renderTopicPills = function() {
+  const el = document.getElementById('mapTopicPills')
+  if(!el || !Array.isArray(window.worldMapData) || !window.worldMapData.length) return
+  // Aggregera artikelantal per topic över alla institutioner. topics är objekt
+  // {topic: count} från map_institution_coords.topics (jsonb_object_agg).
+  const counts = {}
+  for(const inst of window.worldMapData) {
+    const t = inst.topics || {}
+    for(const k in t) counts[k] = (counts[k] || 0) + (Number(t[k]) || 0)
+  }
+  const rows = Object.entries(counts)
+    .filter(([k]) => k && k !== 'uncategorized')  // uncategorized säger inget om ämne
+    .sort((a,b) => b[1] - a[1])
+  const TOP_N = 10
+  const visible = window._mapTopicPillsExpanded ? rows : rows.slice(0, TOP_N)
+  const hidden = window._mapTopicPillsExpanded ? 0 : Math.max(rows.length - TOP_N, 0)
+  const sel = window.selectedMapTopics || new Set()
+
+  const pillHtml = visible.map(([topic, n]) => {
+    const active = sel.has(topic)
+    const color = getTopicColor(topic)
+    return `<button onclick="toggleTopicPill('${topic}')" data-topic="${topic}"
+      style="font-size:11px;padding:4px 10px 4px 8px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;display:inline-flex;align-items:center;gap:6px;background:${active ? color : 'rgba(255,255,255,.04)'};color:${active ? '#0C0B09' : 'rgba(255,255,255,.75)'};border:0.5px solid ${active ? color : 'rgba(255,255,255,.18)'};font-weight:${active ? '500' : '400'}">
+        <span style="width:7px;height:7px;border-radius:50%;background:${active ? '#0C0B09' : color};display:inline-block"></span>
+        <span>${topic.replace(/_/g,' ')}</span>
+        <span style="font-size:10px;opacity:.7">${n}</span>
+      </button>`
+  }).join('')
+
+  const clearBtn = sel.size > 0
+    ? `<button onclick="clearTopicPills()" style="font-size:11px;padding:4px 10px;border-radius:20px;background:none;color:rgba(255,255,255,.6);border:0.5px solid rgba(255,255,255,.18);cursor:pointer">× Clear (${sel.size})</button>`
+    : ''
+  const expandBtn = hidden > 0
+    ? `<button onclick="expandTopicPills()" style="font-size:11px;padding:4px 10px;border-radius:20px;background:none;color:rgba(201,168,76,.8);border:0.5px solid rgba(201,168,76,.28);cursor:pointer">Show all (${hidden} more)</button>`
+    : (window._mapTopicPillsExpanded && rows.length > TOP_N
+        ? `<button onclick="collapseTopicPills()" style="font-size:11px;padding:4px 10px;border-radius:20px;background:none;color:rgba(255,255,255,.5);border:0.5px solid rgba(255,255,255,.18);cursor:pointer">Show less</button>`
+        : '')
+
+  el.innerHTML = `
+    <span style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-right:2px">Filter by topic</span>
+    ${pillHtml}
+    ${expandBtn}
+    ${clearBtn}
+  `
+  el.style.display = 'flex'
+}
+
+window.toggleTopicPill = function(topic) {
+  if(!window.selectedMapTopics) window.selectedMapTopics = new Set()
+  if(window.selectedMapTopics.has(topic)) window.selectedMapTopics.delete(topic)
+  else window.selectedMapTopics.add(topic)
+  window.renderTopicPills()
+  window.renderWorldDots()
+}
+window.clearTopicPills = function() {
+  window.selectedMapTopics = new Set()
+  window.renderTopicPills()
+  window.renderWorldDots()
+}
+window.expandTopicPills = function() {
+  window._mapTopicPillsExpanded = true
+  window.renderTopicPills()
+}
+window.collapseTopicPills = function() {
+  window._mapTopicPillsExpanded = false
+  window.renderTopicPills()
+}
+
+// ─── KEYWORD DRILL-DOWN ─────────────────────────────────────────────────────
+//
+// Klick på ett nyckelord i institutionspanelen → map_institutions_by_keyword-
+// RPC:n ger listan av institutioner som har detta keyword i minst en artikel.
+// Sätter keywordFilterInstitutions-Set som renderWorldDots filtrerar på.
+// Visar aktiv-chip under kartan med clear-knapp.
+// ============================================================================
+window.applyKeywordFilter = async function(kw) {
+  if(!kw) return
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/map_institutions_by_keyword`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_keyword: kw })
+    })
+    if(!r.ok) {
+      console.log('map_institutions_by_keyword HTTP', r.status)
+      return
+    }
+    const arr = await r.json()
+    const names = Array.isArray(arr) ? arr : []
+    window.keywordFilter = kw
+    window.keywordFilterInstitutions = new Set(names)
+    const chip = document.getElementById('mapKeywordFilter')
+    const lbl = document.getElementById('mapKeywordFilterLabel')
+    if(chip && lbl) {
+      lbl.textContent = `${kw} · ${names.length} institution${names.length===1?'':'s'}`
+      chip.style.display = 'flex'
+    }
+    window.renderWorldDots()
+  } catch(e) {
+    console.log('applyKeywordFilter error:', e)
+  }
+}
+window.clearKeywordFilter = function() {
+  window.keywordFilter = null
+  window.keywordFilterInstitutions = null
+  const chip = document.getElementById('mapKeywordFilter')
+  if(chip) chip.style.display = 'none'
+  window.renderWorldDots()
+}
+
+// ─── INSTITUTIONSPANEL ──────────────────────────────────────────────────────
+//
+// Klick på dot laddar map_institution_detail(name) → country, article_count,
+// topics (top 10 med share), keywords (>1 förekomst, filtrerade mot
+// openalex_concept_blocklist server-side). Rendrar i worldMapSidebar.
+//
+// Topics visas som stapelrad rankad på count desc; topics som ligger i
+// selectedMapTopics markeras med kraftigare färg. Keywords visas som
+// klickbara etiketter — klick sätter keyword-filter på kartan.
+// ============================================================================
+window.showInstitutionPanel = async function(name) {
+  if(!name) return
+  const sidebar = document.getElementById('worldMapSidebar')
+  const content = document.getElementById('worldMapSidebarContent')
+  if(!sidebar || !content) return
+  sidebar.style.display = 'block'
+  content.innerHTML = `<div style="padding:20px;text-align:center;color:rgba(255,255,255,.5);font-size:12px">Loading ${escapeHtml(name)}…</div>`
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/map_institution_detail`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_name: name })
+    })
+    if(!r.ok) {
+      content.innerHTML = `<div style="padding:16px;color:rgba(255,255,255,.5);font-size:12px">Could not load institution details (HTTP ${r.status}).</div>`
+      return
+    }
+    const d = await r.json()
+    const country = d.country || '—'
+    const total = d.article_count || 0
+    const topics = Array.isArray(d.topics) ? d.topics : []
+    const keywords = Array.isArray(d.keywords) ? d.keywords : []
+    const sel = window.selectedMapTopics || new Set()
+    const maxTopicCount = topics.reduce((m, t) => Math.max(m, Number(t.count) || 0), 1)
+
+    const topicRows = topics.map(t => {
+      const w = maxTopicCount ? (Number(t.count) / maxTopicCount) * 100 : 0
+      const isSel = sel.has(t.topic)
+      const color = getTopicColor(t.topic)
+      return `
+        <div style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:${isSel ? '#fff' : 'rgba(255,255,255,.72)'};margin-bottom:3px">
+            <span>${(t.topic || '').replace(/_/g,' ')}${isSel ? ' <span style=\"color:var(--gold);font-size:9px\">● selected</span>' : ''}</span>
+            <span style="color:rgba(255,255,255,.5)">${t.count}</span>
+          </div>
+          <div style="height:${isSel ? 6 : 4}px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${w}%;background:${color};opacity:${isSel ? 1 : 0.7}"></div>
+          </div>
+        </div>
+      `
+    }).join('')
+
+    const kwPills = keywords.map(k => {
+      const active = window.keywordFilter && window.keywordFilter.toLowerCase() === (k.keyword || '').toLowerCase()
+      const kwEsc = String(k.keyword || '').replace(/'/g, "\\'")
+      return `<button onclick="applyKeywordFilter('${kwEsc}')" title="Filter map by this keyword" style="font-size:11px;padding:3px 8px;border-radius:14px;cursor:pointer;font-family:'Outfit',sans-serif;background:${active ? 'var(--gold)' : 'rgba(255,255,255,.04)'};color:${active ? '#0C0B09' : 'rgba(255,255,255,.72)'};border:0.5px solid ${active ? 'rgba(201,168,76,.4)' : 'rgba(255,255,255,.14)'};margin:0 4px 4px 0">${escapeHtml(k.keyword)} <span style="opacity:.6;font-size:10px">${k.count}</span></button>`
+    }).join('')
+
+    content.innerHTML = `
+      <div style="font-size:13px;font-weight:500;color:#fff;line-height:1.3;margin-bottom:4px">${escapeHtml(name)}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:12px">${escapeHtml(country)} · ${total} article${total===1?'':'s'}</div>
+      <button onclick="focusMapInstitution('${name.replace(/'/g,"\\'")}')" style="width:100%;font-size:11px;padding:6px;border-radius:6px;background:rgba(201,168,76,.14);color:var(--gold);border:0.5px solid rgba(201,168,76,.32);cursor:pointer;margin-bottom:14px">View articles →</button>
+
+      ${topicRows ? `
+        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.7);text-transform:uppercase;margin-bottom:8px">Topic distribution</div>
+        <div style="margin-bottom:14px">${topicRows}</div>
+      ` : ''}
+
+      ${kwPills ? `
+        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.7);text-transform:uppercase;margin-bottom:8px">Keywords · click to find peers</div>
+        <div style="line-height:1.9">${kwPills}</div>
+      ` : `
+        <div style="font-size:11px;color:rgba(255,255,255,.45);font-style:italic">No keywords with more than one occurrence.</div>
+      `}
+    `
+    // Highlight dot i kartan
+    if(window.worldMapSvg){
+      window.worldMapSvg.selectAll('.winst').attr('opacity', n => n.name === name ? 1 : 0.25)
+    }
+  } catch(e) {
+    console.log('showInstitutionPanel error:', e)
+    content.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,.5);font-size:12px">Could not load institution details.</div>'
+  }
+}
+
+// Enkel HTML-escape för sidopanelen — RPC:n returnerar användar-genererade
+// institutionsnamn och keywords som annars kan innehålla &, <, > eller citat.
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
 // Map-scoped focus. Klick på institution/land öppnar en artikel-lista UNDER
@@ -6200,6 +6430,9 @@ async function focusMapInstitution(name){
   pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading articles…</span></div>'
   window._mapFocus.kind = 'inst'
   window._mapFocus.value = name
+  // Sidopanelen + artikellistan i parallell — sidopanelen sitter kvar högst
+  // upp så användaren ser topics/keywords medan artiklarna laddas nedanför.
+  showInstitutionPanel(name)
   await loadMapFocusArticles({ name })
   setTimeout(() => wrap.scrollIntoView({ behavior:'smooth', block:'start' }), 200)
   // Highlight clicked dot, dim others
