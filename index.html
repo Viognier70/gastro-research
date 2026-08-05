@@ -867,17 +867,46 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .triad-btn:hover:not(:disabled){opacity:.92}
 .triad-btn:disabled{opacity:.9;cursor:default}
 .triad-ico{width:17px;height:17px;color:#C9A961;flex-shrink:0;transform-origin:50% 50%;display:inline-block}
-.triad-btn.spinning .triad-ico{animation:gspin 1.5s cubic-bezier(.5,.1,.5,.9) infinite}
-@keyframes gspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .triad-caption{font-size:11.5px;color:var(--gustema-muted,#8A7B5E);margin-top:10px;font-family:'Inter','Outfit',sans-serif;font-style:italic;line-height:1.5}
-.triad-phase-hint{font-size:11px;color:var(--gustema-muted,#8A7B5E);margin-top:8px;font-family:'Inter','Outfit',sans-serif;opacity:.75;letter-spacing:.02em}
-.triad-quota-hint{font-size:11.5px;color:var(--gustema-muted,#8A7B5E);margin-top:10px;font-family:'Inter','Outfit',sans-serif}
 .triad-err{padding:14px 16px;background:#FAF3E5;border:0.5px solid #E8D5A0;border-radius:8px;font-size:12.5px;color:#5C4A00;line-height:1.6;margin-top:14px;font-family:'Inter','Outfit',sans-serif;text-align:left}
 .triad-err a{color:var(--gustema-gold,#A08A55);font-weight:500;text-decoration:none}
 .triad-err a:hover{text-decoration:underline}
 /* Efter analyze: fade in de nya fälten ett-i-taget (translateY 6→0). */
 .triad-in{animation:triadIn 0.5s ease-out both}
 @keyframes triadIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* Topbar-logon roterar långsamt under TRIAD on-demand och ask-synth.
+   3s per varv — snabbt nog att kännas som "systemet gör något" i
+   perifert seende, långsamt nog att inte stressa vid en 60-75s väntan.
+   Applied av requestTriadAnalysis + doSemanticSearch, alltid removed
+   i try/finally så logon aldrig fastnar snurrande vid fel. Samma
+   spin-keyframe återanvänds av väntevyns roterande gustema-mark
+   (.triad-wait-mark) — konsekvent cadence mellan header och wait-view. */
+.logo-mark.analysing{animation:gustemaSpin 3s linear infinite;transform-origin:50% 50%}
+@keyframes gustemaSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* TRIAD-väntevy — ersätter CTA-boxen under de 60-75s Sonnet analyserar.
+   Bygger på samma warm-100-bakgrund som .triad-cta men med större
+   vertikal luft (roterande mark + text tar mer plats än en knapp).
+   Wait-mark är gustema-symbolen ~24px, roterande i samma cadence som
+   header-logon. Recent-boxen är kortlistor i art-related-stil för
+   visuell kontinuitet med Related research-sektionen (renderas
+   nedanför efter analys). */
+.triad-wait{padding:24px 22px;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px}
+.triad-wait-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.triad-wait-mark{width:24px;height:24px;color:var(--gustema-gold,#A08A55);animation:gustemaSpin 3s linear infinite;flex-shrink:0}
+.triad-wait-title{font-family:'Inter','Outfit',sans-serif;font-size:14px;font-weight:500;color:var(--text-primary);line-height:1.4}
+.triad-wait-sub{font-size:11.5px;color:var(--gustema-muted,#8A7B5E);line-height:1.5;margin:0 0 18px 36px}
+.triad-wait-recent{margin-top:14px}
+.triad-wait-recent-label{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px}
+.triad-wait-recent-list{display:flex;flex-direction:column;gap:0;border-top:0.5px solid var(--border);background:var(--white);border-radius:6px;padding:0 12px}
+.triad-wait-recent-item{padding:10px 0;border-top:0.5px solid var(--border);cursor:pointer;transition:opacity .12s}
+.triad-wait-recent-item:first-child{border-top:none}
+.triad-wait-recent-item:hover{opacity:.72}
+.triad-wait-recent-title{font-size:12.5px;color:var(--text-primary);line-height:1.5;margin-bottom:3px}
+.triad-wait-recent-meta{font-size:10.5px;color:var(--text-tertiary);letter-spacing:.02em}
+.triad-wait-recent-empty{font-size:11.5px;color:var(--text-tertiary);font-style:italic;padding:6px 0}
+/* Faslistan i väntevyn — degraderad: liten kursiv text under artiklarna,
+   inte huvudinnehåll. Samma cykling som förut (start 8s, byte var 4:e). */
+.triad-wait-phase{font-size:10.5px;color:var(--gustema-muted,#8A7B5E);opacity:.7;font-style:italic;margin-top:16px;text-align:center;letter-spacing:.02em;min-height:14px}
 /* Relaterad forskning — pgvector-grannar under TRIAD (match_related-RPC).
    Ämnesnära, INTE evidentiellt bekräftande — därför neutral rubrik "Relaterad
    forskning" och inga procent-siffror eller "stöd för slutsats"-formuleringar. */
@@ -4166,19 +4195,10 @@ function openArticleOverlay(article){
     if(nav) nav.style.display = 'none'
     if(content){
       content.className = 'art-triad-content'
-      content.innerHTML = `
-        <div class="triad-cta">
-          <div class="triad-cta-lead">This article hasn't been analysed through TRIAD yet.</div>
-          <button class="triad-btn" id="triadCtaBtn" onclick="requestTriadAnalysis('${(article.id||'').replace(/'/g,'')}')">
-            <svg class="triad-ico" viewBox="0 0 1500 1500" aria-hidden="true"><use href="#gustema-mark"/></svg>
-            <span id="triadCtaText">Analyse with TRIAD</span>
-          </button>
-          <div class="triad-caption">The analysis is saved permanently and shared with all future readers.</div>
-          <div id="triadPhaseHint" class="triad-phase-hint" style="display:none"></div>
-          <div id="triadQuotaHint" class="triad-quota-hint" style="display:none"></div>
-          <div id="triadErrorBox" class="triad-err" style="display:none"></div>
-        </div>
-      `
+      // renderTriadCta delas med resetToCta i requestTriadAnalysis — samma
+      // HTML behöver kunna återskapas efter retry-bara fel (network, timeout,
+      // unparseable), så CTA:n bor i en funktion istället för inline HTML.
+      renderTriadCta((article.id || ''))
     }
   }
   if(article.imrad_introduction){
@@ -4349,17 +4369,105 @@ window.addEventListener('popstate', () => {
   }
 })
 
-// TRIAD on-demand — kallar /functions/v1/triad-on-demand, hanterar
-// alla fyra statuskoder (analyzed/cached/pending/quota_exceeded) + 502
-// cold-start-retry. Backend är bevisad 7/7 (test-user 13581790 i dag).
-// Ingen catch(_) {} — varje felväg loggar console.error och visar UI.
+// ─── TRIAD on-demand ─────────────────────────────────────────────────────────
+//
+// Tre vyer i #artTriadContent:
+//   1. CTA (renderTriadCta)   — "Analyse with TRIAD"-knapp, ingångsläget.
+//   2. Wait (renderTriadWait) — roterande gustema-mark, "recent research"-
+//      preload (match_related-RPC), degraderad fascykel. Ersätter CTA från
+//      requestTriadAnalysis-start till backend-svar.
+//   3. TRIAD-tabs (renderTriadInline) — ersätter wait-view när svar landar.
+//
+// Fel-vägar:
+//   - retry-bara (network / timeout / unparseable): resetToCta → CTA-vyn igen
+//     med error-msg synlig, knappen tillbaka i klickbart läge.
+//   - blockerande (402 kvot / 503 budget): showBlockingError → dedikerad
+//     error-box, ingen retry-knapp.
+//
+// Header-logon (.topbar .logo-mark) roterar under hela requesten — global
+// aktivitetssignal utanför sidebar/overlay. try/finally-städning via
+// dedikerade stopLogo/stopCycle-hjälpare på alla exit-vägar, så inget kan
+// fastna snurrande vid oväntat fel.
+// ============================================================================
+
+function renderTriadCta(articleId, errorHtml){
+  const c = document.getElementById('artTriadContent')
+  if(!c) return
+  c.className = 'art-triad-content'
+  const idEsc = String(articleId || '').replace(/'/g, '')
+  c.innerHTML = `
+    <div class="triad-cta">
+      <div class="triad-cta-lead">This article hasn't been analysed through TRIAD yet.</div>
+      <button class="triad-btn" id="triadCtaBtn" onclick="requestTriadAnalysis('${idEsc}')">
+        <svg class="triad-ico" viewBox="0 0 1500 1500" aria-hidden="true"><use href="#gustema-mark"/></svg>
+        <span id="triadCtaText">${errorHtml ? 'Try again' : 'Analyse with TRIAD'}</span>
+      </button>
+      <div class="triad-caption">The analysis is saved permanently and shared with all future readers.</div>
+      <div id="triadErrorBox" class="triad-err" style="${errorHtml ? '' : 'display:none'}">${errorHtml || ''}</div>
+    </div>
+  `
+}
+
+function renderTriadWait(articleId){
+  const c = document.getElementById('artTriadContent')
+  if(!c) return
+  c.className = 'art-triad-content'
+  c.innerHTML = `
+    <div class="triad-wait">
+      <div class="triad-wait-head">
+        <svg class="triad-wait-mark" viewBox="0 0 1500 1500" aria-hidden="true"><use href="#gustema-mark"/></svg>
+        <div class="triad-wait-title" id="triadWaitTitle">Analysing this article through TRIAD…</div>
+      </div>
+      <div class="triad-wait-sub">Sonnet reads the abstract and writes three lenses on it — episteme, techne, phronesis. This usually takes 60–75 seconds.</div>
+      <div class="triad-wait-recent" id="triadWaitRecent" style="display:none">
+        <div class="triad-wait-recent-label">Recent research in the same area</div>
+        <div class="triad-wait-recent-list" id="triadWaitRecentList"></div>
+      </div>
+      <div class="triad-wait-phase" id="triadWaitPhase"></div>
+      <div id="triadErrorBox" class="triad-err" style="display:none"></div>
+    </div>
+  `
+  // Ladda grannartiklar parallellt — det som visas medan Sonnet skriver.
+  loadRecentForWait(articleId)
+}
+
+// Cachar match_related-svaret på window._relatedRows så loadRelated() efter
+// analysen inte behöver anropa RPC:n igen. Grannar visas 3-5 st, prioriterade
+// på senaste år (currentYear-2, med gradvis fallback). Silent på fel.
+async function loadRecentForWait(articleId){
+  try {
+    const {data, error} = await sb.rpc('match_related', {p_article_id: articleId, p_k: 25, p_floor: 0.70})
+    if(error || !Array.isArray(data) || data.length === 0) return
+    // Cache för loadRelated senare — samma RPC-svar, samma format.
+    window._relatedRows = data
+    window._relatedFor  = articleId
+    window._relatedShown = Math.min(10, data.length)
+    // Sortera fram de nyaste. currentYear-2 primärt; fallback till -3, sen
+    // hela listan om även det ger <3. Poängen: "medan du väntar — publicerat
+    // nyligen inom samma område", så tomt vore sämre än något äldre.
+    const yearNow = new Date().getFullYear()
+    const byYear = th => data.filter(r => r.year && Number(r.year) >= th)
+    let picks = byYear(yearNow - 2)
+    if(picks.length < 3) picks = byYear(yearNow - 3)
+    if(picks.length < 3) picks = data.slice()
+    picks = picks.slice(0, 5)
+    const wrap = document.getElementById('triadWaitRecent')
+    const list = document.getElementById('triadWaitRecentList')
+    if(!wrap || !list) return  // Väntevyn har ersatts, ingen målspot kvar.
+    list.innerHTML = picks.map(r => {
+      const meta = [r.journal, r.year].filter(Boolean).join(' · ')
+      const title = String(r.title || '').replace(/</g,'&lt;')
+      const idEsc = String(r.id || '').replace(/'/g, '')
+      return `<div class="triad-wait-recent-item" onclick="openArticleFromId('${idEsc}')">
+        <div class="triad-wait-recent-title">${title}</div>
+        ${meta ? `<div class="triad-wait-recent-meta">${meta}</div>` : ''}
+      </div>`
+    }).join('')
+    wrap.style.display = 'block'
+  } catch(e) { /* silent — recent är kompletterande, inte kritisk */ }
+}
+
 window.requestTriadAnalysis = async function(articleId){
-  const btn      = document.getElementById('triadCtaBtn')
-  const txt      = document.getElementById('triadCtaText')
-  const phase    = document.getElementById('triadPhaseHint')
-  const quotaHt  = document.getElementById('triadQuotaHint')
-  const errBox   = document.getElementById('triadErrorBox')
-  if(!btn || !txt) return
   // Auth-gate: kräver JWT. Utan session → sign-in-modal.
   const sess = await sb.auth.getSession().catch(()=>({data:{session:null}}))
   const session = sess?.data?.session
@@ -4368,43 +4476,57 @@ window.requestTriadAnalysis = async function(articleId){
     openModal('authModal')
     return
   }
-  // Nollställ ev. tidigare state
-  if(errBox)  { errBox.style.display  = 'none'; errBox.innerHTML  = '' }
-  if(quotaHt) { quotaHt.style.display = 'none'; quotaHt.textContent = '' }
-  btn.disabled = true
-  btn.classList.add('spinning')
-  txt.textContent = 'Analysing…'
-  phase.style.display = 'block'
-  phase.textContent   = ''
-  // Fas 2: text-cykel som startar vid t=8s, byter var 4:e s.
-  // Mätt Sonnet-latens: 56–59s. Räkna med 60–65s wall.
+  // CTA → wait-view (roterande mark, recent-preload, phase-cykel).
+  renderTriadWait(articleId)
+
+  // Global aktivitetssignal: topbar-logon roterar under hela anropet, alltid
+  // rensad via stopLogo() i alla exit-vägar. Samma mönster som ask-diamanten
+  // (b59a7f0). getElementById via .topbar-selector — hero-heim-logon
+  // (.hero-logo) roterar inte, den är statisk sidmarkör.
+  const headerLogo = document.querySelector('.topbar .logo-mark')
+  if(headerLogo) headerLogo.classList.add('analysing')
+
+  // Faslistan — degraderad till liten kursiv text under artiklarna. Samma
+  // cykling som förr (start 8s, byte 4s) — signalen "systemet gör något
+  // specifikt" kvar, men konkurrerar inte längre om huvudinnehållet.
   const phases = ['Reading abstract','Assessing episteme','Formulating techne','Weighing phronesis']
   let phaseIdx = 0, cycleTimer = null
-  const cycleStart = setTimeout(()=>{
-    phase.textContent = phases[0]
-    cycleTimer = setInterval(()=>{
+  const cycleStart = setTimeout(() => {
+    const p = document.getElementById('triadWaitPhase')
+    if(p) p.textContent = phases[0]
+    cycleTimer = setInterval(() => {
       phaseIdx = (phaseIdx + 1) % phases.length
-      phase.textContent = phases[phaseIdx]
+      const el = document.getElementById('triadWaitPhase')
+      if(el) el.textContent = phases[phaseIdx]
     }, 4000)
   }, 8000)
   const stopCycle = () => {
     clearTimeout(cycleStart)
     if(cycleTimer) clearInterval(cycleTimer)
-    phase.style.display = 'none'
   }
-  // Reset-hjälpare vid fel — knappen tillbaka i klickbar state
-  const resetButton = (msg) => {
-    stopCycle()
-    btn.classList.remove('spinning')
-    btn.disabled = false
-    txt.textContent = 'Try again'
-    if(errBox && msg){ errBox.textContent = msg; errBox.style.display = 'block' }
+  const stopLogo = () => { if(headerLogo) headerLogo.classList.remove('analysing') }
+  // Retry-bara fel (network, timeout, unparseable, oväntad status) → återgå
+  // till CTA-vyn med error-msg + knappen i "Try again"-läge.
+  const resetToCta = (msg) => {
+    stopCycle(); stopLogo()
+    const html = msg ? String(msg).replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''
+    renderTriadCta(articleId, html)
   }
-  // POST-anrop med 502-retry (cold-start upptäcktes i test).
-  // role skickas som science-namn så backend kan returnera roll-specifikt
-  // content inline i svaret — vi förlitar oss INTE på refetch via
-  // openArticleFromId eftersom get_articles_full är Pro-gate:ad och skulle
-  // ge free-user tom payload trots att analysen är skriven till DB.
+  // Blockerande fel (402 kvot, 503 budget) → dedikerad error-box, ingen
+  // retry-knapp. Ersätter hela CTA/wait-innehållet.
+  const showBlockingError = (html) => {
+    stopCycle(); stopLogo()
+    const c = document.getElementById('artTriadContent')
+    if(!c) return
+    c.className = 'art-triad-content'
+    c.innerHTML = `<div class="triad-cta"><div id="triadErrorBox" class="triad-err" style="display:block">${html}</div></div>`
+  }
+
+  // POST-anrop med 502-retry (cold-start upptäcktes i test). role skickas
+  // som science-namn så backend kan returnera roll-specifikt content inline
+  // — vi förlitar oss INTE på refetch via openArticleFromId eftersom
+  // get_articles_full är Pro-gate:ad och skulle ge free-user tom payload
+  // trots att analysen är skriven till DB.
   const dbRoleName = (typeof role !== 'undefined' && role && role !== 'all')
     ? (typeof toDbRole === 'function' ? toDbRole(role) : role)
     : 'sensory_pro'
@@ -4417,6 +4539,7 @@ window.requestTriadAnalysis = async function(articleId){
     },
     body: JSON.stringify({ article_id: articleId, role: dbRoleName })
   })
+
   let resp
   try {
     resp = await doPost()
@@ -4427,96 +4550,96 @@ window.requestTriadAnalysis = async function(articleId){
     }
   } catch(e){
     console.error('triad-on-demand: fetch error', e)
-    resetButton('Network error. Please try again in a moment.')
+    resetToCta('Network error. Please try again in a moment.')
     return
   }
   // Global daglig budget slut = HTTP 503 (backend budget-cap, 2026-07-19).
   // Både Free och Pro påverkas — INGEN Pro-upsell (Pro har samma tak).
-  // Meddelande på svenska; en generic "försök imorgon"-fras utan
-  // användarspecifik åtgärd.
   if(resp.status === 503){
-    stopCycle()
-    btn.classList.remove('spinning')
-    btn.style.display = 'none'
-    if(errBox){
-      errBox.innerHTML = 'TRIAD analysis is temporarily unavailable today (daily budget reached). Please try again tomorrow.'
-      errBox.style.display = 'block'
-    }
+    showBlockingError('TRIAD analysis is temporarily unavailable today (daily budget reached). Please try again tomorrow.')
     return
   }
   // Kvot slut = HTTP 402. Modell B (2026-07-20): räknas per VISNING (cache
-  //  ELLER ny generering). Meddelandet måste därför säga "analyser" utan att
-  //  antyda "3 nya" — cachade visningar dras också. "Kostnadsfria" gör
-  //  Free-nivån explicit, "denna månad" markerar rullande period.
+  // ELLER ny generering). "3 free" utan "nya"-antydan — cachade dras också.
   if(resp.status === 402){
-    stopCycle()
-    btn.classList.remove('spinning')
-    btn.style.display = 'none'
-    if(errBox){
-      errBox.innerHTML = 'You\'ve used your 3 free TRIAD analyses this month. <a href="#" onclick="closeArticleModal();openModal(\'upgradeModal\');return false;">Pro gives unlimited analyses →</a>'
-      errBox.style.display = 'block'
-    }
+    showBlockingError('You\'ve used your 3 free TRIAD analyses this month. <a href="#" onclick="closeArticleModal();openModal(\'upgradeModal\');return false;">Pro gives unlimited analyses →</a>')
     return
   }
   let body = {}
   try { body = await resp.json() } catch(e){
     console.error('triad-on-demand: unparseable body', e)
-    resetButton('Unexpected response from the server.')
+    resetToCta('Unexpected response from the server.')
     return
   }
   const status = body.status
-  // 'analyzed' & 'cached' → refresh overlay så artikel-payloaden refetchas
-  // med de nya fälten. Free-user ser Pro-upsell (existerande arkitektur —
-  // triad-innehåll är gate:at av get_articles_full som kräver Pro/trial).
-  // Pro-user ser hela TRIAD:en direkt via enrichWithPremiumIfPro.
+  // 'analyzed' & 'cached' → renderTriadInline ersätter #artTriadContent med
+  // E/T/P-tabs. Wait-view (inkl. loading-mark) försvinner då automatiskt.
+  // Related research renderas som separat #artRelated-sektion nedan;
+  // window._relatedRows-cachen från loadRecentForWait återanvänds.
   if(status === 'analyzed' || status === 'cached'){
-    stopCycle()
-    btn.classList.remove('spinning')
+    stopCycle(); stopLogo()
     if(typeof body.quota_remaining === 'number'){
       console.log('TRIAD: analysis complete. Quota remaining this month:', body.quota_remaining)
     }
-    // Fas 3: rendera INLINE i öppna overlayn. Ingen refetch — svaret från
-    // triad-on-demand innehåller roll-specifikt content och IMRaD. Refetch
-    // via openArticleFromId → get_articles_full skulle ge tom payload för
-    // free-user och lämna dem med "no TRIAD yet"-vyn de precis betalat
-    // kvot för att slippa.
     renderTriadInline(body.triad || {}, articleId)
+    // Om loadRecentForWait redan hämtat grannarna, rendera Related-sektionen
+    // direkt utan ny RPC. loadRelated() är idempotent; den hoppar RPC:n om
+    // _relatedFor matchar och _relatedRows finns.
+    if(Array.isArray(window._relatedRows) && window._relatedRows.length > 0 && window._relatedFor === articleId){
+      renderRelated()
+      const box = document.getElementById('artRelated'); if(box) box.classList.add('open')
+      const lbl = document.getElementById('artRelatedLabel'); if(lbl) lbl.textContent = 'Related research'
+      const more = document.getElementById('artRelatedMore')
+      if(more){
+        if(window._relatedRows.length > 10){ more.style.display = 'inline-block'; more.textContent = `Show more (${window._relatedRows.length - 10})` }
+        else more.style.display = 'none'
+      }
+    } else {
+      loadRelated(articleId)
+    }
     return
   }
-  // 'pending' → polla var 3:e s tills det finns TRIAD (max 30 polls = 90s)
+  // 'pending' → polla var 3:e s tills det finns TRIAD (max 30 polls = 90s).
+  // Behåll wait-view; uppdatera bara rubriktext så användaren vet varför
+  // det tar en stund extra.
   if(status === 'pending'){
-    txt.textContent = 'Analysing right now…'
-    phase.textContent = 'Waiting for another user\'s analysis'
+    const title = document.getElementById('triadWaitTitle')
+    if(title) title.textContent = 'Waiting for another user\'s analysis…'
     let polls = 0
-    const pollTimer = setInterval(async ()=>{
+    const pollTimer = setInterval(async () => {
       polls++
       if(polls > 30){
         clearInterval(pollTimer)
         console.error('triad-on-demand: polling timeout after 90s')
-        resetButton('The analysis is taking longer than expected. Please try again in a moment.')
+        resetToCta('The analysis is taking longer than expected. Please try again in a moment.')
         return
       }
       try {
         const pollResp = await doPost()
         if(pollResp.status === 502) return  // transient, fortsätt polla
-        const pollBody = await pollResp.json().catch(()=>({}))
+        const pollBody = await pollResp.json().catch(() => ({}))
         if(pollBody.status === 'cached' || pollBody.status === 'analyzed'){
           clearInterval(pollTimer)
-          stopCycle()
-          btn.classList.remove('spinning')
+          stopCycle(); stopLogo()
           renderTriadInline(pollBody.triad || {}, articleId)
+          if(Array.isArray(window._relatedRows) && window._relatedRows.length > 0 && window._relatedFor === articleId){
+            renderRelated()
+            const box = document.getElementById('artRelated'); if(box) box.classList.add('open')
+            const lbl = document.getElementById('artRelatedLabel'); if(lbl) lbl.textContent = 'Related research'
+          } else {
+            loadRelated(articleId)
+          }
         }
-        // om fortfarande 'pending' → fortsätt polla
       } catch(e){
         console.error('triad-on-demand: poll error', e)
       }
     }, 3000)
     return
   }
-  // Övrigt (400/404/500/502-efter-retry/etc): logga och visa error-box
+  // Övrigt (400/404/500/502-efter-retry/etc): logga och visa error i CTA
   console.error('triad-on-demand: unexpected status', resp.status, body)
   const errMsg = body?.error || `Unexpected response (HTTP ${resp.status})`
-  resetButton(errMsg)
+  resetToCta(errMsg)
 }
 
 // Rendera TRIAD-content från svaret inline i öppna article-overlayn.
@@ -4794,6 +4917,12 @@ window.doSemanticSearch = async function(inputId, resultsId) {
   const askDiamond = askWidget?.querySelector('.ask-diamond')
   if (askDiamond) askDiamond.classList.add('pulse')
 
+  // Topbar-logon roterar i samma cadence som TRIAD on-demand — global
+  // aktivitetssignal även när diamant-widget:en är utanför viewport.
+  // Rensas i try/finally som pulsen. Samma helper som requestTriadAnalysis.
+  const askHeaderLogo = document.querySelector('.topbar .logo-mark')
+  if (askHeaderLogo) askHeaderLogo.classList.add('analysing')
+
   // Auth-token om inloggad (för framtida Pro-detektion i STEG 3).
   let token = SB_ANON
   try {
@@ -4909,9 +5038,11 @@ window.doSemanticSearch = async function(inputId, resultsId) {
     results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">Ask is temporarily unavailable. Please check your network or try again.</div>`
     console.log('ask-synth error:', e)
   } finally {
-    // Stoppa diamant-pulsen oavsett hur try-blocket slutade (svar, insufficient,
-    // budget, error). Utan detta skulle diamanten fastna och pulsa för evigt.
+    // Stoppa diamant-pulsen och logo-rotationen oavsett hur try-blocket
+    // slutade (svar, insufficient, budget, error). Utan detta skulle
+    // signalerna fastna och blinka för evigt.
     if (askDiamond) askDiamond.classList.remove('pulse')
+    if (askHeaderLogo) askHeaderLogo.classList.remove('analysing')
   }
 }
 
