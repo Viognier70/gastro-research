@@ -1,0 +1,83 @@
+-- =============================================================================
+-- Drop idx_articles_title_unique — felaktigt antagande
+-- =============================================================================
+-- APPLICERA MANUELLT I SQL-EDITORN — INTE via `supabase db push`.
+--
+-- BAKGRUND (upptäckt 2026-08-06 vid apply av 20260806140000):
+--
+--   HTML-entity-cleanup UPDATE:n fällde på idx_articles_title_unique. Två
+--   rader har samma titel men olika DOI:
+--
+--     8c60373e (scopus)   doi.org/10.1111/1750-3841.70685
+--     20b22e41 (openalex) doi.org/10.1111/1750-3841.70616
+--
+--   "Industrial Applications of Selected JFS Articles" är en återkommande
+--   spaltrubrik i Journal of Food Science — det är TVÅ separata artiklar.
+--   Samma mönster finns för "Editor's introduction to volume N", errata-
+--   rader, ledartexter osv. Titeln är INTE unik i verkligheten.
+--
+-- INDEXETS URSPRUNG: ingen migration, ingen script, inget commit. Skapat
+-- utanför versionskontroll (Supabase Table Designer eller manuell SQL i
+-- editorn tidigt i projektet). Motiveringen har aldrig dokumenterats.
+--
+-- VARFÖR DROP:
+--
+--   1. uq_articles_url (partial unique på url WHERE url IS NOT NULL,
+--      migration 20260802120000) är den RIKTIGA dedup-invarianten —
+--      DOI/url som nyckel över källor.
+--
+--   2. isDuplicate-pre-checken i daily-fetch (saveArticle:s ilike-title-
+--      match) är en HEURISTIK för fall där DOI saknas, inte en assertion
+--      om global titel-unikhet. Den använder inte indexet — .limit(1)-
+--      lookup fungerar oförändrat efter drop.
+--
+--   3. SILENT INGEST-BUG idag: när Scopus levererar en andra JFS-
+--      Industrial-Applications-artikel efter OpenAlex redan lagt den
+--      första — ny url, ny DOI, upsert blir INSERT, title-indexet
+--      blockerar. saveArticle catchar felet och loggar bara "saveArticle
+--      error: duplicate key". Ingen räknare, ingen mätning. Rader har
+--      förlorats tyst i månader utan att någon vet hur många.
+--
+--   4. Framtida title-modifierande migrations (encoding-fix för brutna
+--      accenter, trim-batch, canonicalization) skulle falla på samma vägg.
+--
+-- ALTERNATIVET (medvetet valt bort): "skip and report" i UPDATE-vägen
+-- skulle klara denna specifika migration men lämnar felantagandet + silent-
+-- ingest-buggen kvar. Drop:en löser båda i ett drag.
+-- =============================================================================
+
+drop index concurrently if exists public.idx_articles_title_unique;
+
+-- =============================================================================
+-- Verifiering (efter apply):
+--
+--   -- 1. Indexet ska vara borta:
+--   select indexname from pg_indexes
+--    where schemaname='public' and tablename='articles'
+--      and indexname='idx_articles_title_unique';
+--   -- expected: 0 rader
+--
+--   -- 2. uq_articles_url ska finnas kvar (dedup-invarianten):
+--   select indexname, indexdef from pg_indexes
+--    where schemaname='public' and tablename='articles'
+--      and indexname='uq_articles_url';
+--   -- expected: 1 rad med WHERE (url IS NOT NULL)
+--
+--   -- 3. Efter drop → kör om 20260806140000 (HTML-entity cleanup)
+--   --    UPDATE:en ska nu gå igenom utan kollision.
+--
+-- EFTERANALYS (rekommenderas):
+--
+--   -- Hur många titel-kollisioner finns idag (efter cleanup)?
+--   -- Sanity — pre-mätning så vi vet vad drop:en tillåter framåt.
+--   select title, count(*) as c
+--     from public.articles
+--    where irrelevant is not true
+--    group by title
+--   having count(*) > 1
+--    order by c desc
+--    limit 20;
+--   -- Om siffrorna ser stora ut: signal om att daily-fetch:s silent-drop
+--   -- har svalt fler rader än vi vill. Overväg re-inhämtning av Scopus
+--   -- för JFS + andra affekterade tidskrifter.
+-- =============================================================================
