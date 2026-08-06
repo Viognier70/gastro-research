@@ -2598,12 +2598,42 @@ function _apaJoinAuthors(rawStr){
   return texts.slice(0, -1).join(', ') + ', & ' + texts[texts.length - 1]
 }
 
+// ─── HTML-entiteter — defensive decode ──────────────────────────────────────
+//
+// Bakgrund (2026-08-06): 305 rader i articles hade &lt;em&gt;/&amp;-entiteter
+// i title-fältet — crossref/scopus skickar ibland `&lt;em&gt;Vitis vinifera
+// &lt;/em&gt;` för italic-latinska binomen. Frontendens _apaCleanTitle
+// strippade bara råa <tag>, inte entiteter, så både overlay och APA-referens
+// visade literal `<em>Vitis vinifera</em>`. Migration 20260806140000 +
+// daily-fetch cleanText rensar; cleanTextField här är tredje bältet — fångar
+// nya varianter från framtida källor innan de når rendering.
+//
+// textarea-tricket: browser-inbyggd decoder som fångar ALL named entities
+// (`&Auml;`, `&ndash;`, etc.), inte bara top-6. Säkert — <textarea>.innerHTML
+// tolkas som text, inte HTML, så eventuell `<script>` inuti körs inte.
+window.__htmlDecodeEl = null
+function cleanTextField(s){
+  if(s == null) return ''
+  const raw = String(s)
+  if(!raw) return ''
+  // Fast-path — inga entiteter eller taggar → skippa DOM-arbete
+  if(!/[&<]/.test(raw)) return raw.replace(/\s+/g, ' ').trim()
+  // Lat init så helper:n funkar även under initial script-eval (innan DOM klar)
+  if(!window.__htmlDecodeEl) window.__htmlDecodeEl = document.createElement('textarea')
+  const el = window.__htmlDecodeEl
+  el.innerHTML = raw
+  return el.value
+    .replace(/<[^>]+>/g, '')  // strippa kvarvarande HTML-taggar
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function _apaCleanTitle(rawTitle){
   if(!rawTitle) return ''
-  // Strippa HTML-taggar (<i>, </i>, <sub>, <sup> förekommer)
-  let t = String(rawTitle).replace(/<[^>]+>/g, '')
-  // Normalisera whitespace
-  t = t.replace(/\s+/g, ' ').trim()
+  // cleanTextField avkodar entiteter + strippar taggar + normaliserar
+  // whitespace. Före fixen 2026-08-06 strippade _apaCleanTitle bara <tag>
+  // vilket lämnade `&lt;em&gt;Vitis vinifera&lt;/em&gt;` intakt i citeringen.
+  let t = cleanTextField(rawTitle)
   // Trailing period bort — vi lägger till egen
   t = t.replace(/\.\s*$/, '')
   // APA 7 sentence case: versal efter kolon (subtitle). Ingestion har redan
@@ -2691,7 +2721,13 @@ function cardHTML(a,idx){
   // headline_sv (dead-data 2026-08-02: aldrig skriven av nuvarande pipeline,
   // haiku-sci.ts prompt begär bara headline_en). Läses inte längre.
   const hasGustemaHeadline = !!a.headline_en
-  const roleHeadline = hasGustemaHeadline ? a.headline_en : (a.title||'')
+  // Defensive decode av text-fält från DB. Efter migration 20260806140000
+  // + daily-fetch cleanText är befintlig data ren, men cleanTextField här
+  // fångar entiteter från framtida källor innan de når rendering.
+  const _title    = cleanTextField(a.title || '')
+  const _authors  = cleanTextField(a.authors || '')
+  const _journal  = cleanTextField(a.journal || '')
+  const roleHeadline = cleanTextField(hasGustemaHeadline ? a.headline_en : (a.title||''))
   const l = k => ({
     original:'ORIGINAL TITLE', authors:'AUTHORS', journal:'JOURNAL',
     showTriad:'Show TRIAD analysis ↓', hideTriad:'Hide analysis ↑',
@@ -2725,9 +2761,9 @@ function cardHTML(a,idx){
     <h3 class="card-headline" onclick="openArticleFromId('${a.id||''}')" title="Open article">${roleHeadline}</h3>
     ${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${(a.primary_institution||'').replace(/'/g,"\\'")}',event)" title="Filter by institution" style="margin-bottom:14px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
     <dl class="card-meta-list">
-      ${hasGustemaHeadline?`<dt>${l('original')}</dt><dd class="cm-original-title">${a.title||''}</dd>`:''}
-      ${a.authors?`<dt>${l('authors')}</dt><dd>${a.authors}</dd>`:''}
-      ${a.journal?`<dt>${l('journal')}</dt><dd>${a.journal}${a.year?' · '+a.year:''}</dd>`:''}
+      ${hasGustemaHeadline?`<dt>${l('original')}</dt><dd class="cm-original-title">${_title}</dd>`:''}
+      ${_authors?`<dt>${l('authors')}</dt><dd>${_authors}</dd>`:''}
+      ${_journal?`<dt>${l('journal')}</dt><dd>${_journal}${a.year?' · '+a.year:''}</dd>`:''}
     </dl>
     ${coreClaim&&!locked?`<div class="card-claim-box">${coreClaim}</div>`:''}
     ${a.limitation&&!locked?`<div class="card-limitation-inline">⚠ ${a.limitation}</div>`:''}
@@ -4142,8 +4178,8 @@ function openArticleOverlay(article){
   const badges = (topic?'<span class="topic-badge">'+topic+'</span>':'')+
     (article.study_type?'<span class="study-badge">'+article.study_type+'</span>':'')
   document.getElementById('artBadges').innerHTML = badges
-  document.getElementById('artTitle').textContent = article.title || ''
-  document.getElementById('artMeta').textContent = [article.authors||null, article.journal, article.year].filter(Boolean).join(' · ')
+  document.getElementById('artTitle').textContent = cleanTextField(article.title || '')
+  document.getElementById('artMeta').textContent = [cleanTextField(article.authors||''), cleanTextField(article.journal||''), article.year].filter(Boolean).join(' · ')
   const claim = article.core_claim || article.insight || ''
   const claimEl = document.getElementById('artClaim')
   if(claim){ claimEl.textContent = claim; claimEl.style.display='block' } else { claimEl.style.display='none' }
@@ -4304,8 +4340,9 @@ function renderRelated(){
   if(!list) return
   const rows = window._relatedRows.slice(0, window._relatedShown)
   list.innerHTML = rows.map(r => {
-    const meta = [r.journal, r.year].filter(Boolean).join(' · ')
-    const title = (r.title||'').replace(/</g,'&lt;')
+    const title   = cleanTextField(r.title || '').replace(/</g,'&lt;')
+    const journal = cleanTextField(r.journal || '')
+    const meta    = [journal, r.year].filter(Boolean).join(' · ')
     return `<div class="art-related-item" onclick="openArticleFromId('${r.id}')">
       <div class="art-related-title">${title}</div>
       ${meta?`<div class="art-related-meta">${meta}</div>`:''}
@@ -4455,9 +4492,10 @@ async function loadRecentForWait(articleId){
     const list = document.getElementById('triadWaitRecentList')
     if(!wrap || !list) return  // Väntevyn har ersatts, ingen målspot kvar.
     list.innerHTML = picks.map(r => {
-      const meta = [r.journal, r.year].filter(Boolean).join(' · ')
-      const title = String(r.title || '').replace(/</g,'&lt;')
-      const idEsc = String(r.id || '').replace(/'/g, '')
+      const title   = cleanTextField(r.title || '').replace(/</g,'&lt;')
+      const journal = cleanTextField(r.journal || '')
+      const meta    = [journal, r.year].filter(Boolean).join(' · ')
+      const idEsc   = String(r.id || '').replace(/'/g, '')
       return `<div class="triad-wait-recent-item" onclick="openArticleFromId('${idEsc}')">
         <div class="triad-wait-recent-title">${title}</div>
         ${meta ? `<div class="triad-wait-recent-meta">${meta}</div>` : ''}

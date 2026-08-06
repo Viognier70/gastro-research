@@ -27,6 +27,38 @@ const FOOD_KEYWORDS = /wine|sommelier|tasting|flavor|flavour|aroma|taste|sensory
 // Trusted core gastronomy/food-science journals — always allowed through the relevance gate
 const TRUSTED_JOURNALS = /food quality and preference|appetite|chemical senses|international journal of gastronomy|journal of sensory studies|food research international|flavour|journal of culinary|food science|food technolog|meat science|journal of wine|oeno|beverages|fermentation|food chemistry|nutrients|critical reviews in food/i
 
+// HTML-entiteter i title/abstract/journal/authors — 305 rader affekterade
+// vid mätning 2026-08-06 (0,9 % av 34 722 relevanta artiklar). Källor:
+// Crossref/Scopus/PubMed skickar ibland `&lt;em&gt;Vitis vinifera&lt;/em&gt;`
+// för italic-latinska binomen, `&amp;` för ampersand. Frontendens
+// _apaCleanTitle strippade bara råa <tag>, inte entiteter, så både overlay
+// och APA-referens visade literal `<em>Vitis vinifera</em>`.
+//
+// cleanText avkodar top-6 named entities (&amp; sist så double-escape
+// undviks) + numeriska (&#\d+;) + strippar kvarvarande HTML-taggar. Samma
+// logik som html_entity_decode_strip SQL-funktionen i migration
+// 20260806140000. Frontend har en tredje kopia (cleanTextField via textarea)
+// som defensivt fångar entiteter vi missar här — trippelbälte, samma
+// resonemang som topic_keywords: tabell + daily-fetch-loader + hardcoded
+// fallback.
+function cleanText(s: string | null | undefined): string {
+  if (!s) return ''
+  return String(s)
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => {
+      const c = parseInt(n, 10)
+      return c > 0 && c < 0x110000 ? String.fromCodePoint(c) : ''
+    })
+    .replace(/&amp;/g, '&')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function isBlockedJournal(journal: string, title: string, abstract: string): boolean {
   if(!journal) return false
   const j = journal.toLowerCase().trim()
@@ -204,6 +236,18 @@ async function isDuplicate(doi: string, title: string): Promise<boolean> {
 // ─── SAVE ARTICLE ─────────────────────────────────────────────────────────────
 async function saveArticle(article: any, topic: string): Promise<boolean> {
   try {
+    // Normalisera text-fält från alla källor innan validering och dup-check.
+    // Se cleanText-kommentaren för bakgrund. Muteras på plats så resten av
+    // saveArticle och alla downstream-callers (relevanceReject, isDuplicate,
+    // upsert) opererar på rena strängar. length-checken nedan gäller alltså
+    // den rensade titeln — "<em>Volatile</em>" (13 tecken) blir "Volatile"
+    // (8 tecken) och skippas som förr, vilket är rätt: en riktig titel
+    // förlorar inte tio tecken bara för att italics strippas.
+    article.title    = cleanText(article.title)
+    article.abstract = cleanText(article.abstract)
+    article.journal  = cleanText(article.journal)
+    article.authors  = cleanText(article.authors)
+
     if (!article.title || article.title.length < 10) {
       skippedShortTitle++
       return false
