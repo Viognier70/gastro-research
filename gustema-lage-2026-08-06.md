@@ -175,13 +175,41 @@ bara en spinning knapp och en faslista.
 | `2676ac1` | triad väntevy: roterande logo + recent research under analys | 60–75 s väntan behövde mer än en spinning knapp |
 | `236cdb1` | text: HTML-entiteter i title/abstract/journal/authors | 305 rader hade `&lt;em&gt;`/`&amp;` — obrukbar APA-citering |
 | `37972a9` | reclassify: apply-migration för uncategorized (7 519 rader) | topic_keywords-round 2/3 räckte men körde bara på gastronomy förra rundan |
+| `80d8401` | drop idx_articles_title_unique | Blockerade HTML-entity UPDATE + orsakade silent-ingest-drop vid återkommande spaltrubriker |
 
-**Deploy-status per 2026-08-06 kväll:**
+### 3.6 Cleanup + drop av felaktigt index
+
+Städningen av HTML-entiteter i titlar fällde vid apply på tre kollisioner
+i det oversionerade `idx_articles_title_unique`. Två av kollisionerna var
+äkta dubbletter (dolda bakom teckenkodningsskillnader); en var en
+återkommande spaltrubrik i Journal of Food Science ("Industrial
+Applications of Selected JFS Articles") — två separata artiklar med olika
+DOI, samma titel.
+
+- **Indexet borttaget** (migration `20260806160000`). Ingen migration,
+  inget commit, ingen script skapade det — okänt ursprung. `uq_articles_url`
+  (`20260802120000`) är den riktiga dedup-invarianten och ligger kvar.
+- **Silent ingest-bug identifierad:** när Scopus levererar en andra artikel
+  med samma återkommande titel (efter OpenAlex redan lagt den första),
+  blockerade indexet upserten och `saveArticle` catchade felet till en
+  loggrad ingen läser. Rader har tappats tyst i månader utan mätning.
+- **HTML-entity-cleanup nu applicerad:** 163 rader städade i titles.
+- **Tre äkta dubbletter rensade manuellt:** `238d9ab9`, `64c265be`,
+  `122b4fa8` — alla preprint- eller arkivversioner utan riktig DOI,
+  dolda bakom kodningsskillnader.
+
+**Medvetet ej åtgärdat:** HTML-entiteter i `abstract` (~1 847 rader).
+Fältet renderas INTE i overlayn — användaren ser det aldrig. Städning
+skulle inte synas. Se § 4 lärdomen om att mäta i gränssnittet först.
+
+**Deploy-status per 2026-08-06 sent + tidig 07:**
 - Alla commits pushade till `ux-ia-omstrukturering`-branchen
 - Migrationer `20260806120000`, `20260806130000` applicerade
-- Migration `20260806140000` (HTML-entity cleanup) — **väntar apply**
+- Migration `20260806140000` (HTML-entity cleanup) — **applicerad**,
+  163 rader städade
 - Migration `20260806150000` (uncategorized reclassify) — **applicerad**,
   `refresh_map_mvs()` körd
+- Migration `20260806160000` (drop title-index) — **applicerad**
 - Edge-fn `daily-fetch` deployad med `cleanText` + `topic_keywords`-loader
 
 ---
@@ -206,12 +234,40 @@ I fyra av fallen mätte räknaren fel sak:
 Detta är exakt behovet `gusto-vaktaren-spec.md` (2026-07-13) beskriver.
 Väktaren är skriven men **inte byggd** — se § 5.
 
-**Ny lärdom idag:** HTML-entiteter i title/abstract/journal/authors var
-tysta i 305 rader utan att någon räknare fångade det. Frontend
+**Ny lärdom 2026-08-06:** HTML-entiteter i title/abstract/journal/authors
+var tysta i 305 rader utan att någon räknare fångade det. Frontend
 `_apaCleanTitle` strippade `<tag>` men inte `&lt;`/`&amp;`. Fix i tre lager
 (DB-cleanup + daily-fetch normalisering + frontend defensive decode) —
 samma trippelbälte-mönster som `topic_keywords` (tabell + edge-loader +
 hardcoded fallback). Om en av tre havererar står de andra kvar.
+
+**Ny lärdom (kväll 08-06):** Mät effekten i gränssnittet innan databasen
+städas. En timme lades på HTML i `abstract` innan det visade sig att
+fältet inte renderas alls — städning av 1 847 rader hade varit
+osynlig arbete. Samma mönster tidigare:
+
+- `fill-daily-analysis` byggd + rollbackad samma dag (2026-08-04) efter
+  data-check
+- Kartans färglegend beskrev fem "familjer" som koden inte grupperade på
+- `queue_new_article`-triggerns "succeeded" mättes utan att kolla om
+  claim-predikatet accepterade nästa steg
+
+**Regel:** innan en batch-cleanup körs, öppna ett kort i UI:t och
+verifiera att fältet SYNS. Om det inte gör det är städningen
+mättekniskt osynlig — spara tiden till dokumenterade prioriteringar.
+
+**Ny lärdom (kväll 08-06, andra):** Antaganden som skapats utanför
+migrations-systemet dyker upp som osynliga blockerare först när de
+krockar med legitimt arbete. `idx_articles_title_unique` skapades
+någonstans utan spår, byggde in ett falskt antagande ("titlar är
+unika") som samtidigt orsakade en silent-ingest-bug OCH blockerade
+en cleanup två år senare.
+
+**Regel:** varje `CREATE INDEX / CONSTRAINT / TABLE` som körs i prod ska
+ha en motsvarande fil i `supabase/migrations/`. Retroaktiv paritetsfil
+för allt som finns i pg_indexes/pg_constraint idag är billig försäkring
+mot samma överraskning igen. Kandidat att lägga i § 5C som pre-launch-
+uppgift.
 
 ---
 
@@ -228,13 +284,37 @@ källan har fel. Fyra artiklar korrigerade manuellt. Samma mönster finns
 sannolikt för Karolinska, Uppsala, Lund — okontrollerat. Rapporterat till
 OpenAlex.
 
-**B. HTML-ENTITETER I TITLAR** — 167 med `&lt;`/`&gt;`, 138 med `&amp;`.
-Förstör APA-citeringen. Ej åtgärdat.
+**B. HTML-ENTITETER I TITLAR** — ~~167 med `&lt;`/`&gt;`, 138 med `&amp;`.
+Förstör APA-citeringen. Ej åtgärdat.~~
+**Åtgärdat kväll 08-06:** 163 rader städade via migration `20260806140000`
+(krävde först drop av `idx_articles_title_unique`, se § 3.6). Daily-fetch
+`cleanText` + frontend `cleanTextField` säkrar nya rader.
 
-**C. TECKENKODNING** — 16 författarrader och 4 titlar med ersättningstecken
-(franska accenter brutna). Få, ej åtgärdat.
+**C. TECKENKODNING** — kinesiska och franska tecken brutna i ~20
+författarrader + 4 titlar (ersättningstecken �). Få, ej åtgärdat.
+Kräver ny inhämtning från källan snarare än in-place-städning eftersom
+byten är förlorade vid encoding-mismatchen.
 
-**D. UNCATEGORIZED 6 013** — nyckelorden fångar inte allt. Ärligt men stort.
+**D. UNCATEGORIZED 6 013** — nyckelorden fångar inte allt. Ärligt men
+stort.
+
+**E. VERSIONSDEDUPLICERING** — vår `uq_articles_url`- och
+`isDuplicate`-heuristik fångar inte artiklar som finns i flera versioner
+(preprint mot publicerad, olika DOI, ibland en teckens skillnad i titeln).
+Tre exempel hittades av en slump när titelstädningen krockade med
+`idx_articles_title_unique` (238d9ab9, 64c265be, 122b4fa8 — alla
+preprint- eller arkivversioner). Fler finns sannolikt, oräknade. Öppen
+fråga: bygg version-medveten dedup (fuzzy title + author-overlap +
+year-nearness) eller acceptera dubbletter som brus?
+
+**F. TRIAD v3-ANALYSER I DB** — befintliga 32 728 TRIAD-analyser är
+gjorda med v3 (repeterande "The study establishes"-öppning, vaga hedges,
+oförklarad jargong). Nya analyser via `triad-on-demand` och
+`triad-background` skrivs med v4 sedan 2026-08-06. Omkörning av v3-korpusen
+är ett kostnadsbeslut som hör ihop med pre-seed-frågan (§ 1 "Pre-seed av
+cachen"): ~$100-200 om det görs via Batches API på topp-500-per-roll.
+Inte bråttom — men bör beslutas innan lansering så mätningen i L6.4 inte
+blandar v3/v4-utfall.
 
 ### 5B. Blockerare / hög prio (oförändrat från 08-05)
 
@@ -255,6 +335,12 @@ Förstör APA-citeringen. Ej åtgärdat.
 
 ### 5C. Bör före lansering
 
+- **Migrations-paritet för oversionerade objekt** — `idx_articles_title_unique`-
+  incidenten (§ 4 kväll 08-06, andra lärdomen) visar att prod-DB:n har
+  objekt utan git-motsvarighet. Enkelt inventeringsscript: `pg_indexes`
+  + `pg_constraint` → lista allt utan matchande fil under
+  `supabase/migrations/`. Retroaktiv `_pre_git_parity.sql`-fil för varje
+  träff. Billig försäkring mot samma överraskning igen.
 - **Explore-samordning (kartredesign commit 3, ej byggd)** — samma
   topic-pills-rad + samma klickbeteende i Explore-vyn. Kartans commit 2
   landade 2026-08-06; Explore står kvar med gamla mönstret.
