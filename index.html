@@ -131,8 +131,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   gap:10px;padding-bottom:8px;cursor:pointer;
 }
 .site-header .logo-mark{color:#A08A55;height:30px;width:auto;display:block}
-.site-header .wm-gusto{font-family:'Inter','Outfit',sans-serif;font-size:18px;font-weight:500;color:#F2EFE6;letter-spacing:-.01em}
-.site-header .wm-science{font-family:'Inter','Outfit',sans-serif;font-size:18px;font-weight:400;color:#A08A55;letter-spacing:-.01em}
+/* Wordmark-tvåfärg — global så .hero-wordmark också får rätt uppdelning.
+   Ärver font-size från parent (site-header 18px, hero-wordmark 32px). */
+.wm-gusto{font-family:'Inter','Outfit',sans-serif;font-weight:500;color:var(--gusto-ink);letter-spacing:-.01em}
+.wm-science{font-family:'Inter','Outfit',sans-serif;font-weight:400;color:#A08A55;letter-spacing:-.01em}
+.site-header .wm-gusto{color:#F2EFE6}
 .site-header-eyebrow{
   font-size:11px;letter-spacing:1.7px;text-transform:uppercase;
   color:#6E675A;text-align:center;padding-bottom:14px;
@@ -1728,14 +1731,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- HERO -->
 <div class="hero">
   <svg class="hero-logo" aria-hidden="true" viewBox="0 0 1500 1500" style="display:block;width:120px;height:120px;margin:0 auto 14px"><use href="#gusto-mark"/></svg>
-  <div class="hero-wordmark">Gustema</div>
+  <div class="hero-wordmark"><span class="wm-gusto">gusto</span><span class="wm-science"> science</span></div>
   <div class="gusto-tagline" aria-label="Gusto Science tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
   <h1 class="hero-title" id="heroTitle">Science that tells you<br><em>what, how, and when.</em></h1>
   <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you more: what the research establishes (<em>Episteme</em>), how it applies in practice (<em>Techne</em>), and the situated judgment that binds them (<em>Phronesis</em>) — the double grip that makes professional knowledge possible. Dr Anders Crichton-Fock's model, after Aristotle. Select your role below — every article is translated for your perspective.</p>
   <div class="hero-stats">
     <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
-    <div class="stat-item"><div class="stat-num" id="triadCount">—</div><div class="stat-label">TRIAD analyses</div></div>
+    <!-- Fallback "39,000+" per ORDER 092 §4 — samma som landing-hero. Om
+         public.triad_coverage() svarar sätts talet i loadCounts (rad ~3417). -->
+    <div class="stat-item"><div class="stat-num" id="triadCount">39,000+</div><div class="stat-label">TRIAD analyses</div></div>
     <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">research areas</div></div>
   </div><!-- /hero-stats -->
 </div><!-- /hero -->
