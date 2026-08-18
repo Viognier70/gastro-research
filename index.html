@@ -1527,12 +1527,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
           <span class="dp-val" id="dp-triad-count">—</span>
         </div>
         <div class="dp-row">
-          <span class="dp-label">Publications scanned <span class="dp-info" data-tip="Total articles tracked across Scopus, PubMed, OpenAlex and EndNote. Not all have TRIAD analyses yet.">&#9432;</span></span>
+          <span class="dp-label">Publications scanned <span class="dp-info" data-tip="Total articles tracked across OpenAlex and PubMed. Not all have TRIAD analyses yet.">&#9432;</span></span>
           <span class="dp-val dp-muted" id="dp-total-count">—</span>
         </div>
         <div class="dp-row">
           <span class="dp-label">Sources <span class="dp-info" data-tip="Academic databases from which articles are sourced. Each has different subject coverage and indexing criteria.">&#9432;</span></span>
-          <span class="dp-val dp-muted">Scopus &middot; PubMed &middot; OpenAlex &middot; EndNote</span>
+          <span class="dp-val dp-muted">OpenAlex &middot; PubMed</span>
         </div>
         <div class="dp-row">
           <span class="dp-label">Institutions with coordinates <span class="dp-info" data-tip="Only institutions with verified geographic coordinates appear on the world map. Backfilling is ongoing.">&#9432;</span></span>
@@ -1828,10 +1828,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </select>
   <select class="filter-select" id="srcSel" onchange="loadArticles()">
     <option value="all">All sources</option>
-    <option value="scopus">Scopus</option>
-    <option value="pubmed">PubMed</option>
     <option value="openalex">OpenAlex</option>
-    <option value="endnote">EndNote</option>
+    <option value="pubmed">PubMed</option>
   </select>
   <select class="filter-select" id="sortSel" onchange="renderFeed()">
     <option value="newest">Newest first</option>
