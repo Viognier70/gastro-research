@@ -6169,7 +6169,7 @@ async function updateMapCoverageCopy(){
   // articles_public v4).
   const triadOr = 'or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)'
   const base = `irrelevant=is.false&primary_institution=not.is.null&${triadOr}`
-  const countOf = async (extra) => {
+  const countOf = async (extra, label) => {
     const url = `${SB_URL}/rest/v1/articles_public?select=id&${base}${extra ? '&' + extra : ''}&limit=1`
     const r = await fetch(url, {
       headers: {
@@ -6179,12 +6179,19 @@ async function updateMapCoverageCopy(){
     })
     const cr = r.headers.get('content-range') || ''
     const m = cr.match(/\/(\d+)$/)
-    return m ? parseInt(m[1], 10) : null
+    const n = m ? parseInt(m[1], 10) : null
+    if(n == null){
+      // §2.3 (ORDER 093): logga HTTP-status + content-range så tyst null
+      // går att spåra i console utan network-tab. Samma diagnos-mönster
+      // som triad_coverage-loggen efter ORDER 092 §3.
+      console.warn('[coverage-copy] countOf null', {label, status:r.status, ok:r.ok, contentRange:cr})
+    }
+    return n
   }
   try {
     const [withCoords, total] = await Promise.all([
-      countOf('institution_coords=not.is.null&institution_coords=not.eq.%5B%5D'),
-      countOf(null)
+      countOf('institution_coords=not.is.null&institution_coords=not.eq.%5B%5D', 'withCoords'),
+      countOf(null, 'total')
     ])
     if(withCoords == null || total == null){
       el.innerHTML = 'Institution coordinates: <strong>unavailable</strong>'
@@ -6202,7 +6209,7 @@ async function updateMapCoverageCopy(){
     const dpM = document.getElementById('dp-map-coverage')
     if(dpM) dpM.textContent = `${fmt(withCoords)} of ${fmt(total)}`
   } catch(e) {
-    console.log('coverage-copy error:', e)
+    console.warn('[coverage-copy] fetch threw', e)
     el.innerHTML = 'Institution coordinates: <strong>unavailable</strong>'
   }
 }
