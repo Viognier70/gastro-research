@@ -6189,10 +6189,11 @@ async function updateMapCoverageCopy(){
       return
     }
     const fmt = n => n.toLocaleString('en-US')
-    // §6: fältet TRIAD-analysed togs bort — predikatet räknar articles_public
-    // med institution_coords, inte TRIAD-analys (TRIAD-talet lever i
-    // public.triad_coverage()). Fel label under vilseledande text-etikett.
-    el.innerHTML = `Institution coordinates: <strong>${fmt(withCoords)} of ${fmt(total)} articles with known institution</strong> — backfilling ongoing.`
+    // "TRIAD-analysed" bevaras — predikatet ovan har has_episteme_<role>-OR
+    // (TRIAD-gate) + irrelevant=false + primary_institution. Talet är alltså
+    // en delmängd av public.triad_coverage() (28 553 ⊂ 39 141), inte något
+    // helt annat. ORDER 091 §6 tog bort labeln på felaktig grund; återinförd.
+    el.innerHTML = `Institution coordinates: <strong>${fmt(withCoords)} of ${fmt(total)} TRIAD-analysed articles with known institution</strong> — backfilling ongoing.`
     // Data-panelen (dropdown i top-navet) visar samma coverage-tal utan
     // "TRIAD-analysed articles with known institution"-suffix — kortare
     // format för smalare komponent.
