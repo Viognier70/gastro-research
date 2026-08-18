@@ -112,10 +112,129 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .user-greeting{font-size:11px;color:var(--text-secondary);font-family:'Outfit',sans-serif;font-style:italic;margin-right:8px;letter-spacing:.01em;white-space:nowrap}
 #authArea{display:flex;align-items:center;gap:0}
 
-/* APP NAV — vy-växling mellan Feed / Explore / Syntheses / Map. Sitter under
-   topbar (topbar top:0 z:100 → app-nav top:54px z:99). Editorial-tab-stil
-   med guld-underline på aktiv flik. Skild från roll-chip-baren nedanför:
-   nav-tabs är strukturell sektion-växling; role-chips är innehållsfilter. */
+/* SITE HEADER (§5, ORDER 091) — centrerat akademiskt sidhuvud.
+   Palett scoped hit: bakgrund #0a0a0a, primärtext #F2EFE6, accent #A08A55.
+   Kontrast mätt: guld/svart 5,90:1 (AA), krämvitt 17,2:1, dämpad 3,54:1
+   (dämpad endast för etiketter, aldrig brödtext). */
+.site-header{
+  position:sticky;top:0;z-index:100;
+  background:#0a0a0a;color:#F2EFE6;
+  padding:22px 32px 0;
+  transition:padding .25s ease;
+}
+.site-header-utility{
+  position:absolute;top:12px;right:16px;
+  display:flex;align-items:center;gap:10px;z-index:1;
+}
+.site-header-brand{
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;padding-bottom:8px;cursor:pointer;
+}
+.site-header .logo-mark{color:#A08A55;height:30px;width:auto;display:block}
+.site-header .wm-gusto{font-family:'Inter','Outfit',sans-serif;font-size:18px;font-weight:500;color:#F2EFE6;letter-spacing:-.01em}
+.site-header .wm-science{font-family:'Inter','Outfit',sans-serif;font-size:18px;font-weight:400;color:#A08A55;letter-spacing:-.01em}
+.site-header-eyebrow{
+  font-size:11px;letter-spacing:1.7px;text-transform:uppercase;
+  color:#6E675A;text-align:center;padding-bottom:14px;
+}
+.site-header-nav{
+  display:flex;justify-content:center;align-items:center;gap:6px;
+  padding:10px 0;
+  border-top:0.5px solid #191510;border-bottom:0.5px solid #191510;
+}
+.site-header-nav .app-nav-tab{
+  position:static;font-size:14px;font-weight:400;color:#8A8272;
+  background:none;border:none;padding:6px 14px;cursor:pointer;
+  font-family:'Outfit',sans-serif;letter-spacing:.005em;transition:color .15s;
+}
+.site-header-nav .app-nav-tab:hover{color:#F2EFE6}
+.site-header-nav .app-nav-tab.is-active{color:#F2EFE6}
+.site-header-nav .app-nav-tab.is-active::after{display:none}
+.site-header-nav .app-nav-signin{color:#F2EFE6;font-weight:500}
+.site-header-nav .nav-sep{color:#191510;user-select:none;padding:0 2px}
+
+/* Compact state — utlöses av IntersectionObserver när #siteHeaderSentinel
+   scrollas ut. Vänstercentrerad kompakt bar utan eyebrow. */
+.site-header.is-compact{padding:8px 24px}
+.site-header.is-compact .site-header-brand{
+  justify-content:flex-start;padding-bottom:0;
+}
+.site-header.is-compact .logo-mark{height:28px}
+.site-header.is-compact .site-header-eyebrow{display:none}
+.site-header.is-compact .site-header-nav{
+  border:none;padding:0;gap:2px;
+  position:absolute;top:10px;right:16px;
+}
+.site-header.is-compact .site-header-utility{display:none}
+@media (prefers-reduced-motion:reduce){.site-header{transition:none}}
+
+/* Mobil ned till 360px */
+@media (max-width:480px){
+  .site-header{padding:16px 12px 0}
+  .site-header-brand{gap:8px}
+  .site-header .wm-gusto,.site-header .wm-science{font-size:16px}
+  .site-header .logo-mark{height:26px}
+  .site-header-eyebrow{font-size:10px;letter-spacing:1.4px;padding-bottom:10px}
+  .site-header-nav{gap:0;padding:8px 0;flex-wrap:wrap}
+  .site-header-nav .app-nav-tab{font-size:12px;padding:6px 6px}
+  .site-header.is-compact .site-header-nav{position:static;padding:6px 0;border-top:0.5px solid #191510}
+  .site-header-utility{top:8px;right:8px;gap:6px}
+}
+
+/* LANDING HERO (§5) — under headern, samma dark palett. Cta-knapp + siffra. */
+.landing-hero{
+  background:#0a0a0a;color:#F2EFE6;text-align:center;
+  padding:40px 24px 32px;
+}
+.lh-source{
+  font-size:11px;letter-spacing:1.7px;text-transform:uppercase;
+  color:#6E675A;margin-bottom:20px;
+}
+.lh-title{
+  font-family:'Fraunces','Playfair Display',serif;
+  font-size:34px;font-weight:500;color:#F2EFE6;
+  max-width:460px;margin:0 auto 18px;line-height:1.15;
+}
+.lh-sub{
+  font-size:16px;color:#8A8272;max-width:430px;margin:0 auto 24px;line-height:1.55;
+}
+.lh-cta{
+  display:flex;justify-content:center;align-items:center;gap:20px;flex-wrap:wrap;
+  margin-bottom:36px;
+}
+.lh-primary{
+  background:#A08A55;color:#0a0a0a;border:none;
+  padding:12px 24px;border-radius:6px;
+  font-size:14px;font-weight:500;cursor:pointer;
+  font-family:'Outfit',sans-serif;
+}
+.lh-primary:hover{opacity:.9}
+.lh-secondary{
+  color:#8A8272;text-decoration:none;
+  font-size:13px;font-family:'Outfit',sans-serif;
+}
+.lh-secondary:hover{color:#F2EFE6}
+.lh-stats{
+  display:flex;justify-content:center;align-items:baseline;gap:56px;
+  padding-top:24px;border-top:0.5px solid #191510;
+  font-variant-numeric:tabular-nums;
+}
+.lh-stat{text-align:center}
+.lh-stat-num{
+  font-size:22px;font-weight:500;color:#F2EFE6;line-height:1.1;
+}
+.lh-stat-label{
+  font-size:12px;color:#6E675A;margin-top:6px;letter-spacing:.02em;
+}
+@media (max-width:480px){
+  .landing-hero{padding:32px 16px 24px}
+  .lh-title{font-size:26px;max-width:320px}
+  .lh-sub{font-size:14px;max-width:320px}
+  .lh-cta{gap:12px;margin-bottom:24px}
+  .lh-stats{flex-direction:column;gap:20px;padding-top:20px}
+}
+
+/* APP NAV (legacy — kvar tills gamla .topbar/.app-nav-markup rensats bort) */
 .app-nav{position:sticky;top:54px;z-index:99;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;gap:0;padding:0 32px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .app-nav::-webkit-scrollbar{display:none}
 .app-nav-tab{position:relative;font-size:13px;font-weight:500;color:var(--text-secondary);background:none;border:none;padding:14px 18px;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;transition:color .15s;letter-spacing:.005em}
@@ -1382,27 +1501,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   </symbol>
 </svg>
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
-    <svg class="logo-mark" role="img" aria-label="Gusto Science" viewBox="0 0 1500 1500" style="display:block;height:34px;width:auto"><use href="#gusto-mark"/></svg>
-    <span class="logo-wordmark">Gustema</span>
-  </div>
-  <div class="topbar-right">
-    <!-- Gusto Academy länk dold tills live -->
-    <button id="pwaInstallBtn" onclick="installPWA()" style="display:none;align-items:center;gap:5px;padding:7px 14px;background:var(--gold,#c9a84c);color:#000;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif">
+<!-- SITE HEADER (§5) — centrerat akademiskt, dark palett. Utility-slot
+     bevarar About-this-data, PWA-install och authArea från gamla topbar. -->
+<header class="site-header" id="siteHeader">
+  <div class="site-header-utility">
+    <button id="pwaInstallBtn" onclick="installPWA()" style="display:none;align-items:center;gap:5px;padding:7px 14px;background:#A08A55;color:#0a0a0a;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Install App
     </button>
-    <!-- Subscribe-knappen dold 2026-07-13: weekly-newsletter är kod-buggad
-         (odeklarerad BREVO_LIST_ID → ReferenceError vid körning) OCH aldrig
-         schemalagd (0 rader i cron.job för %newsletter%). En knapp som samlar
-         adresser till ett brev som aldrig skickas är värre än ingen knapp.
-         Återkommer när: (1) BREVO_LIST_ID deklareras + testad, (2) cron är
-         satt, (3) ett välkomstmail bekräftar att skrivningen fungerar. -->
     <button class="academy-btn" id="navSubscribeBtn" onclick="openNewsletter()" style="display:none">Subscribe →</button>
     <div id="roleNavBadge" onclick="localStorage.removeItem('gs_onboarding_seen');checkOnboarding()" style="display:none;cursor:pointer;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;font-family:Outfit,sans-serif;border:0.5px solid;transition:all .2s"></div>
-    <!-- A1: Data transparency trigger -->
     <div style="position:relative;display:inline-block" id="dataPanelWrap">
       <button
         onclick="toggleDataPanel()"
@@ -1454,31 +1562,63 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div id="authArea"><button class="auth-btn" onclick="openModal('authModal')" id="authBtn">A</button></div>
   </div>
-</div>
 
-<!-- APP NAV — section switcher (Feed default). Sitter direkt under topbar. -->
-<nav class="app-nav" role="tablist" aria-label="Sections">
-  <button class="app-nav-tab is-active" data-view="oversikt" onclick="showView('oversikt')" role="tab" aria-selected="true" aria-controls="view-oversikt">Overview</button>
-  <button class="app-nav-tab" data-view="feed" onclick="showView('feed')" role="tab" aria-selected="false" aria-controls="view-feed">Feed</button>
-  <button class="app-nav-tab" data-view="explore" onclick="showView('explore')" role="tab" aria-selected="false" aria-controls="view-explore">Explore</button>
-  <button class="app-nav-tab" data-view="map" onclick="showView('map')" role="tab" aria-selected="false" aria-controls="view-map">Map</button>
-</nav>
+  <!-- Rad 1: logo + wordmark, centrerat. Klick → scrolla top. -->
+  <div class="site-header-brand" onclick="window.scrollTo(0,0)">
+    <svg class="logo-mark" role="img" aria-label="Gusto Science" viewBox="0 0 1500 1500"><use href="#gusto-mark"/></svg>
+    <span><span class="wm-gusto">gusto</span><span class="wm-science"> science</span></span>
+  </div>
+
+  <!-- Rad 2: eyebrow, centrerad. -->
+  <div class="site-header-eyebrow">RESEARCH INTELLIGENCE FOR GASTRONOMY</div>
+
+  <!-- Rad 3: nav centrerad mellan två hairlines. Behåller .app-nav-tab-klassen
+       så showView() (~rad 4837) kan uppdatera is-active utan JS-ändring. -->
+  <nav class="site-header-nav" role="tablist" aria-label="Sections">
+    <button class="app-nav-tab is-active" data-view="oversikt" onclick="showView('oversikt')" role="tab" aria-selected="true" aria-controls="view-oversikt">Overview</button>
+    <span class="nav-sep">·</span>
+    <button class="app-nav-tab" data-view="feed" onclick="showView('feed')" role="tab" aria-selected="false" aria-controls="view-feed">Feed</button>
+    <span class="nav-sep">·</span>
+    <button class="app-nav-tab" data-view="explore" onclick="showView('explore')" role="tab" aria-selected="false" aria-controls="view-explore">Explore</button>
+    <span class="nav-sep">·</span>
+    <button class="app-nav-tab" data-view="map" onclick="showView('map')" role="tab" aria-selected="false" aria-controls="view-map">Map</button>
+    <span class="nav-sep">·</span>
+    <button class="app-nav-tab app-nav-signin" onclick="openModal('authModal')">Sign in</button>
+  </nav>
+</header>
+
+<!-- Sentinel för IntersectionObserver — headern kollapsar när denna
+     scrollas ut ur viewport. 1px hög, osynlig, direkt under headern. -->
+<div id="siteHeaderSentinel" aria-hidden="true" style="height:1px"></div>
 
 <!-- APP VIEWS — Feed default (no [hidden]). Steg 2-4 flyttar innehåll hit. -->
 <!-- APP VIEW: Översikt — landning från 2026-07-16. Skeleton nu; moduler i nästa session. -->
 <div id="view-oversikt" class="app-view" role="tabpanel">
-  <div class="oversikt-wrap">
-    <div class="oversikt-hero">
-      <div class="oversikt-eyebrow">Gustema</div>
-      <h1 class="oversikt-title">Research intelligence for gastronomy</h1>
-      <p class="oversikt-sub">
-        Peer-reviewed research translated into three forms of knowledge:
-        <strong>Episteme</strong> — what the research establishes.
-        <strong>Techne</strong> — how to apply it.
-        <strong>Phronesis</strong> — the situated judgment.
-      </p>
+  <!-- LANDING HERO (§5) — full-width dark, sitter över .oversikt-wrap.
+       Sifferbandets TRIAD-tal läses från public.triad_coverage() (se §6);
+       fallback "39,000+" står i markup så vi aldrig visar tomt fält.
+       466,905 är hårdkodat per §5 (aggregerar bibliotekets nuvarande storlek). -->
+  <section class="landing-hero" aria-label="About Gusto Science">
+    <div class="lh-source">OPENALEX &middot; PUBMED</div>
+    <h1 class="lh-title">Peer-reviewed research, read for the kitchen and the cellar</h1>
+    <p class="lh-sub">Every study interpreted through three forms of knowledge — what it shows, how to use it, and when to trust it.</p>
+    <div class="lh-cta">
+      <button class="lh-primary" onclick="showView('feed')">Explore the library</button>
+      <a class="lh-secondary" href="/foundation">See how TRIAD works</a>
     </div>
+    <div class="lh-stats">
+      <div class="lh-stat">
+        <div class="lh-stat-num" id="landingTriadCount">39,000+</div>
+        <div class="lh-stat-label">studies with full TRIAD analysis</div>
+      </div>
+      <div class="lh-stat">
+        <div class="lh-stat-num">466,905</div>
+        <div class="lh-stat-label">peer-reviewed articles tracked</div>
+      </div>
+    </div>
+  </section>
 
+  <div class="oversikt-wrap">
     <div class="oversikt-modules">
       <!-- 1. Bevaknings-rad. Inloggad → delta sedan besök. Anonym → static intro. -->
       <div class="oversikt-watchbar" id="oversiktWatchBar">
@@ -6733,6 +6873,23 @@ function clearMapFocus(){
 <footer class="site-footer">
   <a id="footerAbout" href="/about.html">The Name</a>
 </footer>
+
+<script>
+/* §5: kollapsa .site-header när sentinelen scrollas ut. IntersectionObserver
+   fires bara vid intersection-övergång — inga scroll-events per frame.
+   Respekterar prefers-reduced-motion via CSS-media (transition:none). */
+(function initSiteHeaderCollapse(){
+  var header = document.getElementById('siteHeader')
+  var sentinel = document.getElementById('siteHeaderSentinel')
+  if(!header || !sentinel || !('IntersectionObserver' in window)) return
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      header.classList.toggle('is-compact', !e.isIntersecting)
+    })
+  }, { threshold: 0 })
+  io.observe(sentinel)
+})()
+</script>
 
 </body>
 </html>
