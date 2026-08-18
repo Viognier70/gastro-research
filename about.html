@@ -11,9 +11,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gustema-ink:    #3A3226;
-  --gustema-gold:   #A08A55;
-  --gustema-paper:  #FAF7F0;
+  --gusto-ink:    #3A3226;
+  --gusto-gold:   #A08A55;
+  --gusto-paper:  #FAF7F0;
   --brodtext:       #3A3628;
   --fotnot:         #8A7B5E;
 }
@@ -21,8 +21,8 @@
 html { scroll-behavior: smooth }
 body {
   font-family: 'Outfit', sans-serif;
-  background: var(--gustema-paper);
-  color: var(--gustema-ink);
+  background: var(--gusto-paper);
+  color: var(--gusto-ink);
   margin: 0;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -43,7 +43,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: var(--gustema-ink);
+  color: var(--gusto-ink);
   text-decoration: none;
   font-family: 'Inter', 'Outfit', sans-serif;
   font-weight: 600;
@@ -66,7 +66,7 @@ body {
   cursor: pointer;
   letter-spacing: .01em;
 }
-.lang-btn:hover { color: var(--gustema-ink); border-color: rgba(58,50,38,.4) }
+.lang-btn:hover { color: var(--gusto-ink); border-color: rgba(58,50,38,.4) }
 
 /* ── Main / typography ──────────────────────────────── */
 main {
@@ -86,7 +86,7 @@ main {
   font-size: 10.5px;
   letter-spacing: .16em;
   text-transform: uppercase;
-  color: var(--gustema-gold);
+  color: var(--gusto-gold);
   margin: 0 0 16px;
 }
 .rubrik {
@@ -94,7 +94,7 @@ main {
   font-weight: 400;
   font-size: 32px;
   line-height: 1.1;
-  color: var(--gustema-ink);
+  color: var(--gusto-ink);
   margin: 0 0 40px;
   letter-spacing: -.005em;
 }
@@ -114,7 +114,7 @@ main {
   font-weight: 400;
   font-size: 20px;
   line-height: 1.4;
-  color: var(--gustema-ink);
+  color: var(--gusto-ink);
   max-width: 620px;
   margin: 28px 0;
 }
@@ -131,7 +131,7 @@ main {
 }
 .fotnot em { font-style: italic }
 .fotnot a { color: inherit; text-decoration: underline; text-underline-offset: 2px }
-.fotnot a:hover { color: var(--gustema-ink) }
+.fotnot a:hover { color: var(--gusto-ink) }
 
 /* ── Språkväxling ───────────────────────────────────── */
 [data-lang] { display: none }
@@ -153,14 +153,14 @@ body[data-lang-active="sv"] [data-lang="sv"] { display: block }
 
 <header class="about-header">
   <a class="home-link" href="index.html">
-    <img src="gustema-logo.svg" alt="">
+    <img src="gusto-science-logo.svg" alt="">
     <span>Gustema</span>
   </a>
   <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
 </header>
 
 <main>
-  <img class="mark" src="gustema-logo.svg" alt="Gustema mark">
+  <img class="mark" src="gusto-science-logo.svg" alt="Gusto Science">
 
   <!-- ── SVENSKA ───────────────────────────────────── -->
   <section data-lang="sv">
