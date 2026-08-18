@@ -6161,47 +6161,29 @@ async function callMapRpc(name){
 async function updateMapCoverageCopy(){
   const el = document.querySelector('.si-coverage')
   if(!el) return
-  // Nämnare = TRIAD-analyserade artiklar med känd institution (målgruppen
-  // läser kartan för att hitta forskning). Täljare = samma population OCH
-  // institution_coords non-null-non-empty. HEAD med Prefer count=exact ger
-  // count i Content-Range utan att hämta rader. TRIAD-gate = has_episteme_
-  // vilken-som-helst-roll (view exposar en boolean per science-roll sedan
-  // articles_public v4).
-  const triadOr = 'or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)'
-  const base = `irrelevant=is.false&primary_institution=not.is.null&${triadOr}`
-  const countOf = async (extra, label) => {
-    const url = `${SB_URL}/rest/v1/articles_public?select=id&${base}${extra ? '&' + extra : ''}&limit=1`
-    const r = await fetch(url, {
-      headers: {
-        'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`,
-        'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0'
-      }
-    })
-    const cr = r.headers.get('content-range') || ''
-    const m = cr.match(/\/(\d+)$/)
-    const n = m ? parseInt(m[1], 10) : null
-    if(n == null){
-      // §2.3 (ORDER 093): logga HTTP-status + content-range så tyst null
-      // går att spåra i console utan network-tab. Samma diagnos-mönster
-      // som triad_coverage-loggen efter ORDER 092 §3.
-      console.warn('[coverage-copy] countOf null', {label, status:r.status, ok:r.ok, contentRange:cr})
-    }
-    return n
-  }
+  // ORDER 094: en RPC-anrop istället för två parallella articles_public
+  // Prefer:count=exact-fetches. De fick 500 under samtidig belastning över
+  // 466k rader med OR-heavy predikat (ORDER 093 §2.3-diagnos). Nu räknar
+  // public.map_coverage() båda talen i EN tabellskanning och returnerar
+  // {"with_coords": bigint, "total": bigint}. Predikatet är oförändrat.
   try {
-    const [withCoords, total] = await Promise.all([
-      countOf('institution_coords=not.is.null&institution_coords=not.eq.%5B%5D', 'withCoords'),
-      countOf(null, 'total')
-    ])
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/map_coverage`, {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: '{}'
+    })
+    const data = await r.json().catch(() => null)
+    const withCoords = (data && typeof data.with_coords === 'number') ? data.with_coords : null
+    const total      = (data && typeof data.total       === 'number') ? data.total       : null
     if(withCoords == null || total == null){
+      console.warn('[coverage-copy] map_coverage non-numeric', {status:r.status, ok:r.ok, type:typeof data, value:data})
       el.innerHTML = 'Institution coordinates: <strong>unavailable</strong>'
       return
     }
     const fmt = n => n.toLocaleString('en-US')
-    // "TRIAD-analysed" bevaras — predikatet ovan har has_episteme_<role>-OR
-    // (TRIAD-gate) + irrelevant=false + primary_institution. Talet är alltså
-    // en delmängd av public.triad_coverage() (28 553 ⊂ 39 141), inte något
-    // helt annat. ORDER 091 §6 tog bort labeln på felaktig grund; återinförd.
+    // "TRIAD-analysed" bevaras — predikatet i RPC:n har phronesis_<role>-OR
+    // (TRIAD-gate, canary-fältet från triad_coverage) + irrelevant + institution.
+    // Talet är en delmängd av public.triad_coverage() (28 553 ⊂ 39 141).
     el.innerHTML = `Institution coordinates: <strong>${fmt(withCoords)} of ${fmt(total)} TRIAD-analysed articles with known institution</strong> — backfilling ongoing.`
     // Data-panelen (dropdown i top-navet) visar samma coverage-tal utan
     // "TRIAD-analysed articles with known institution"-suffix — kortare
