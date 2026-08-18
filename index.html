@@ -3412,7 +3412,12 @@ async function loadCounts(){
     const r3=await fetch(`${SB_URL}/rest/v1/rpc/triad_coverage`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const r3Data=await r3.json().catch(()=>null)
     const triadTotal=(typeof r3Data==='number' && Number.isFinite(r3Data)) ? r3Data : 0
-    if(triadTotal===0) console.warn('[triad_coverage] RPC returned 0/null — showing fallback')
+    if(triadTotal===0){
+      // Icke-numeriskt svar (array, objekt, null, HTTP-fel) eller genuin 0.
+      // Loggar HTTP-status + typ + värde så en tyst fallback går att spåra i
+      // console — annars ser sifferbandet levande ut men står kvar på 39,000+.
+      console.warn('[triad_coverage] non-numeric or zero — showing fallback', {status:r3.status, ok:r3.ok, type:typeof r3Data, value:r3Data})
+    }
     if(triadTotal>0){
       const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal)
       window._triadCount=triadTotal
