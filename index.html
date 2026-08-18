@@ -6129,9 +6129,9 @@ window.loadWorldMapData = async function() {
     console.log(`Map: ${Object.keys(instMap).length} coord-institutions, ${Object.keys(countryCounts).length} countries, ${window.worldMapCollabs.length} collabs`)
     return Object.values(instMap).filter(i => i.count > 0).sort((a,b) => b.count - a.count)
   } catch(e) {
+    // ORDER 093 §2.1: äger inte .si-coverage — den lever i updateMapCoverageCopy
+    // med egen catch. Att klobba den härifrån gav "unavailable"-race-buggen.
     console.log('World map error:', e)
-    const el = document.querySelector('.si-coverage')
-    if(el) el.innerHTML = 'Institution coordinates: <strong>unavailable</strong>'
     return []
   }
 }
