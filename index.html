@@ -96,6 +96,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:54px;gap:16px}
 .logo{display:flex;align-items:baseline;gap:0;cursor:pointer}
+/* Loggan inlinas som <svg><use href="#gusto-mark"/> — path:en är
+   fill=currentColor så färgen styrs härifrån. Fungerar inte via <img>. */
+.logo-mark,.hero-logo{color:#4A3F2E}
+@media (prefers-color-scheme:dark){.logo-mark,.hero-logo{color:#A08A55}}
 .logo-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--gusto-ink);letter-spacing:-.02em}
 .hero-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:32px;font-weight:600;color:var(--gusto-ink);letter-spacing:-.02em;line-height:1;margin-bottom:10px;text-align:center}
 /* Gamla klasser bevarade — kan tas bort i cleanup-commit när inga referenser finns kvar. */
@@ -1381,7 +1385,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="logo" onclick="window.scrollTo(0,0)" style="display:flex;align-items:center;gap:11px">
-    <img src="/gusto-science-logo.svg" alt="Gusto Science" height="34" class="logo-mark" style="display:block;height:34px;width:auto">
+    <svg class="logo-mark" role="img" aria-label="Gusto Science" viewBox="0 0 1500 1500" style="display:block;height:34px;width:auto"><use href="#gusto-mark"/></svg>
     <span class="logo-wordmark">Gustema</span>
   </div>
   <div class="topbar-right">
@@ -1583,7 +1587,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 <!-- HERO -->
 <div class="hero">
-  <img src="/gusto-science-logo.svg" alt="" width="120" height="120" class="hero-logo" style="display:block;margin:0 auto 14px">
+  <svg class="hero-logo" aria-hidden="true" viewBox="0 0 1500 1500" style="display:block;width:120px;height:120px;margin:0 auto 14px"><use href="#gusto-mark"/></svg>
   <div class="hero-wordmark">Gustema</div>
   <div class="gusto-tagline" aria-label="Gusto Science tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
