@@ -23,6 +23,28 @@
 -- SEPARAT FRÅN university_rankings: den tabellen är QS-ranking-source (name,
 -- lat, lng, country_code) och används av backfill-institutions för QS-baserad
 -- fuzzy namn-matchning. Har 453 rader, 5 % täckning. Behåll separat semantik.
+--
+-- SANITY-CAP I SCRIPTEN (15 000 i båda faserna):
+--
+--   Capen är en cirkuitbrytare mot körningar som malar oändligt av två
+--   möjliga fel:
+--     (a) TRIAD-gaten här nedan tas bort eller går sönder → populationen
+--         hoppar från ~11 k till ~37 k icke-synliga institutioner och
+--         quota-räknaren rinner iväg innan någon märker det.
+--     (b) Idempotensen bryts (upsert lyckas men openalex_institutions_missing
+--         returnerar samma id igen) → oändlig loop mot OpenAlex.
+--   Capen skyddar därför OpenAlex-quotan och våra pengar mer än den skyddar
+--   databasen.
+--
+--   Höj den INTE blint när populationen närmar sig taket. Kolla först:
+--     1. Har TRIAD-populationen faktiskt vuxit (count TRIAD-artiklar)?
+--     2. Har idempotensen brutits (samma id upsertat två gånger i loggen)?
+--     3. Har någon lagt till en ny artikelkälla utan att TRIAD-pipelinen
+--        hunnit ikapp?
+--   Endast om (1) är förklaringen ska capen höjas. 2026-08-03 höjdes den
+--   från 3 000 (Fas 1) resp 10 000 (Fas 2) till 15 000 båda — förra
+--   estimatet 3-5k unika id underskattade hur många institutioner
+--   ~19 767 TRIAD-artiklar täcker (faktiskt utfall Fas 2: 11 177).
 -- =============================================================================
 
 -- Städa upp obsolet RPC från Väg A-scriptet (935ff92 → superseded 2026-08-03).

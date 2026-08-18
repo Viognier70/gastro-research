@@ -31,7 +31,7 @@
 // SÄKERHETSGARANTIER:
 //   - --dry-run default. Kräver --live för DB-skrivning.
 //   - /tmp-JSONL med hämtad data för granskning.
-//   - Sanity-cap 10 000 id (om populationen är större → bugg).
+//   - Sanity-cap 15 000 id (om populationen är större → utred, höj inte blint).
 //   - UPSERT (on-conflict id do update) → idempotent, kan köras om.
 //
 // USAGE:
@@ -78,7 +78,11 @@ function parseRetryAfter(v: string | null): number | null {
 }
 
 const BATCH_SIZE = 1000
-const POPULATION_SANITY_CAP = 10_000
+// Höj inte utan att först verifiera att populationen är legitim (se
+// doc-block i migration 20260803120000_openalex_institutions_lookup.sql).
+// Faktisk pop 2026-08-03 var 11 177 — förr-uppskattningen 3-5k underskattade
+// hur många unika institutioner ~19 767 TRIAD-artiklar täcker.
+const POPULATION_SANITY_CAP = 15_000
 
 async function fetchMissingIds(pLimit: number): Promise<string[]> {
   const r = await fetch(`${SB_URL}/rest/v1/rpc/openalex_institutions_missing`, {

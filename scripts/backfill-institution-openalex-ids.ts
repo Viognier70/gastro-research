@@ -86,7 +86,9 @@ function parseRetryAfter(v: string | null): number | null {
 }
 
 const BATCH_SIZE = 1000
-const POPULATION_SANITY_CAP = 3_000
+// Höj inte utan att först verifiera att populationen är legitim (se
+// doc-block i migration 20260803120000_openalex_institutions_lookup.sql).
+const POPULATION_SANITY_CAP = 15_000
 
 async function fetchPopulationBatch(pLimit: number): Promise<Row[]> {
   const r = await fetch(`${SB_URL}/rest/v1/rpc/institution_openalex_ids_backfill_candidates`, {
@@ -199,7 +201,8 @@ async function main() {
       seenIds.add(row.id)
       totalProcessed++
       if (totalProcessed > POPULATION_SANITY_CAP) {
-        console.error(`\nABORT: bearbetat ${totalProcessed} > sanity-cap ${POPULATION_SANITY_CAP}. Population borde vara ~1 421.`)
+        console.error(`\nABORT: bearbetat ${totalProcessed} > sanity-cap ${POPULATION_SANITY_CAP}.`)
+        console.error('Höj inte capen blint — se doc-block i 20260803120000_openalex_institutions_lookup.sql.')
         await Deno.writeTextFile(logPath, logLines.join('\n') + '\n')
         Deno.exit(4)
       }
