@@ -3252,7 +3252,7 @@ async function loadTrending(){
     const maxCount = Math.max(...data.map(k => k.total_count||0))
     const totalArticles = window._triadCount || 39000
     const metaEl = document.getElementById('trendingMeta')
-    if(metaEl) metaEl.textContent = `Top keywords by frequency · ${totalArticles.toLocaleString()} TRIAD-analysed articles · 2025 vs 2024`
+    if(metaEl) metaEl.textContent = `Top keywords by frequency · ${totalArticles.toLocaleString('en-US')} TRIAD-analysed articles · 2025 vs 2024`
     const di={rising:'↑',stable:'→',declining:'↓',new:'✦'}
     const dc={rising:'#3B6D11',stable:'var(--text-tertiary)',declining:'#A32D2D',new:'#185FA5'}
     document.getElementById('trendingList').innerHTML = data.map(k => {
