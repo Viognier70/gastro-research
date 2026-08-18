@@ -3237,10 +3237,17 @@ if(data.journals) document.getElementById('journalList').innerHTML=data.journals
   }catch(e){console.log('sidebar error',e)}
 }
 
+// Trending-race: loadArticles→loadTrending körs innan loadCounts hunnit sätta
+// window._triadCount, loadCounts→loadTrending igen efter. Om första fetchen
+// resolvar sist skrivs trendingMeta med fallback 39,000 över live-siffran.
+// Samma gen-mönster som renderOversiktWatchBar.
+window._trendingGen = 0
 async function loadTrending(){
+  const gen = ++window._trendingGen
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/get_trending_keywords`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({limit_n:8})})
     const data=await r.json()
+    if(gen !== window._trendingGen) return  // stale
     if(!Array.isArray(data)||!data.length) return
     const maxCount = Math.max(...data.map(k => k.total_count||0))
     const totalArticles = window._triadCount || 39000
@@ -3430,6 +3437,12 @@ async function loadCounts(){
       const upT=document.getElementById('upgrade-triad-count'); if(upT) upT.textContent=triadTotal.toLocaleString('en-US')+'+'
       // Landing-hero sifferband (§5). Fallback "39,000+" står i markup.
       const lhT=document.getElementById('landingTriadCount'); if(lhT) lhT.textContent=triadTotal.toLocaleString('en-US')
+      // Watchbar och trending läser window._triadCount — trigga om nu, så
+      // eventuella tidigare fallback-renders (från renderOversikt/loadArticles
+      // som startade innan _triadCount fanns) skrivs över. Gen-tokens i
+      // renderOversiktWatchBar/loadTrending garanterar att den senast
+      // startade körningen vinner, oavsett vilken async-kedja som resolvar sist.
+      if(typeof window.renderOversiktWatchBar === 'function') window.renderOversiktWatchBar()
       loadTrending()
     }
     if(total>0){
@@ -5389,7 +5402,16 @@ function escapeHtmlOversikt(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 }
 
+// Watchbar-race (2026-08-18): två parallella anrop — renderOversikt() fires
+// direkt när initAuth resolvat, loadCounts fires en andra gång när
+// window._triadCount landat. Async-awaits inuti (getUser, profile, count)
+// gör att sista skrivningen inte alltid är den senast startade — resultat:
+// fallback 39,000 kunde skrivas över live-siffran 39,141.
+// Generation-token: varje ny körning bumpar _watchbarGen, DOM-writes i
+// tidigare körningar aborteras.
+window._watchbarGen = 0
 window.renderOversiktWatchBar = async function() {
+  const gen = ++window._watchbarGen
   const el = document.getElementById('oversiktWatchBar')
   if(!el) return
   const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'all')
@@ -5398,21 +5420,19 @@ window.renderOversiktWatchBar = async function() {
 
   let user = null
   try { user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null } catch(_) {}
-  // Diagnos-logg (tillfällig 2026-07-22): om inloggad hamnar i anon-fallback
-  // vill vi kunna skilja "getUser=null" från "profile.last_visit=null" —
-  // showReturnSignal skriver last_visit fire-and-forget, race möjlig.
-  console.log('[watchbar] user=', !!user, 'role=', rRaw)
+  if(gen !== window._watchbarGen) return  // stale: en nyare körning har startat
 
   if(user) {
     try {
       const {data: profile} = await sb.from('profiles').select('last_visit').eq('id', user.id).single()
-      console.log('[watchbar] profile.last_visit=', profile?.last_visit)
+      if(gen !== window._watchbarGen) return
       if(profile?.last_visit) {
         const daysSince = Math.max(1, Math.floor((Date.now() - new Date(profile.last_visit).getTime()) / 86400000))
         // Rollfiltrera bara när en riktig roll är vald; 'all' → alla nya artiklar.
         let q = sb.from('articles_public').select('*', {count:'exact', head:true}).gt('fetched_at', profile.last_visit)
         if(rRaw !== 'all') q = q.eq('has_episteme_' + toDbRole(rRaw), true)
         const {count} = await q
+        if(gen !== window._watchbarGen) return
         el.innerHTML =
           '<div class="oversikt-watch-eyebrow">Your watch · ' + escapeHtmlOversikt(rLabel) + '</div>' +
           '<div class="oversikt-watch-line">' +
@@ -5427,6 +5447,7 @@ window.renderOversiktWatchBar = async function() {
   }
 
   // Anonym / första besök. Statisk introrad — den vy vi optimerar.
+  if(gen !== window._watchbarGen) return
   const totalStr = window._totalCount ? window._totalCount.toLocaleString('en-US') : null
   const introLead = totalStr
     ? 'Explore <strong>' + totalStr + '</strong> articles across gastronomy research'
