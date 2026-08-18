@@ -3240,7 +3240,7 @@ async function loadTrending(){
     const data=await r.json()
     if(!Array.isArray(data)||!data.length) return
     const maxCount = Math.max(...data.map(k => k.total_count||0))
-    const totalArticles = window._triadCount || 5203
+    const totalArticles = window._triadCount || 39000
     const metaEl = document.getElementById('trendingMeta')
     if(metaEl) metaEl.textContent = `Top keywords by frequency · ${totalArticles.toLocaleString()} TRIAD-analysed articles · 2025 vs 2024`
     const di={rising:'↑',stable:'→',declining:'↓',new:'✦'}
@@ -3403,29 +3403,25 @@ async function loadCounts(){
   try{
     const r1=await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
-    // TRIAD-count läses från screening_funnel.triad_analyserade — samma
-    // definition som tratten (relevance_checked = true AND irrelevant = false
-    // AND phronesis_educator_researcher is not null, kumulativa filter per
-    // migration 20260802160000). Enda källan till sanning för "hur många
-    // TRIAD-analyserade artiklar finns det" — så #triadCount, Research Pulse,
-    // Översikt watchbar och obSubText-onboarding visar identiskt tal med
-    // trattens sista steg.
+    // TRIAD-count läses från public.triad_coverage() (§6, ORDER 091 2026-08-18)
+    // — kanonisk siffra för "artiklar med minst en TRIAD-roll ifylld". Ersätter
+    // screening_funnel.triad_analyserade (som gate:ade på relevance + irrelevant
+    // och gav 5-9k istället för verkliga ~39k). Alla vyer som visar ett TRIAD-tal
+    // (landing sifferband, Feed hero, data-panel, upgrade-modal, onboarding,
+    // Overview watchbar) läser samma svar. Inget hårdkodat markup-tal.
     //
-    // Tidigare räknades här via has_episteme_sensory_pro=is.true (utan
-    // irrelevant-gate, utan canary-fältet phronesis) och drev fram olika tal
-    // på samma sida. MV refreshas var 10 min via pg_cron 'refresh-screening-
-    // funnel' — några minuter staleness accepterat i utbyte mot konsistens.
-    const r3=await fetch(`${SB_URL}/rest/v1/screening_funnel?select=triad_analyserade`,{headers:{'apikey':SB_ANON,'Authorization':`Bearer ${SB_ANON}`}})
+    // Är RPC:n inte anropbar visar vi fallback "39,000+" — aldrig tomt fält.
+    const r3=await fetch(`${SB_URL}/rest/v1/rpc/triad_coverage`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const r3Data=await r3.json().catch(()=>null)
-    const triadTotal=Array.isArray(r3Data)&&r3Data[0]?.triad_analyserade!=null?Number(r3Data[0].triad_analyserade):0
+    const triadTotal=(typeof r3Data==='number' && Number.isFinite(r3Data)) ? r3Data : 0
+    if(triadTotal===0) console.warn('[triad_coverage] RPC returned 0/null — showing fallback')
     if(triadTotal>0){
       const tel=document.getElementById('triadCount');if(tel) animateCount(tel,triadTotal)
       window._triadCount=triadTotal
-      // Data-panelen + upgrade-modalen läser samma tal så alla "TRIAD-
-      // analyzed studies"-copyn stämmer med tratten. Formaterat med "+"
-      // som suffix eftersom copyn "N+ TRIAD-analyzed" är sedan tidigare.
       const dpT=document.getElementById('dp-triad-count'); if(dpT) dpT.textContent=triadTotal.toLocaleString('en-US')
       const upT=document.getElementById('upgrade-triad-count'); if(upT) upT.textContent=triadTotal.toLocaleString('en-US')+'+'
+      // Landing-hero sifferband (§5). Fallback "39,000+" står i markup.
+      const lhT=document.getElementById('landingTriadCount'); if(lhT) lhT.textContent=triadTotal.toLocaleString('en-US')
       loadTrending()
     }
     if(total>0){
@@ -3437,9 +3433,11 @@ async function loadCounts(){
       const dpTot=document.getElementById('dp-total-count'); if(dpTot) dpTot.textContent=total.toLocaleString('en-US')+'+'
       const obSub=document.getElementById('obSubText')
       if(obSub){
-        // Separera de två talen: TRIAD-analyserade (~5 200) vs genomsökta (~453 000).
-        // triadTotal kan vara 0 om räkningen misslyckas — visa i så fall bara det statiska talet så vi inte skriver "0+ studies".
-        const triadStr = (triadTotal>0 ? triadTotal : 5200).toLocaleString('en-US')
+        // Separera de två talen: TRIAD-analyserade (~39 000) vs genomsökta (~466 000).
+        // triadTotal kan vara 0 om triad_coverage() RPC:n misslyckas — visa
+        // fallback "39,000+" så vi aldrig skriver "0+ studies". Fallback är
+        // uppdaterad från 5 200 (screening_funnel-era) per ORDER 091 §6.
+        const triadStr = (triadTotal>0 ? triadTotal : 39000).toLocaleString('en-US')
         const totalStr = total.toLocaleString('en-US')
         obSub.textContent = `${triadStr}+ studies analyzed in depth through the TRIAD framework — drawn from ${totalStr}+ screened publications.`
       }
@@ -4359,10 +4357,10 @@ function openArticleOverlay(article){
     if(nav) nav.style.display = 'none'
     if(content){
       content.className = 'art-triad-content'
-      // TRIAD-count dynamiskt från screening_funnel via window._triadCount
-      // (satt i loadCounts). Fallback "thousands of" när räknaren inte
-      // hunnit ladda — undviker att skriva "0" om overlayn öppnas före
-      // loadCounts hunnit resolve:a.
+      // TRIAD-count dynamiskt via window._triadCount, satt i loadCounts
+      // från public.triad_coverage() RPC (§6). Fallback "thousands of" när
+      // räknaren inte hunnit ladda — undviker att skriva "0" om overlayn
+      // öppnas före loadCounts hunnit resolve:a.
       const triadN = (typeof window._triadCount === 'number' && window._triadCount > 0)
         ? window._triadCount.toLocaleString('en-US') + '+'
         : 'thousands of'
@@ -5388,7 +5386,7 @@ window.renderOversiktWatchBar = async function() {
   if(!el) return
   const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'all')
   const rLabel = rRaw === 'all' ? 'all professionals' : ((window.roleLabel && window.roleLabel(rRaw)) || rRaw)
-  const triadStr = (window._triadCount || 9714).toLocaleString('en-US')
+  const triadStr = (window._triadCount || 39000).toLocaleString('en-US')
 
   let user = null
   try { user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null } catch(_) {}
@@ -6162,7 +6160,10 @@ async function updateMapCoverageCopy(){
       return
     }
     const fmt = n => n.toLocaleString('en-US')
-    el.innerHTML = `Institution coordinates: <strong>${fmt(withCoords)} of ${fmt(total)} TRIAD-analysed articles with known institution</strong> — backfilling ongoing.`
+    // §6: fältet TRIAD-analysed togs bort — predikatet räknar articles_public
+    // med institution_coords, inte TRIAD-analys (TRIAD-talet lever i
+    // public.triad_coverage()). Fel label under vilseledande text-etikett.
+    el.innerHTML = `Institution coordinates: <strong>${fmt(withCoords)} of ${fmt(total)} articles with known institution</strong> — backfilling ongoing.`
     // Data-panelen (dropdown i top-navet) visar samma coverage-tal utan
     // "TRIAD-analysed articles with known institution"-suffix — kortare
     // format för smalare komponent.
