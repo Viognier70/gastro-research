@@ -6119,8 +6119,10 @@ window.loadWorldMapData = async function() {
       }
     }
 
-    // Coverage-copyn: separata head-count-queries med TRIAD-gate.
-    updateMapCoverageCopy()
+    // Coverage-copyn körs oberoende från initWorldMap (§2.2, ORDER 093) —
+    // den beror bara på articles_public-räknare, inte på Leaflet eller
+    // map_institution_* RPC:er. Att starta den härifrån skapade race där
+    // en sen fetch resolvade efter loadWorldMapData:s catch.
 
     // Collabs direkt från RPC:n — server-side har redan filtrerat på
     // olika country + ≥2 coords per artikel och grupperat på sorterade
@@ -6471,6 +6473,12 @@ window.initWorldMap = async function() {
   const container = document.getElementById('worldMapContainer')
   if(!container) return
   container.innerHTML = ''
+
+  // Coverage-copyn: fire-and-forget, egen error-boundary. Starta så tidigt
+  // som möjligt — parallellt med d3.json + loadWorldMapData — så den inte
+  // väntar på Leaflet eller RPC-kedjan. Ägs exklusivt av
+  // updateMapCoverageCopy (ORDER 093 §2.2).
+  updateMapCoverageCopy()
 
   const [world, data] = await Promise.all([
     d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
