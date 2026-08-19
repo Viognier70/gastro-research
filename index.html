@@ -759,6 +759,22 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .library-view-toggle button.on{background:var(--black);color:var(--white)}
 .library-topic-group{margin-bottom:20px}
 .library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
+/* §5 (ORDER 102) — rating-stjärnor + anteckningar */
+.library-stars{display:inline-flex;gap:2px;align-items:center}
+.library-star{font-size:16px;background:none;border:none;padding:2px 3px;cursor:pointer;color:var(--border-mid);font-family:inherit;line-height:1;transition:color .12s}
+.library-star.on{color:var(--gusto-gold,#A08A55)}
+.library-star:hover{color:var(--gusto-gold-dark,#836428)}
+.library-star:focus-visible{outline:2px solid var(--gusto-gold,#A08A55);outline-offset:1px;border-radius:2px}
+.library-note{margin-top:10px}
+.library-note-input{width:100%;min-height:56px;padding:8px 10px;border:0.5px solid var(--border-mid);border-radius:6px;font-family:'Outfit',sans-serif;font-size:12px;color:var(--text-primary);background:var(--white);resize:vertical;line-height:1.5;box-sizing:border-box}
+.library-note-input:focus{outline:none;border-color:var(--gusto-gold,#A08A55)}
+.library-note-meta{display:flex;justify-content:flex-end;font-size:10px;color:var(--text-tertiary);margin-top:4px;min-height:14px}
+.library-note-counter.warn{color:var(--gusto-gold-dark,#836428)}
+/* Fel-toast — poppar upp top-right vid rollback. */
+.library-toast{position:fixed;top:80px;right:20px;background:#5C2D00;color:#F5EDE3;padding:10px 16px;border-radius:6px;font-size:12px;font-family:'Outfit',sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:9999;animation:libToastIn .2s ease-out}
+.library-toast[hidden]{display:none}
+@keyframes libToastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.library-toast{animation:none}}
 /* Listläge */
 .library-article-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer;outline:none}
 .library-article-row:last-child{border-bottom:none}
@@ -3614,18 +3630,27 @@ async function toggleSaveArticle(id,btn){
 }
 
 
+// §5 (ORDER 102): _libraryMeta lagrar rating + note per article_id.
+// Fylls i loadSavedArticles vid inloggning; töms vid signout via reload.
+window._libraryMeta = window._libraryMeta || {}
 async function loadSavedArticles(){
   savedArticleIds.clear()
   // Försök hämta från Supabase om inloggad
   const user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null
   if(user) {
     try {
-      const {data} = await sb.from('saved_articles').select('article_id').eq('user_id', user.id)
-      if(Array.isArray(data)) data.forEach(r => savedArticleIds.add(r.article_id))
+      const {data} = await sb.from('saved_articles').select('article_id,rating,note').eq('user_id', user.id)
+      if(Array.isArray(data)) {
+        window._libraryMeta = {}
+        data.forEach(r => {
+          savedArticleIds.add(r.article_id)
+          window._libraryMeta[r.article_id] = { rating: r.rating ?? null, note: r.note ?? '' }
+        })
+      }
       return
     } catch(e) { console.log('Supabase saved error:', e) }
   }
-  // Fallback till localStorage
+  // Fallback till localStorage (anon — ingen metadata, bara ids)
   const ls = JSON.parse(localStorage.getItem('gs_saved')||'[]')
   ls.forEach(id => savedArticleIds.add(id))
 }
@@ -5398,6 +5423,107 @@ function libraryRowKeydown(ev, id){
   }
 }
 
+// §5 (ORDER 102) — rating + anteckningar med optimistic update + rollback.
+function libraryStarsHtml(id, rating){
+  const r = Number.isInteger(rating) ? rating : 0
+  const escId = libraryEscape(id)
+  let out = `<div class="library-stars" role="group" aria-label="Rating" data-artid="${escId}">`
+  for(let i=1; i<=5; i++){
+    out += `<button type="button" class="library-star${r>=i?' on':''}" data-star="${i}" aria-label="Rate ${i} of 5 stars" onclick="event.stopPropagation();setLibraryRating('${escId}',${i})">★</button>`
+  }
+  out += `</div>`
+  return out
+}
+function libraryNoteHtml(id, note){
+  const escId = libraryEscape(id)
+  const val = libraryEscape(note || '')
+  const len = (note||'').length
+  const counter = len > 400 ? `<span class="library-note-counter${len>=500?' warn':''}" data-artid="${escId}">${len}/500</span>` : ''
+  return `<div class="library-note" onclick="event.stopPropagation()">
+    <textarea class="library-note-input" data-artid="${escId}" maxlength="500" placeholder="Add a note about this article…" oninput="onLibraryNoteInput(this)">${val}</textarea>
+    <div class="library-note-meta"><span class="library-note-counter${len>=500?' warn':''}" data-artid="${escId}">${counter?'':''}${len>400?len+'/500':''}</span></div>
+  </div>`
+}
+async function setLibraryRating(id, newValue){
+  const meta = window._libraryMeta[id] || (window._libraryMeta[id] = { rating:null, note:'' })
+  const previous = meta.rating ?? null
+  // Klick på samma stjärna → nollställ (annars går en felklick inte att ångra).
+  const applied = (previous === newValue) ? null : newValue
+  meta.rating = applied
+  refreshLibraryStars(id, applied)
+  await patchLibraryMeta(id, { rating: applied }, () => {
+    meta.rating = previous
+    refreshLibraryStars(id, previous)
+    showLibraryError('Could not save rating — try again')
+  })
+}
+function refreshLibraryStars(id, rating){
+  const r = Number.isInteger(rating) ? rating : 0
+  const sel = `[data-artid="${(window.CSS && CSS.escape) ? CSS.escape(id) : id}"]`
+  document.querySelectorAll('.library-stars' + sel).forEach(group => {
+    group.querySelectorAll('.library-star').forEach(btn => {
+      const n = Number(btn.getAttribute('data-star'))
+      btn.classList.toggle('on', r >= n)
+    })
+  })
+}
+const _libraryNoteTimers = new Map()
+function onLibraryNoteInput(el){
+  const id = el.getAttribute('data-artid')
+  const val = el.value
+  // Live-räknare (visas bara vid >400 tecken).
+  const sel = `[data-artid="${(window.CSS && CSS.escape) ? CSS.escape(id) : id}"]`
+  document.querySelectorAll('.library-note-counter' + sel).forEach(c => {
+    c.textContent = val.length > 400 ? `${val.length}/500` : ''
+    c.classList.toggle('warn', val.length >= 500)
+  })
+  // Debounce serveranrop 800ms per §5-spec.
+  clearTimeout(_libraryNoteTimers.get(id))
+  _libraryNoteTimers.set(id, setTimeout(() => flushLibraryNote(id, val), 800))
+}
+async function flushLibraryNote(id, val){
+  const meta = window._libraryMeta[id] || (window._libraryMeta[id] = { rating:null, note:'' })
+  const previous = meta.note ?? ''
+  if(previous === val) return  // Ingen ändring att spara
+  meta.note = val
+  await patchLibraryMeta(id, { note: val }, () => {
+    meta.note = previous
+    // Rollback textarea-värdet också så användaren ser resetten.
+    const sel = `[data-artid="${(window.CSS && CSS.escape) ? CSS.escape(id) : id}"]`
+    document.querySelectorAll('.library-note-input' + sel).forEach(t => { t.value = previous })
+    showLibraryError('Could not save note — try again')
+  })
+}
+async function patchLibraryMeta(id, patch, rollback){
+  try {
+    const {data:{user}} = await sb.auth.getUser()
+    if(!user){ rollback(); return }
+    const {error} = await sb.from('saved_articles')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id).eq('article_id', id)
+    if(error) throw error
+  } catch(e) {
+    console.warn('[library] patch failed', {id, patch, error:e})
+    rollback()
+  }
+}
+let _libraryToastTimer = null
+function showLibraryError(msg){
+  let t = document.getElementById('libraryToast')
+  if(!t){
+    t = document.createElement('div')
+    t.id = 'libraryToast'
+    t.className = 'library-toast'
+    t.setAttribute('role','status')
+    t.setAttribute('aria-live','polite')
+    document.body.appendChild(t)
+  }
+  t.textContent = msg
+  t.removeAttribute('hidden')
+  clearTimeout(_libraryToastTimer)
+  _libraryToastTimer = setTimeout(() => t.setAttribute('hidden',''), 4000)
+}
+
 window.renderMyLibrary = async function() {
   const pane = document.getElementById('feedPane')
   if(!pane) return
@@ -5453,9 +5579,7 @@ window.renderMyLibrary = async function() {
     const preview = libraryLens==='e'?ep:libraryLens==='t'?tc:libraryLens==='p'?ph:''
     const id = libraryEscape(a.id)
     const expanded = window._libraryExpandedId === a.id
-    // Kort-utfällning (§4) — samma markup som Cards-läget, hidden när collapse.
-    // Genereras för varje rad så toggle bara flippar hidden — ingen re-render
-    // och ingen re-fetch krävs.
+    const meta = window._libraryMeta[a.id] || {}
     const expansionInner = renderCard(a)
     return `<div class="library-article-row" data-artid="${id}" role="button" tabindex="0" aria-expanded="${expanded?'true':'false'}" onclick="toggleLibraryExpanded('${id}')" onkeydown="libraryRowKeydown(event,'${id}')">
       <div class="library-triad-dots">
@@ -5468,6 +5592,7 @@ window.renderMyLibrary = async function() {
         <div class="library-article-meta">${libraryEscape(a.journal||'')} · ${libraryEscape(a.year||'')}</div>
         ${preview?`<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.5;font-style:italic">${libraryEscape(preview.slice(0,150))}…</div>`:''}
       </div>
+      <div onclick="event.stopPropagation()" style="flex-shrink:0">${libraryStarsHtml(a.id, meta.rating)}</div>
       <button class="library-unsave" onclick="event.stopPropagation();toggleSaveArticle('${id}',null).then(()=>renderMyLibrary())">× Remove</button>
     </div>
     <div class="library-article-expansion" data-artid="${id}"${expanded?'':' hidden'}>${expansionInner}</div>`
@@ -5478,12 +5603,15 @@ window.renderMyLibrary = async function() {
     // Episteme först per §3-spec. Fall tillbaka på τ eller φ om ε saknas.
     const triadShown = ep || tc || ph
     const triadLabel = ep ? 'ε Episteme' : tc ? 'τ Techne' : ph ? 'φ Phronesis' : ''
+    const meta = window._libraryMeta[a.id] || {}
     return `<div class="library-card" data-artid="${libraryEscape(a.id)}">
       <div class="library-card-head">
         <div class="library-card-title">${libraryEscape(a.headline_en||a.title?.slice(0,140)||'')}</div>
+        ${libraryStarsHtml(a.id, meta.rating)}
       </div>
       <div class="library-card-meta">${libraryEscape(a.journal||'')} · ${libraryEscape(a.year||'')}</div>
       ${triadShown?`<div class="library-card-triad"><span class="library-card-triad-label">${triadLabel}</span>${libraryEscape(triadShown.slice(0,320))}${triadShown.length>320?'…':''}</div>`:''}
+      ${libraryNoteHtml(a.id, meta.note)}
       <div class="library-card-actions">
         ${a.url?`<a class="library-card-paper" href="${libraryEscape(a.url)}" target="_blank" rel="noopener">Full paper ↗</a>`:''}
         <button class="library-unsave" onclick="toggleSaveArticle('${libraryEscape(a.id)}',null).then(()=>renderMyLibrary())">× Remove</button>
