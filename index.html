@@ -763,6 +763,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* §7 (ORDER 102) — sök inom sparade. Visas bara vid >15 sparade. */
 .library-search{font-size:11px;padding:4px 10px;border:0.5px solid var(--border-mid);border-radius:20px;background:var(--white);color:var(--text-primary);font-family:'Outfit',sans-serif;min-width:180px}
 .library-search:focus{outline:none;border-color:var(--gusto-gold,#A08A55)}
+/* §8 (ORDER 102) — export-knappar. */
+.library-export-btn{font-size:10px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-secondary)}
+.library-export-btn:hover{color:var(--text-primary);border-color:var(--gusto-gold,#A08A55)}
 .library-topic-group{margin-bottom:20px}
 .library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
 /* §5 (ORDER 102) — rating-stjärnor + anteckningar */
@@ -5590,6 +5593,99 @@ function showLibraryError(msg){
   _libraryToastTimer = setTimeout(() => t.setAttribute('hidden',''), 4000)
 }
 
+// §8 (ORDER 102) — export CSV + BibTeX från redan laddad data.
+// Cache:as som window._libraryArts från senaste render, så knappen inte
+// behöver re-fetcha.
+window._libraryArts = null
+function libraryDownload(filename, content, mime){
+  const blob = new Blob([content], {type: mime + ';charset=utf-8'})
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click()
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove() }, 0)
+}
+function libraryFilename(ext){
+  const d = new Date()
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0')
+  return `gusto-library-${y}-${m}-${day}.${ext}`
+}
+function csvField(v){
+  const s = v == null ? '' : String(v)
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s
+}
+function libraryFirstAuthor(a){
+  const raw = a.authors
+  if(Array.isArray(raw) && raw.length) return String(raw[0])
+  if(typeof raw === 'string' && raw.length) return raw.split(/[,;]/)[0].trim()
+  return ''
+}
+function asciiSlug(s){
+  return String(s||'').normalize('NFKD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'')
+}
+function bibKeyFor(a){
+  const first = libraryFirstAuthor(a)
+  // Efternamn = sista whitespace-delen. "Anders Crichton-Fock" → "crichtonfock".
+  const surname = first ? asciiSlug(first.split(/\s+/).pop()) : ''
+  const year = String(a.year||'').replace(/\D/g,'')
+  const firstWord = asciiSlug((a.headline_en || a.title || '').split(/\s+/)[0] || '')
+  if(surname && year) return [surname, year, firstWord].filter(Boolean).join('-')
+  // Fallback: article-<id-prefix> så nyckeln blir stabil men läsbar
+  return 'article-' + String(a.id||'').replace(/-/g,'').slice(0,8)
+}
+function bibEscape(s){
+  // BibTeX escapes: {} runt allt, backslash för specialtecken. Enklaste:
+  // wrappa värdet i { } och backslash-escapa { } inuti.
+  return String(s||'').replace(/[{}\\]/g, m => '\\'+m)
+}
+function libraryExportCsv(){
+  const arts = window._libraryArts || []
+  if(!arts.length){ showLibraryError('Nothing to export'); return }
+  const header = ['title','journal','year','doi','url','rating','note','saved_at']
+  const lines = [header.join(',')]
+  for(const a of arts){
+    const meta = window._libraryMeta[a.id] || {}
+    lines.push([
+      csvField(a.headline_en || a.title || ''),
+      csvField(a.journal || ''),
+      csvField(a.year || ''),
+      csvField(a.doi || ''),
+      csvField(a.url || ''),
+      csvField(meta.rating ?? ''),
+      csvField(meta.note || ''),
+      csvField(meta.saved_at || ''),
+    ].join(','))
+  }
+  // BOM för Excel-locale-detection.
+  libraryDownload(libraryFilename('csv'), '﻿' + lines.join('\r\n') + '\r\n', 'text/csv')
+}
+function libraryExportBib(){
+  const arts = window._libraryArts || []
+  if(!arts.length){ showLibraryError('Nothing to export'); return }
+  const seenKeys = new Map()
+  const entries = []
+  for(const a of arts){
+    let key = bibKeyFor(a)
+    // Unika nycklar: duplicat suffixas med -2, -3, ...
+    const prevCount = seenKeys.get(key) || 0
+    seenKeys.set(key, prevCount + 1)
+    if(prevCount > 0) key = `${key}-${prevCount+1}`
+    const fields = []
+    const authors = Array.isArray(a.authors) ? a.authors.join(' and ')
+                     : typeof a.authors === 'string' ? a.authors : ''
+    if(authors) fields.push(`  author = {${bibEscape(authors)}}`)
+    fields.push(`  title = {${bibEscape(a.headline_en || a.title || '')}}`)
+    if(a.journal) fields.push(`  journal = {${bibEscape(a.journal)}}`)
+    if(a.year) fields.push(`  year = {${bibEscape(a.year)}}`)
+    if(a.doi) fields.push(`  doi = {${bibEscape(a.doi)}}`)
+    if(a.url) fields.push(`  url = {${bibEscape(a.url)}}`)
+    const meta = window._libraryMeta[a.id] || {}
+    if(meta.note) fields.push(`  note = {${bibEscape(meta.note)}}`)
+    entries.push(`@article{${key},\n${fields.join(',\n')}\n}`)
+  }
+  libraryDownload(libraryFilename('bib'), entries.join('\n\n') + '\n', 'application/x-bibtex')
+}
+
 window.renderMyLibrary = async function() {
   const pane = document.getElementById('feedPane')
   if(!pane) return
@@ -5613,13 +5709,15 @@ window.renderMyLibrary = async function() {
   const dbRole = window.role && window.role !== 'all' ? toDbRole(window.role) : 'sensory_pro'
   const epCol = 'episteme_'+dbRole, tcCol = 'techne_'+dbRole, phCol = 'phronesis_'+dbRole
 
-  // url tillagd i select — behövs för Full paper-länk i kortläget (§3).
-  const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year,url&id=in.(${ids.join(',')})`, {
+  // url + authors + doi tillagda i select (§8 export).
+  const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year,url,authors,doi&id=in.(${ids.join(',')})`, {
     headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
   })
   const arts = await resp.json()
   if(!Array.isArray(arts)) return
   await enrichWithPremiumIfPro(arts)
+  // Cache:a för §8-export — knappen anropar libraryExportCsv/Bib utan re-fetch.
+  window._libraryArts = arts
 
   const libraryLens = window._libraryLens || 'all'
   const view = effectiveLibraryView()
@@ -5713,6 +5811,8 @@ window.renderMyLibrary = async function() {
           <option value="year"${sort==='year'?' selected':''}>Publication year</option>
         </select>
         ${showSearch?`<input type="search" class="library-search" placeholder="Search in library…" aria-label="Search saved articles" value="${libraryEscape(query)}" oninput="onLibrarySearchInput(this)">`:''}
+        <button class="library-export-btn" onclick="libraryExportCsv()" title="Export as CSV">CSV</button>
+        <button class="library-export-btn" onclick="libraryExportBib()" title="Export as BibTeX">BibTeX</button>
         <div class="library-filters">
           <button class="library-filter-btn${libraryLens==='all'?' on':''}" onclick="window._libraryLens='all';renderMyLibrary()">All</button>
           <button class="library-filter-btn${libraryLens==='e'?' e-on':''}" onclick="window._libraryLens='e';renderMyLibrary()">ε Episteme</button>
