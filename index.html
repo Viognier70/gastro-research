@@ -2107,7 +2107,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="modal-bg" id="authModal">
   <div class="modal" style="max-width:380px">
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
-    <div class="modal-eyebrow">Gustema</div>
+    <div class="modal-eyebrow">Gusto Science</div>
     <div class="modal-title" id="authTitle">Sign in</div>
     <div class="auth-form" id="authForm">
       <input type="text" id="authName" placeholder="Your name (e.g. Dr. Crichton-Fock)" style="display:none">
@@ -2123,7 +2123,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div class="modal-bg" id="upgradeModal">
   <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="closeModal('upgradeModal')">×</button>
-    <div class="modal-eyebrow">Gustema Pro</div>
+    <div class="modal-eyebrow">Gusto Science Pro</div>
     <div class="modal-title" id="upgradeTitle">Unlock the full research library</div>
     <ul class="upgrade-features">
       <li>Unlimited access to <span id="upgrade-triad-count">thousands of</span> TRIAD-analyzed studies — growing daily</li>
@@ -3697,7 +3697,7 @@ if(window.location.search.includes('pro=true')){
       const {data:{session}}=await sb.auth.getSession()
       if(session){
         const {data:p}=await sb.from('profiles').select('is_pro').eq('id',session.user.id).maybeSingle()
-        if(p?.is_pro){isPro=true;updateFreeBar();loadArticles();alert('Welcome to Gustema Pro! Enjoy unlimited access.');return}
+        if(p?.is_pro){isPro=true;updateFreeBar();loadArticles();alert('Welcome to Gusto Science Pro! Enjoy unlimited access.');return}
       }
       await new Promise(r=>setTimeout(r,2000))
     }
@@ -5983,7 +5983,7 @@ function saveObRoleAndExplore(){
 </script>
 <div class="ob-overlay" id="obOverlay">
   <div class="ob-panel">
-    <div class="ob-eyebrow">Welcome to Gustema</div>
+    <div class="ob-eyebrow">Welcome to Gusto Science</div>
     <div class="ob-title">Research intelligence<br>for your profession</div>
     <div class="ob-sub"><span id="obSubText">5,200+ studies analyzed in depth through the TRIAD framework — drawn from 453,000+ screened publications.</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
