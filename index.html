@@ -3355,15 +3355,21 @@ async function loadScreeningFunnel(){
     box.hidden=false
   }
   try{
-    const r=await fetch(SB_URL+'/rest/v1/screening_funnel?select=*',{headers:H})
+    // ORDER 098 §3: anropar public.get_screening_funnel() RPC istället för
+    // direkt vy-fetch. Vyer kan inte sätta SET statement_timeout — under
+    // sidladdningskonkurrens fick vyn 57014-timeout 3/5 körningar trots
+    // att den solo svarar på 0.16 s. RPC:n har statement_timeout=30s.
+    // Returtyp jsonb → objekt direkt, ingen array-unwrap.
+    const r=await fetch(SB_URL+'/rest/v1/rpc/get_screening_funnel',{
+      method:'POST', headers:{...H,'Content-Type':'application/json'}, body:'{}'
+    })
     if(!r.ok){
       const bodyText=await r.text().catch(()=>'<unread>')
       showFallback(`HTTP ${r.status}: ${bodyText.slice(0,200)}`)
       return
     }
-    const rows=await r.json()
-    const d=rows&&rows[0]
-    if(!d){
+    const d=await r.json()
+    if(!d || typeof d !== 'object'){
       showFallback('empty result — matview may need refresh')
       return
     }
