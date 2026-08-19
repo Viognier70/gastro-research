@@ -1045,12 +1045,23 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* Header + note i overlay: matchar triad-band-v2-header/note (Feed-korten)
    så etiketterna läser likadant i båda vyerna. Färgen ärvs från
    .art-triad-content.e/.t/.p via currentColor på wrappern nedan. */
-.art-triad-headnote{font-family:'Inter','Outfit',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;opacity:.85}
+/* ORDER 104: samma mönster som .triad-band-v2 — rubrik (fråga) + markör
+   (grekiska) i en flex-header, subhead under, body oförändrad. */
+.art-triad-headnote{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;
+  font-family:'Inter','Outfit',sans-serif;
+  margin-bottom:4px;
+  text-transform:none;letter-spacing:normal;
+  opacity:1;
+}
+.art-triad-title{font-size:14px;font-weight:600}
+.art-triad-marker{font-size:12px;font-weight:500;color:var(--text-tertiary)}
+.art-triad-subhead{font-size:13px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px}
 .art-triad-body{font-size:13px;line-height:1.8;color:var(--text-secondary)}
 .art-triad-note{font-size:9.5px;font-style:italic;margin-top:12px;opacity:.55}
-.art-triad-content.e .art-triad-headnote,.art-triad-content.e .art-triad-note{color:var(--episteme)}
-.art-triad-content.t .art-triad-headnote,.art-triad-content.t .art-triad-note{color:var(--techne)}
-.art-triad-content.p .art-triad-headnote,.art-triad-content.p .art-triad-note{color:var(--phronesis)}
+.art-triad-content.e .art-triad-title,.art-triad-content.e .art-triad-note{color:var(--episteme)}
+.art-triad-content.t .art-triad-title,.art-triad-content.t .art-triad-note{color:var(--techne)}
+.art-triad-content.p .art-triad-title,.art-triad-content.p .art-triad-note{color:var(--phronesis)}
 /* TRIAD on-demand-knapp — visas när episteme_* saknas för artikeln. */
 .triad-cta{padding:22px 20px;text-align:center;background:var(--warm-100);border:0.5px solid var(--border-mid);border-radius:8px}
 .triad-cta-lead{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;font-family:'Outfit',sans-serif}
@@ -1463,13 +1474,35 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   border-radius: 0 6px 6px 0;
   padding: 14px 16px;
 }
+/* ORDER 104 (2026-08-19): headern är nu rubrik + markör. Container
+   behåller layouten (flex baseline så markören sitter bredvid rubriken);
+   .triad-band-v2-title bär frågan, .triad-band-v2-marker bär grekiskan. */
 .triad-band-v2-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+  /* nollställ gamla uppercase-attribut — flyttade till .triad-band-v2-marker */
   font-family: 'Inter', 'Outfit', sans-serif;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.triad-band-v2-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gusto-ink);
+}
+.triad-band-v2-marker {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.triad-band-v2-subhead {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  margin-bottom: 10px;
 }
 .triad-band-v2-body {
   font-size: 12.5px;
@@ -1483,14 +1516,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   opacity: .5;
 }
 .triad-band-v2-e { background: #EDF1F6; border-left-color: #3A5F8F }
-.triad-band-v2-e .triad-band-v2-header,
+.triad-band-v2-e .triad-band-v2-title,
 .triad-band-v2-e .triad-band-v2-note { color: #3A5F8F }
 .triad-band-v2-t { background: #EBF0EA; border-left-color: #4E7A57 }
-.triad-band-v2-t .triad-band-v2-header,
+.triad-band-v2-t .triad-band-v2-title,
 .triad-band-v2-t .triad-band-v2-note { color: #4E7A57 }
 .triad-band-v2-p { background: #F5EFE2; border-left-color: #A8823C }
-.triad-band-v2-p .triad-band-v2-header,
+.triad-band-v2-p .triad-band-v2-title,
 .triad-band-v2-p .triad-band-v2-note { color: #A8823C }
+/* Markör och subhead är neutralt muted i alla tre linser — grekiskan är
+   bihang till rubriken, inte färgad markör. */
+.triad-band-v2-marker,
+.triad-band-v2-subhead { color: var(--text-tertiary) }
 
 .imrad-toggle-v2 {
   display: inline-block;
@@ -2670,12 +2707,28 @@ function triadBlock(text,label,bc,bg,lc){
 // gånger per kort. AI-modelleringen står precis en gång, i footern.
 // Phronesis note säger nu var i TRIAD-modellen läsaren står (reflektiv
 // prompt, inte föreskrift) — substans, ingen brasklapp.
+// ORDER 104 (2026-08-19): rubriken är frågan, grekiskan är markör bredvid.
+// Innehållet (episteme_*/techne_*/phronesis_*-fälten) är oförändrat —
+// bara presentationen skiftar. Prompten i _shared/labeled-triad.ts och DB
+// är orörda. triadCap fanns tidigare men returnerade ALL CAPS-etikett;
+// tas bort ur bruk i förmån för triadMarker som håller Title Case ihop
+// med symbolen.
 function triadHead(key){
   return ({
-    e: 'what the research establishes',
-    t: 'how to apply in practice',
-    p: 'the situated judgment'
+    e: 'What the research found',
+    t: 'What to do with it',
+    p: "When it applies — and when it doesn't"
   })[key] || ''
+}
+function triadSubhead(key){
+  return ({
+    e: 'The finding, the evidence behind it, and how strong it is',
+    t: 'The applied move — technique, timing, workflow',
+    p: 'The limits: context, exceptions, and where your judgement takes over'
+  })[key] || ''
+}
+function triadMarker(key){
+  return key==='e' ? 'ε Episteme' : key==='t' ? 'τ Techne' : 'φ Phronesis'
 }
 function triadNote(key){
   return ({
@@ -2683,9 +2736,6 @@ function triadNote(key){
     t: '',
     p: 'Reflective prompt · not prescriptive'
   })[key] || ''
-}
-function triadCap(key){
-  return key==='e' ? 'EPISTEME' : key==='t' ? 'TECHNE' : 'PHRONESIS'
 }
 function triadSym(key){
   return key==='e' ? 'ε' : key==='t' ? 'τ' : 'φ'
@@ -3002,19 +3052,22 @@ function cardHTML(a,idx){
     <div class="card-triad-v2" style="display:${st.triad?'flex':'none'}">
       ${ep.length>10?`
       <div class="triad-band-v2 triad-band-v2-e">
-        <div class="triad-band-v2-header">${triadSym('e')} ${triadCap('e')} — ${triadHead('e')}</div>
+        <div class="triad-band-v2-header"><span class="triad-band-v2-title">${triadHead('e')}</span><span class="triad-band-v2-marker">${triadMarker('e')}</span></div>
+        <div class="triad-band-v2-subhead">${triadSubhead('e')}</div>
         <div class="triad-band-v2-body">${ep}</div>
         ${triadNote('e')?`<div class="triad-band-v2-note">${triadNote('e')}</div>`:''}
       </div>`:''}
       ${tc.length>10?`
       <div class="triad-band-v2 triad-band-v2-t">
-        <div class="triad-band-v2-header">${triadSym('t')} ${triadCap('t')} — ${triadHead('t')}</div>
+        <div class="triad-band-v2-header"><span class="triad-band-v2-title">${triadHead('t')}</span><span class="triad-band-v2-marker">${triadMarker('t')}</span></div>
+        <div class="triad-band-v2-subhead">${triadSubhead('t')}</div>
         <div class="triad-band-v2-body">${tc}</div>
         ${triadNote('t')?`<div class="triad-band-v2-note">${triadNote('t')}</div>`:''}
       </div>`:''}
       ${ph.length>10?`
       <div class="triad-band-v2 triad-band-v2-p">
-        <div class="triad-band-v2-header">${triadSym('p')} ${triadCap('p')} — ${triadHead('p')}</div>
+        <div class="triad-band-v2-header"><span class="triad-band-v2-title">${triadHead('p')}</span><span class="triad-band-v2-marker">${triadMarker('p')}</span></div>
+        <div class="triad-band-v2-subhead">${triadSubhead('p')}</div>
         <div class="triad-band-v2-body">${ph}</div>
         ${triadNote('p')?`<div class="triad-band-v2-note">${triadNote('p')}</div>`:''}
       </div>`:''}
@@ -4581,7 +4634,8 @@ window.switchArtTriad = function(key){
   // (Sonnet-genererad) och konsekvent behandlat som trusted både här och
   // i card-triad-v2, så innerHTML är precedent-korrekt.
   content.innerHTML = `
-    <div class="art-triad-headnote">${triadSym(key)} ${triadCap(key)} — ${triadHead(key)}</div>
+    <div class="art-triad-headnote"><span class="art-triad-title">${triadHead(key)}</span><span class="art-triad-marker">${triadMarker(key)}</span></div>
+    <div class="art-triad-subhead">${triadSubhead(key)}</div>
     <div class="art-triad-body">${body}</div>
     ${note?`<div class="art-triad-note">${note}</div>`:''}
   `
