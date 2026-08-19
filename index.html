@@ -760,8 +760,17 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .library-topic-group{margin-bottom:20px}
 .library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
 /* Listläge */
-.library-article-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer}
+.library-article-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer;outline:none}
 .library-article-row:last-child{border-bottom:none}
+.library-article-row[aria-expanded="true"]{background:rgba(160,138,85,.05);border-bottom:none}
+.library-article-row:focus-visible{background:rgba(160,138,85,.08)}
+/* §4 (ORDER 102) — utfällning inline. Kortmarkupen återanvänder .library-card
+   inuti containern. Ingen animation vid prefers-reduced-motion. */
+.library-article-expansion{padding:0 0 14px 22px;border-bottom:0.5px solid var(--border);animation:libraryExpand .18s ease-out}
+.library-article-expansion[hidden]{display:none}
+.library-article-expansion .library-card{margin-bottom:0;border-color:rgba(160,138,85,.25)}
+@keyframes libraryExpand{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.library-article-expansion{animation:none}}
 .library-triad-dots{display:flex;gap:3px;flex-shrink:0;padding-top:3px}
 .library-triad-dot{width:7px;height:7px;border-radius:50%}
 .library-article-title{font-size:13px;font-weight:500;color:var(--text-primary);line-height:1.4;flex:1}
@@ -5365,6 +5374,29 @@ function effectiveLibraryView(){
   return window._libraryView === 'card' ? 'card' : 'list'
 }
 function libraryEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+// §4 (ORDER 102) — endast ett kort utfällt åt gången. Toggle stänger andra
+// och öppnar den klickade (eller stänger om samma id klickas igen). Ingen
+// navigering — att lämna biblioteket motverkar poängen med att ha sparat.
+window._libraryExpandedId = null
+window.toggleLibraryExpanded = function(id){
+  const wasExpanded = window._libraryExpandedId === id
+  window._libraryExpandedId = wasExpanded ? null : id
+  document.querySelectorAll('.library-article-expansion').forEach(el => el.setAttribute('hidden',''))
+  document.querySelectorAll('.library-article-row[aria-expanded]').forEach(el => el.setAttribute('aria-expanded','false'))
+  if(!wasExpanded){
+    const sel = `[data-artid="${(window.CSS && CSS.escape) ? CSS.escape(id) : id}"]`
+    const exp = document.querySelector('.library-article-expansion' + sel)
+    if(exp) exp.removeAttribute('hidden')
+    const row = document.querySelector('.library-article-row' + sel)
+    if(row) row.setAttribute('aria-expanded','true')
+  }
+}
+function libraryRowKeydown(ev, id){
+  if(ev.key === 'Enter' || ev.key === ' '){
+    ev.preventDefault()
+    toggleLibraryExpanded(id)
+  }
+}
 
 window.renderMyLibrary = async function() {
   const pane = document.getElementById('feedPane')
@@ -5419,7 +5451,13 @@ window.renderMyLibrary = async function() {
   function renderListRow(a){
     const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
     const preview = libraryLens==='e'?ep:libraryLens==='t'?tc:libraryLens==='p'?ph:''
-    return `<div class="library-article-row" data-artid="${libraryEscape(a.id)}">
+    const id = libraryEscape(a.id)
+    const expanded = window._libraryExpandedId === a.id
+    // Kort-utfällning (§4) — samma markup som Cards-läget, hidden när collapse.
+    // Genereras för varje rad så toggle bara flippar hidden — ingen re-render
+    // och ingen re-fetch krävs.
+    const expansionInner = renderCard(a)
+    return `<div class="library-article-row" data-artid="${id}" role="button" tabindex="0" aria-expanded="${expanded?'true':'false'}" onclick="toggleLibraryExpanded('${id}')" onkeydown="libraryRowKeydown(event,'${id}')">
       <div class="library-triad-dots">
         <div class="library-triad-dot" style="background:${ep?'var(--episteme)':'var(--border)'}"></div>
         <div class="library-triad-dot" style="background:${tc?'var(--techne)':'var(--border)'}"></div>
@@ -5430,8 +5468,9 @@ window.renderMyLibrary = async function() {
         <div class="library-article-meta">${libraryEscape(a.journal||'')} · ${libraryEscape(a.year||'')}</div>
         ${preview?`<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.5;font-style:italic">${libraryEscape(preview.slice(0,150))}…</div>`:''}
       </div>
-      <button class="library-unsave" onclick="event.stopPropagation();toggleSaveArticle('${libraryEscape(a.id)}',null).then(()=>renderMyLibrary())">× Remove</button>
-    </div>`
+      <button class="library-unsave" onclick="event.stopPropagation();toggleSaveArticle('${id}',null).then(()=>renderMyLibrary())">× Remove</button>
+    </div>
+    <div class="library-article-expansion" data-artid="${id}"${expanded?'':' hidden'}>${expansionInner}</div>`
   }
 
   function renderCard(a){
