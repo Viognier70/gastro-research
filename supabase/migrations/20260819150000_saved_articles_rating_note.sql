@@ -1,0 +1,68 @@
+-- =============================================================================
+-- saved_articles — lägg rating, note, updated_at (2026-08-19, ORDER 102 §2)
+-- =============================================================================
+-- APPLICERA MANUELLT I SQL-EDITORN — INTE via `supabase db push`.
+-- (Augusti-migrationerna är körda mot databasen men saknas i
+-- schema_migrations. En push skulle försöka köra om dem. Se ORDER 091 §8.)
+--
+-- BAKGRUND (ORDER 102 §2):
+--
+--   saved_articles har idag kolumnerna id, user_id, article_id, saved_at
+--   (verifierat via anon-probe 2026-08-19: rating/note/updated_at
+--   returnerar HTTP 400 "column ... does not exist").
+--
+--   My Library ska stödja rating, anteckningar, senast-uppdaterat-tid.
+--
+-- DESIGNVAL:
+--
+--   * rating smallint, nullable, CHECK 1..5.
+--     Null tills användaren sätter den. Noll och "ingen rating" är inte
+--     samma sak — ett NOT NULL DEFAULT 0 skulle göra osatta artiklar
+--     till noll-stjärniga i sortering och export. Osatta ska hamna sist
+--     vid rating-sortering (nulls last), inte i botten som 0-stjärniga.
+--
+--   * note text, nullable, INGEN längd-check.
+--     500-tecken-gränsen finns i frontend (§5) så vi kan justera utan
+--     migration.
+--
+--   * updated_at timestamptz DEFAULT now().
+--     Skrivs vid rating/note-ändring från frontend. Ingen trigger — vi
+--     styr semantiken från applikationen (saved_at ändras aldrig efter
+--     första inserten, updated_at ändras vid metadata-uppdatering).
+--
+-- RLS:
+--
+--   Befintlig policy "Users can manage own saved articles" är FOR ALL
+--   med qual auth.uid() = user_id och without_check=null (fall tillbaka
+--   på qual). Kolumn-agnostisk — täcker automatiskt de nya kolumnerna.
+--   Ingen policy-ändring behövs.
+--
+--   (Skör-punkter i policyn — roles={public}, with_check=null —
+--   dokumenterade i 20260819140000_saved_articles_rls_current_state.sql.
+--   Adressas inte här.)
+--
+-- VERIFIERING EFTER APPLICERING:
+--
+--   -- Nya kolumner finns
+--   SELECT column_name, data_type, is_nullable, column_default
+--     FROM information_schema.columns
+--    WHERE table_schema='public' AND table_name='saved_articles'
+--      AND column_name IN ('rating','note','updated_at');
+--   -- expected: tre rader
+--
+--   -- CHECK-constrainten är på plats
+--   SELECT conname, pg_get_constraintdef(oid)
+--     FROM pg_constraint
+--    WHERE conrelid='public.saved_articles'::regclass
+--      AND conname LIKE '%rating%';
+--   -- expected: rating IS NULL OR (rating >= 1 AND rating <= 5)
+--
+--   -- Anon kan fortfarande inte skriva (RLS oförändrad)
+--   -- POST /rest/v1/saved_articles → 401 permission denied
+-- =============================================================================
+
+ALTER TABLE public.saved_articles
+  ADD COLUMN IF NOT EXISTS rating smallint
+    CHECK (rating IS NULL OR rating BETWEEN 1 AND 5),
+  ADD COLUMN IF NOT EXISTS note text,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
