@@ -1563,7 +1563,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <div id="dpTooltip" style="display:none;position:absolute;background:#0e0d0b;border:0.5px solid rgba(201,168,76,.2);border-radius:6px;padding:8px 10px;font-size:11px;color:rgba(255,255,255,.7);max-width:200px;z-index:10000;line-height:1.5;pointer-events:none;"></div>
       </div>
     </div>
-    <div id="authArea"><button class="auth-btn" onclick="openModal('authModal')" id="authBtn">A</button></div>
+    <!-- #authArea är tomt när utloggad — Sign in ligger i nav-raden (§5).
+         renderAuthArea populerar med avatar + greeting när inloggad. -->
+    <div id="authArea"></div>
   </div>
 
   <!-- Rad 1: logo + wordmark, centrerat. Klick → scrolla top. -->
@@ -1586,7 +1588,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <span class="nav-sep">·</span>
     <button class="app-nav-tab" data-view="map" onclick="showView('map')" role="tab" aria-selected="false" aria-controls="view-map">Map</button>
     <span class="nav-sep">·</span>
-    <button class="app-nav-tab app-nav-signin" onclick="openModal('authModal')">Sign in</button>
+    <button id="navSignInBtn" class="app-nav-tab app-nav-signin" onclick="openModal('authModal')">Sign in</button>
   </nav>
 </header>
 
@@ -3613,8 +3615,12 @@ async function handleAuth(){
   closeModal('authModal')
   const {data:{session}}=await sb.auth.getSession()
   if(session){
-    const btn=document.getElementById('authBtn')
-    if(btn){btn.textContent=session.user.email.slice(0,1).toUpperCase();btn.style.background='var(--gold)';btn.style.color='#000'}
+    // Kör initAuth istället för att modda authBtn manuellt — då körs hela
+    // auth-UI-syncen: utility-slot får avatar, nav-radens Sign in döljs,
+    // profil laddas, trial/pro-tillstånd sätts. Tidigare direktupdate av
+    // #authBtn gjorde bara utility-knappen guldig men lämnade nav
+    // Sign-in-knappen synlig efter login (ORDER 095 §1).
+    initAuth()
     loadSavedArticles()
     // Skriv display_name till profilen om vi har ett väntande värde (t.ex. vid signin utan bekräftelse-mail eller efter e-postverifiering).
     await persistPendingDisplayName(session)
@@ -3744,6 +3750,9 @@ async function initAuth(){
       }catch(_){}
     }
     renderAuthArea(session, displayName, initial)
+    // Nav-radens Sign in döljs när inloggad — utility slot äger auth-UI då.
+    const navSignIn = document.getElementById('navSignInBtn')
+    if(navSignIn) navSignIn.style.display = 'none'
     await loadSavedArticles()
     // Om användaren startade trial-flödet innan konto/verifiering: kör start_trial nu.
     // Detta kan i sin tur re-kalla initAuth via doStartTrial; flaggan rensas först
@@ -3803,6 +3812,11 @@ async function initAuth(){
     window._isProDb = false
     window._trialEndsAt = null
     window._trialUsed = false
+    // Nav-radens Sign in synlig, utility-slot tom. Säkerhet vid signout
+    // eller re-init där session försvinner.
+    const area = document.getElementById('authArea'); if(area) area.innerHTML = ''
+    const navSignIn = document.getElementById('navSignInBtn')
+    if(navSignIn) navSignIn.style.display = ''
   }
   updateFreeBar()
 }
