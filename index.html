@@ -1001,8 +1001,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .knowledge-card.episteme{background:var(--episteme-light);border-left:3px solid var(--episteme)}
 .knowledge-card.techne{background:var(--techne-light);border-left:3px solid var(--techne)}
 .knowledge-card.phronesis{background:var(--phronesis-light);border-left:3px solid var(--phronesis)}
-.kc-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.kc-title{font-size:13px;font-weight:600;margin-bottom:4px}
 .kc-title.episteme{color:var(--episteme)}.kc-title.techne{color:var(--techne)}.kc-title.phronesis{color:var(--phronesis)}
+.kc-subhead{font-size:13px;color:var(--text-tertiary);line-height:1.5}
+/* .kc-greek + .kc-text ligger kvar för framtida bruk men används inte längre
+   i modalen — modell-detaljerna flyttade till foundation-sidan (ORDER 3). */
 .kc-greek{font-size:11px;color:var(--text-tertiary);margin-bottom:8px;font-style:italic}
 .kc-text{font-size:12px;color:var(--text-secondary);line-height:1.7}
 .auth-form input{width:100%;border:0.5px solid var(--border-mid);border-radius:8px;padding:10px 14px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:10px;outline:none}
@@ -2147,7 +2150,10 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:8px;font-style:italic">Aristotelian forms of knowledge and the Double Grip</p>
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:24px;font-weight:300">The TRIAD model applies Aristotle's three forms of knowledge to culinary and hospitality practice — forming a developmental hierarchy toward professional mastery. Every article in this library is translated into all three levels for your profession.</p>
 
-    <!-- TRIAD TRIANGLE -->
+    <!-- TRIAD TRIANGLE — etiketterna är de tre frågorna som TRIAD-vyn ställer.
+         Modell-begreppen (sensory realisation / practical orchestration /
+         symbolic framing) och Double Grip flyttade till foundation-sidan
+         per ORDER 3 (2026-08-19). Trianglens form behållen. -->
     <div style="background:#0C0B09;border-radius:10px;padding:24px 16px;margin-bottom:24px;display:flex;justify-content:center">
       <svg viewBox="0 0 500 380" style="width:100%;max-width:480px" xmlns="http://www.w3.org/2000/svg">
         <polygon points="250,18 128,218 372,218" fill="#1B3A2D"/>
@@ -2157,50 +2163,46 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <line x1="250" y1="18" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
         <line x1="22" y1="378" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
         <line x1="478" y1="378" x2="250" y2="218" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
-        <circle cx="250" cy="228" r="52" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.2"/>
-        <text x="250" y="216" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">THE DOUBLE</text>
-        <text x="250" y="228" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" fill="#C9A84C" letter-spacing="1.5">GRIP</text>
-        <path d="M224,242 C224,236 232,232 240,238 C248,244 252,244 260,238 C268,232 276,236 276,242 C276,248 268,252 260,246 C252,240 248,240 240,246 C232,252 224,248 224,242Z" fill="none" stroke="#C9A84C" stroke-width="1.3"/>
-        <text x="237" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">ANALYSIS</text>
-        <text x="263" y="258" text-anchor="middle" font-family="Outfit,sans-serif" font-size="6.5" fill="rgba(255,255,255,0.5)">EXPERIENCE</text>
-        <text x="250" y="65" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">1.</text>
-        <text x="250" y="82" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">SENSORY REALISATION</text>
-        <text x="250" y="97" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Phronesis)</text>
-        <text x="250" y="113" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.65)">Taste · smell · sound · texture · aesthetic balance</text>
+        <!-- Central visuell markör (utan text — "double grip"-namnet på metod-sidan). -->
+        <circle cx="250" cy="228" r="40" fill="#0C0B09" stroke="#C9A84C" stroke-width="1.2" opacity="0.6"/>
+        <!-- Toppen: Phronesis-frågan -->
+        <text x="250" y="55" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">1.</text>
+        <text x="250" y="82" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">When it applies —</text>
+        <text x="250" y="99" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">and when it doesn't</text>
+        <text x="250" y="118" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="rgba(201,168,76,0.65)">φ Phronesis</text>
+        <!-- Vänster: Techne-frågan -->
         <text x="136" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">2.</text>
-        <text x="136" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">PRACTICAL</text>
-        <text x="136" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">ORCHESTRATION</text>
-        <text x="136" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Techne)</text>
-        <text x="136" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Cooking · service · workflows</text>
+        <text x="136" y="292" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">What to do with it</text>
+        <text x="136" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="rgba(201,168,76,0.65)">τ Techne</text>
+        <!-- Höger: Episteme-frågan -->
         <text x="364" y="268" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C" letter-spacing="1">3.</text>
-        <text x="364" y="283" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">SYMBOLIC</text>
-        <text x="364" y="297" text-anchor="middle" font-family="Playfair Display,serif" font-size="12" font-weight="700" fill="#fff">FRAMING</text>
-        <text x="364" y="311" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#C9A84C">(Episteme)</text>
-        <text x="364" y="325" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.65)">Rituals · identity · hospitality</text>
-        <text x="250" y="372" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#C9A84C" letter-spacing="0.5">Episteme isolates · Techne realises · Phronesis integrates</text>
+        <text x="364" y="288" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">What the research</text>
+        <text x="364" y="305" text-anchor="middle" font-family="Playfair Display,serif" font-size="13" font-weight="700" fill="#fff">found</text>
+        <text x="364" y="323" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="rgba(201,168,76,0.65)">ε Episteme</text>
       </svg>
     </div>
 
+    <!-- Rubriker + utökade rader — samma text som TRIAD-vyn (triadHead +
+         triadSubhead från Order 104). Ordning: matchar triangelns nummer
+         (Phronesis→Techne→Episteme). -->
     <div class="knowledge-card phronesis">
-      <div class="kc-title phronesis">1. Sensory realisation — Phronesis · φρόνησις</div>
-      <div class="kc-greek">The situated judgment — where knowledge becomes lived truth</div>
-      <div class="kc-text">The apex and integration principle. Phronesis is the aesthetic and ethical wisdom to act well in a specific, unrepeatable situation — knowing when the dish is ready, when the wine is right for this guest, when the room calls for silence. It is not a third option alongside Episteme and Techne. It is what gives the other two their meaning. The Double Grip — moving between "What is in the glass?" (analytical) and "What does this evoke?" (analogical) — is Phronesis in action.</div>
+      <div class="kc-title phronesis">1. When it applies — and when it doesn't</div>
+      <div class="kc-subhead">The limits: context, exceptions, and where your judgement takes over</div>
     </div>
     <div class="knowledge-card techne">
-      <div class="kc-title techne">2. Practical orchestration — Techne · τέχνη</div>
-      <div class="kc-greek">The executing know-how — where knowledge becomes action</div>
-      <div class="kc-text">Craft knowledge that lives in the body and hands. Cannot be learned from textbooks alone — it requires practice, repetition and feedback. Techne mediates between theory and wisdom: the trained skill that makes analytical knowledge actionable, and experiential judgment repeatable. Service, temperature, glassware, sensory protocols, training methods.</div>
+      <div class="kc-title techne">2. What to do with it</div>
+      <div class="kc-subhead">The applied move — technique, timing, workflow</div>
     </div>
     <div class="knowledge-card episteme">
-      <div class="kc-title episteme">3. Symbolic framing — Episteme · ἐπιστήμη</div>
-      <div class="kc-greek">The analytical knowing — where knowledge becomes concept and structure</div>
-      <div class="kc-text">The foundation — universal, provable, teachable knowledge. Episteme isolates and describes: flavour chemistry, sensory physiology, hospitality theory, the IMRaD structure. Every professional begins here. But mastery cannot end here. Acidity level, tannin structure, aroma categories, QDA, classifications.</div>
+      <div class="kc-title episteme">3. What the research found</div>
+      <div class="kc-subhead">The finding, the evidence behind it, and how strong it is</div>
     </div>
 
-    <div style="background:rgba(201,168,76,.08);border:0.5px solid rgba(201,168,76,.2);border-radius:6px;padding:14px 16px;margin-top:8px;font-size:12px;color:var(--text-secondary);line-height:1.8">
-      <strong style="color:var(--gold)">The Double Grip</strong><br>
-      The oscillation between "What is in the glass?" (Episteme) and "What does this evoke?" (Phronesis), enabled by Techne. The mark of professional mastery is fluency in both directions — simultaneously analytical and experiential.<br>
-      <em style="font-size:11px;color:var(--text-tertiary)">Crichton-Fock & Spence (2024) · Herdenstam (2011, 2024) · Aristotle (trans. 2000)</em>
+    <!-- Länk till metod-sidan där modellbegreppen bor (Aristoteles-forms,
+         svenska begrepp, dubbla greppet, referenser). -->
+    <div style="margin-top:20px;padding-top:16px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text-secondary);line-height:1.7">
+      These three come from a model of professional knowledge.
+      <a href="/foundation.html#the-model" style="color:var(--gold);text-decoration:none;font-weight:500;margin-left:6px">→ How TRIAD reads a paper</a>
     </div>
   </div>
 </div>
