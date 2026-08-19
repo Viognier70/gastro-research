@@ -1,0 +1,105 @@
+-- =============================================================================
+-- uq_articles_url — partial → full unique index (2026-08-19)
+-- =============================================================================
+-- REDAN APPLICERAD MANUELLT 2026-08-19. Filen finns för git-paritet.
+-- KÖR INTE OM.
+--
+-- ⚠️  FÖRVÄXLA INTE med 20260806160000_drop_articles_title_unique.sql.
+--     Den migrationen droppar ett HELT ANNAT index:
+--       idx_articles_title_unique (unique på articles.title)
+--     Denna migration handlar om:
+--       uq_articles_url          (unique på articles.url)
+--     Olika kolumner, olika bakgrunder, olika beslut. Läs headers innan
+--     du refererar till dem.
+--
+-- BAKGRUND (Anders' manuella fix 2026-08-19):
+--
+--   uq_articles_url skapades 2026-08-02 (migration 20260802120000) som ett
+--   PARTIAL unique index:
+--
+--     create unique index concurrently uq_articles_url
+--       on public.articles (url) where url is not null;
+--
+--   Partial-varianten var vald eftersom NULL-urls (openalex-rader utan DOI,
+--   källor som inte returnerar länk) skulle förbli tillåtna i valfri mängd
+--   — NULL har inget att kollidera på semantiskt.
+--
+--   Kollateralt problem: daily-fetch/saveArticle använder
+--
+--     .upsert(row, { onConflict: 'url', ignoreDuplicates: true })
+--
+--   PostgREST matchar onConflict-hint mot befintliga unique constraints
+--   och index via pg_constraint / pg_index. Ett PARTIAL unique index (med
+--   WHERE-predikat) kvalificerar sig INTE som en onConflict-target eftersom
+--   ON CONFLICT-syntaxen kräver en index_predicate som exakt matchar
+--   partial-predikatet — och PostgREST har ingen hint-syntax för det.
+--
+--   Symptom: daily-fetch tystade sina upserts. Ingen insert skedde, ingen
+--   explicit error rullade upp till skippedDuplicate-räknaren.
+--
+--   Verifierat i prod 2026-08-19: senaste artikel sparad före fixen var
+--   2026-05-11 — samma dag som uq_articles_url tros ha aktiverats som
+--   partial (fast migrationen dateras 2026-08-02, hänvisar troligen till
+--   en ansträngning som började tidigare eller ett indexeringsfönster
+--   spårat separat).
+--
+-- LÖSNING (redan applicerad):
+--
+--   Droppa partial-varianten, återskapa som FULL unique index utan
+--   WHERE-clause:
+--
+--     drop index uq_articles_url;
+--     create unique index uq_articles_url on public.articles (url);
+--
+--   Postgres tillåter flera NULL-värden i en unique constraint by default
+--   (NULLs är inte lika mot varandra i unique-semantik), så full-varianten
+--   bevarar samma egenskap som partial-varianten hade önskat: flera NULL
+--   urls tillåtna, deduplicering på faktiska url-strängar.
+--
+--   Efter fix: PostgREST kan nu matcha onConflict:'url' → upsert fungerar.
+--
+-- VERIFIERAT EFTER FIX:
+--
+--   - 10 nya artiklar sparade första körningen (första sedan 11 maj).
+--   - Ingen doi-dubblett i den sparade batchen.
+--   - daily-fetch skippedDuplicate rapporterar korrekt.
+--
+-- OM DU KÖR OM MOT NY MILJÖ:
+--   drop index if exists uq_articles_url;
+--   create unique index uq_articles_url on public.articles (url);
+--
+--   OBS: CREATE UNIQUE INDEX utan CONCURRENTLY tar en ACCESS EXCLUSIVE lock
+--   på tabellen. På 466k+ rader kan det ta några sekunder och blockera
+--   pågående writes. Alternativt:
+--   create unique index concurrently uq_articles_url on public.articles (url);
+--   (får inte köras i en transaktion, alltså inte via supabase db push).
+-- =============================================================================
+
+-- Historisk not: nedanstående kommandon är REDAN körda manuellt 2026-08-19.
+-- Om du replayar mot en tom bas ta bort kommentar-prefix.
+
+-- drop index if exists public.uq_articles_url;
+-- create unique index uq_articles_url on public.articles (url);
+
+
+-- =============================================================================
+-- Verifiering (körd 2026-08-19 efter apply):
+--
+--   -- Index finns och är FULL (ingen WHERE-clause i indexdef)?
+--   select indexname, indexdef
+--     from pg_indexes
+--    where schemaname='public' and tablename='articles'
+--      and indexname='uq_articles_url';
+--   -- expected: indexdef har INGEN "WHERE ..." — bara USING btree (url)
+--
+--   -- Inga kvarvarande dubbletter?
+--   select url, count(*) c
+--     from public.articles
+--    where url is not null
+--    group by url
+--   having count(*) > 1;
+--   -- expected: 0 rader
+--
+--   -- daily-fetch upsert fungerar (POST /rest/v1/rpc/... eller manuell test)
+--   -- expected: 10 nya rader sparade, första sedan 2026-05-11.
+-- =============================================================================
