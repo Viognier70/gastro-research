@@ -81,9 +81,16 @@ type Article = {
   abstract: string
   year: string | null
   topic: string | null
-  doi: string | null
-  bucket: string      // vilket urvals-kriterium den valdes för
-  why: string         // kort motivering
+  url: string | null   // DOI lever här som https://doi.org/<doi> — det finns ingen `doi`-kolumn
+  bucket: string       // vilket urvals-kriterium den valdes för
+  why: string          // kort motivering
+}
+
+// DOI extraherad ur url. Returnerar tom sträng om inte en doi.org-url.
+function doiFromUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  const m = /^https?:\/\/(?:dx\.)?doi\.org\/(.+)$/i.exec(url.trim())
+  return m ? m[1] : ''
 }
 
 type Generation = {
@@ -141,11 +148,15 @@ function pickOne<T>(pool: T[], used: Set<string>, key: (x: T) => string): T | nu
 }
 
 async function selectArticles(): Promise<Article[]> {
-  console.log('[urval] hämtar bulk från public.articles (service_role, id,title,abstract,year,topic,doi)…')
+  console.log('[urval] hämtar bulk från public.articles (service_role, id,title,abstract,year,topic,url)…')
   // Läs en generös bulk att filtrera från. Bara med icke-tomt abstract.
   // Slumpmässig ordning så inte alltid samma toppartiklar plockas.
+  //
+  // OBS: kolumnen är `url` (inte `doi`). DOI extraheras via doiFromUrl().
+  // Läser dessutom specifikt DOI-artikeln separat (url=ilike) så den fyller
+  // sin bucket även om den råkar hamna utanför de första 2000 raderna.
   const bulk = await sbSelect(
-    `${SB_URL}/rest/v1/articles?select=id,title,abstract,year,topic,doi`
+    `${SB_URL}/rest/v1/articles?select=id,title,abstract,year,topic,url`
     + `&abstract=not.is.null&title=not.is.null&order=id&limit=2000`
   )
   console.log(`[urval] ${bulk.length} kandidater lästa`)
@@ -156,8 +167,17 @@ async function selectArticles(): Promise<Article[]> {
   const picked: Article[] = []
   const used = new Set<string>()
 
-  // Bucket 1: specifik DOI (fyll först, om den finns)
-  const specific = bulk.find(a => (a.doi || '').toLowerCase() === SPECIFIC_DOI.toLowerCase())
+  // Bucket 1: specifik DOI (fyll först, om den finns). Först: kolla om
+  // artikeln råkar ligga i bulk-samplet. Om inte, hämta separat via
+  // url=ilike (dubbeltäck så vi garanterat får den).
+  let specific = bulk.find(a => doiFromUrl(a.url).toLowerCase() === SPECIFIC_DOI.toLowerCase())
+  if (!specific) {
+    const extra = await sbSelect(
+      `${SB_URL}/rest/v1/articles?select=id,title,abstract,year,topic,url`
+      + `&url=ilike.%2A${encodeURIComponent(SPECIFIC_DOI)}%2A&abstract=not.is.null&limit=1`
+    ).catch(() => [])
+    if (extra.length) specific = extra[0]
+  }
   if (specific) {
     used.add(specific.id)
     picked.push({...specific, bucket:'specific-doi', why:`DOI = ${SPECIFIC_DOI} (the imitation game)`})
@@ -315,7 +335,8 @@ async function main() {
     lines.push(`## ${i+1}. ${a.title}`)
     lines.push('')
     lines.push(`- **id:** \`${a.id}\``)
-    lines.push(`- **doi:** ${a.doi || '_(saknas)_'}`)
+    const doi = doiFromUrl(a.url)
+    lines.push(`- **doi:** ${doi || '_(url inte doi.org)_'}${a.url ? ` · **url:** ${a.url}` : ''}`)
     lines.push(`- **year:** ${a.year || '_(saknas)_'} · **topic:** ${a.topic || '_(saknas)_'}`)
     lines.push(`- **bucket:** ${a.bucket} — ${a.why}`)
     lines.push('')
