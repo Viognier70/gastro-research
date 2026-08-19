@@ -2109,12 +2109,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
     <div class="modal-eyebrow">Gusto Science</div>
     <div class="modal-title" id="authTitle">Sign in</div>
-    <div class="auth-form" id="authForm">
-      <input type="text" id="authName" placeholder="Your name (e.g. Dr. Crichton-Fock)" style="display:none">
-      <input type="email" id="authEmail" placeholder="Email address">
-      <input type="password" id="authPassword" placeholder="Password">
-      <button onclick="handleAuth()">Sign in</button>
-    </div>
+    <form class="auth-form" id="authForm" onsubmit="event.preventDefault();handleAuth();return false">
+      <input type="text" id="authName" name="name" autocomplete="name" placeholder="Your name (e.g. Dr. Crichton-Fock)" style="display:none">
+      <input type="email" id="authEmail" name="email" autocomplete="email" placeholder="Email address">
+      <input type="password" id="authPassword" name="password" autocomplete="current-password" placeholder="Password">
+      <button type="submit">Sign in</button>
+    </form>
     <div class="auth-switch" id="authSwitch">No account? <span onclick="toggleAuthMode()">Create one</span></div>
   </div>
 </div>
@@ -3578,16 +3578,21 @@ window.toggleAuthMode=function(){
   const btn=document.querySelector('#authForm button')
   const sw=document.getElementById('authSwitch')
   const nameInput=document.getElementById('authName')
+  // Lösenordshanterare behöver rätt autocomplete-hint per mode: signup =
+  // new-password (be inte om aktuellt), signin = current-password.
+  const pwInput=document.getElementById('authPassword')
   if(authMode==='signup'){
     if(title)title.textContent='Create account'
     if(btn)btn.textContent='Create account'
     if(sw)sw.innerHTML='Already have an account? <span onclick="toggleAuthMode()">Sign in</span>'
     if(nameInput) nameInput.style.display=''
+    if(pwInput) pwInput.setAttribute('autocomplete','new-password')
   }else{
     if(title)title.textContent='Sign in'
     if(btn)btn.textContent='Sign in'
     if(sw)sw.innerHTML='No account? <span onclick="toggleAuthMode()">Create one</span>'
     if(nameInput) nameInput.style.display='none'
+    if(pwInput) pwInput.setAttribute('autocomplete','current-password')
   }
 }
 
