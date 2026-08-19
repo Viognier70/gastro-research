@@ -5764,11 +5764,22 @@ window.renderMyLibrary = async function() {
   const epCol = 'episteme_'+dbRole, tcCol = 'techne_'+dbRole, phCol = 'phronesis_'+dbRole
 
   // url + authors + doi tillagda i select (§8 export).
-  const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year,url,authors,doi&id=in.(${ids.join(',')})`, {
-    headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
-  })
-  const arts = await resp.json()
-  if(!Array.isArray(arts)) return
+  // ORDER 106 (2026-08-19): bytt från rå fetch till sb.from(). Rå fetch
+  // med ?id=in.(uuid1,...uuidN) triggade 400 "No API key found in request"
+  // när användaren hade många sparade artiklar — Cloudflare framför
+  // Supabase klipper URL:en vid ~4-8KB, och när URL-linjen trunkeras
+  // ser servern inte längre apikey-headern. Klienten hanterar långa
+  // .in()-filter genom att automatiskt batcha och alltid injicera
+  // apikey + Authorization: Bearer <session-jwt eller anon>.
+  const { data: arts, error: artsErr } = await sb
+    .from('articles_public')
+    .select('id,title,headline_en,topic,journal,year,url,authors,doi')
+    .in('id', ids)
+  if(artsErr || !Array.isArray(arts)) {
+    if(artsErr) console.warn('[library] articles_public fetch failed', artsErr)
+    pane.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-tertiary);font-size:12px">Could not load your library — try again in a moment.</div>'
+    return
+  }
   await enrichWithPremiumIfPro(arts)
   // Cache:a för §8-export — knappen anropar libraryExportCsv/Bib utan re-fetch.
   window._libraryArts = arts
