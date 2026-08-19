@@ -744,22 +744,44 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .my-library-wrap{background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
 .library-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .library-title{font-size:14px;font-weight:500;color:var(--text-primary);font-family:'Playfair Display',serif}
+.library-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .library-filters{display:flex;gap:6px;flex-wrap:wrap}
 .library-filter-btn{font-size:10px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border-mid);background:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-tertiary);transition:all .15s}
 .library-filter-btn.on{background:var(--black);color:var(--white);border-color:var(--black)}
 .library-filter-btn.e-on{background:var(--episteme);color:#fff;border-color:var(--episteme)}
 .library-filter-btn.t-on{background:var(--techne);color:#fff;border-color:var(--techne)}
 .library-filter-btn.p-on{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
+/* §3 (ORDER 102) — vy-växling lista/kort. Under 480px tvingas lista via
+   media query som gömmer card-toggle-knappen — koden re-läser val från
+   effectiveView() vid varje render. */
+.library-view-toggle{display:inline-flex;border:0.5px solid var(--border-mid);border-radius:20px;overflow:hidden}
+.library-view-toggle button{font-size:10px;padding:3px 10px;background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-tertiary);transition:background .15s}
+.library-view-toggle button.on{background:var(--black);color:var(--white)}
 .library-topic-group{margin-bottom:20px}
 .library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
+/* Listläge */
 .library-article-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer}
 .library-article-row:last-child{border-bottom:none}
 .library-triad-dots{display:flex;gap:3px;flex-shrink:0;padding-top:3px}
 .library-triad-dot{width:7px;height:7px;border-radius:50%}
 .library-article-title{font-size:13px;font-weight:500;color:var(--text-primary);line-height:1.4;flex:1}
 .library-article-meta{font-size:10px;color:var(--text-tertiary);margin-top:3px}
-.library-unsave{font-size:10px;color:var(--text-tertiary);cursor:pointer;flex-shrink:0;padding:2px 6px;border-radius:10px;border:0.5px solid var(--border)}
+.library-unsave{font-size:10px;color:var(--text-tertiary);cursor:pointer;flex-shrink:0;padding:2px 6px;border-radius:10px;border:0.5px solid var(--border);background:none;font-family:'Outfit',sans-serif}
 .library-unsave:hover{color:var(--text-primary);border-color:var(--border-mid)}
+/* Kortläge */
+.library-card{border:0.5px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px;background:var(--white)}
+.library-card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+.library-card-title{font-size:14px;font-weight:500;color:var(--text-primary);line-height:1.4;flex:1;font-family:'Playfair Display',serif}
+.library-card-meta{font-size:11px;color:var(--text-tertiary);margin-bottom:10px}
+.library-card-triad{font-size:12px;color:var(--text-secondary);line-height:1.6;font-style:italic;margin-bottom:10px}
+.library-card-triad-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--episteme);margin-right:6px;font-style:normal}
+.library-card-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)}
+.library-card-paper{font-size:11px;color:var(--gusto-gold-dark,#836428);text-decoration:none;padding:4px 10px;border:0.5px solid var(--border-mid);border-radius:20px;font-family:'Outfit',sans-serif}
+.library-card-paper:hover{border-color:var(--gusto-gold,#A08A55)}
+@media (max-width:480px){
+  .library-view-toggle{display:none}
+  .library-card{padding:12px 14px}
+}
 .semantic-search-wrap{background:linear-gradient(135deg,rgba(26,58,92,.08),rgba(45,80,22,.05));border:0.5px solid rgba(201,168,76,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px}
 .semantic-search-label{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .semantic-search-input{width:100%;border:0.5px solid var(--border-mid);border-radius:6px;padding:10px 14px;font-size:13px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-primary);outline:none;box-sizing:border-box}
@@ -5328,6 +5350,22 @@ window.__askScrollToSource = function(rid, ref) {
   setTimeout(() => { el.style.background = orig || '' }, 1200)
 }
 
+// ORDER 102 §3: vy-växling lista/kort. Val i localStorage per enhet.
+// Under 480px tvingas listläge (kort blir oläsligt på mobil).
+window._libraryView = localStorage.getItem('gs_library_view') || 'list'  // 'list'|'card'
+window.setLibraryView = function(mode){
+  window._libraryView = mode
+  try { localStorage.setItem('gs_library_view', mode) } catch(_) {}
+  renderMyLibrary()
+}
+function effectiveLibraryView(){
+  // Mobil-tvång — kort tvingas till list under 480px. Val i localStorage
+  // överlever men respekteras inte förrän viewporten är bred nog.
+  if(window.matchMedia && window.matchMedia('(max-width:480px)').matches) return 'list'
+  return window._libraryView === 'card' ? 'card' : 'list'
+}
+function libraryEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
 window.renderMyLibrary = async function() {
   const pane = document.getElementById('feedPane')
   if(!pane) return
@@ -5351,7 +5389,8 @@ window.renderMyLibrary = async function() {
   const dbRole = window.role && window.role !== 'all' ? toDbRole(window.role) : 'sensory_pro'
   const epCol = 'episteme_'+dbRole, tcCol = 'techne_'+dbRole, phCol = 'phronesis_'+dbRole
 
-  const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year&id=in.(${ids.join(',')})`, {
+  // url tillagd i select — behövs för Full paper-länk i kortläget (§3).
+  const resp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,topic,journal,year,url&id=in.(${ids.join(',')})`, {
     headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
   })
   const arts = await resp.json()
@@ -5366,44 +5405,79 @@ window.renderMyLibrary = async function() {
     groups[t].push(a)
   })
 
-  // Render
   const libraryLens = window._libraryLens || 'all'
+  const view = effectiveLibraryView()
+
+  function passesLens(a){
+    const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
+    if(libraryLens==='e' && !ep) return false
+    if(libraryLens==='t' && !tc) return false
+    if(libraryLens==='p' && !ph) return false
+    return true
+  }
+
+  function renderListRow(a){
+    const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
+    const preview = libraryLens==='e'?ep:libraryLens==='t'?tc:libraryLens==='p'?ph:''
+    return `<div class="library-article-row" data-artid="${libraryEscape(a.id)}">
+      <div class="library-triad-dots">
+        <div class="library-triad-dot" style="background:${ep?'var(--episteme)':'var(--border)'}"></div>
+        <div class="library-triad-dot" style="background:${tc?'var(--techne)':'var(--border)'}"></div>
+        <div class="library-triad-dot" style="background:${ph?'#2d6a4f':'var(--border)'}"></div>
+      </div>
+      <div style="flex:1">
+        <div class="library-article-title">${libraryEscape(a.headline_en||a.title?.slice(0,100)||'')}</div>
+        <div class="library-article-meta">${libraryEscape(a.journal||'')} · ${libraryEscape(a.year||'')}</div>
+        ${preview?`<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.5;font-style:italic">${libraryEscape(preview.slice(0,150))}…</div>`:''}
+      </div>
+      <button class="library-unsave" onclick="event.stopPropagation();toggleSaveArticle('${libraryEscape(a.id)}',null).then(()=>renderMyLibrary())">× Remove</button>
+    </div>`
+  }
+
+  function renderCard(a){
+    const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
+    // Episteme först per §3-spec. Fall tillbaka på τ eller φ om ε saknas.
+    const triadShown = ep || tc || ph
+    const triadLabel = ep ? 'ε Episteme' : tc ? 'τ Techne' : ph ? 'φ Phronesis' : ''
+    return `<div class="library-card" data-artid="${libraryEscape(a.id)}">
+      <div class="library-card-head">
+        <div class="library-card-title">${libraryEscape(a.headline_en||a.title?.slice(0,140)||'')}</div>
+      </div>
+      <div class="library-card-meta">${libraryEscape(a.journal||'')} · ${libraryEscape(a.year||'')}</div>
+      ${triadShown?`<div class="library-card-triad"><span class="library-card-triad-label">${triadLabel}</span>${libraryEscape(triadShown.slice(0,320))}${triadShown.length>320?'…':''}</div>`:''}
+      <div class="library-card-actions">
+        ${a.url?`<a class="library-card-paper" href="${libraryEscape(a.url)}" target="_blank" rel="noopener">Full paper ↗</a>`:''}
+        <button class="library-unsave" onclick="toggleSaveArticle('${libraryEscape(a.id)}',null).then(()=>renderMyLibrary())">× Remove</button>
+      </div>
+    </div>`
+  }
+
+  const renderItem = view === 'card' ? renderCard : renderListRow
 
   pane.innerHTML = `<div class="my-library-wrap">
     <div class="library-header">
       <div class="library-title">My Library · ${arts.length} articles</div>
-      <div class="library-filters">
-        <button class="library-filter-btn${libraryLens==='all'?' on':''}" onclick="window._libraryLens='all';renderMyLibrary()">All</button>
-        <button class="library-filter-btn${libraryLens==='e'?' e-on':''}" onclick="window._libraryLens='e';renderMyLibrary()">ε Episteme</button>
-        <button class="library-filter-btn${libraryLens==='t'?' t-on':''}" onclick="window._libraryLens='t';renderMyLibrary()">τ Techne</button>
-        <button class="library-filter-btn${libraryLens==='p'?' p-on':''}" onclick="window._libraryLens='p';renderMyLibrary()">φ Phronesis</button>
+      <div class="library-toolbar">
+        <div class="library-view-toggle" role="group" aria-label="View mode">
+          <button class="${view==='list'?'on':''}" onclick="setLibraryView('list')">List</button>
+          <button class="${view==='card'?'on':''}" onclick="setLibraryView('card')">Cards</button>
+        </div>
+        <div class="library-filters">
+          <button class="library-filter-btn${libraryLens==='all'?' on':''}" onclick="window._libraryLens='all';renderMyLibrary()">All</button>
+          <button class="library-filter-btn${libraryLens==='e'?' e-on':''}" onclick="window._libraryLens='e';renderMyLibrary()">ε Episteme</button>
+          <button class="library-filter-btn${libraryLens==='t'?' t-on':''}" onclick="window._libraryLens='t';renderMyLibrary()">τ Techne</button>
+          <button class="library-filter-btn${libraryLens==='p'?' p-on':''}" onclick="window._libraryLens='p';renderMyLibrary()">φ Phronesis</button>
+        </div>
       </div>
     </div>
-    ${Object.entries(groups).map(([topic, topicArts]) => `
-      <div class="library-topic-group">
-        <div class="library-topic-label">${topic}</div>
-        ${topicArts.map(a => {
-          const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
-          if(libraryLens==='e'&&!ep) return ''
-          if(libraryLens==='t'&&!tc) return ''
-          if(libraryLens==='p'&&!ph) return ''
-          const preview = libraryLens==='e'?ep:libraryLens==='t'?tc:libraryLens==='p'?ph:''
-          return `<div class="library-article-row">
-            <div class="library-triad-dots">
-              <div class="library-triad-dot" style="background:${ep?'var(--episteme)':'var(--border)'}"></div>
-              <div class="library-triad-dot" style="background:${tc?'var(--techne)':'var(--border)'}"></div>
-              <div class="library-triad-dot" style="background:${ph?'#2d6a4f':'var(--border)'}"></div>
-            </div>
-            <div style="flex:1">
-              <div class="library-article-title">${a.headline_en||a.title?.slice(0,100)||''}</div>
-              <div class="library-article-meta">${a.journal||''} · ${a.year||''}</div>
-              ${preview?`<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.5;font-style:italic">${preview.slice(0,150)}…</div>`:''}
-            </div>
-            <button class="library-unsave" onclick="toggleSaveArticle('${a.id}',null).then(()=>renderMyLibrary())">× Remove</button>
-          </div>`
-        }).join('')}
-      </div>
-    `).join('')}
+    ${Object.entries(groups).map(([topic, topicArts]) => {
+      const shown = topicArts.filter(passesLens)
+      if(!shown.length) return ''
+      return `<div class="library-topic-group">
+        <div class="library-topic-label">${libraryEscape(topic)}</div>
+        ${shown.map(renderItem).join('')}
+      </div>`
+    }).join('')}
   </div>`
 }
 
