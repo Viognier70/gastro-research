@@ -5711,6 +5711,15 @@ function bibEscape(s){
   // wrappa värdet i { } och backslash-escapa { } inuti.
   return String(s||'').replace(/[{}\\]/g, m => '\\'+m)
 }
+// articles_public har ingen doi-kolumn. DOI ligger i url som
+// https://doi.org/<doi> (samma logik som two-track-test.ts). Rader vars
+// url inte matchar doi.org (openalex.org/W…, Scopus prism:url) ger ''
+// istället för att läcka full URL i doi-fältet.
+function doiFromUrl(url){
+  const s = String(url||'')
+  if(!/^https?:\/\/(dx\.)?doi\.org\//i.test(s)) return ''
+  return s.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+}
 function libraryExportCsv(){
   const arts = window._libraryArts || []
   if(!arts.length){ showLibraryError('Nothing to export'); return }
@@ -5722,7 +5731,7 @@ function libraryExportCsv(){
       csvField(a.headline_en || a.title || ''),
       csvField(a.journal || ''),
       csvField(a.year || ''),
-      csvField(a.doi || ''),
+      csvField(doiFromUrl(a.url)),
       csvField(a.url || ''),
       csvField(meta.rating ?? ''),
       csvField(meta.note || ''),
@@ -5750,7 +5759,8 @@ function libraryExportBib(){
     fields.push(`  title = {${bibEscape(a.headline_en || a.title || '')}}`)
     if(a.journal) fields.push(`  journal = {${bibEscape(a.journal)}}`)
     if(a.year) fields.push(`  year = {${bibEscape(a.year)}}`)
-    if(a.doi) fields.push(`  doi = {${bibEscape(a.doi)}}`)
+    const doi = doiFromUrl(a.url)
+    if(doi) fields.push(`  doi = {${bibEscape(doi)}}`)
     if(a.url) fields.push(`  url = {${bibEscape(a.url)}}`)
     const meta = window._libraryMeta[a.id] || {}
     if(meta.note) fields.push(`  note = {${bibEscape(meta.note)}}`)
@@ -5782,7 +5792,8 @@ window.renderMyLibrary = async function() {
   const dbRole = window.role && window.role !== 'all' ? toDbRole(window.role) : 'sensory_pro'
   const epCol = 'episteme_'+dbRole, tcCol = 'techne_'+dbRole, phCol = 'phronesis_'+dbRole
 
-  // url + authors + doi tillagda i select (§8 export).
+  // url + authors tillagda i select (§8 export). DOI extraheras ur url
+  // (articles_public har ingen doi-kolumn; DOI ligger som https://doi.org/<x>).
   // ORDER 106 (2026-08-19): bytt från rå fetch till sb.from(). Rå fetch
   // med ?id=in.(uuid1,...uuidN) triggade 400 "No API key found in request"
   // när användaren hade många sparade artiklar — Cloudflare framför
@@ -5792,7 +5803,7 @@ window.renderMyLibrary = async function() {
   // apikey + Authorization: Bearer <session-jwt eller anon>.
   const { data: arts, error: artsErr } = await sb
     .from('articles_public')
-    .select('id,title,headline_en,topic,journal,year,url,authors,doi')
+    .select('id,title,headline_en,topic,journal,year,url,authors')
     .in('id', ids)
   if(artsErr || !Array.isArray(arts)) {
     if(artsErr) console.warn('[library] articles_public fetch failed', artsErr)
