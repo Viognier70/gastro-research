@@ -757,6 +757,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .library-view-toggle{display:inline-flex;border:0.5px solid var(--border-mid);border-radius:20px;overflow:hidden}
 .library-view-toggle button{font-size:10px;padding:3px 10px;background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text-tertiary);transition:background .15s}
 .library-view-toggle button.on{background:var(--black);color:var(--white)}
+/* §6 (ORDER 102) — sorteringsväljare, samma dimensioner som view-toggle. */
+.library-sort{font-size:10px;padding:3px 8px;border:0.5px solid var(--border-mid);border-radius:20px;background:var(--white);color:var(--text-secondary);cursor:pointer;font-family:'Outfit',sans-serif}
+.library-sort:focus{outline:none;border-color:var(--gusto-gold,#A08A55)}
 .library-topic-group{margin-bottom:20px}
 .library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
 /* §5 (ORDER 102) — rating-stjärnor + anteckningar */
@@ -3639,12 +3642,12 @@ async function loadSavedArticles(){
   const user = sb?.auth?.getUser ? (await sb.auth.getUser()).data?.user : null
   if(user) {
     try {
-      const {data} = await sb.from('saved_articles').select('article_id,rating,note').eq('user_id', user.id)
+      const {data} = await sb.from('saved_articles').select('article_id,rating,note,saved_at').eq('user_id', user.id)
       if(Array.isArray(data)) {
         window._libraryMeta = {}
         data.forEach(r => {
           savedArticleIds.add(r.article_id)
-          window._libraryMeta[r.article_id] = { rating: r.rating ?? null, note: r.note ?? '' }
+          window._libraryMeta[r.article_id] = { rating: r.rating ?? null, note: r.note ?? '', saved_at: r.saved_at || null }
         })
       }
       return
@@ -5392,6 +5395,45 @@ window.setLibraryView = function(mode){
   try { localStorage.setItem('gs_library_view', mode) } catch(_) {}
   renderMyLibrary()
 }
+// §6 (ORDER 102) — sortering. Ämnesrubriker syns bara vid 'topic'.
+window._librarySort = localStorage.getItem('gs_library_sort') || 'topic'  // topic|saved|rating|year
+window.setLibrarySort = function(mode){
+  window._librarySort = mode
+  try { localStorage.setItem('gs_library_sort', mode) } catch(_) {}
+  renderMyLibrary()
+}
+function sortLibraryArticles(arts, mode){
+  const copy = arts.slice()
+  if(mode === 'saved'){
+    // Senast sparad först. saved_at kommer från _libraryMeta (fylls av
+    // loadSavedArticles). Anon-fallback saknar saved_at → hamnar sist.
+    copy.sort((a,b) => {
+      const sa = window._libraryMeta[a.id]?.saved_at || ''
+      const sb = window._libraryMeta[b.id]?.saved_at || ''
+      return sa < sb ? 1 : sa > sb ? -1 : 0
+    })
+  } else if(mode === 'rating'){
+    // Högst rating först, osatta (null) sist.
+    copy.sort((a,b) => {
+      const ra = window._libraryMeta[a.id]?.rating
+      const rb = window._libraryMeta[b.id]?.rating
+      if(ra == null && rb == null) return 0
+      if(ra == null) return 1
+      if(rb == null) return -1
+      return rb - ra
+    })
+  } else if(mode === 'year'){
+    // Nyast publiceringsår först. Saknad/ogiltig hamnar sist.
+    copy.sort((a,b) => {
+      const ya = parseInt(a.year, 10)
+      const yb = parseInt(b.year, 10)
+      const va = Number.isFinite(ya) ? ya : -Infinity
+      const vb = Number.isFinite(yb) ? yb : -Infinity
+      return vb - va
+    })
+  }
+  return copy
+}
 function effectiveLibraryView(){
   // Mobil-tvång — kort tvingas till list under 480px. Val i localStorage
   // överlever men respekteras inte förrän viewporten är bred nog.
@@ -5555,16 +5597,20 @@ window.renderMyLibrary = async function() {
   if(!Array.isArray(arts)) return
   await enrichWithPremiumIfPro(arts)
 
-  // Gruppera per topic
-  const groups = {}
-  arts.forEach(a => {
-    const t = (a.topic||'general').replace(/_/g,' ')
-    if(!groups[t]) groups[t] = []
-    groups[t].push(a)
-  })
-
   const libraryLens = window._libraryLens || 'all'
   const view = effectiveLibraryView()
+  const sort = window._librarySort || 'topic'
+
+  // Gruppera per topic ENDAST vid ämnessortering (§6). Övriga lägen
+  // ger platt lista utan rubriker.
+  const groups = {}
+  if(sort === 'topic'){
+    arts.forEach(a => {
+      const t = (a.topic||'general').replace(/_/g,' ')
+      if(!groups[t]) groups[t] = []
+      groups[t].push(a)
+    })
+  }
 
   function passesLens(a){
     const ep = a[epCol]||'', tc = a[tcCol]||'', ph = a[phCol]||''
@@ -5621,14 +5667,19 @@ window.renderMyLibrary = async function() {
 
   const renderItem = view === 'card' ? renderCard : renderListRow
 
-  pane.innerHTML = `<div class="my-library-wrap">
-    <div class="library-header">
+  const toolbar = `<div class="library-header">
       <div class="library-title">My Library · ${arts.length} articles</div>
       <div class="library-toolbar">
         <div class="library-view-toggle" role="group" aria-label="View mode">
           <button class="${view==='list'?'on':''}" onclick="setLibraryView('list')">List</button>
           <button class="${view==='card'?'on':''}" onclick="setLibraryView('card')">Cards</button>
         </div>
+        <select class="library-sort" aria-label="Sort" onchange="setLibrarySort(this.value)">
+          <option value="topic"${sort==='topic'?' selected':''}>Topic</option>
+          <option value="saved"${sort==='saved'?' selected':''}>Last saved</option>
+          <option value="rating"${sort==='rating'?' selected':''}>Rating</option>
+          <option value="year"${sort==='year'?' selected':''}>Publication year</option>
+        </select>
         <div class="library-filters">
           <button class="library-filter-btn${libraryLens==='all'?' on':''}" onclick="window._libraryLens='all';renderMyLibrary()">All</button>
           <button class="library-filter-btn${libraryLens==='e'?' e-on':''}" onclick="window._libraryLens='e';renderMyLibrary()">ε Episteme</button>
@@ -5636,16 +5687,25 @@ window.renderMyLibrary = async function() {
           <button class="library-filter-btn${libraryLens==='p'?' p-on':''}" onclick="window._libraryLens='p';renderMyLibrary()">φ Phronesis</button>
         </div>
       </div>
-    </div>
-    ${Object.entries(groups).map(([topic, topicArts]) => {
+    </div>`
+
+  let body
+  if(sort === 'topic'){
+    body = Object.entries(groups).map(([topic, topicArts]) => {
       const shown = topicArts.filter(passesLens)
       if(!shown.length) return ''
       return `<div class="library-topic-group">
         <div class="library-topic-label">${libraryEscape(topic)}</div>
         ${shown.map(renderItem).join('')}
       </div>`
-    }).join('')}
-  </div>`
+    }).join('')
+  } else {
+    // Platt lista: filter först, sortera efter valt kriterium.
+    const shown = sortLibraryArticles(arts.filter(passesLens), sort)
+    body = `<div class="library-topic-group">${shown.map(renderItem).join('')}</div>`
+  }
+
+  pane.innerHTML = `<div class="my-library-wrap">${toolbar}${body}</div>`
 }
 
 window.checkOnboarding = function() {
