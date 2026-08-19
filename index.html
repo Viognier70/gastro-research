@@ -760,6 +760,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* §6 (ORDER 102) — sorteringsväljare, samma dimensioner som view-toggle. */
 .library-sort{font-size:10px;padding:3px 8px;border:0.5px solid var(--border-mid);border-radius:20px;background:var(--white);color:var(--text-secondary);cursor:pointer;font-family:'Outfit',sans-serif}
 .library-sort:focus{outline:none;border-color:var(--gusto-gold,#A08A55)}
+/* §7 (ORDER 102) — sök inom sparade. Visas bara vid >15 sparade. */
+.library-search{font-size:11px;padding:4px 10px;border:0.5px solid var(--border-mid);border-radius:20px;background:var(--white);color:var(--text-primary);font-family:'Outfit',sans-serif;min-width:180px}
+.library-search:focus{outline:none;border-color:var(--gusto-gold,#A08A55)}
 .library-topic-group{margin-bottom:20px}
 .library-topic-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
 /* §5 (ORDER 102) — rating-stjärnor + anteckningar */
@@ -5402,6 +5405,27 @@ window.setLibrarySort = function(mode){
   try { localStorage.setItem('gs_library_sort', mode) } catch(_) {}
   renderMyLibrary()
 }
+// §7 (ORDER 102) — sök inom sparade. Klientsidigt filter, ingen persist
+// (session-scoped — nästa besök är rimligen ett nytt sökbehov). Fältet
+// visas först vid >15 sparade artiklar; under det är det brus.
+window._librarySearch = ''
+function onLibrarySearchInput(el){
+  window._librarySearch = el.value || ''
+  // Behåll fokus/cursor — re-render slänger DOM. Snapshot + restore.
+  const pos = el.selectionStart
+  renderMyLibrary().then(() => {
+    const next = document.querySelector('.library-search')
+    if(next){ next.focus(); try { next.setSelectionRange(pos, pos) } catch(_){} }
+  })
+}
+function libraryMatchesQuery(a, q){
+  if(!q) return true
+  const needle = q.toLowerCase()
+  const title = (a.headline_en || a.title || '').toLowerCase()
+  const journal = (a.journal || '').toLowerCase()
+  const note = (window._libraryMeta[a.id]?.note || '').toLowerCase()
+  return title.includes(needle) || journal.includes(needle) || note.includes(needle)
+}
 function sortLibraryArticles(arts, mode){
   const copy = arts.slice()
   if(mode === 'saved'){
@@ -5600,12 +5624,17 @@ window.renderMyLibrary = async function() {
   const libraryLens = window._libraryLens || 'all'
   const view = effectiveLibraryView()
   const sort = window._librarySort || 'topic'
+  const query = window._librarySearch || ''
+
+  // §7: applicera sökfilter FÖRE gruppering/sortering — så räkning i
+  // gruppheaders och sortordning matchar synlig data.
+  const filtered = query ? arts.filter(a => libraryMatchesQuery(a, query)) : arts
 
   // Gruppera per topic ENDAST vid ämnessortering (§6). Övriga lägen
   // ger platt lista utan rubriker.
   const groups = {}
   if(sort === 'topic'){
-    arts.forEach(a => {
+    filtered.forEach(a => {
       const t = (a.topic||'general').replace(/_/g,' ')
       if(!groups[t]) groups[t] = []
       groups[t].push(a)
@@ -5667,8 +5696,11 @@ window.renderMyLibrary = async function() {
 
   const renderItem = view === 'card' ? renderCard : renderListRow
 
+  // §7: sökfältet visas ENDAST vid >15 sparade — under det är fältet
+  // bara brus. Räknas på totalen (savedArticleIds), inte på filter/sort.
+  const showSearch = arts.length > 15
   const toolbar = `<div class="library-header">
-      <div class="library-title">My Library · ${arts.length} articles</div>
+      <div class="library-title">My Library · ${arts.length} articles${query?` · ${filtered.length} match`:''}</div>
       <div class="library-toolbar">
         <div class="library-view-toggle" role="group" aria-label="View mode">
           <button class="${view==='list'?'on':''}" onclick="setLibraryView('list')">List</button>
@@ -5680,6 +5712,7 @@ window.renderMyLibrary = async function() {
           <option value="rating"${sort==='rating'?' selected':''}>Rating</option>
           <option value="year"${sort==='year'?' selected':''}>Publication year</option>
         </select>
+        ${showSearch?`<input type="search" class="library-search" placeholder="Search in library…" aria-label="Search saved articles" value="${libraryEscape(query)}" oninput="onLibrarySearchInput(this)">`:''}
         <div class="library-filters">
           <button class="library-filter-btn${libraryLens==='all'?' on':''}" onclick="window._libraryLens='all';renderMyLibrary()">All</button>
           <button class="library-filter-btn${libraryLens==='e'?' e-on':''}" onclick="window._libraryLens='e';renderMyLibrary()">ε Episteme</button>
@@ -5700,8 +5733,8 @@ window.renderMyLibrary = async function() {
       </div>`
     }).join('')
   } else {
-    // Platt lista: filter först, sortera efter valt kriterium.
-    const shown = sortLibraryArticles(arts.filter(passesLens), sort)
+    // Platt lista: sökfilter redan applicerat, lens sen sortering.
+    const shown = sortLibraryArticles(filtered.filter(passesLens), sort)
     body = `<div class="library-topic-group">${shown.map(renderItem).join('')}</div>`
   }
 
