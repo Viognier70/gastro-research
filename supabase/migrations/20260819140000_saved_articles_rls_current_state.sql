@@ -1,0 +1,108 @@
+-- =============================================================================
+-- saved_articles RLS — dokumentation av nuvarande policy-tillstånd (2026-08-19)
+-- =============================================================================
+-- KÖR INTE. Denna fil ändrar ingenting. Den finns för att fånga två sköra
+-- detaljer i den befintliga RLS-uppsättningen som verifierades i live-DB
+-- 2026-08-19 (ORDER 101 §2). Beslut: låta stå, dokumentera.
+--
+-- =============================================================================
+-- OBSERVERAT TILLSTÅND
+-- =============================================================================
+--
+-- Tabellen saved_articles har RLS enabled och en policy som filtrerar rader
+-- till ägaren. Verifierat via anon-probe:
+--
+--   GET  /rest/v1/saved_articles?select=*&limit=3   → 200 []
+--   POST /rest/v1/saved_articles ...                → 401 42501 permission denied
+--   DELETE /rest/v1/saved_articles ...              → 401 42501 permission denied
+--
+-- Policyn (bevakad via pg_policies i Supabase SQL-editorn 2026-08-19):
+--
+--   roles       = {public}   ← ⚠️ inte {authenticated}
+--   qual        = (auth.uid() = user_id)
+--   with_check  = NULL        ← ⚠️ faller tillbaka på qual implicit
+--
+-- =============================================================================
+-- SKÖR-PUNKT #1 — roles={public}
+-- =============================================================================
+--
+-- {public} är en Postgres-pseudo-roll som omfattar ALLA definierade roller:
+-- anon, authenticated, service_role, dashboard-user, m.fl. En policy med
+-- roles={public} appliceras alltså även på anon-anrop.
+--
+-- Att det ändå SKYDDAR anon idag: qual-uttrycket är auth.uid() = user_id.
+-- För anon-anrop returnerar auth.uid() NULL. NULL = user_id evaluerar till
+-- NULL, vilket i RLS-kontexten räknas som FALSE. Alltså 0 rader synliga för
+-- anon (bekräftat i probe:n ovan).
+--
+-- Varför sköra: skyddet är EN indirektionsnivå djupare än nödvändigt. Om
+-- policyn framöver refaktoreras (t.ex. till en mer permissiv qual under
+-- felsökning, eller till en SECURITY DEFINER-funktion som glömmer null-
+-- checka), tappas anon-skyddet omedelbart utan varning.
+--
+-- Kanoniskt Supabase-mönster: roles={authenticated} + qual=(auth.uid() =
+-- user_id). Då krävs BÅDE inloggad OCH ägare — explicit, granskbart,
+-- klarar refaktor.
+--
+-- =============================================================================
+-- SKÖR-PUNKT #2 — with_check = NULL
+-- =============================================================================
+--
+-- Postgres tillåter separata predikat för läsning (USING/qual) och
+-- skrivning (WITH CHECK). När with_check är NULL faller INSERT/UPDATE
+-- tillbaka på qual implicit. Det fungerar när predikatet är symmetriskt
+-- — samma villkor för att läsa som för att skriva, vilket är fallet här
+-- (auth.uid() = user_id gäller båda vägar).
+--
+-- Varför sköra: kopplingen är implicit. Om qual senare får ett läs-
+-- specifikt villkor (t.ex. AND is_public = true för att exponera delade
+-- listor) ändras SAMTIDIGT skrivvillkoret utan att det syns i diffen.
+-- Bug utan varning.
+--
+-- Kanoniskt mönster: with_check anges explicit, även när identiskt med
+-- qual. Läs- och skrivintent åtskilda; framtida ändringar kräver medveten
+-- justering av båda.
+--
+-- =============================================================================
+-- VARFÖR INTE ÄNDRAT NU (2026-08-19)
+-- =============================================================================
+--
+-- Systemet fungerar. Ingen känd användare har läckt data. Att skifta
+-- policyer på en live-tabell är alltid en risk — även "no-op"-refaktor
+-- kan trigga cache-invalidering, connection-pool-effekter, eller (om
+-- man klantar sig) tappa skyddet under den millisekund då den gamla
+-- droppas innan den nya committas.
+--
+-- Anders beslut (efter §2-rapport): dokumentera skörhet nu, ändra
+-- proaktivt vid nästa RLS-städningsrunda. Frikoppla säkerhets-refaktor
+-- från övrig aktiv utveckling — samma princip som väg 1 över väg 3 i
+-- ORDER 098 §3 (scoped fix > global default-ändring).
+--
+-- =============================================================================
+-- OM/NÄR DU ÅTGÄRDAR (framtida ORDER):
+-- =============================================================================
+--
+-- Följ mönstret från 20260725130000_security_rls_grants.sql. Byt policy
+-- inom en transaktion:
+--
+--   ALTER TABLE public.saved_articles DISABLE ROW LEVEL SECURITY;
+--   DROP POLICY <nuvarande-policyname> ON public.saved_articles;
+--   CREATE POLICY "saved_articles owner rw"
+--     ON public.saved_articles
+--     FOR ALL
+--     TO authenticated
+--     USING      (auth.uid() = user_id)
+--     WITH CHECK (auth.uid() = user_id);
+--   ALTER TABLE public.saved_articles ENABLE ROW LEVEL SECURITY;
+--
+-- Verifiera efteråt:
+--
+--   SELECT policyname, cmd, roles, qual, with_check
+--     FROM pg_policies
+--    WHERE schemaname='public' AND tablename='saved_articles';
+--
+-- Notera: sparandet är gratis för alla inloggade — det är trappsteget
+-- mellan anonym besökare och betalande kund. INGEN is_pro-gate i policy.
+-- Frontend toggleSaveArticle (index.html rad ~3569) kollar bara user,
+-- inte isPro, medvetet.
+-- =============================================================================
