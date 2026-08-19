@@ -3312,7 +3312,24 @@ async function loadArticles(){
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       }
-      const r=await fetch(url,{headers:H})
+      // ORDER 105 (2026-08-19): role='all'-grenen med default-filter
+      // (topic='all', src='all') gick över anons 3s statement_timeout —
+      // en direkt articles_public-select med 28 kolumner + 10-vägs OR
+      // + limit 200 är för tung. Wrap:ad i SECURITY DEFINER-RPC:n
+      // feed_articles med statement_timeout=30s. Signaturen har bara
+      // p_limit — topic/src-filter fortsätter via direkt fetch (mindre
+      // vanliga, mindre resultatmängd, timeoutar sällan).
+      const canUseRpc = role==='all' && topic==='all' && src==='all'
+      let r
+      if(canUseRpc){
+        r=await fetch(`${SB_URL}/rest/v1/rpc/feed_articles`, {
+          method:'POST',
+          headers:{...H,'Content-Type':'application/json'},
+          body: JSON.stringify({ p_limit: 200 })
+        })
+      } else {
+        r=await fetch(url,{headers:H})
+      }
       articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
       if(window.__cardExpansion) window.__cardExpansion.clear()
