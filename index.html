@@ -3413,8 +3413,23 @@ async function loadScreeningFunnel(){
 }
 async function loadCounts(){
   try{
-    const r1=await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
-    const total=parseInt(r1.headers.get('content-range')?.split('/')[1]||'0')
+    // ORDER 097b: sex parallella Prefer:count=exact-fetches → ett RPC-anrop.
+    // public.page_counts() räknar total/new_2w/new_24h/analyzed/relevant/triad
+    // i EN tabellskanning över articles_public. Slutar HTTP-500-stormen under
+    // sidladdning (~9 av 11 500:or från ORDER 096-audit).
+    const pcR = await fetch(`${SB_URL}/rest/v1/rpc/page_counts`, {
+      method:'POST', headers:{...H,'Content-Type':'application/json'}, body:'{}'
+    })
+    const pc = await pcR.json().catch(() => null)
+    if(!pc || typeof pc !== 'object'){
+      console.warn('[page_counts] non-object response', {status:pcR.status, ok:pcR.ok, type:typeof pc, value:pc})
+    }
+    const total    = Number(pc?.total    ?? 0)
+    const newCount = Number(pc?.new_2w   ?? 0)
+    const newWeek  = Number(pc?.new_24h  ?? 0)
+    const analyzed = Number(pc?.analyzed ?? 0)
+    const relevant = Number(pc?.relevant ?? 0)
+    const triad    = Number(pc?.triad    ?? 0)
     // TRIAD-count läses från public.triad_coverage() (§6, ORDER 091 2026-08-18)
     // — kanonisk siffra för "artiklar med minst en TRIAD-roll ifylld". Ersätter
     // screening_funnel.triad_analyserade (som gate:ade på relevance + irrelevant
@@ -3465,18 +3480,16 @@ async function loadCounts(){
         obSub.textContent = `${triadStr}+ studies analyzed in depth through the TRIAD framework — drawn from ${totalStr}+ screened publications.`
       }
     }
-    const ago=new Date(Date.now()-14*24*60*60*1000).toISOString()
-    const r2=await fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${ago}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
-    const newCount=parseInt(r2.headers.get('content-range')?.split('/')[1]||'0')
+    // #newCount lever i data-panelen — visas bara när pipeline har levererat
+    // nya artiklar de senaste 14 dagarna. Med sovande pipeline stannar den 0.
     if(newCount>0&&document.getElementById('newCount')) document.getElementById('newCount').textContent=`${newCount} new in last 2 weeks`
-    const [r4,r5,r6,r8]=await Promise.all([fetch(`${SB_URL}/rest/v1/articles_public?select=id&has_core_claim=is.true`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(relevance_sci_sensory_pro.gt.0,relevance_sci_culinary_pro.gt.0,relevance_sci_gastronomy_culture.gt.0,relevance_sci_hospitality_mgmt.gt.0,relevance_sci_educator_researcher.gt.0)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SB_URL}/rest/v1/articles_public?select=id&fetched_at=gte.${new Date(Date.now()-24*60*60*1000).toISOString()}`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})])
+    // get_synthesis_stats är en RPC (utanför page_counts-scope) — kör kvar.
     const synthResp=await fetch(`${SB_URL}/rest/v1/rpc/get_synthesis_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const synthStats=await synthResp.json()
-    const analyzed=parseInt(r4.headers.get("content-range")?.split("/")[1]||"0")
-    const relevant=parseInt(r5.headers.get('content-range')?.split('/')[1]||'0')
-    const triad=parseInt(r6.headers.get('content-range')?.split('/')[1]||'0')
-    const newWeek=parseInt(r8.headers.get('content-range')?.split('/')[1]||'0')
-    const totalForDb=parseInt((await fetch(`${SB_URL}/rest/v1/articles_public?select=id`,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})).headers.get('content-range')?.split('/')[1]||'0');const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=totalForDb.toLocaleString('en-US');const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=totalForDb.toLocaleString('en-US')
+    // dbTotal + pyTotal använder samma total som topbaren — behöver inte
+    // ett separat count-anrop (dubblett innan ORDER 097b).
+    const dbTotal=document.getElementById('dbTotal');if(dbTotal)dbTotal.textContent=total.toLocaleString('en-US')
+    const pyT=document.getElementById('pyTotal');if(pyT)pyT.textContent=total.toLocaleString('en-US')
     const dbNew=document.getElementById('dbNew');if(dbNew&&newWeek>0)dbNew.textContent='+'+newWeek.toLocaleString('en-US')+' new today'
     const dbAnalyzed=document.getElementById('dbAnalyzed');if(dbAnalyzed)dbAnalyzed.textContent=analyzed.toLocaleString('en-US');const pyA=document.getElementById('pyAnalysed');if(pyA)pyA.textContent=analyzed.toLocaleString('en-US')
     const dbRelevant=document.getElementById('dbRelevant');if(dbRelevant)dbRelevant.textContent=relevant.toLocaleString('en-US')
