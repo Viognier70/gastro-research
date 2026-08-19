@@ -109,6 +109,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .academy-btn{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 12px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:flex;align-items:center;gap:4px}
 .auth-btn{font-size:12px;font-weight:500;background:var(--black);color:var(--white);border:none;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif}
 .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--black);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer}
+/* ORDER 101 §1: kontomeny — klick på avatar öppnar dropdown istället
+   för att signout:a direkt. Menyn ligger relativt .account-wrap. */
+.account-wrap{position:relative;display:inline-flex;align-items:center}
+.account-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:160px;background:#1a1914;border:0.5px solid rgba(160,138,85,.28);border-radius:8px;padding:6px 0;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.4);font-family:'Outfit',sans-serif}
+.account-menu[hidden]{display:none}
+.account-menu-item{display:block;width:100%;text-align:left;padding:8px 14px;background:none;border:none;color:#F2EFE6;font-size:13px;cursor:pointer;font-family:inherit}
+.account-menu-item:hover{background:rgba(160,138,85,.12);color:#A08A55}
+.account-menu-signout{border-top:0.5px solid rgba(255,255,255,.08);margin-top:4px;padding-top:10px;color:#8A8272}
+.account-menu-signout:hover{color:#F2EFE6}
 .user-greeting{font-size:11px;color:var(--text-secondary);font-family:'Outfit',sans-serif;font-style:italic;margin-right:8px;letter-spacing:.01em;white-space:nowrap}
 #authArea{display:flex;align-items:center;gap:0}
 
@@ -3735,10 +3744,33 @@ function renderAuthArea(session, displayName, initial){
   const savedRole = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole') || ''
   const title = AUTH_ROLE_TITLES[savedRole] || ''
   const greeting = displayName ? (title ? `${title} ${displayName}` : displayName) : ''
-  const tooltip = greeting ? `${greeting} · Sign out` : `${session.user.email} · Sign out`
+  // ORDER 101 §1: avatar-klick öppnade tidigare sb.auth.signOut() direkt —
+  // ett oavsiktligt klick avslutade sessionen. Nu öppnar klick en meny;
+  // Sign out kräver ett medvetet val i menyn.
+  const tooltip = greeting || session.user.email
   const area = document.getElementById('authArea')
   if(!area) return
-  area.innerHTML = `${greeting ? `<span class="user-greeting">${_escHtml(greeting)}</span>` : ''}<div class="user-avatar" title="${_escHtml(tooltip)}" onclick="sb.auth.signOut().then(()=>location.reload())">${initial}</div>`
+  area.innerHTML = `${greeting ? `<span class="user-greeting">${_escHtml(greeting)}</span>` : ''}<div class="account-wrap"><div class="user-avatar" title="${_escHtml(tooltip)}" onclick="event.stopPropagation();toggleAccountMenu()">${initial}</div><div id="accountMenu" class="account-menu" hidden><button class="account-menu-item" onclick="event.stopPropagation();closeAccountMenu();showView('feed');if(!showingSaved) toggleSaved();">Saved articles</button><button class="account-menu-item account-menu-signout" onclick="event.stopPropagation();closeAccountMenu();sb.auth.signOut().then(()=>location.reload())">Sign out</button></div></div>`
+}
+window.toggleAccountMenu = function(){
+  const el = document.getElementById('accountMenu')
+  if(!el) return
+  const open = !el.hasAttribute('hidden')
+  if(open){ el.setAttribute('hidden',''); return }
+  el.removeAttribute('hidden')
+  // Registrera document-click-listener för att stänga vid klick utanför.
+  setTimeout(() => document.addEventListener('click', accountMenuOutsideClose, {once:true}), 0)
+}
+window.closeAccountMenu = function(){
+  const el = document.getElementById('accountMenu')
+  if(el) el.setAttribute('hidden','')
+}
+function accountMenuOutsideClose(e){
+  const menu = document.getElementById('accountMenu')
+  const wrap = document.querySelector('.account-wrap')
+  if(!menu || menu.hasAttribute('hidden')) return
+  if(wrap && wrap.contains(e.target)) return  // inside — låt en ny click-listener bindas nästa toggle
+  menu.setAttribute('hidden','')
 }
 async function initAuth(){
   const {data:{session}}=await sb.auth.getSession()
