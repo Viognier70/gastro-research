@@ -29,8 +29,17 @@ const SB_KEY        = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 const MODEL         = 'claude-sonnet-4-6'
 const MAX_TOKENS    = 1500
-const OUT_PATH      = 'out/two-track-test.md'
+const IS_V2         = Deno.env.get('TWOSTAR_V2') === '1'
+// V2-läge (ORDER A efter tiotestet): två prompt-tillägg + omkörning av
+// bara artikel 3, 4, 5 från v1. Ny out-fil så v1 inte överskrivs.
+const OUT_PATH      = IS_V2 ? 'out/two-track-test-v2.md' : 'out/two-track-test.md'
 const SPECIFIC_DOI  = '10.1080/09571264.2024.2310307'  // The Imitation Game
+// V2 kör exakt dessa ids (PTSD, amyloid-beta, fosfornorbornan från v1).
+const V2_IDS = [
+  '008635ef-8138-46ca-b279-9f7d463463bc',  // 3 — PTSD
+  '007bb498-43dc-426e-96f0-3cfdeed4fa89',  // 4 — amyloid-beta
+  '0047ceb2-76c2-497c-8426-d3e7cb431d20',  // 5 — fosfornorbornan
+]
 
 // Sonnet 4.6 prislista (per 1M tokens). Justera om det ändras.
 const PRICE_INPUT_PER_M  = 3
@@ -50,6 +59,10 @@ producing TWO renderings of each finding, held against each other.
 EXPLICIT: what the study measured, found, or established. Plain,
 specific, no hedging adverbs. If the abstract does not support a field,
 say so in one short sentence — not a paragraph.
+- State only what the abstract states. Do not upgrade "were identified
+  in" to "produced the highest concentration of", or "risk was higher
+  in children" to "risk per gram consumed". If the abstract does not
+  rank, compare, or quantify, neither do you.
 
 ANALOGICAL: the same finding rendered as an image, comparison or
 gesture that a working ${roleLabel} would recognise.
@@ -64,6 +77,11 @@ Hard rules for the analogical rendering:
   different paper, it is empty — rewrite it.
 - One image per field. Do not stack metaphors.
 - It is better to write nothing than to write decoration.
+- Relevance is a separate test. Before writing an analogical rendering,
+  ask: would a working ${roleLabel} do anything differently knowing
+  this? If not, write nothing. An abstract can fully support an image
+  that is still useless to this role — traceability and relevance must
+  BOTH pass, not either.
 
 Return exactly:
 {
@@ -148,6 +166,22 @@ function pickOne<T>(pool: T[], used: Set<string>, key: (x: T) => string): T | nu
 }
 
 async function selectArticles(): Promise<Article[]> {
+  if (IS_V2) {
+    console.log(`[urval] V2-läge — kör exakt ${V2_IDS.length} ids från v1 (Order A efter tiotestet)`)
+    const rows = await sbSelect(
+      `${SB_URL}/rest/v1/articles?select=id,title,abstract,year,topic,url`
+      + `&id=in.(${V2_IDS.join(',')})`
+    )
+    // Bevara ursprunglig ordning (PTSD, amyloid, fosfornorbornan).
+    const byId: Record<string, any> = {}
+    for (const r of rows) byId[r.id] = r
+    const picked: Article[] = []
+    for (const id of V2_IDS) {
+      if (!byId[id]) { console.warn(`[urval] id saknas i DB: ${id}`); continue }
+      picked.push({...byId[id], bucket:'v2-rerun', why:'Order A efter tiotestet — kontroll av relevanstest + explicit-strikthet'})
+    }
+    return picked
+  }
   console.log('[urval] hämtar bulk från public.articles (service_role, id,title,abstract,year,topic,url)…')
   // Läs en generös bulk att filtrera från. Bara med icke-tomt abstract.
   // Slumpmässig ordning så inte alltid samma toppartiklar plockas.
