@@ -3296,8 +3296,9 @@ async function loadArticles(){
         // (score>=5, Del 3-backfill 2026-07-19). Sci-only artiklar
         // renderar rätt CTA via card:s !hasTriadPresence-branch:
         // "Analyze with TRIAD" (triggerar on-demand Sonnet, kvoterat).
-        const orderCol = `relevance_sci_${dbRole}`
-        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(has_episteme_${dbRole}.is.true,has_sci_${dbRole}.is.true)&order=${orderCol}.desc.nullslast,fetched_at.desc&limit=200`
+        // URL byggs bara för topic/src-filtergrenen — ren rollfetch
+        // går via feed_articles_by_role() RPC (30s timeout).
+        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(has_episteme_${dbRole}.is.true,has_sci_${dbRole}.is.true)&order=relevance_sci_${dbRole}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
@@ -3312,20 +3313,29 @@ async function loadArticles(){
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       }
-      // ORDER 105 (2026-08-19): role='all'-grenen med default-filter
-      // (topic='all', src='all') gick över anons 3s statement_timeout —
-      // en direkt articles_public-select med 28 kolumner + 10-vägs OR
-      // + limit 200 är för tung. Wrap:ad i SECURITY DEFINER-RPC:n
-      // feed_articles med statement_timeout=30s. Signaturen har bara
-      // p_limit — topic/src-filter fortsätter via direkt fetch (mindre
-      // vanliga, mindre resultatmängd, timeoutar sällan).
-      const canUseRpc = role==='all' && topic==='all' && src==='all'
+      // ORDER 105/107 (2026-08-19/20): direktfetch mot articles_public
+      // med 28 kolumner + role-OR + limit 200 tippade över anons 3s
+      // statement_timeout under parallell page-load. Två RPC:er wrappar
+      // predikaten med statement_timeout=30s:
+      //   feed_articles(p_limit)                — role='all'-grenen
+      //   feed_articles_by_role(p_role,p_limit) — role-specifik grenen
+      // Topic/src-filtergrenen kör kvar direkt fetch (mindre vanliga,
+      // mindre resultatmängd, timeoutar sällan).
+      const noExtraFilter = topic==='all' && src==='all'
+      const canUseRpcAll  = role==='all' && noExtraFilter
+      const canUseRpcRole = role!=='all' && noExtraFilter
       let r
-      if(canUseRpc){
+      if(canUseRpcAll){
         r=await fetch(`${SB_URL}/rest/v1/rpc/feed_articles`, {
           method:'POST',
           headers:{...H,'Content-Type':'application/json'},
           body: JSON.stringify({ p_limit: 200 })
+        })
+      } else if(canUseRpcRole){
+        r=await fetch(`${SB_URL}/rest/v1/rpc/feed_articles_by_role`, {
+          method:'POST',
+          headers:{...H,'Content-Type':'application/json'},
+          body: JSON.stringify({ p_role: dbRole, p_limit: 200 })
         })
       } else {
         r=await fetch(url,{headers:H})
@@ -5961,8 +5971,12 @@ window.loadMiniTicker = async function() {
   const track = document.getElementById('miniTickerTrack')
   if(!track) return
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/articles_public?select=title,journal,year&or=(has_episteme_sensory_pro.is.true,has_episteme_culinary_pro.is.true,has_episteme_gastronomy_culture.is.true,has_episteme_hospitality_mgmt.is.true,has_episteme_educator_researcher.is.true)&order=year.desc.nullslast&limit=10`, {
-      headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+    // ORDER 107: ticker_articles() RPC — ingen p_role, samma 5-vägs
+    // OR över has_episteme_<role> som direktfetchen. 30s timeout.
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/ticker_articles`, {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: JSON.stringify({ p_limit: 10 })
     })
     const data = await r.json()
     if(!Array.isArray(data) || !data.length) return
@@ -6186,21 +6200,28 @@ window.loadSpotlight = async function() {
 
     // Research Synthesis-korten hämtas av loadSyntheses() i Syntheses-vyn.
     // loadSpotlight fokuserar på Feed:s artikel-highlights.
-    const artResp = await fetch(`${SB_URL}/rest/v1/articles_public?select=id,title,headline_en,journal,year,url,fetched_at,${relCol},citation_count,has_core_claim,has_episteme_${dbRole}&has_episteme_${dbRole}=is.true&${relCol}=gte.5&order=year.desc,fetched_at.desc&limit=7`, {
-      headers: {'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`}
+    // ORDER 107: spotlight_articles() RPC — aliaserar relevance_sci_<role>
+    // → relevance_sci och has_episteme_<role> → has_episteme. 30s timeout.
+    const artResp = await fetch(`${SB_URL}/rest/v1/rpc/spotlight_articles`, {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: JSON.stringify({ p_role: dbRole, p_limit: 7 })
     })
 
     const arts = await artResp.json()
     if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet for this role.</p>'; return }
     await enrichWithPremiumIfPro(arts)
 
-    const big = arts.filter(a => (a[relCol]||0) >= 8)
-    const mid = arts.filter(a => (a[relCol]||0) >= 6 && (a[relCol]||0) < 8)
-    const small = arts.filter(a => (a[relCol]||0) >= 5 && (a[relCol]||0) < 6)
+    // Sortering läser den aliaserade a.relevance_sci från RPC:n.
+    // epCol/tcCol/phCol behållna för TRIAD-payload som enrich (Pro)
+    // skjuter in via Object.assign efter get_articles_full.
+    const big = arts.filter(a => (a.relevance_sci||0) >= 8)
+    const mid = arts.filter(a => (a.relevance_sci||0) >= 6 && (a.relevance_sci||0) < 8)
+    const small = arts.filter(a => (a.relevance_sci||0) >= 5 && (a.relevance_sci||0) < 6)
 
     const lead = big[0] || mid[0] || arts[0]
     const ep0 = lead[epCol]||'', tc0 = lead[tcCol]||'', ph0 = lead[phCol]||''
-    const rel0 = lead[relCol]||0
+    const rel0 = lead.relevance_sci||0
 
     const formatDate = (d) => {
       if(!d) return ''
@@ -6210,7 +6231,7 @@ window.loadSpotlight = async function() {
 
     const midCards = [...big.slice(1), ...mid].slice(0,4).map(a => {
       const ep = a[epCol]||''
-      const rel = a[relCol]||0
+      const rel = a.relevance_sci||0
       return `<div style="border-bottom:0.5px solid #C8C0B0;padding-bottom:14px;margin-bottom:14px">
         <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
         <span class="gs-sp-rel">Relevance ${rel}/10</span>
@@ -6223,7 +6244,7 @@ window.loadSpotlight = async function() {
     }).join('')
 
     const smallCards = small.slice(0,3).map(a => {
-      const rel = a[relCol]||0
+      const rel = a.relevance_sci||0
       return `<div style="border-bottom:0.5px solid #C8C0B0;padding-bottom:10px;margin-bottom:10px">
         <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
         <div class="gs-sp-title-sm">${a.headline_en||a.title?.slice(0,70)||''}</div>
