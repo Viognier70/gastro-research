@@ -5373,6 +5373,41 @@ window.doSemanticSearch = async function(inputId, resultsId) {
       return
     }
 
+    // ORDER 112 — Anon: sign-in krävs för Ask.
+    // Copyn presenterar Free-tier-värdet (3/dag), inte bara blockering.
+    if(data?.status === 'signin_required') {
+      const freeDaily = data.free_daily || 3
+      results.innerHTML = `<div style="padding:18px 20px;background:#FDFBF6;border:0.5px solid rgba(160,138,85,.3);border-radius:8px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gusto-gold,#A08A55);margin-bottom:8px">Sign in to use Ask</div>
+        <div style="font-size:13px;color:var(--text-primary);line-height:1.7;margin-bottom:14px">
+          Free accounts get <strong>${freeDaily} questions per day</strong>. Pro is unlimited.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="openModal('authModal')" style="font-size:11px;font-weight:600;color:#fff;background:var(--gusto-gold,#A08A55);border:none;padding:8px 18px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Sign in / Create account</button>
+        </div>
+      </div>`
+      return
+    }
+
+    // ORDER 112 — Free-user har nått 3/3.
+    // Copyn förklarar vad hon fick (3 gratis frågor idag) och rutten framåt.
+    if(data?.status === 'quota_exceeded') {
+      const freeDaily = data.free_daily || 3
+      results.innerHTML = `<div style="padding:18px 20px;background:#FDFBF6;border:0.5px solid rgba(160,138,85,.3);border-radius:8px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gusto-gold,#A08A55)">Daily limit reached</span>
+          <span style="font-size:11px;font-weight:600;color:var(--text-tertiary);font-family:'Outfit',sans-serif">${freeDaily}/${freeDaily} used today</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-primary);line-height:1.7;margin-bottom:14px">
+          You've used your <strong>${freeDaily} free Ask questions</strong> for today. Come back tomorrow, or upgrade to Pro for unlimited questions.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="openModal('upgradeModal')" style="font-size:11px;font-weight:600;color:#fff;background:var(--gusto-gold,#A08A55);border:none;padding:8px 18px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif">Upgrade to Pro</button>
+        </div>
+      </div>`
+      return
+    }
+
     // Otillräckligt underlag — visa träffar som lista så användaren kan bläddra.
     if(data?.status === 'insufficient_coverage') {
       const hits = Array.isArray(data.hits_summary) ? data.hits_summary : []
@@ -5429,6 +5464,13 @@ window.doSemanticSearch = async function(inputId, resultsId) {
       <div style="font-family:'Outfit',sans-serif;font-size:14px;line-height:1.7;color:var(--text-primary);white-space:pre-wrap">${answerWithLinks}</div>
     </div>`
 
+    // ORDER 112 — quota_remaining: null för Pro (ingen räknare), 0-2 för Free.
+    // Renderar diskret räknare ovanför honesty-rad om Free-user.
+    const quotaLeft = (typeof data.quota_remaining === 'number') ? data.quota_remaining : null
+    const quotaHtml = quotaLeft !== null ? `<div style="margin-bottom:8px;font-size:10px;color:var(--text-tertiary);font-family:'Outfit',sans-serif">
+      ${quotaLeft} free ${quotaLeft === 1 ? 'question' : 'questions'} remaining today · <a onclick="openModal('upgradeModal')" style="color:var(--gusto-gold-dark,#836428);text-decoration:none;cursor:pointer">Upgrade to Pro →</a>
+    </div>` : ''
+
     const honestyHtml = `<div style="margin-bottom:14px;font-size:10px;line-height:1.6;color:var(--text-tertiary);font-family:'Outfit',sans-serif;font-style:italic">
       AI synthesis of ${sources.length} peer-reviewed articles · Not itself peer-reviewed · Verify against the sources below · <a href="/foundation#methodology" style="color:var(--gusto-gold-dark,#836428);text-decoration:none;font-style:normal">How the answer is generated →</a>
     </div>`
@@ -5450,7 +5492,7 @@ window.doSemanticSearch = async function(inputId, resultsId) {
       </div>`
     }).join('')
 
-    results.innerHTML = answerHtml + honestyHtml + sourcesHeader + sourcesHtml
+    results.innerHTML = answerHtml + quotaHtml + honestyHtml + sourcesHeader + sourcesHtml
   } catch(e) {
     results.innerHTML = `<div style="font-size:12px;color:var(--text-tertiary);padding:12px 0">Ask is temporarily unavailable. Please check your network or try again.</div>`
     console.log('ask-synth error:', e)

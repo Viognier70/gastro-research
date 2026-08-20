@@ -126,8 +126,59 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SB_URL, SB_KEY, { auth: { persistSession: false } })
 
-  // GLOBAL DAILY BUDGET — hard cap oberoende av per-user-kvot.
-  // Framtida ask_quota (steg 2) ligger PÅ TOP av denna som per-user-räkning.
+  // ── PER-USER QUOTA (ORDER 112, 2026-08-20) ──────────────────────────
+  // Kör FÖRE ask_budget_claim så global cap inte konsumeras för anrop
+  // som ändå ska blockas. Anon kräver sign-in (Free-tier lock).
+  // Samma auth-mönster som triad-on-demand (rad ~108).
+  const authHeader = req.headers.get('Authorization') || ''
+  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  let userId: string | null = null
+  if (jwt) {
+    const { data: userData, error: authErr } = await supabase.auth.getUser(jwt)
+    if (!authErr && userData?.user) userId = userData.user.id
+  }
+  if (!userId) {
+    return json({
+      status: 'signin_required',
+      free_daily: 3,
+      message: L(
+        'Logga in för att använda Ask. Free-konton får 3 frågor per dag; Pro är obegränsat.',
+        'Sign in to use Ask. Free accounts get 3 questions per day; Pro is unlimited.'
+      ),
+    }, 401)
+  }
+
+  // is_pro server-side. Klienten kan inte sätta detta. Samma pattern
+  // som triad-on-demand (endast is_pro, inte trial_ends_at — trial ger
+  // TRIAD men inte automatiskt obegränsat Ask; separat produktbeslut).
+  const { data: profile } = await supabase.from('profiles')
+    .select('is_pro').eq('id', userId).maybeSingle()
+  const isPro = !!profile?.is_pro
+
+  const { data: quotaRemRaw, error: quotaErr } = await supabase.rpc('ask_quota_claim', {
+    p_user_id: userId, p_is_pro: isPro
+  })
+  if (quotaErr) {
+    console.error('ask_quota_claim failed:', quotaErr)
+    return json({ status: 'error', error: `quota_claim: ${quotaErr.message}` }, 500)
+  }
+  const quotaRem = quotaRemRaw as number
+  if (quotaRem === -1) {
+    return json({
+      status: 'quota_exceeded',
+      free_daily: 3,
+      is_pro: false,
+      message: L(
+        'Du har använt dina 3 gratis Ask-frågor idag. Kom tillbaka imorgon, eller uppgradera till Pro för obegränsat.',
+        'You\'ve used your 3 free Ask questions today. Come back tomorrow, or upgrade to Pro for unlimited.'
+      ),
+    }, 402)
+  }
+  // För Pro: quotaRem = 999999 → skickas som null till klienten (ingen
+  // count-badge visas). För Free: 0-2 återstående efter denna claim.
+  const quotaRemainingForClient: number | null = isPro ? null : quotaRem
+
+  // GLOBAL DAILY BUDGET — hard cap ovanpå per-user-kvot.
   const { data: budgetRem, error: budgetErr } = await supabase.rpc('ask_budget_claim', { p_budget: DAILY_BUDGET })
   if (budgetErr) {
     console.error('ask_budget_claim failed:', budgetErr)
@@ -357,6 +408,9 @@ Now synthesize a JSON answer following STRICT RULES.`
       core_claim: s.core_claim,
     })),
     role: dbRole,
+    // Free-user: 0-2 (efter denna claim). Pro: null (ingen count-badge).
+    // ORDER 112 — frontend renderar "N free left today" under answer om ej null.
+    quota_remaining: quotaRemainingForClient,
     duration_ms: Date.now() - startedAt,
   })
 })
