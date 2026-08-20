@@ -51,7 +51,6 @@ if (!MAILTO) {
 type Target = {
   id:          string
   url:         string | null
-  abstract:    string
   abstract_len:number
 }
 
@@ -99,20 +98,6 @@ function reconstructAbstract(idx: Record<string, number[]> | null | undefined): 
 }
 
 // ── HTTP-hjälpare ─────────────────────────────────────────────────────────
-async function sbGet(path: string): Promise<any> {
-  const r = await fetch(`${SB_URL}${path}`, {
-    headers: {
-      'apikey':        SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
-    }
-  })
-  if (!r.ok) {
-    const t = await r.text().catch(() => '<unread>')
-    throw new Error(`Supabase ${r.status}: ${t.slice(0,200)}`)
-  }
-  return await r.json()
-}
-
 async function fetchOpenAlex(doi: string): Promise<{status: number, abstract: string}> {
   const mailtoParam = MAILTO ? `?mailto=${encodeURIComponent(MAILTO)}` : ''
   const url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}${mailtoParam}`
@@ -141,55 +126,33 @@ async function rpcOverwrite(id: string, abstract: string): Promise<void> {
   }
 }
 
-// ── Trunkerings-check (rtrim + sista tecken) ──────────────────────────────
-// Utvärderas klientside för att vara oberoende av eventuell trailing
-// whitespace i databasen. Rader som slutar på . ! ? ) räknas som HELA.
-function isTruncated(abstract: string): boolean {
-  const trimmed = abstract.replace(/\s+$/, '')
-  if (!trimmed) return false  // tomt abstract är inte "trunkerat" i vår mening
-  return !/[.!?)]$/.test(trimmed)
-}
-
 // ── Fetcha kandidater ─────────────────────────────────────────────────────
-// Filter: abstract IS NOT NULL AND (episteme_<n> IS NOT NULL) AND
-// LIKE-chain för att grovsålla trunkerade. Klientside re-verifierar med
-// isTruncated(). Pagination för att undvika PostgREST-tak (default 1000).
+// Kallar repair_abstract_targets() — SECURITY DEFINER-RPC med
+// statement_timeout=30s (ORDER 109 följdfix). Predikat serverside:
+// abstract not null, length(trim)>0, right(trim,1) not in ('.','!','?',')'),
+// och phronesis_<någon av 5> not null. Ordering by citation_count desc.
+// Ersatte den paginerade PostgREST-fetchen som tippade över anons 3s.
 async function fetchTargets(): Promise<Target[]> {
-  const pageSize = 1000
-  let offset = 0
-  const all: Target[] = []
-  while (true) {
-    const params = new URLSearchParams()
-    params.append('select', 'id,url,abstract')
-    params.append('abstract', 'not.is.null')
-    params.append('or', '(episteme_sensory_pro.not.is.null,episteme_culinary_pro.not.is.null,episteme_gastronomy_culture.not.is.null,episteme_hospitality_mgmt.not.is.null,episteme_educator_researcher.not.is.null)')
-    // Grovsåll — matchar de flesta trunkerade (falska positiva från
-    // trailing whitespace filtreras klientside):
-    params.append('abstract', 'not.ilike.*.')
-    params.append('abstract', 'not.ilike.*!')
-    params.append('abstract', 'not.ilike.*?')
-    params.append('abstract', 'not.ilike.*)')
-    params.append('order', 'id')
-    params.append('limit', String(pageSize))
-    params.append('offset', String(offset))
-
-    const rows: any[] = await sbGet(`/rest/v1/articles?${params.toString()}`)
-    if (!Array.isArray(rows) || rows.length === 0) break
-
-    for (const r of rows) {
-      if (!r.abstract || !isTruncated(r.abstract)) continue
-      all.push({
-        id:           r.id,
-        url:          r.url,
-        abstract:     r.abstract,
-        abstract_len: r.abstract.length,
-      })
-    }
-    console.log(`[fetch] offset=${offset}  page=${rows.length}  passed-verify=${all.length} totalt`)
-    if (rows.length < pageSize) break
-    offset += pageSize
+  const r = await fetch(`${SB_URL}/rest/v1/rpc/repair_abstract_targets`, {
+    method: 'POST',
+    headers: {
+      'apikey':        SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({ p_limit: 3000 }),
+  })
+  if (!r.ok) {
+    const t = await r.text().catch(() => '<unread>')
+    throw new Error(`repair_abstract_targets ${r.status}: ${t.slice(0,200)}`)
   }
-  return all
+  const rows: any[] = await r.json()
+  if (!Array.isArray(rows)) throw new Error('repair_abstract_targets: unexpected shape')
+  return rows.map(x => ({
+    id:           x.id,
+    url:          x.url,
+    abstract_len: x.abstract_len,
+  }))
 }
 
 // ── Huvudloop ─────────────────────────────────────────────────────────────

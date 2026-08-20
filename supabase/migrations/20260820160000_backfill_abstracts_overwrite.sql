@@ -63,6 +63,72 @@ COMMENT ON FUNCTION public.backfill_abstracts_overwrite(uuid, text) IS
 
 
 -- =============================================================================
+-- repair_abstract_targets(p_limit) — id-lista över trunkerade TRIAD-artiklar
+-- =============================================================================
+-- Skriptets fetchTargets tippade över anons 3s statement_timeout via
+-- PostgREST med den or=(phronesis_… not.is.null) + not.ilike-chain-baserade
+-- filterförfrågan (57014 fångad 2026-08-20). Wrap:ar samma predikat i en
+-- SECURITY DEFINER-RPC med statement_timeout=30s.
+--
+-- Skriptet kör med service_role — GRANT ges bara dit, INTE till anon.
+--
+-- Predikat (exakt det som Anders verifierat i SQL-editorn = 2 127 rader):
+--   abstract not null
+--   AND length(trim(abstract)) > 0
+--   AND right(trim(abstract),1) NOT IN ('.','!','?',')')
+--   AND phronesis_<någon av 5> IS NOT NULL
+--
+-- Not: phronesis_<role> IS NOT NULL används som TRIAD-signal (starkare än
+-- has_episteme eftersom TRIAD-pipeline skriver alla tre fält samtidigt när
+-- en analys godkänns — phronesis är sista fältet som fylls).
+--
+-- ORDER BY coalesce(citation_count,0) DESC — reparera mest citerade först.
+-- p_limit default 3000 med marginal över 2 127.
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.repair_abstract_targets(
+  p_limit integer DEFAULT 3000
+)
+RETURNS TABLE(
+  id           uuid,
+  url          text,
+  abstract_len integer
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+SET statement_timeout = '30s'
+AS $fn$
+  SELECT
+    id,
+    url,
+    length(abstract) AS abstract_len
+  FROM public.articles
+  WHERE abstract IS NOT NULL
+    AND length(btrim(abstract)) > 0
+    AND right(btrim(abstract), 1) NOT IN ('.', '!', '?', ')')
+    AND (
+      phronesis_sensory_pro         IS NOT NULL
+      OR phronesis_culinary_pro        IS NOT NULL
+      OR phronesis_gastronomy_culture  IS NOT NULL
+      OR phronesis_hospitality_mgmt    IS NOT NULL
+      OR phronesis_educator_researcher IS NOT NULL
+    )
+  ORDER BY coalesce(citation_count, 0) DESC
+  LIMIT p_limit
+$fn$;
+
+GRANT EXECUTE ON FUNCTION public.repair_abstract_targets(integer)
+  TO service_role;
+
+COMMENT ON FUNCTION public.repair_abstract_targets(integer) IS
+  'Id-lista över trunkerade TRIAD-analyserade abstracts. Konsumeras av '
+  'scripts/repair-abstracts.ts (service_role). Predikat identiskt med '
+  'SQL-verifikationen 2026-08-20 (2 127 rader). statement_timeout=30s '
+  '(ORDER 109 följdfix, 2026-08-20).';
+
+
+-- =============================================================================
 -- SCHEMA-CACHE RELOAD
 -- =============================================================================
 NOTIFY pgrst, 'reload schema';
