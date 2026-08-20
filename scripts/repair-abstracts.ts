@@ -127,12 +127,15 @@ async function rpcOverwrite(id: string, abstract: string): Promise<void> {
 }
 
 // ── Fetcha kandidater ─────────────────────────────────────────────────────
-// Kallar repair_abstract_targets() — SECURITY DEFINER-RPC med
-// statement_timeout=30s (ORDER 109 följdfix). Predikat serverside:
+// Kallar repair_abstract_targets(p_limit, p_offset) — SECURITY DEFINER-RPC
+// med statement_timeout=30s (ORDER 109 följdfix). Predikat serverside:
 // abstract not null, length(trim)>0, right(trim,1) not in ('.','!','?',')'),
 // och phronesis_<någon av 5> not null. Ordering by citation_count desc.
-// Ersatte den paginerade PostgREST-fetchen som tippade över anons 3s.
-async function fetchTargets(): Promise<Target[]> {
+//
+// PAGINERING: PostgREST db-max-rows klipper svar vid 1000 rader oavsett
+// RPC:ns egna LIMIT. Iterar i sidor om 1000 tills sidan är kortare än
+// pageSize (indikerar sista sidan).
+async function fetchTargetsPage(limit: number, offset: number): Promise<Target[]> {
   const r = await fetch(`${SB_URL}/rest/v1/rpc/repair_abstract_targets`, {
     method: 'POST',
     headers: {
@@ -140,7 +143,7 @@ async function fetchTargets(): Promise<Target[]> {
       'Authorization': `Bearer ${SB_KEY}`,
       'Content-Type':  'application/json',
     },
-    body: JSON.stringify({ p_limit: 3000 }),
+    body: JSON.stringify({ p_limit: limit, p_offset: offset }),
   })
   if (!r.ok) {
     const t = await r.text().catch(() => '<unread>')
@@ -153,6 +156,21 @@ async function fetchTargets(): Promise<Target[]> {
     url:          x.url,
     abstract_len: x.abstract_len,
   }))
+}
+
+async function fetchTargets(): Promise<Target[]> {
+  const pageSize = 1000
+  const all: Target[] = []
+  let offset = 0
+  while (true) {
+    const page = await fetchTargetsPage(pageSize, offset)
+    if (page.length === 0) break
+    all.push(...page)
+    console.log(`[fetch] offset=${offset}  page=${page.length}  totalt=${all.length}`)
+    if (page.length < pageSize) break
+    offset += pageSize
+  }
+  return all
 }
 
 // ── Huvudloop ─────────────────────────────────────────────────────────────

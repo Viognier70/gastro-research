@@ -63,7 +63,7 @@ COMMENT ON FUNCTION public.backfill_abstracts_overwrite(uuid, text) IS
 
 
 -- =============================================================================
--- repair_abstract_targets(p_limit) — id-lista över trunkerade TRIAD-artiklar
+-- repair_abstract_targets(p_limit, p_offset) — id-lista med paginering
 -- =============================================================================
 -- Skriptets fetchTargets tippade över anons 3s statement_timeout via
 -- PostgREST med den or=(phronesis_… not.is.null) + not.ilike-chain-baserade
@@ -83,10 +83,20 @@ COMMENT ON FUNCTION public.backfill_abstracts_overwrite(uuid, text) IS
 -- en analys godkänns — phronesis är sista fältet som fylls).
 --
 -- ORDER BY coalesce(citation_count,0) DESC — reparera mest citerade först.
--- p_limit default 3000 med marginal över 2 127.
+--
+-- PAGINERING (följdfix 2026-08-20): dry-run gav 1000 rader trots p_limit
+-- 3000 — Supabases PostgREST db-max-rows-cap klipper RPC-svar vid 1000
+-- oavsett RPC:ns egna LIMIT. Lösning: p_offset-parameter så skriptet kan
+-- iterera i sidor om 1000. p_limit default sänkt till 1000 (samma som cap:et).
+--
+-- SIGNATUR-BYTE: gamla 1-arg-versionen (integer) droppas explicit så inte
+-- båda överlagringarna lever samtidigt.
 -- =============================================================================
+DROP FUNCTION IF EXISTS public.repair_abstract_targets(integer);
+
 CREATE OR REPLACE FUNCTION public.repair_abstract_targets(
-  p_limit integer DEFAULT 3000
+  p_limit  integer DEFAULT 1000,
+  p_offset integer DEFAULT 0
 )
 RETURNS TABLE(
   id           uuid,
@@ -115,17 +125,19 @@ AS $fn$
       OR phronesis_educator_researcher IS NOT NULL
     )
   ORDER BY coalesce(citation_count, 0) DESC
+  OFFSET p_offset
   LIMIT p_limit
 $fn$;
 
-GRANT EXECUTE ON FUNCTION public.repair_abstract_targets(integer)
+GRANT EXECUTE ON FUNCTION public.repair_abstract_targets(integer, integer)
   TO service_role;
 
-COMMENT ON FUNCTION public.repair_abstract_targets(integer) IS
-  'Id-lista över trunkerade TRIAD-analyserade abstracts. Konsumeras av '
-  'scripts/repair-abstracts.ts (service_role). Predikat identiskt med '
-  'SQL-verifikationen 2026-08-20 (2 127 rader). statement_timeout=30s '
-  '(ORDER 109 följdfix, 2026-08-20).';
+COMMENT ON FUNCTION public.repair_abstract_targets(integer, integer) IS
+  'Id-lista över trunkerade TRIAD-analyserade abstracts, paginerad. '
+  'Konsumeras av scripts/repair-abstracts.ts (service_role). Predikat '
+  'identiskt med SQL-verifikationen 2026-08-20 (2 127 rader). p_offset '
+  'nödvändig pga PostgREST-cap på 1000 rader per RPC-svar. '
+  'statement_timeout=30s (ORDER 109 följdfix, 2026-08-20).';
 
 
 -- =============================================================================
