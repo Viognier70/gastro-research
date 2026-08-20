@@ -2336,6 +2336,10 @@ function checkTrialReset(){const today=new Date().toDateString();const last=loca
 window._trialEndsAt = null
 window._trialUsed = false
 window._isProDb = false
+// Pessimistisk default: dölj TRIAD-kvot-baren tills initAuth verifierat
+// sessionen. Alternativet (undefined) skulle flasha baren för utloggade
+// under initial pageload-fönstret innan sb.auth.getSession() svarat.
+window._isSignedIn = false
 
 // Kanoniska "chip"-rollnamn — de enda som finns som has_episteme_<x>,
 // episteme_<x>, techne_<x>, phronesis_<x> i articles_public. "Science"-
@@ -2545,16 +2549,27 @@ function updateFeedIntro(count){
 }
 function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
-  const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=remaining>0?'':`${remaining} free today`
+  // Ordet "TRIAD" i texten: sedan ORDER 112 finns även en Ask-kvot (3/dag).
+  // Två kvoter i samma vy utan att någon säger vilken är värre än en falsk
+  // nolla — text måste tydligt tala om att denna räknar TRIAD-analyser.
+  const _ft=document.getElementById('freeText');if(_ft)_ft.textContent=remaining>0?'':`${remaining} free TRIAD analyses today`
   const _ff=document.getElementById('freeFill');if(_ff)_ff.style.width=Math.round((freeCount/FREE_LIMIT)*100)+'%'
   const trialEnds = window._trialEndsAt ? new Date(window._trialEndsAt) : null
   const now = new Date()
   const trialActive = !!(trialEnds && trialEnds > now)
   const trialExpired = !!(trialEnds && trialEnds <= now)
   const bar = document.getElementById('freeBar')
-  // Göm baren bara för äkta betalande Pro (is_pro=true, ingen aktiv trial).
+  // Göm baren:
+  //  - för utloggade users (window._isSignedIn = false): TRIAD-kvot bygger
+  //    på localStorage-räknare som utloggade ändå inte kan använda för
+  //    riktig TRIAD-generering. Att visa "0 free today" här motsäger
+  //    Ask-widgetens signin_required-copy och skapar två motstridiga signaler.
+  //  - för äkta betalande Pro (is_pro=true, ingen aktiv trial): kvot saknas.
   // Aktiv trial → visa "N dagar kvar". Utgången trial + free tier → visa nudge.
-  if(bar) bar.style.display = (window._isProDb === true && !trialActive) ? 'none' : 'flex'
+  if(bar) bar.style.display = (
+    window._isSignedIn === false
+    || (window._isProDb === true && !trialActive)
+  ) ? 'none' : 'flex'
   if(_ft){
     if(trialActive){
       const daysLeft = Math.max(0, Math.ceil((trialEnds - now) / (24*60*60*1000)))
@@ -3939,6 +3954,7 @@ async function initAuth(){
       const trialActive = !!(trialEnds && trialEnds > new Date())
       isPro = dbIsPro || trialActive
       window._isProDb = dbIsPro
+      window._isSignedIn = true
       window._trialEndsAt = profile?.trial_ends_at || null
       window._trialUsed = profile?.trial_used === true
       displayName = profile?.display_name || ''
@@ -3946,6 +3962,7 @@ async function initAuth(){
     } catch(e) {
       isPro = false
       window._isProDb = false
+      window._isSignedIn = true  // session finns, bara profil-läs som failed
       window._trialEndsAt = null
       window._trialUsed = false
     }
@@ -4018,6 +4035,7 @@ async function initAuth(){
   } else {
     // Anon — inget servertillstånd att läsa.
     window._isProDb = false
+    window._isSignedIn = false
     window._trialEndsAt = null
     window._trialUsed = false
     // Nav-radens Sign in synlig, utility-slot tom. Säkerhet vid signout
