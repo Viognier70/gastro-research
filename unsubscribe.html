@@ -72,12 +72,6 @@ const titleEl = document.getElementById('title')
 const bodyEl  = document.getElementById('body')
 const actionEl= document.getElementById('action')
 
-// escapeHtml för säker DOM-injektion. Bara token echoas via URL — men
-// samma trigger fires även för hand-editerade URL:er, så defensiv escape.
-function escHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-}
-
 function render({title, bodyHtml, action}){
   titleEl.textContent = title
   bodyEl.innerHTML   = bodyHtml
@@ -103,7 +97,9 @@ function neutralPage(isUndo, token){
     }
   }
   return {
-    title: 'You&#39;ve been unsubscribed',
+    // Double-quoted sträng med plain apostrof — titleEl.textContent parsar
+    // INTE HTML-entities, så '&#39;' skulle renderas literalt.
+    title: "You've been unsubscribed",
     bodyHtml: '<p>If this email address was subscribed to the Gusto Science weekly digest, we\'ve stopped sending it.</p>'
             + '<p style="margin-top:14px">Was this a mistake?</p>',
     action: { url: `?t=${encToken}&undo=1`, label: 'Undo — resubscribe' },
