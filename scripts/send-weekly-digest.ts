@@ -1,0 +1,618 @@
+// scripts/send-weekly-digest.ts
+// ─────────────────────────────────────────────────────────────────────────
+// ORDER 122 (2026-08-21) — veckobrev till profiler med roll + aktiv digest.
+//
+// Fristående Deno-skript. Följer samma pattern som scripts/repair-abstracts.ts
+// och two-track-test.ts. Cron-triggning från Supabase Dashboard kan
+// wrapas i en tunn edge-fn senare — utanför scope här.
+//
+// FLÖDE PER MOTTAGARE:
+//   A. Fem artiklar — nya sedan last_digest_at (eller senaste 7 dagarna
+//      om null), rankade på relevance_sci_<science-role>. Filter:
+//      episteme_<science-role> not null, irrelevant not true. Topic-
+//      filter från saved_articles-topics (två vanligaste) ENDAST om
+//      user har >= 3 sparade — annars bara rank på roll.
+//   B. Research Pulse — 4 trendande keywords via get_trending_keywords
+//      RPC (rollagnostisk). Cacheas ONE gång för hela körningen.
+//   C. Veckans omdöme — phronesis-texten från den högst rankade artikeln
+//      (articles[0] från Section A). Skippas om A är tomt.
+//   D. Institutionsobservation — institution som publicerat mest inom
+//      user:s vanligaste topic senaste månaden. Skippas om user har 0
+//      sparade eller om aggregatet ger 0 träffar.
+//   E. Sparat-påminnelse — 2 artiklar via match_related-RPC seedad från
+//      user:s 3 senast sparade. Filtrerar bort redan sparade. Skippas
+//      om user har 0 sparade eller om match_related ger < 1 unik.
+//
+// ROBUSTHET: A måste finnas för att brevet ska skickas alls. B krävs
+//   också (om get_trending_keywords ger 0 → cache-array är tom och
+//   sektionen skippas — mycket osannolikt scenario). C/D/E toleras
+//   tomma — sektionerna droppas ur HTML:en tyst.
+//
+// FREE vs PRO:
+//   isPro = profiles.is_pro OR (trial_ends_at > now())
+//   Free  → rubrik + core_claim per artikel
+//   Pro   → dessutom TRIAD-fält (episteme/techne/phronesis för rollen)
+//
+// AVSÄNDNING: Brevo /v3/smtp/email (transactional, per-recipient).
+//   Avsändare research@gusto.science med namn "The Gusto Weekly".
+//   Unsubscribe-länk: https://gusto.science/unsubscribe?t=<digest_token>
+//   sist i varje brev (statisk sida från ORDER 121 hostas där).
+//
+// DRY-RUN som default. --send krävs för att kalla Brevo + uppdatera
+//   last_digest_at. Dry-run skriver full HTML till out/digest-preview/
+//   <email>.html per mottagare för manuell granskning.
+//
+// KÖRNING:
+//   Dry-run:
+//     SUPABASE_SERVICE_ROLE_KEY=eyJ... BREVO_API_KEY=xkeysib-... \
+//       deno run --allow-net --allow-env --allow-read --allow-write \
+//       scripts/send-weekly-digest.ts
+//   Apply:
+//     SUPABASE_SERVICE_ROLE_KEY=eyJ... BREVO_API_KEY=xkeysib-... \
+//       deno run --allow-net --allow-env --allow-read --allow-write \
+//       scripts/send-weekly-digest.ts --send
+// ─────────────────────────────────────────────────────────────────────────
+
+// ── Konfiguration ─────────────────────────────────────────────────────────
+const SB_URL     = Deno.env.get('SUPABASE_URL') || 'https://igmkzhdovyhbfgjomrsc.supabase.co'
+const SB_KEY     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+const BREVO_KEY  = Deno.env.get('BREVO_API_KEY') || ''
+const APPLY      = Deno.args.includes('--send')
+
+const SENDER_EMAIL = 'research@gusto.science'
+const SENDER_NAME  = 'The Gusto Weekly'
+const UNSUB_BASE   = 'https://gusto.science/unsubscribe'
+const OUT_DIR      = 'out/digest-preview'
+const PER_SEND_MS  = 200        // ~5 req/s mot Brevo — väl under 400/s-taket
+const FALLBACK_SINCE_DAYS = 7   // om last_digest_at IS NULL
+
+if (!SB_KEY) { console.error('Missing SUPABASE_SERVICE_ROLE_KEY'); Deno.exit(2) }
+if (APPLY && !BREVO_KEY) { console.error('Missing BREVO_API_KEY (krävs för --send)'); Deno.exit(2) }
+
+// ── Roll-mappning ─────────────────────────────────────────────────────────
+// chip → science-namn för DB-kolumner. Matchar CHECK-constraint i
+// migration 20260821120000_profile_role_and_digest.sql.
+const ROLE_TO_SCIENCE: Record<string, string> = {
+  sommelier:       'sensory_pro',
+  chef:            'culinary_pro',
+  gastronomy:      'gastronomy_culture',
+  fb_manager:      'hospitality_mgmt',
+  food_researcher: 'educator_researcher',
+}
+const ROLE_LABEL: Record<string, string> = {
+  sommelier:       'Sommelier',
+  chef:            'Chef',
+  gastronomy:      'Meal Creator',
+  fb_manager:      'Hospitality Management',
+  food_researcher: 'Food Researcher & Educator',
+}
+
+// ── Typer ─────────────────────────────────────────────────────────────────
+type Recipient = {
+  id:             string
+  email:          string
+  display_name:   string | null
+  role:           string   // chip-slug
+  is_pro:         boolean
+  trial_ends_at:  string | null
+  digest_token:   string
+  last_digest_at: string | null
+}
+type Article = {
+  id:          string
+  title:       string
+  headline_en: string | null
+  journal:     string | null
+  year:        string | null
+  url:         string | null
+  core_claim:  string | null
+  topic:       string | null
+  episteme:    string | null
+  techne:      string | null
+  phronesis:   string | null
+  relevance:   number | null
+}
+type PulseKw = { keyword: string; trend_direction: string; trend_pct: number }
+type SavedMeta = { ids: string[]; topics: string[]; topTopic: string | null }
+
+// ── HTTP-hjälpare ─────────────────────────────────────────────────────────
+async function sbFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${SB_URL}${path}`, {
+    ...init,
+    headers: {
+      'apikey':        SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type':  'application/json',
+      ...(init.headers as Record<string, string> || {}),
+    },
+  })
+}
+async function sbGet(path: string): Promise<any> {
+  const r = await sbFetch(path)
+  if (!r.ok) throw new Error(`sb ${r.status}: ${(await r.text()).slice(0,200)}`)
+  return r.json()
+}
+async function sbRpc(name: string, params: object): Promise<any> {
+  const r = await sbFetch(`/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    body: JSON.stringify(params),
+  })
+  if (!r.ok) throw new Error(`rpc ${name} ${r.status}: ${(await r.text()).slice(0,200)}`)
+  return r.json()
+}
+
+// ── HTML-escape ───────────────────────────────────────────────────────────
+function esc(s: string | null | undefined): string {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!))
+}
+
+// ── Recipients ────────────────────────────────────────────────────────────
+async function fetchRecipients(): Promise<Recipient[]> {
+  // 6-day cutoff: last_digest_at is null eller <= now - interval '6 days'.
+  // Kör mot profiles direkt med service_role. or=() PostgREST-syntax:
+  //   last_digest_at.is.null,last_digest_at.lt.<cutoff>
+  const cutoff = new Date(Date.now() - 6 * 86400_000).toISOString()
+  const params = new URLSearchParams()
+  params.append('select', 'id,email,display_name,role,is_pro,trial_ends_at,digest_token,last_digest_at')
+  params.append('role', 'not.is.null')
+  params.append('digest_enabled', 'is.true')
+  params.append('or', `(last_digest_at.is.null,last_digest_at.lt.${cutoff})`)
+  params.append('order', 'email')
+  params.append('limit', '2000')  // pragmatiskt tak; utöka + paginera vid överskridande
+  return await sbGet(`/rest/v1/profiles?${params.toString()}`)
+}
+
+function computeIsPro(r: Recipient): boolean {
+  if (r.is_pro) return true
+  if (r.trial_ends_at && new Date(r.trial_ends_at) > new Date()) return true
+  return false
+}
+
+function computeSince(r: Recipient): Date {
+  if (r.last_digest_at) return new Date(r.last_digest_at)
+  return new Date(Date.now() - FALLBACK_SINCE_DAYS * 86400_000)
+}
+
+// ── User's saved metadata: ids, topics-aggregat, topTopic ─────────────────
+async function fetchSavedMeta(uid: string): Promise<SavedMeta> {
+  // Steg 1: fetch saved_articles(article_id, saved_at) för user
+  const sel = new URLSearchParams()
+  sel.append('select', 'article_id,saved_at')
+  sel.append('user_id', `eq.${uid}`)
+  sel.append('order', 'saved_at.desc')
+  sel.append('limit', '500')
+  const savedRows: {article_id: string; saved_at: string}[] = await sbGet(`/rest/v1/saved_articles?${sel.toString()}`)
+  const ids = savedRows.map(s => s.article_id)
+  if (!ids.length) return { ids: [], topics: [], topTopic: null }
+
+  // Steg 2: fetch topic-fält för dessa ids från articles
+  const inList = ids.map(id => `"${id}"`).join(',')
+  const topicRows: {topic: string | null}[] = await sbGet(
+    `/rest/v1/articles?select=topic&id=in.(${inList})&limit=500`
+  )
+  // Aggregera topics
+  const counts: Record<string, number> = {}
+  for (const r of topicRows) {
+    if (r.topic) counts[r.topic] = (counts[r.topic] || 0) + 1
+  }
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+  const topics = sorted.map(([t]) => t)
+  const topTopic = topics[0] || null
+  return { ids, topics, topTopic }
+}
+
+// ── Section A: fem artiklar ───────────────────────────────────────────────
+async function sectionA(r: Recipient, science: string, since: Date, topics: string[]): Promise<Article[]> {
+  const sinceIso = since.toISOString()
+  const params = new URLSearchParams()
+  params.append('select',
+    `id,title,headline_en,journal,year,url,core_claim,topic,` +
+    `episteme_${science},techne_${science},phronesis_${science},relevance_sci_${science}`
+  )
+  params.append('fetched_at', `gte.${sinceIso}`)
+  params.append(`episteme_${science}`, 'not.is.null')
+  params.append('irrelevant', 'not.is.true')
+  if (topics.length) {
+    params.append('topic', `in.(${topics.map(t => `"${t}"`).join(',')})`)
+  }
+  params.append('order', `relevance_sci_${science}.desc.nullslast,fetched_at.desc`)
+  params.append('limit', '5')
+  const rows: any[] = await sbGet(`/rest/v1/articles?${params.toString()}`)
+  return rows.map(a => ({
+    id:          a.id,
+    title:       a.title,
+    headline_en: a.headline_en,
+    journal:     a.journal,
+    year:        a.year,
+    url:         a.url,
+    core_claim:  a.core_claim,
+    topic:       a.topic,
+    episteme:    a[`episteme_${science}`],
+    techne:      a[`techne_${science}`],
+    phronesis:   a[`phronesis_${science}`],
+    relevance:   a[`relevance_sci_${science}`],
+  }))
+}
+
+// ── Section B: research pulse (cache one gång per körning) ────────────────
+async function sectionB(): Promise<PulseKw[]> {
+  const data = await sbRpc('get_trending_keywords', { limit_n: 4 })
+  return Array.isArray(data) ? data.slice(0, 4) : []
+}
+
+// ── Section D: institution som publicerat mest inom user:s topTopic ───────
+async function sectionD(topTopic: string | null): Promise<{name: string; count: number} | null> {
+  if (!topTopic) return null
+  const cutoff = new Date(Date.now() - 30 * 86400_000).toISOString()
+  const params = new URLSearchParams()
+  params.append('select', 'primary_institution')
+  params.append('topic', `eq.${topTopic}`)
+  params.append('fetched_at', `gte.${cutoff}`)
+  params.append('primary_institution', 'not.is.null')
+  params.append('limit', '500')
+  const rows: {primary_institution: string}[] = await sbGet(`/rest/v1/articles?${params.toString()}`)
+  if (!rows.length) return null
+  // Aggregera i JS (PostgREST kan inte GROUP BY via URL)
+  const counts: Record<string, number> = {}
+  for (const r of rows) {
+    counts[r.primary_institution] = (counts[r.primary_institution] || 0) + 1
+  }
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+  if (!sorted.length) return null
+  return { name: sorted[0][0], count: sorted[0][1] }
+}
+
+// ── Section E: match_related seedad från user:s 3 senaste sparade ─────────
+async function sectionE(seedIds: string[], excludeIds: Set<string>): Promise<Article[]> {
+  if (!seedIds.length) return []
+  const seeds = seedIds.slice(0, 3)
+  const candidates: Map<string, {sim: number; row: any}> = new Map()
+
+  for (const seedId of seeds) {
+    try {
+      const rows = await sbRpc('match_related', {
+        p_article_id: seedId,
+        match_count: 5,
+        similarity_threshold: 0.55,
+      })
+      if (!Array.isArray(rows)) continue
+      for (const row of rows) {
+        if (!row?.id || excludeIds.has(row.id)) continue
+        const prev = candidates.get(row.id)
+        if (!prev || (row.similarity || 0) > prev.sim) {
+          candidates.set(row.id, { sim: row.similarity || 0, row })
+        }
+      }
+    } catch (e) {
+      console.log(`[section-E] match_related failed for ${seedId}:`, (e as Error).message)
+    }
+  }
+  const top = [...candidates.values()]
+    .sort((a, b) => b.sim - a.sim)
+    .slice(0, 2)
+    .map(x => x.row)
+  return top.map((a: any) => ({
+    id:          a.id,
+    title:       a.title,
+    headline_en: null,
+    journal:     a.journal || null,
+    year:        a.year || null,
+    url:         null,
+    core_claim:  a.core_claim || null,
+    topic:       null,
+    episteme:    null,
+    techne:      null,
+    phronesis:   null,
+    relevance:   null,
+  }))
+}
+
+// ── HTML-byggnad ──────────────────────────────────────────────────────────
+function articleCardHtml(a: Article, isPro: boolean): string {
+  const title = a.headline_en || a.title
+  const journal = a.journal ? esc(a.journal) : ''
+  const year = a.year ? esc(a.year) : ''
+  const meta = [journal, year].filter(Boolean).join(' · ')
+  const paperLink = a.url
+    ? `<a href="${esc(a.url)}" style="font-size:11px;color:#836428;text-decoration:none;border:1px solid rgba(160,138,85,.4);padding:4px 12px;border-radius:20px;display:inline-block;margin-top:6px">Read paper</a>`
+    : ''
+  const claim = a.core_claim
+    ? `<p style="font-size:13px;color:#5C5649;line-height:1.7;margin:0 0 10px;font-style:italic">${esc(a.core_claim)}</p>`
+    : ''
+  const proBlock = isPro
+    ? triadBlockHtml(a)
+    : ''
+  return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:20px;margin-bottom:14px">
+    ${meta ? `<div style="font-size:11px;color:#9C9484;margin:0 0 6px">${meta}</div>` : ''}
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 8px;color:#0C0B09;line-height:1.4">${esc(title)}</h3>
+    ${claim}
+    ${proBlock}
+    ${paperLink}
+  </div>`
+}
+
+function triadBlockHtml(a: Article): string {
+  const band = (label: string, marker: string, color: string, bg: string, text: string | null) => {
+    if (!text) return ''
+    return `<div style="margin:10px 0 0">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${color};margin-bottom:4px">${marker}</div>
+      <div style="font-size:12px;color:${color};line-height:1.6;padding:10px 12px;background:${bg};border-radius:6px">${esc(text)}</div>
+    </div>`
+  }
+  return [
+    band('episteme',  'ε Episteme',  '#1A3A5C', '#E8EFF6', a.episteme),
+    band('techne',    'τ Techne',    '#2D5016', '#EAF0E5', a.techne),
+    band('phronesis', 'φ Phronesis', '#5C2D00', '#F5EDE3', a.phronesis),
+  ].join('')
+}
+
+function pulseHtml(pulse: PulseKw[]): string {
+  if (!pulse.length) return ''
+  const rows = pulse.map((k, i) => {
+    const dir = k.trend_direction || 'stable'
+    const label = dir === 'rising'    ? `↑ +${k.trend_pct}% vs 2024`
+                : dir === 'declining' ? `↓ ${k.trend_pct}% vs 2024`
+                : dir === 'new'       ? `✦ new 2025`
+                :                       `→ stable`
+    return `<tr>
+      <td style="padding:6px 10px 6px 0;font-size:12px;color:#9C9484;width:24px">${i + 1}</td>
+      <td style="padding:6px 10px 6px 0;font-size:13px;color:#0C0B09">${esc(k.keyword.replace(/_/g, ' '))}</td>
+      <td style="padding:6px 0 6px 10px;font-size:11px;color:#5C5649;text-align:right">${label}</td>
+    </tr>`
+  }).join('')
+  return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:14px">
+    <table style="width:100%;border-collapse:collapse">${rows}</table>
+    <p style="font-size:10px;color:#9C9484;margin:12px 0 0;font-style:italic">Top-4 keywords in TRIAD-analysed articles · same across roles · 2025 vs 2024</p>
+  </div>`
+}
+
+function phronesisHtml(text: string, sourceTitle: string): string {
+  return `<div style="background:#F5EDE3;border-left:3px solid #5C2D00;padding:16px 18px;margin-bottom:14px;border-radius:6px">
+    <div style="font-size:13px;color:#5C2D00;line-height:1.7;margin:0 0 10px">${esc(text)}</div>
+    <div style="font-size:10px;color:#7A3D00;font-style:italic">From: ${esc(sourceTitle)}</div>
+  </div>`
+}
+
+function institutionHtml(inst: {name: string; count: number}, topicLabel: string): string {
+  return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:14px">
+    <p style="font-size:13px;color:#0C0B09;margin:0;line-height:1.7">
+      <strong>${esc(inst.name)}</strong> published ${inst.count} new
+      ${inst.count === 1 ? 'study' : 'studies'} on
+      <em>${esc(topicLabel)}</em> in the last month.
+    </p>
+  </div>`
+}
+
+function savedRelatedHtml(articles: Article[]): string {
+  if (!articles.length) return ''
+  const rows = articles.map(a => {
+    const title = a.headline_en || a.title
+    const meta = [a.journal, a.year].filter(Boolean).join(' · ')
+    return `<div style="padding:10px 0;border-bottom:0.5px solid #E8E0D0">
+      ${meta ? `<div style="font-size:10px;color:#9C9484;margin:0 0 3px">${esc(meta)}</div>` : ''}
+      <div style="font-size:13px;color:#0C0B09;line-height:1.5">${esc(title)}</div>
+      ${a.core_claim ? `<div style="font-size:11px;color:#5C5649;font-style:italic;margin-top:4px;line-height:1.6">${esc(a.core_claim.slice(0, 180))}${a.core_claim.length > 180 ? '…' : ''}</div>` : ''}
+    </div>`
+  }).join('')
+  return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:14px">${rows}</div>`
+}
+
+function sectionHeader(label: string): string {
+  return `<h2 style="font-family:Georgia,serif;font-size:16px;font-weight:400;color:#0C0B09;margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid #E8E0D0">${esc(label)}</h2>`
+}
+
+type EmailData = {
+  recipient: Recipient
+  isPro: boolean
+  roleLabel: string
+  articles: Article[]
+  pulse: PulseKw[]
+  phronesisFrom: {text: string; title: string} | null
+  institution: {name: string; count: number} | null
+  institutionTopic: string | null
+  savedRelated: Article[]
+}
+
+function buildEmail(d: EmailData): string {
+  const weekStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  const unsubUrl = `${UNSUB_BASE}?t=${encodeURIComponent(d.recipient.digest_token)}`
+  const greeting = d.recipient.display_name
+    ? `Hi ${esc(d.recipient.display_name)},`
+    : `Hi,`
+
+  const sections: string[] = []
+
+  // A. Fem artiklar
+  sections.push(sectionHeader(`Five new for ${d.roleLabel}`))
+  sections.push(d.articles.map(a => articleCardHtml(a, d.isPro)).join(''))
+
+  // B. Research Pulse
+  if (d.pulse.length) {
+    sections.push(sectionHeader('Research Pulse'))
+    sections.push(pulseHtml(d.pulse))
+  }
+
+  // C. Veckans omdöme
+  if (d.phronesisFrom) {
+    sections.push(sectionHeader("This week's practical read"))
+    sections.push(phronesisHtml(d.phronesisFrom.text, d.phronesisFrom.title))
+  }
+
+  // D. Institutionsobservation
+  if (d.institution && d.institutionTopic) {
+    sections.push(sectionHeader('Institution watch'))
+    sections.push(institutionHtml(d.institution, d.institutionTopic.replace(/_/g, ' ')))
+  }
+
+  // E. Sparat-påminnelse
+  if (d.savedRelated.length) {
+    sections.push(sectionHeader('Related to what you\'ve saved'))
+    sections.push(savedRelatedHtml(d.savedRelated))
+  }
+
+  const tierBadge = d.isPro
+    ? '<span style="font-size:10px;color:#C9A84C">Pro</span>'
+    : ''
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gusto Weekly</title></head>
+<body style="margin:0;padding:0;background:#F7F4ED;font-family:'Outfit',system-ui,-apple-system,sans-serif;color:#0C0B09">
+<div style="max-width:620px;margin:0 auto;padding:24px 16px">
+  <div style="text-align:center;padding:24px 0 16px">
+    <h1 style="font-size:26px;font-weight:400;color:#0C0B09;margin:0 0 4px;font-family:Georgia,serif">Gusto Science</h1>
+    <p style="font-size:12px;color:#9C9484;margin:0">Weekly research digest · ${esc(weekStr)} ${tierBadge}</p>
+  </div>
+  <p style="font-size:14px;color:#0C0B09;margin:0 0 16px">${greeting}</p>
+  <p style="font-size:14px;color:#5C5649;line-height:1.7;margin:0 0 20px">${d.articles.length} new peer-reviewed ${d.articles.length === 1 ? 'study' : 'studies'} for ${esc(d.roleLabel)}, plus what's trending and what your saved library connects to.</p>
+  ${sections.join('')}
+  <div style="text-align:center;padding:28px 0 12px;border-top:1px solid #E8E0D0;margin-top:32px">
+    <p style="font-size:11px;color:#9C9484;margin:0 0 6px">Gusto Science · Dr Anders Crichton-Fock</p>
+    <p style="font-size:11px;color:#9C9484;margin:0">
+      <a href="${esc(unsubUrl)}" style="color:#9C9484">Unsubscribe from the weekly digest</a>
+    </p>
+  </div>
+</div>
+</body></html>`
+}
+
+// ── Brevo send ────────────────────────────────────────────────────────────
+async function sendMail(to: {email: string; name: string | null}, subject: string, html: string): Promise<{ok: boolean; detail: string}> {
+  try {
+    const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': BREVO_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sender:      { email: SENDER_EMAIL, name: SENDER_NAME },
+        to:          [{ email: to.email, name: to.name || undefined }],
+        subject,
+        htmlContent: html,
+      }),
+    })
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '')
+      return { ok: false, detail: `brevo ${resp.status}: ${txt.slice(0, 200)}` }
+    }
+    return { ok: true, detail: 'sent' }
+  } catch (e) {
+    return { ok: false, detail: `network: ${(e as Error).message}` }
+  }
+}
+
+async function markSent(uid: string): Promise<boolean> {
+  const r = await sbFetch(`/rest/v1/profiles?id=eq.${uid}`, {
+    method: 'PATCH',
+    headers: { 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ last_digest_at: new Date().toISOString() }),
+  })
+  return r.ok
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────
+async function main() {
+  const startedAt = new Date().toISOString()
+  console.log(`[start] mode=${APPLY ? 'APPLY (skickar)' : 'DRY-RUN'}  at=${startedAt}`)
+
+  const recipients = await fetchRecipients()
+  console.log(`[fetch] ${recipients.length} mottagare (role satt, digest_enabled, cooldown passerad)`)
+
+  if (!recipients.length) {
+    console.log('[done] inga mottagare — inget att göra')
+    return
+  }
+
+  // Section B cacheas — samma pulse för alla mottagare
+  let pulse: PulseKw[] = []
+  try { pulse = await sectionB() }
+  catch (e) { console.log('[section-B] failed:', (e as Error).message) }
+  console.log(`[cache] pulse: ${pulse.length} keywords`)
+
+  if (!APPLY) {
+    await Deno.mkdir(OUT_DIR, { recursive: true }).catch(() => {})
+  }
+
+  const counters = {
+    sent: 0, would_send: 0, skipped_no_articles: 0, failed: 0,
+  }
+
+  for (const r of recipients) {
+    const science = ROLE_TO_SCIENCE[r.role]
+    if (!science) {
+      console.log(`  [skip] ${r.email}: unknown role "${r.role}"`)
+      continue
+    }
+    const isPro     = computeIsPro(r)
+    const since     = computeSince(r)
+    const roleLabel = ROLE_LABEL[r.role]
+
+    try {
+      const savedMeta   = await fetchSavedMeta(r.id)
+      const topicFilter = savedMeta.ids.length >= 3 ? savedMeta.topics.slice(0, 2) : []
+      const articles    = await sectionA(r, science, since, topicFilter)
+
+      if (!articles.length) {
+        counters.skipped_no_articles++
+        console.log(`  [skip] ${r.email} (${r.role}): 0 nya artiklar sedan ${since.toISOString().slice(0,10)}`)
+        continue
+      }
+
+      // Section C: phronesis-text från topArticle (bara meningsfullt om det finns)
+      const phronesisFrom = articles[0].phronesis
+        ? { text: articles[0].phronesis!, title: articles[0].headline_en || articles[0].title }
+        : null
+
+      // Section D: institution för user:s topTopic
+      let institution: {name: string; count: number} | null = null
+      try { institution = await sectionD(savedMeta.topTopic) }
+      catch (e) { console.log(`  [section-D] ${r.email}: ${(e as Error).message}`) }
+
+      // Section E: match_related från 3 senaste sparade
+      const excludeIds = new Set(savedMeta.ids)
+      const savedRelated = await sectionE(savedMeta.ids.slice(0, 3), excludeIds)
+
+      const emailData: EmailData = {
+        recipient: r, isPro, roleLabel, articles, pulse,
+        phronesisFrom, institution, institutionTopic: savedMeta.topTopic,
+        savedRelated,
+      }
+      const html    = buildEmail(emailData)
+      const subject = `Gusto Weekly — ${articles.length} new for ${roleLabel}`
+
+      if (APPLY) {
+        const send = await sendMail({ email: r.email, name: r.display_name }, subject, html)
+        if (send.ok) {
+          const marked = await markSent(r.id)
+          if (marked) {
+            counters.sent++
+            console.log(`  [sent] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length}`)
+          } else {
+            counters.failed++
+            console.log(`  [warn] ${r.email}: mail sent men last_digest_at kunde inte uppdateras — nästa run skickar igen`)
+          }
+        } else {
+          counters.failed++
+          console.log(`  [fail] ${r.email}: ${send.detail}`)
+        }
+        await new Promise(res => setTimeout(res, PER_SEND_MS))
+      } else {
+        const safeName = r.email.replace(/[^\w.-]/g, '_')
+        await Deno.writeTextFile(`${OUT_DIR}/${safeName}.html`, html)
+        counters.would_send++
+        console.log(`  [preview] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length}`)
+      }
+    } catch (e) {
+      counters.failed++
+      console.log(`  [error] ${r.email}: ${(e as Error).message}`)
+    }
+  }
+
+  const finishedAt = new Date().toISOString()
+  console.log(`\n[done] mode=${APPLY ? 'APPLY' : 'DRY-RUN'}  ${finishedAt}`)
+  if (APPLY) {
+    console.log(`  sent=${counters.sent}  failed=${counters.failed}  skipped_no_articles=${counters.skipped_no_articles}`)
+  } else {
+    console.log(`  would_send=${counters.would_send}  failed=${counters.failed}  skipped_no_articles=${counters.skipped_no_articles}`)
+    console.log(`  preview HTML: ${OUT_DIR}/<email>.html`)
+  }
+}
+
+main().catch(e => { console.error('[FATAL]', e); Deno.exit(1) })
