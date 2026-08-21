@@ -5498,8 +5498,51 @@ window.doSemanticSearch = async function(inputId, resultsId) {
       <span style="font-size:11px;color:var(--text-tertiary);font-family:'Outfit',sans-serif">Click [N] in the answer to jump here</span>
     </div>`
 
-    const sourcesHtml = sources.map(s => {
+    // ORDER 113 — TRIAD-block per källa. Top-1 (mest relevanta) auto-öppet,
+    // övriga fem med toggler. Copy från triadHead()/triadMarker() (samma som
+    // Feed och article-modal, ORDER 104). triadSubhead skippas här — user
+    // har redan sett den i flödet, tredje-visning är brus.
+    // Skip helt om alla tre TRIAD-fält är tomma (source utan roll-payload).
+    const askTriadBlock = (s) => {
+      const hasTriad = !!(s.episteme || s.techne || s.phronesis)
+      if(!hasTriad) return ''
+      const band = (key, colorVar, text) => {
+        if(!text) return ''
+        return `<div style="margin-top:10px">
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:600;color:var(${colorVar})">${triadHead(key)}</span>
+            <span style="font-size:10px;font-weight:500;color:var(--text-tertiary)">${triadMarker(key)}</span>
+          </div>
+          <div style="font-size:12px;line-height:1.65;color:var(--text-primary)">${escapeHtmlOversikt(text)}</div>
+        </div>`
+      }
+      return `<div class="ask-source-triad-body">
+        ${band('e', '--episteme',  s.episteme)}
+        ${band('t', '--techne',    s.techne)}
+        ${band('p', '--phronesis', s.phronesis)}
+      </div>`
+    }
+
+    const sourcesHtml = sources.map((s, i) => {
       const sim = Math.round((s.similarity || 0) * 100)
+      const isTop = i === 0
+      const hasTriad = !!(s.episteme || s.techne || s.phronesis)
+      const triadHtml = askTriadBlock(s)
+      // Togglern lovar innehåll ("What it found · what to do · when it applies"),
+      // namnger inte funktion. Ren ordföljd matchar triadHead-frågorna.
+      // Top-1 renderas auto-öppen och behöver ingen toggler.
+      const toggleLabel = 'What it found · what to do · when it applies'
+      const triadWrap = hasTriad ? (isTop
+        ? `<div class="ask-source-triad" data-expanded="true" style="padding-left:30px;margin-top:6px">
+             ${triadHtml}
+           </div>`
+        : `<div class="ask-source-triad" data-expanded="false" style="padding-left:30px;margin-top:6px">
+             <div class="ask-source-triad-toggle" onclick="window.__askToggleTriad(this)" style="cursor:pointer;font-size:11px;color:var(--gusto-gold-dark,#836428);font-family:'Outfit',sans-serif;padding:4px 0;user-select:none">
+               ▸ ${toggleLabel}
+             </div>
+             <div class="ask-source-triad-body-wrap" hidden>${triadHtml}</div>
+           </div>`
+      ) : ''
       return `<div id="askSource_${rid}_${s.idx}" class="ask-source" style="padding:12px 0;border-bottom:0.5px solid var(--border);transition:background .5s">
         <div style="display:flex;align-items:baseline;gap:8px;font-size:10px;color:var(--text-tertiary);margin-bottom:3px">
           <span style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gusto-gold,#A08A55);min-width:22px">[${s.idx}]</span>
@@ -5507,6 +5550,7 @@ window.doSemanticSearch = async function(inputId, resultsId) {
         </div>
         <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px;padding-left:30px;cursor:pointer" onclick="openArticleFromId('${s.id}')">${escapeHtmlOversikt((s.title||'').slice(0, 140))}</div>
         ${s.core_claim ? `<div style="font-size:11px;color:var(--text-secondary);line-height:1.55;padding-left:30px;font-style:italic">${escapeHtmlOversikt(s.core_claim.length > 180 ? s.core_claim.slice(0, 180) + '…' : s.core_claim)}</div>` : ''}
+        ${triadWrap}
       </div>`
     }).join('')
 
@@ -5521,6 +5565,22 @@ window.doSemanticSearch = async function(inputId, resultsId) {
     if (askDiamond) askDiamond.classList.remove('pulse')
     if (askHeaderLogo) askHeaderLogo.classList.remove('analysing')
   }
+}
+
+// ORDER 113 — expand/collapse för TRIAD-block i Ask-källor (utom top-1
+// som renderas auto-öppen). Toggler visas bara när källan har TRIAD-
+// payload för aktuell roll. Flippar pilen (▸/▾) och hidden-attributet
+// på body-wrappen; inga klasser för att undvika CSS-scope-krock.
+window.__askToggleTriad = function(el) {
+  const parent = el.closest('.ask-source-triad')
+  if(!parent) return
+  const body = parent.querySelector('.ask-source-triad-body-wrap')
+  if(!body) return
+  const wasOpen = parent.getAttribute('data-expanded') === 'true'
+  const nowOpen = !wasOpen
+  parent.setAttribute('data-expanded', String(nowOpen))
+  body.hidden = !nowOpen
+  el.textContent = (nowOpen ? '▾ ' : '▸ ') + 'What it found · what to do · when it applies'
 }
 
 // Scroll+highlight-hjälpare för klickbara [N]-citations i Ask-svar.
