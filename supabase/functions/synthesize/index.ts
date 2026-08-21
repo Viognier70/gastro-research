@@ -40,22 +40,71 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({error:'insufficient_articles',count:articles?.length||0,role:dbRole,topic}),{headers:CORS})
   }
 
-  const summaries = articles.map((a:any,i:number)=>`[${i+1}] "${a.title}": ${(a.core_claim||'').slice(0,120)}`).join('\n')
-  const prompt = `Write ONE synthesis JSON for a ${dbRole} about "${topic.replace(/_/g,' ')}".\nArticles:\n${summaries.slice(0,700)}\nReturn ONLY JSON:\n{"title":"5-8 words","convergence":"Research consistently shows X.","synthesis":"For you as a ${dbRole}, X.","evidence_strength":"strong|moderate|emerging"}`
+  // ORDER 122: per-artikel core_claim höjd 120 → 400 chars och total
+  // slice 700 → 8000 chars. 700 klippte till ~3 av 10 artiklar och gjorde
+  // divergens-bedömningen till en gissning. 10 × ~500 chars = ~5000 chars
+  // ryms i 8000-capet med marginal. Haiku 4.5 tar 200k tokens context;
+  // 8000 chars ≈ 2000 input-tokens per anrop ≈ $0.0016. Försumbart.
+  const summaries = articles.map((a:any,i:number)=>`[${i+1}] "${a.title}": ${(a.core_claim||'').slice(0,400)}`).join('\n')
+  const prompt = `Write ONE synthesis JSON for a ${dbRole} about "${topic.replace(/_/g,' ')}".
+Articles:
+${summaries.slice(0,8000)}
+
+Assess the evidence pattern honestly. Do NOT invent disagreement that isn't
+there. If the articles converge, set divergence to null (not "" and not a
+soft caveat). Only describe divergence when the source articles substantively
+contradict or split.
+
+evidence_type:
+  "convergence" — articles agree; divergence is null
+  "mixed"       — a minority position or nuance exists; divergence names it
+  "divergence"  — articles clearly split; divergence describes the split
+
+Return ONLY JSON:
+{
+  "title": "5-8 words",
+  "convergence": "Research consistently shows X.",
+  "divergence": null | "…",
+  "evidence_type": "convergence" | "mixed" | "divergence",
+  "synthesis": "For you as a ${dbRole}, X.",
+  "evidence_strength": "strong" | "moderate" | "emerging"
+}`
 
   const resp = await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-    body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    // max_tokens höjt 600 → 900 för att rymma divergence-mening + evidence_type
+    // utan att klippa synthesis. Typisk output-storlek: ~500-700 tokens.
+    body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,messages:[{role:'user',content:prompt}]})
   })
   const d = await resp.json()
   const txt = d.content?.[0]?.text||''
 
   let parsed:any = null
   try{ parsed = JSON.parse(txt.replace(/^```json\s*/,'').replace(/```\s*$/,'')) }catch(e){
-    const m=txt.match(/\{[^{}]+\}/s); if(m) try{parsed=JSON.parse(m[0])}catch(e2){}
+    // Fallback-regex vidgad: divergence-mening + evidence_type gör svaret
+    // multi-line, så den gamla {[^{}]+} tightare matchen bröts oftare.
+    const m=txt.match(/\{[\s\S]+\}/); if(m) try{parsed=JSON.parse(m[0])}catch(e2){}
   }
   if(!parsed||!parsed.title) return new Response(JSON.stringify({error:'parse_failed',txt:txt.slice(0,200)}),{headers:CORS})
+
+  // ORDER 122: defensiv rensning av Haiku-drift. Divergence: modellen
+  // vill ofta skicka "" eller "None"/"N/A" istället för literal null.
+  // evidence_type: whitelist mot värden utanför enum. Default
+  // "convergence" är säkraste fallback — statistiskt gäller det för
+  // merparten av (role, topic) i vår corpus.
+  const cleanDivergence = (v:any):string|null => {
+    if (v === null || v === undefined) return null
+    const s = String(v).trim()
+    if (!s) return null
+    const l = s.toLowerCase()
+    if (l === 'none' || l === 'null' || l === 'n/a') return null
+    return s
+  }
+  const cleanEvidenceType = (v:any):string => {
+    const s = String(v||'').trim().toLowerCase()
+    return (s === 'mixed' || s === 'divergence') ? s : 'convergence'
+  }
 
   const synth = parsed.synthesis||parsed.convergence||''
   const { error: saveErr } = await supabase
@@ -66,6 +115,9 @@ Deno.serve(async (req) => {
       synthesis: synth,
       synthesis_text: synth,
       convergence: parsed.convergence||'',
+      // ORDER 122: nya fält från utökad prompt.
+      divergence: cleanDivergence(parsed.divergence),
+      evidence_type: cleanEvidenceType(parsed.evidence_type),
       evidence_strength: parsed.evidence_strength||'moderate',
       article_count: articles.length,
       // ORDER 122: spara underlags-artiklarnas id:n så veckobrev och andra
@@ -73,8 +125,8 @@ Deno.serve(async (req) => {
       // Kolumnen finns i schemat sedan tidigare men fylldes aldrig av
       // denna edge-fn — 23 av 25 rader saknar den (state 2026-08-21).
       article_ids: articles.map((a:any) => a.id),
-      topics: [topic],
-      professions: [dbRole],
+      // topics + professions borttagna — redundanta mot singular topic/role.
+      // Kolumnerna droppas i migration 20260821150000.
       updated_at: new Date().toISOString()
     }, { onConflict: 'role,topic' })
 
