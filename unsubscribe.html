@@ -91,6 +91,39 @@ function render({title, bodyHtml, action}){
   app.hidden = false
 }
 
+// Bekräftelsesida (neutralt utfall — samma vid okänd/malformad/count=0/count=1).
+function neutralPage(isUndo, token){
+  const encToken = encodeURIComponent(token)
+  if(isUndo){
+    return {
+      title: 'Welcome back',
+      bodyHtml: '<p>If this email address is registered, you\'ll receive the next weekly digest.</p>'
+              + '<p style="margin-top:14px">Changed your mind again?</p>',
+      action: { url: `?t=${encToken}`, label: 'Unsubscribe' },
+    }
+  }
+  return {
+    title: 'You&#39;ve been unsubscribed',
+    bodyHtml: '<p>If this email address was subscribed to the Gusto Science weekly digest, we\'ve stopped sending it.</p>'
+            + '<p style="margin-top:14px">Was this a mistake?</p>',
+    action: { url: `?t=${encToken}&undo=1`, label: 'Undo — resubscribe' },
+  }
+}
+
+// Felsida (bara vid nätverksfel eller RPC-exception — inte vid count=0).
+// Ger user chansen att försöka igen (samma URL, reload) OCH en mailto-
+// fallback om felet upprepas. Reason logges till konsolen, inte visat.
+function renderError(reason){
+  console.log('[unsubscribe] failed:', reason)
+  render({
+    title: 'Something went wrong',
+    bodyHtml: '<p>We couldn\'t process your request. Please try again in a moment, '
+            + 'or email <a href="mailto:research@gusto.science?subject=Unsubscribe">research@gusto.science</a> '
+            + 'if the problem persists.</p>',
+    action: { url: location.href, label: 'Try again' },
+  })
+}
+
 // Ingen token i URL → visa fallback-instruktion. Ingen RPC-anrop.
 if(!token){
   render({
@@ -100,34 +133,35 @@ if(!token){
             + '<a href="mailto:research@gusto.science">research@gusto.science</a>.',
     action: null,
   })
+} else if(!UUID_RE.test(token)){
+  // Malformad token — samma neutrala utfall som okänd token (avslöja aldrig).
+  // Ingen RPC-anrop eftersom det ändå garanterat returnerar count=0.
+  console.log('[unsubscribe] malformed token payload')
+  render(neutralPage(isUndo, token))
 } else {
-  // Neutralt utfall: render OMEDELBART baserat på isUndo, fire-and-forget
-  // RPC:n i bakgrunden. Om token är okänd/malformad/RPC failar visar vi
-  // ändå samma besked — avslöjar aldrig om token existerar.
-  const encToken = encodeURIComponent(token)
-  if(isUndo){
-    render({
-      title: 'Welcome back',
-      bodyHtml: '<p>If this email address is registered, you\'ll receive the next weekly digest.</p>'
-              + '<p style="margin-top:14px">Changed your mind again?</p>',
-      action: { url: `?t=${encToken}`, label: 'Unsubscribe' },
-    })
-  } else {
-    render({
-      title: 'You&#39;ve been unsubscribed',
-      bodyHtml: '<p>If this email address was subscribed to the Gusto Science weekly digest, we\'ve stopped sending it.</p>'
-              + '<p style="margin-top:14px">Was this a mistake?</p>',
-      action: { url: `?t=${encToken}&undo=1`, label: 'Undo — resubscribe' },
-    })
-  }
-  // Fire-and-forget mot RPC. Ingen await, ingen catch-branch som
-  // ändrar UI — utfallet är alltid samma sida oavsett resultat.
-  if(UUID_RE.test(token)){
-    sb.rpc('set_digest_enabled', { p_token: token, p_enabled: isUndo })
-      .then(({error}) => { if(error) console.log('[unsubscribe] rpc:', error.message) })
-  } else {
-    console.log('[unsubscribe] malformed token payload')
-  }
+  // Loading-läge medan RPC:n är i flight. Kort — undviker att user tror
+  // att sidan är tom om nätet är långsamt. Ingen action-knapp under load.
+  render({
+    title: 'Processing…',
+    bodyHtml: '<p>One moment.</p>',
+    action: null,
+  })
+  ;(async () => {
+    try {
+      const {error} = await sb.rpc('set_digest_enabled', { p_token: token, p_enabled: isUndo })
+      if(error){
+        // PostgREST/Postgres-level fel — RPC svarade 4xx/5xx.
+        // Skiljer sig från count=0 (då kommer ingen error, bara data=0).
+        renderError('rpc: ' + (error.message || 'unknown'))
+        return
+      }
+      // Success — count 0 eller 1, samma bekräftelsesida (neutralt utfall).
+      render(neutralPage(isUndo, token))
+    } catch(e) {
+      // Nätverksfel eller fetch-throw. Sannolikast offline eller CORS-fel.
+      renderError('network: ' + (e?.message || 'unknown'))
+    }
+  })()
 }
 </script>
 
