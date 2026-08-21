@@ -215,7 +215,11 @@ async function sectionA(r: Recipient, science: string, since: Date, topics: stri
   if (topics.length) {
     params.append('topic', `in.(${topics.map(t => `"${t}"`).join(',')})`)
   }
-  params.append('order', `relevance_sci_${science}.desc.nullslast,fetched_at.desc`)
+  // ORDER 122-fix (item 2, Alt D): sekundär sort på year DESC gör att
+  // nyare studier hamnar överst inom samma relevans-bucket. Ingen hård
+  // årsfilter — landmark-oldies som just fått TRIAD ranker fortfarande
+  // om relevansen är hög.
+  params.append('order', `relevance_sci_${science}.desc.nullslast,year.desc.nullslast,fetched_at.desc`)
   params.append('limit', '5')
   const rows: any[] = await sbGet(`/rest/v1/articles?${params.toString()}`)
   return rows.map(a => ({
@@ -366,10 +370,21 @@ function pulseHtml(pulse: PulseKw[]): string {
   </div>`
 }
 
-function phronesisHtml(text: string, sourceTitle: string): string {
+function phronesisHtml(text: string, sourceTitle: string, isPro: boolean): string {
+  // ORDER 122-fix item 3 (Path B — märkt smakprov): Free ser phronesis
+  // OCH en upsell-rad som använder ORDER 104:s fältrubriker för de andra
+  // två läsningarna. Ingen TRIAD-modellförklaring. Pro ser ingen upsell.
+  const upsell = !isPro ? `
+    <div style="margin-top:14px;padding-top:12px;border-top:0.5px solid rgba(92,45,0,.22)">
+      <p style="font-size:11.5px;color:#7A3D00;line-height:1.6;margin:0 0 10px">
+        This is the third of three readings. The other two — what the research found, and what to do with it — come with Pro.
+      </p>
+      <a href="https://gusto.science" style="display:inline-block;font-size:11px;font-weight:600;color:#fff;background:#C9A84C;padding:6px 14px;border-radius:16px;text-decoration:none">Upgrade to Pro →</a>
+    </div>` : ''
   return `<div style="background:#F5EDE3;border-left:3px solid #5C2D00;padding:16px 18px;margin-bottom:14px;border-radius:6px">
     <div style="font-size:13px;color:#5C2D00;line-height:1.7;margin:0 0 10px">${esc(text)}</div>
     <div style="font-size:10px;color:#7A3D00;font-style:italic">From: ${esc(sourceTitle)}</div>
+    ${upsell}
   </div>`
 }
 
@@ -413,6 +428,22 @@ type EmailData = {
   savedRelated: Article[]
 }
 
+// ORDER 122-fix item 1: bygg ingressen dynamiskt utifrån vilka sektioner
+// som faktiskt renderas. Innan denna fix lovade brevet "what your saved
+// library connects to" även när Section E var tom. Nämner bara B och E
+// eftersom C och D är augmenteringar, inte huvudpelare — en TOC-rad i
+// ingressen skulle ändå ha alla huvudsektioner nämnda och blir ointressant.
+function introHtml(d: EmailData): string {
+  const count = d.articles.length
+  const study = count === 1 ? 'study' : 'studies'
+  const base = `${count} newly analysed peer-reviewed ${study} for ${esc(d.roleLabel)}`
+  const extras: string[] = []
+  if (d.pulse.length)        extras.push("what's trending")
+  if (d.savedRelated.length) extras.push('what your saved library connects to')
+  const suffix = extras.length ? `, plus ${extras.join(' and ')}` : ''
+  return `${base}${suffix}.`
+}
+
 function buildEmail(d: EmailData): string {
   const weekStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const unsubUrl = `${UNSUB_BASE}?t=${encodeURIComponent(d.recipient.digest_token)}`
@@ -422,8 +453,10 @@ function buildEmail(d: EmailData): string {
 
   const sections: string[] = []
 
-  // A. Fem artiklar
-  sections.push(sectionHeader(`Five new for ${d.roleLabel}`))
+  // A. Fem artiklar (ORDER 122-fix item 2: rubriken speglar att detta är
+  // artiklar som fetchats/analyserats nyligen — INTE artiklar publicerade
+  // nyligen. En 1994-studie som just fått TRIAD är "nyanalyserad", inte "ny").
+  sections.push(sectionHeader(`Newly analysed for ${d.roleLabel}`))
   sections.push(d.articles.map(a => articleCardHtml(a, d.isPro)).join(''))
 
   // B. Research Pulse
@@ -432,10 +465,10 @@ function buildEmail(d: EmailData): string {
     sections.push(pulseHtml(d.pulse))
   }
 
-  // C. Veckans omdöme
+  // C. Veckans omdöme (ORDER 122-fix item 3: isPro-flag styr upsell)
   if (d.phronesisFrom) {
     sections.push(sectionHeader("This week's practical read"))
-    sections.push(phronesisHtml(d.phronesisFrom.text, d.phronesisFrom.title))
+    sections.push(phronesisHtml(d.phronesisFrom.text, d.phronesisFrom.title, d.isPro))
   }
 
   // D. Institutionsobservation
@@ -463,7 +496,7 @@ function buildEmail(d: EmailData): string {
     <p style="font-size:12px;color:#9C9484;margin:0">Weekly research digest · ${esc(weekStr)} ${tierBadge}</p>
   </div>
   <p style="font-size:14px;color:#0C0B09;margin:0 0 16px">${greeting}</p>
-  <p style="font-size:14px;color:#5C5649;line-height:1.7;margin:0 0 20px">${d.articles.length} new peer-reviewed ${d.articles.length === 1 ? 'study' : 'studies'} for ${esc(d.roleLabel)}, plus what's trending and what your saved library connects to.</p>
+  <p style="font-size:14px;color:#5C5649;line-height:1.7;margin:0 0 20px">${introHtml(d)}</p>
   ${sections.join('')}
   <div style="text-align:center;padding:28px 0 12px;border-top:1px solid #E8E0D0;margin-top:32px">
     <p style="font-size:11px;color:#9C9484;margin:0 0 6px">Gusto Science · Dr Anders Crichton-Fock</p>
@@ -575,7 +608,9 @@ async function main() {
         savedRelated,
       }
       const html    = buildEmail(emailData)
-      const subject = `Gusto Weekly — ${articles.length} new for ${roleLabel}`
+      // ORDER 122-fix item 2: subject speglar rubriken — "newly analysed"
+      // istället för "new" (som implicerar recently published).
+      const subject = `Gusto Weekly — ${articles.length} newly analysed for ${roleLabel}`
 
       if (APPLY) {
         const send = await sendMail({ email: r.email, name: r.display_name }, subject, html)
