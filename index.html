@@ -3820,7 +3820,9 @@ async function handleAuth(){
     // profil laddas, trial/pro-tillstånd sätts. Tidigare direktupdate av
     // #authBtn gjorde bara utility-knappen guldig men lämnade nav
     // Sign-in-knappen synlig efter login (ORDER 095 §1).
-    initAuth()
+    // ORDER 114: initAuthGuarded så SIGNED_IN-eventet från listenern
+    // återanvänder samma pending promise (ingen dubbel-körning).
+    initAuthGuarded()
     loadSavedArticles()
     // Skriv display_name till profilen om vi har ett väntande värde (t.ex. vid signin utan bekräftelse-mail eller efter e-postverifiering).
     await persistPendingDisplayName(session)
@@ -3975,9 +3977,9 @@ async function initAuth(){
       }catch(_){}
     }
     renderAuthArea(session, displayName, initial)
-    // Nav-radens Sign in döljs när inloggad — utility slot äger auth-UI då.
-    const navSignIn = document.getElementById('navSignInBtn')
-    if(navSignIn) navSignIn.style.display = 'none'
+    // Nav-radens Sign in styrs centralt av updateNavAuthUI som läser
+    // window._isSignedIn (ORDER 114). En källa för samma tillstånd.
+    updateNavAuthUI()
     await loadSavedArticles()
     // Om användaren startade trial-flödet innan konto/verifiering: kör start_trial nu.
     // Detta kan i sin tur re-kalla initAuth via doStartTrial; flaggan rensas först
@@ -4041,11 +4043,55 @@ async function initAuth(){
     // Nav-radens Sign in synlig, utility-slot tom. Säkerhet vid signout
     // eller re-init där session försvinner.
     const area = document.getElementById('authArea'); if(area) area.innerHTML = ''
-    const navSignIn = document.getElementById('navSignInBtn')
-    if(navSignIn) navSignIn.style.display = ''
+    updateNavAuthUI()
   }
   updateFreeBar()
 }
+
+// ORDER 114 — enda källan för nav-knappens synlighet. Läser
+// window._isSignedIn så att nav och freeBar delar tillstånd. Skriv INTE
+// direkt till navSignInBtn.style.display från andra ställen — det
+// duplicerar sanning och skapar bug-mönstret från 2026-08-21.
+function updateNavAuthUI(){
+  const btn = document.getElementById('navSignInBtn')
+  if(!btn) return
+  btn.style.display = (window._isSignedIn === true) ? 'none' : ''
+}
+
+// ORDER 114 — in-flight-guard mot parallella initAuth-körningar. Nya
+// triggers medan en är pending återanvänder samma promise; race-anrop
+// mot start_trial-RPC:n och det efterföljande alert() elimineras.
+let _initAuthPromise = null
+async function initAuthGuarded(){
+  if(_initAuthPromise) return _initAuthPromise
+  _initAuthPromise = initAuth().finally(() => { _initAuthPromise = null })
+  return _initAuthPromise
+}
+
+// ORDER 114 — auth state listener. Löser race där sb.auth.getSession()
+// vid page-boot returnerar null innan Supabase-clienten hunnit hydrera
+// sessionen från localStorage (INITIAL_SESSION fires strax efter). Även
+// TOKEN_REFRESHED (JWT-refresh var 60:e min), SIGNED_IN (annan flik),
+// och SIGNED_OUT (server-invalidation eller signout från annan flik)
+// syncar UI utan sidomladdning.
+sb.auth.onAuthStateChange((event, session) => {
+  if(event === 'SIGNED_OUT'){
+    // Nollställ globals så nav + freeBar direkt reflekterar utloggat läge.
+    // Ingen reload — signout via avatar-menyn triggar reload separat.
+    window._isSignedIn = false
+    window._isProDb = false
+    window._trialEndsAt = null
+    window._trialUsed = false
+    isPro = false
+    const area = document.getElementById('authArea'); if(area) area.innerHTML = ''
+    updateNavAuthUI()
+    updateFreeBar()
+    return
+  }
+  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION'){
+    initAuthGuarded()
+  }
+})
 
 // (triggerAdminFetch borttagen i DEL 2 — dead code, localStorage.isAdmin
 //  var den sista kvarvarande "backdoor"-flaggan. daily-fetch triggas via
@@ -6460,7 +6506,7 @@ window.loadSyntheses = async function() {
 // loadKnowledgeMap (Explore) och initWorldMap (Map) triggas av showView() vid
 // första öppning. Sparar ~2s på förstasidan + Anthropic-kvot om användaren
 // aldrig öppnar de tunga vyerna.
-initAuth().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u);
+initAuthGuarded().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u);
   // Översikt är default-vy: fyras direkt vid boot (showView triggas inte
   // för default). loadCounts→renderOversiktWatchBar re-renderar watchbar
   // med riktiga siffror när fetchen landat (B1, 2026-07-22).
