@@ -2391,6 +2391,10 @@ const DB_ROLE = {
 function toDbRole(r){ return DB_ROLE[r] || r }
 // Alla fem science-namn för OR-kedjor mot articles_public.
 const DB_ROLES_ALL = ['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher']
+// ORDER 120: chip-slug-whitelist för profiles.role-sync. Matchar CHECK-
+// constraint i migration 20260821120000. 'all' är INTE en riktig roll —
+// null i profiles betyder "ingen roll vald" och veckobrev hoppar över dem.
+const VALID_ROLE_CHIPS = new Set(['sommelier','chef','gastronomy','fb_manager','food_researcher'])
 
 // Shared topic → färg-mappning (2026-07-16). Konsoliderar tre tidigare
 // parallella lokala mappningar (rad 3442 Explore, 5109 worldMap, 5136
@@ -4043,7 +4047,7 @@ async function initAuth(){
     let trialExpiredJustNow=false
     try {
       const {data:profile} = await sb.from('profiles')
-        .select('is_pro, display_name, trial_ends_at, trial_used')
+        .select('is_pro, display_name, trial_ends_at, trial_used, role')
         .eq('id', session.user.id).maybeSingle()
       const dbIsPro = profile?.is_pro === true
       const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
@@ -4051,14 +4055,29 @@ async function initAuth(){
       isPro = dbIsPro || trialActive
       window._isProDb = dbIsPro
       window._isSignedIn = true
+      window._userId = session.user.id     // ORDER 120: cachas för setRole-sync utan getUser()-round-trip
       window._trialEndsAt = profile?.trial_ends_at || null
       window._trialUsed = profile?.trial_used === true
       displayName = profile?.display_name || ''
       trialExpiredJustNow = !!(trialEnds && !trialActive && window._trialUsed && !dbIsPro)
+      // ORDER 120: sync roll från localStorage till profiles vid första
+      // signed-in-tillfället efter migrationen. Befintliga konton har
+      // profile.role = NULL — de får sin roll registrerad så veckobrev
+      // och andra server-features kan filtrera på den. Framtida sessioner
+      // ser profile.role satt och skippar sync-blocket (idempotent).
+      // Fire-and-forget: initAuth ska aldrig blocka på detta.
+      if(!profile?.role){
+        const lsRole = toChipRole(localStorage.getItem('gs_role') || localStorage.getItem('gustoRole') || '')
+        if(lsRole && VALID_ROLE_CHIPS.has(lsRole)){
+          sb.from('profiles').update({role: lsRole}).eq('id', session.user.id)
+            .then(({error}) => { if(error) console.log('[ORDER 120] initial role sync failed:', error.message) })
+        }
+      }
     } catch(e) {
       isPro = false
       window._isProDb = false
       window._isSignedIn = true  // session finns, bara profil-läs som failed
+      window._userId = session.user.id
       window._trialEndsAt = null
       window._trialUsed = false
     }
@@ -4134,6 +4153,7 @@ async function initAuth(){
     window._isSignedIn = false
     window._trialEndsAt = null
     window._trialUsed = false
+    window._userId = null              // ORDER 120: rensa cachad user_id
     // Nav-radens Sign in synlig, utility-slot tom. Säkerhet vid signout
     // eller re-init där session försvinner.
     const area = document.getElementById('authArea'); if(area) area.innerHTML = ''
@@ -4174,6 +4194,7 @@ sb.auth.onAuthStateChange((event, session) => {
     // Ingen reload — signout via avatar-menyn triggar reload separat.
     window._isSignedIn = false
     window._isProDb = false
+    window._userId = null              // ORDER 120
     window._trialEndsAt = null
     window._trialUsed = false
     isPro = false
@@ -4658,6 +4679,13 @@ function showTopicCollabs(topic){
 const _baseSetRole=setRole
 window.setRole=function(r,btn){
   _baseSetRole(r,btn)
+  // ORDER 120: sync rollbyte till profiles så veckobrev och andra server-
+  // features ser aktuell roll. Bara inloggade + giltig chip-slug (INTE 'all').
+  // Fire-and-forget: användarens vy-byte får aldrig blockas av DB-write.
+  if(window._isSignedIn && window._userId && VALID_ROLE_CHIPS.has(r)){
+    sb.from('profiles').update({role: r}).eq('id', window._userId)
+      .then(({error}) => { if(error) console.log('[ORDER 120] role sync failed:', error.message) })
+  }
   setTimeout(()=>{
     if(mapTopicData.length>0) renderLiveMap()
     if(window._explore?.topic) loadExploreArticles(window._explore.topic)
