@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Unsubscribe · Gusto Science</title>
+<style>
+  body{margin:0;padding:0;background:#F7F4ED;font-family:'Outfit',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#0C0B09;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .card{max-width:460px;margin:24px auto;padding:36px 28px;background:#fff;border:1px solid #E8E0D0;border-radius:12px;text-align:center;box-shadow:0 1px 3px rgba(12,11,9,.04)}
+  .brand-eyebrow{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin:0 0 24px}
+  h1{font-family:Georgia,serif;font-size:22px;font-weight:400;color:#0C0B09;margin:0 0 14px;line-height:1.35}
+  p{font-size:14px;color:#5C5649;line-height:1.65;margin:0 0 10px}
+  a.action{display:inline-block;margin-top:24px;font-size:13px;font-weight:600;color:#fff;background:#C9A84C;padding:10px 22px;border-radius:22px;text-decoration:none;font-family:'Outfit',system-ui,sans-serif}
+  a.action:hover{background:#B69236}
+  .foot{margin-top:28px;padding-top:20px;border-top:1px solid #E8E0D0;font-size:11px;color:#9C9484}
+  .foot a{color:#836428;text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- ORDER 121 Alt B (2026-08-21): JS-driven avanmälningssida. Alt A/C
+     med server-renderad HTML från edge-fn gick inte — Supabase-routern
+     overrider Content-Type till text/plain för alla edge-fn-svar (JSON
+     bevaras, HTML gör det inte). Med x-content-type-options: nosniff
+     satt av samma router renderade browser HTML som råtext.
+
+     Denna sida anropar set_digest_enabled-RPC:n direkt via supabase-js
+     med anon-key. RPC:n är SECURITY DEFINER (migration 20260821130000)
+     så anon-anrop är säkra: kunskap om digest_token = auth. -->
+
+<noscript>
+  <div class="card">
+    <p class="brand-eyebrow">Gusto Science</p>
+    <h1>JavaScript required</h1>
+    <p>This page needs JavaScript to process your unsubscribe.</p>
+    <p style="margin-top:12px">If you can't enable it, email
+      <a href="mailto:research@gusto.science?subject=Unsubscribe">research@gusto.science</a>
+      from your subscribed address and we'll remove you manually within 24 hours.</p>
+    <div class="foot">Weekly research digest · Gusto Science<br>Dr Anders Crichton-Fock</div>
+  </div>
+</noscript>
+
+<div class="card" id="app" hidden>
+  <p class="brand-eyebrow">Gusto Science</p>
+  <h1 id="title"></h1>
+  <div id="body"></div>
+  <a id="action" class="action" hidden></a>
+  <div class="foot">Weekly research digest · Gusto Science<br>Dr Anders Crichton-Fock</div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// Samma project-ref och anon-key som index.html — kanoniska konstanter,
+// får läggas i klartext (RLS + set_digest_enabled RLS-bypass via
+// SECURITY DEFINER hanterar alla writes).
+const SB_URL  = 'https://igmkzhdovyhbfgjomrsc.supabase.co'
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbWt6aGRvdnloYmZnam9tcnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTAxOTMsImV4cCI6MjA5MzQ2NjE5M30.rMWtPH74usSJA32iyh8KwcIfvHmg7C14olPT7sUD1es'
+
+const sb = createClient(SB_URL, SB_ANON)
+
+const params = new URLSearchParams(location.search)
+const token  = (params.get('t') || '').trim()
+const isUndo = params.get('undo') === '1'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const app     = document.getElementById('app')
+const titleEl = document.getElementById('title')
+const bodyEl  = document.getElementById('body')
+const actionEl= document.getElementById('action')
+
+// escapeHtml för säker DOM-injektion. Bara token echoas via URL — men
+// samma trigger fires även för hand-editerade URL:er, så defensiv escape.
+function escHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+}
+
+function render({title, bodyHtml, action}){
+  titleEl.textContent = title
+  bodyEl.innerHTML   = bodyHtml
+  if(action){
+    actionEl.href = action.url
+    actionEl.textContent = action.label
+    actionEl.hidden = false
+  } else {
+    actionEl.hidden = true
+  }
+  app.hidden = false
+}
+
+// Ingen token i URL → visa fallback-instruktion. Ingen RPC-anrop.
+if(!token){
+  render({
+    title: 'Missing unsubscribe link',
+    bodyHtml: 'This page needs an unsubscribe token from your email link. '
+            + 'Open the link from your weekly digest email again, or email '
+            + '<a href="mailto:research@gusto.science">research@gusto.science</a>.',
+    action: null,
+  })
+} else {
+  // Neutralt utfall: render OMEDELBART baserat på isUndo, fire-and-forget
+  // RPC:n i bakgrunden. Om token är okänd/malformad/RPC failar visar vi
+  // ändå samma besked — avslöjar aldrig om token existerar.
+  const encToken = encodeURIComponent(token)
+  if(isUndo){
+    render({
+      title: 'Welcome back',
+      bodyHtml: '<p>If this email address is registered, you\'ll receive the next weekly digest.</p>'
+              + '<p style="margin-top:14px">Changed your mind again?</p>',
+      action: { url: `?t=${encToken}`, label: 'Unsubscribe' },
+    })
+  } else {
+    render({
+      title: 'You&#39;ve been unsubscribed',
+      bodyHtml: '<p>If this email address was subscribed to the Gusto Science weekly digest, we\'ve stopped sending it.</p>'
+              + '<p style="margin-top:14px">Was this a mistake?</p>',
+      action: { url: `?t=${encToken}&undo=1`, label: 'Undo — resubscribe' },
+    })
+  }
+  // Fire-and-forget mot RPC. Ingen await, ingen catch-branch som
+  // ändrar UI — utfallet är alltid samma sida oavsett resultat.
+  if(UUID_RE.test(token)){
+    sb.rpc('set_digest_enabled', { p_token: token, p_enabled: isUndo })
+      .then(({error}) => { if(error) console.log('[unsubscribe] rpc:', error.message) })
+  } else {
+    console.log('[unsubscribe] malformed token payload')
+  }
+}
+</script>
+
+</body>
+</html>
