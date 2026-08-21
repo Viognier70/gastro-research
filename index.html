@@ -2220,6 +2220,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <button type="submit">Sign in</button>
     </form>
     <div class="auth-switch" id="authSwitch">No account? <span onclick="toggleAuthMode()">Create one</span></div>
+    <!-- ORDER 115 — bekräftelsesteg efter signup när e-postverifiering krävs.
+         Ersätter form + switch; modalen stängs INTE automatiskt. -->
+    <div id="authConfirmStep" hidden>
+      <p style="font-size:13px;color:var(--text-primary);line-height:1.65;margin:8px 0 16px">
+        We sent a confirmation link to <strong id="authConfirmEmail" style="color:var(--gusto-gold-dark,#836428);word-break:break-all"></strong>. Click it to activate your account — then you get 3 free Ask questions per day.
+      </p>
+      <div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:8px">
+        <a id="authResendLink" onclick="resendAuthConfirmation()" style="color:var(--gusto-gold-dark,#836428);cursor:pointer;text-decoration:none">Didn't get it? Send again</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2580,7 +2590,12 @@ function updateFreeBar(){
   }
 }
 
-function openModal(id){document.getElementById(id).classList.add('open')}
+function openModal(id){
+  // ORDER 115: authModal kan lämnas i confirmation-läget efter signup.
+  // Nästa öppning ska visa vanlig form, inte gammal "Check your inbox".
+  if(id === 'authModal') resetAuthConfirmationStep()
+  document.getElementById(id).classList.add('open')
+}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
 function selectPlan(el,plan){selectedPlan=plan;document.querySelectorAll('.price-card').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
@@ -3767,6 +3782,75 @@ async function loadSavedArticles(){
 }
 
 
+// ORDER 115 — bekräftelsesteg efter signup som kräver e-postverifiering.
+// showAuthConfirmationStep byter ut form + switch mot en informationsyta;
+// resetAuthConfirmationStep återställer till vanligt läge (kallas av
+// openModal('authModal') så nästa öppning ser rent formulär).
+function showAuthConfirmationStep(email){
+  const form   = document.getElementById('authForm')
+  const sw     = document.getElementById('authSwitch')
+  const step   = document.getElementById('authConfirmStep')
+  const title  = document.getElementById('authTitle')
+  const emailEl= document.getElementById('authConfirmEmail')
+  const link   = document.getElementById('authResendLink')
+  if(form) form.hidden = true
+  if(sw) sw.hidden = true
+  if(title) title.textContent = 'Check your inbox'
+  if(emailEl) emailEl.textContent = email || ''
+  // Återställ resend-länken i fall den är i "Sent again ✓"-läge från förra försök.
+  if(link){
+    link.textContent = 'Didn\'t get it? Send again'
+    link.style.pointerEvents = ''
+  }
+  if(step) step.hidden = false
+}
+function resetAuthConfirmationStep(){
+  const form  = document.getElementById('authForm')
+  const sw    = document.getElementById('authSwitch')
+  const step  = document.getElementById('authConfirmStep')
+  const title = document.getElementById('authTitle')
+  if(step) step.hidden = true
+  if(form) form.hidden = false
+  if(sw) sw.hidden = false
+  // Titeln speglar authMode; toggleAuthMode sätter samma text i sin gren.
+  if(title) title.textContent = authMode === 'signup' ? 'Create account' : 'Sign in'
+}
+// Supabase v2 auth.resend för 'signup'. Rate-limitad server-side (default
+// runt 4/tim/e-post). Länken disable:as tillfälligt efter lyckad resend
+// så snabba dubbelklick inte bränner kvoten. Fel visas som alert.
+window.resendAuthConfirmation = async function(){
+  const email = document.getElementById('authConfirmEmail')?.textContent?.trim() || ''
+  const link  = document.getElementById('authResendLink')
+  if(!email || !link) return
+  const originalText = 'Didn\'t get it? Send again'
+  link.textContent = 'Sending…'
+  link.style.pointerEvents = 'none'
+  try {
+    const {error} = await sb.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: 'https://gusto.science' }
+    })
+    if(error){
+      link.textContent = originalText
+      link.style.pointerEvents = ''
+      alert(error.message || 'Could not resend. Please try again shortly.')
+      return
+    }
+    link.textContent = 'Sent again ✓'
+    // Håll länken disabled i 15s — server-side rate limit är strängare men
+    // en kort UX-broms hindrar spam-klick och signalerar att resend gick igenom.
+    setTimeout(() => {
+      link.textContent = originalText
+      link.style.pointerEvents = ''
+    }, 15000)
+  } catch(e) {
+    link.textContent = originalText
+    link.style.pointerEvents = ''
+    alert('Network error. Please try again shortly.')
+  }
+}
+
 window.toggleAuthMode=function(){
   authMode=(authMode==='signup')?'signin':'signup'
   const title=document.getElementById('authTitle')
@@ -3796,11 +3880,12 @@ async function handleAuth(){
   const password=document.getElementById('authPassword').value
   const displayName=document.getElementById('authName')?.value?.trim()||''
   let authError=null
+  let signUpData=null
   if(authMode==='signup'){
     // display_name skickas som user_metadata (om trigger finns kopieras det till profiles),
     // och sparas lokalt så initAuth kan skriva det efter e-postverifiering.
     if(displayName) localStorage.setItem('gs_pending_display_name', displayName)
-    const {error}=await sb.auth.signUp({
+    const {data,error}=await sb.auth.signUp({
       email,
       password,
       options:{
@@ -3809,9 +3894,18 @@ async function handleAuth(){
       }
     })
     authError=error
+    signUpData=data
   }
   else{const {error}=await sb.auth.signInWithPassword({email,password});authError=error}
   if(authError){alert(authError.message||'Sign-in failed. Please try again.');return}
+  // ORDER 115 — signup med e-postverifiering: signUp returnerar user
+  // MEN session=null. Visa bekräftelsesteg i modalen (stäng INTE).
+  // Om session finns direkt (t.ex. confirmation-off eller signin) fortsätter
+  // vi till initAuth-flödet nedan som tidigare.
+  if(authMode==='signup' && !signUpData?.session){
+    showAuthConfirmationStep(email)
+    return
+  }
   closeModal('authModal')
   const {data:{session}}=await sb.auth.getSession()
   if(session){
