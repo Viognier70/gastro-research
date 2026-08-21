@@ -5530,9 +5530,15 @@ window.doSemanticSearch = async function(inputId, resultsId) {
 
     // ORDER 112 — quota_remaining: null för Pro (ingen räknare), 0-2 för Free.
     // Renderar diskret räknare ovanför honesty-rad om Free-user.
+    // ORDER 114-fix: 0 återstående läser konstigt direkt efter att man
+    // fått ett svar ("0 free questions remaining today"). Fras om till en
+    // mening som talar om att DENNA var sista, inte att noll är kvar.
     const quotaLeft = (typeof data.quota_remaining === 'number') ? data.quota_remaining : null
+    const quotaText = quotaLeft === 0
+      ? 'That was your last free question today'
+      : `${quotaLeft} free ${quotaLeft === 1 ? 'question' : 'questions'} remaining today`
     const quotaHtml = quotaLeft !== null ? `<div style="margin-bottom:8px;font-size:10px;color:var(--text-tertiary);font-family:'Outfit',sans-serif">
-      ${quotaLeft} free ${quotaLeft === 1 ? 'question' : 'questions'} remaining today · <a onclick="openModal('upgradeModal')" style="color:var(--gusto-gold-dark,#836428);text-decoration:none;cursor:pointer">Upgrade to Pro →</a>
+      ${quotaText} · <a onclick="openModal('upgradeModal')" style="color:var(--gusto-gold-dark,#836428);text-decoration:none;cursor:pointer">Upgrade to Pro →</a>
     </div>` : ''
 
     const honestyHtml = `<div style="margin-bottom:14px;font-size:10px;line-height:1.6;color:var(--text-tertiary);font-family:'Outfit',sans-serif;font-style:italic">
