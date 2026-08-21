@@ -68,6 +68,11 @@ Deno.serve(async (req) => {
       convergence: parsed.convergence||'',
       evidence_strength: parsed.evidence_strength||'moderate',
       article_count: articles.length,
+      // ORDER 122: spara underlags-artiklarnas id:n så veckobrev och andra
+      // konsumenter kan visa/verifiera vilka artiklar som formade syntesen.
+      // Kolumnen finns i schemat sedan tidigare men fylldes aldrig av
+      // denna edge-fn — 23 av 25 rader saknar den (state 2026-08-21).
+      article_ids: articles.map((a:any) => a.id),
       topics: [topic],
       professions: [dbRole],
       updated_at: new Date().toISOString()
