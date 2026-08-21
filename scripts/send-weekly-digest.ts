@@ -99,18 +99,19 @@ type Recipient = {
   last_digest_at: string | null
 }
 type Article = {
-  id:          string
-  title:       string
-  headline_en: string | null
-  journal:     string | null
-  year:        string | null
-  url:         string | null
-  core_claim:  string | null
-  topic:       string | null
-  episteme:    string | null
-  techne:      string | null
-  phronesis:   string | null
-  relevance:   number | null
+  id:             string
+  title:          string
+  headline_en:    string | null
+  journal:        string | null
+  year:           string | null
+  url:            string | null
+  core_claim:     string | null
+  topic:          string | null
+  episteme:       string | null
+  techne:         string | null
+  phronesis:      string | null
+  relevance:      number | null
+  citation_count?: number | null   // ORDER 122-fix: styr phronesis-plockning (Section C)
 }
 type PulseKw = { keyword: string; trend_direction: string; trend_pct: number }
 type SavedMeta = { ids: string[]; topics: string[]; topTopic: string | null }
@@ -206,7 +207,7 @@ async function sectionA(r: Recipient, science: string, since: Date, topics: stri
   const sinceIso = since.toISOString()
   const params = new URLSearchParams()
   params.append('select',
-    `id,title,headline_en,journal,year,url,core_claim,topic,` +
+    `id,title,headline_en,journal,year,url,core_claim,topic,citation_count,` +
     `episteme_${science},techne_${science},phronesis_${science},relevance_sci_${science}`
   )
   params.append('fetched_at', `gte.${sinceIso}`)
@@ -223,19 +224,40 @@ async function sectionA(r: Recipient, science: string, since: Date, topics: stri
   params.append('limit', '5')
   const rows: any[] = await sbGet(`/rest/v1/articles?${params.toString()}`)
   return rows.map(a => ({
-    id:          a.id,
-    title:       a.title,
-    headline_en: a.headline_en,
-    journal:     a.journal,
-    year:        a.year,
-    url:         a.url,
-    core_claim:  a.core_claim,
-    topic:       a.topic,
-    episteme:    a[`episteme_${science}`],
-    techne:      a[`techne_${science}`],
-    phronesis:   a[`phronesis_${science}`],
-    relevance:   a[`relevance_sci_${science}`],
+    id:             a.id,
+    title:          a.title,
+    headline_en:    a.headline_en,
+    journal:        a.journal,
+    year:           a.year,
+    url:            a.url,
+    core_claim:     a.core_claim,
+    topic:          a.topic,
+    episteme:       a[`episteme_${science}`],
+    techne:         a[`techne_${science}`],
+    phronesis:      a[`phronesis_${science}`],
+    relevance:      a[`relevance_sci_${science}`],
+    citation_count: a.citation_count ?? null,
   }))
+}
+
+// ORDER 122-fix: välj phronesis-källa till Section C EXKLUSIVT från
+// articles[1..end]. Pro såg annars samma phronesis i toppartikelns
+// TRIAD-block OCH i "This week's practical read" — dubblering. Free
+// ser inget phronesis i korten men samma logik körs för konsistens.
+//
+// Rank inom articles.slice(1): citation_count DESC (signalerar canonical/
+// diskuterad studie — semantiskt distinkt från relevance-rank). Stable
+// sort bevarar relevance-ordning vid oavgjord citation_count. Måste ha
+// phronesis-text för att kvalificera. Returnerar null om articles < 2
+// eller ingen kandidat har phronesis-text (Section C skippas då).
+function pickPhronesisArticle(articles: Article[]): Article | null {
+  if (articles.length < 2) return null
+  const candidates = articles.slice(1).filter(a => a.phronesis)
+  if (!candidates.length) return null
+  const sorted = [...candidates].sort(
+    (a, b) => (b.citation_count ?? 0) - (a.citation_count ?? 0)
+  )
+  return sorted[0]
 }
 
 // ── Section B: research pulse (cache one gång per körning) ────────────────
@@ -588,9 +610,13 @@ async function main() {
         continue
       }
 
-      // Section C: phronesis-text från topArticle (bara meningsfullt om det finns)
-      const phronesisFrom = articles[0].phronesis
-        ? { text: articles[0].phronesis!, title: articles[0].headline_en || articles[0].title }
+      // Section C: phronesis-text från en ANNAN artikel än articles[0]
+      // (den syns redan i toppkortets TRIAD-block för Pro). Väljs via
+      // pickPhronesisArticle: högst citation_count bland artikel 2-5.
+      // Returnerar null om articles < 2 eller ingen kandidat har phronesis.
+      const phronesisArt  = pickPhronesisArticle(articles)
+      const phronesisFrom = phronesisArt
+        ? { text: phronesisArt.phronesis!, title: phronesisArt.headline_en || phronesisArt.title }
         : null
 
       // Section D: institution för user:s topTopic
