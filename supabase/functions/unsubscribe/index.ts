@@ -152,15 +152,15 @@ Deno.serve(async (req) => {
 
   const html = isUndo ? undonePage(token) : unsubPage(token)
 
-  return new Response(html, {
-    status: 200,
-    headers: {
-      ...CORS,
-      'Content-Type':  'text/html; charset=utf-8',
-      // Ingen cache — svaret speglar server-state per anrop.
-      'Cache-Control': 'no-store',
-      // Klargör att detta är transactional-endpoint, inte trackbar länk.
-      'Referrer-Policy': 'no-referrer',
-    },
-  })
+  // Explicit Headers()-instans + lowercase-nycklar. Vid deploy 2026-08-21
+  // upptäcktes att content-type kom ut som 'text/plain' via plain-object-
+  // spread — sannolikt Supabase-routerns headers-normalisering som gick
+  // fel med title-case-keys. Headers()-API är den kanoniska formen och
+  // undviker case-krocken.
+  const h = new Headers()
+  for (const [k, v] of Object.entries(CORS)) h.set(k, v)
+  h.set('content-type', 'text/html; charset=utf-8')
+  h.set('cache-control', 'no-store')
+  h.set('referrer-policy', 'no-referrer')
+  return new Response(html, { status: 200, headers: h })
 })
