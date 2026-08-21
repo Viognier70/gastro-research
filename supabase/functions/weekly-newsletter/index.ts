@@ -115,6 +115,40 @@ Deno.serve(async (req) => {
   if(req.method==='OPTIONS')return new Response(null,{headers:CORS})
   const body = await req.json().catch(()=>({}))
   const headers = {'Content-Type':'application/json',...CORS}
+
+  // ─── ORDER 119 SAFETY GUARD (2026-08-21) ────────────────────────────────
+  // BEFINTLIG buildEmail-funktion inkluderar hela TRIAD-payloaden (episteme,
+  // techne, phronesis) i mailet UTAN Free/Pro-differentiering och sänder via
+  // Brevo /emailCampaigns till hela BREVO_LIST_ID-listan.
+  //
+  // Två aktiva bugar:
+  //   1. Pro-content läcker gratis till Free-subscribers om skriptet avfyras
+  //      (bryter mot betalvägg-modellen etablerad i get_articles_full-RPC:n).
+  //   2. BREVO_LIST_ID-variabeln refereras (rad 14 + 62) utan att någonsin
+  //      deklareras i filen → ReferenceError vid Brevo-anropen. Skriptet är
+  //      antingen aldrig framgångsrikt körd eller så finns const:en satt via
+  //      en Deno.env-secret som inte visas i koden.
+  //
+  // Denna guard blockerar ALLA vägar tills en säker Free/Pro-branchad build
+  // är på plats (planeras i ORDER 118-bygget). Ta bort guarden aldrig utan
+  // att först verifiera att buildEmail respekterar mottagarens is_pro-flag.
+  //
+  // Undantag: admin_digest-branchen skickar bara till ADMIN_EMAIL och rör
+  // inte prenumerantlistan — den kan fortsätta. Om även den ska frysas,
+  // flytta guarden ovanför admin_digest-checken.
+  const isAdminDigest = body?.admin_digest === true
+  if (!isAdminDigest) {
+    return new Response(JSON.stringify({
+      ok: false,
+      status: 'frozen',
+      reason: 'Weekly newsletter frozen (ORDER 119, 2026-08-21). buildEmail '
+            + 'saknar Free/Pro-differentiering; TRIAD-payloaden skulle läcka '
+            + 'till hela BREVO_LIST_ID-listan. Se supabase/functions/'
+            + 'weekly-newsletter/index.ts guard-block för villkoret att '
+            + 'lyfta detta.'
+    }), { status: 503, headers })
+  }
+
   if(body.admin_digest){
     const ok = await sendAdminDigest()
     return new Response(JSON.stringify({ok,action:'admin_digest'}),{headers})
