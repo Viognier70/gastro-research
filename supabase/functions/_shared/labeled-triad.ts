@@ -71,6 +71,7 @@ STRICT RULES (violation = ruined analysis):
 6. EPISTEME OPENING: Do not use a repeating template across the 5 Epistemes. Start with the substantive finding itself, not with "The study establishes/finds/demonstrates/reports/identifies" or equivalent report-frame verbs.
 7. HEDGING MUST NAME WHAT IS UNCERTAIN. If you write "may", "could", "might", "potentially", or "could indicate", specify in the same sentence WHAT is uncertain — sample size, single-study finding, correlational (not causal) design, restricted context, absence of replication, etc. Example: "may hold in commercial kitchens, though tested only in a lab setting." Vague hedges without stated grounds are noise; either name the source of uncertainty in-line or state the finding plainly.
 8. EXPLAIN DOMAIN TERMS THE TARGET ROLE WOULDN'T KNOW. Each role has its own working vocabulary. A sommelier reads "crossmodal correspondences" as jargon; a food anthropologist reads "Rayleigh scattering" the same way; a chef reads "hedonic valence" the same way. When a term from the source study isn't part of the target role's day-to-day language, define it in one clause on first use (parenthetical or by rephrasing entirely in the role's own words). Test: could a working practitioner in this role act on your sentence without a dictionary? If no, rewrite.
+9. FORMAT: Do NOT write horizontal separators (---, ***, \`\`\`) or "END OF FIELD"-markers between fields. Fields are structured by the [LABEL] tags alone. Blank lines between fields are fine; markdown separators leak into the previous field's saved content.
 
 Title: "${(article.title || '').slice(0, 200)}"
 Abstract: "${source.slice(0, 2000)}"
@@ -167,7 +168,12 @@ export function parseLabeledProse(text: string): ParseResult {
     if (!expected.has(label)) { extra.push(label); continue }
     const contentStart = matches[i].end
     const contentEnd = i + 1 < matches.length ? matches[i + 1].start : text.length
-    const value = text.slice(contentStart, contentEnd).trim()
+    // ORDER 124: strippa trailing markdown-separatorer (---, ```, ***)
+    // som Sonnet/Haiku ibland lägger mellan fält. Utan detta hamnar de
+    // i föregående fälts sparat content — synligt i mail-render 46 gånger
+    // efter fielden audit 2026-08-22. Prompt-regel 9 avråder från detta
+    // men parsern är sista skiktet.
+    const value = text.slice(contentStart, contentEnd).trim().replace(/\s*(---+|\*\*\*+|```)\s*$/, '')
     if (value) fields[label] = value
   }
 
