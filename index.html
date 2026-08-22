@@ -1015,6 +1015,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .upgrade-features{list-style:none;margin:16px 0;display:grid;gap:8px}
 .upgrade-features li{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
 .upgrade-features li::before{content:'✓';color:var(--gold);font-weight:600}
+/* SETTINGS MODAL (ORDER 128) */
+.settings-section{margin-top:18px;padding-top:16px;border-top:0.5px solid var(--border-mid)}
+.settings-section:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+.settings-label{font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:var(--text-primary);font-variation-settings:'WONK' 1,'opsz' 40}
+.settings-hint{font-size:11.5px;color:var(--text-tertiary);margin-top:2px;line-height:1.5}
+.settings-plan-badge{display:inline-block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;font-weight:600}
+.settings-plan-free{background:var(--warm-100);color:var(--text-secondary);border:0.5px solid var(--border-mid)}
+.settings-plan-trial{background:rgba(201,168,76,.12);color:var(--gusto-gold-dark,#836428);border:0.5px solid rgba(201,168,76,.4)}
+.settings-plan-pro{background:var(--black);color:var(--gold);border:0.5px solid var(--gold)}
 .price-row{display:flex;gap:10px;margin:16px 0}
 .price-card{flex:1;border:0.5px solid var(--border-mid);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:all .15s}
 .price-card.on{border-color:var(--gold);background:rgba(201,168,76,.05)}
@@ -2284,6 +2293,55 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <button class="upgrade-btn" style="width:100%;padding:12px;font-size:13px" onclick="startCheckout()">Get Pro access →</button>
     <p style="font-size:10px;color:var(--text-tertiary);text-align:center;margin-top:10px">Secure payment via Stripe · Cancel anytime</p>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL (ORDER 128) — öppnas från avatar-menyn.
+     Roll, digest, plan, e-post. Item 4 (Stripe billing portal) väntar på
+     egen order — endpoint saknas i supabase/functions/. -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
+    <div class="modal-eyebrow">Account settings</div>
+    <div class="modal-title">Your account</div>
+
+    <!-- ROLLVÄLJARE -->
+    <div class="settings-section">
+      <div class="settings-label">Your role</div>
+      <div class="settings-hint">Shapes how every study is read for you — feed, TRIAD lens, weekly digest.</div>
+      <div id="settingsRoleChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+        <button type="button" class="role-chip" data-role="sommelier" onclick="_settingsPickRole('sommelier',this)">Sommelier</button>
+        <button type="button" class="role-chip" data-role="chef" onclick="_settingsPickRole('chef',this)">Chef</button>
+        <button type="button" class="role-chip" data-role="gastronomy" onclick="_settingsPickRole('gastronomy',this)">Meal Creator</button>
+        <button type="button" class="role-chip" data-role="fb_manager" onclick="_settingsPickRole('fb_manager',this)">Hospitality Management</button>
+        <button type="button" class="role-chip" data-role="food_researcher" onclick="_settingsPickRole('food_researcher',this)">Food Researcher &amp; Educator</button>
+      </div>
+    </div>
+
+    <!-- DIGEST-TOGGLE -->
+    <div class="settings-section">
+      <div class="settings-label">Weekly digest</div>
+      <label style="display:block;margin-top:6px;font-size:12.5px;color:var(--text-secondary);line-height:1.55;cursor:pointer">
+        <input type="checkbox" id="settingsDigest" style="width:auto;vertical-align:middle;margin-right:8px">
+        Weekly digest — five new studies for your role.
+      </label>
+    </div>
+
+    <!-- PLAN -->
+    <div class="settings-section">
+      <div class="settings-label">Plan</div>
+      <div id="settingsPlan" style="margin-top:6px"></div>
+      <div id="settingsBilling" style="margin-top:8px;font-size:11.5px;color:var(--text-tertiary)"></div>
+    </div>
+
+    <!-- E-POST (view-only) -->
+    <div class="settings-section">
+      <div class="settings-label">Email</div>
+      <div id="settingsEmail" style="margin-top:6px;font-size:13px;color:var(--text-secondary);word-break:break-all"></div>
+    </div>
+
+    <button class="upgrade-btn" style="width:100%;padding:12px;font-size:13px;margin-top:18px" onclick="saveSettings()">Save changes</button>
+    <div id="settingsStatus" style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:10px;min-height:14px"></div>
   </div>
 </div>
 
@@ -4082,7 +4140,7 @@ function renderAuthArea(session, displayName, initial){
   const tooltip = greeting || session.user.email
   const area = document.getElementById('authArea')
   if(!area) return
-  area.innerHTML = `${greeting ? `<span class="user-greeting">${_escHtml(greeting)}</span>` : ''}<div class="account-wrap"><div class="user-avatar" title="${_escHtml(tooltip)}" onclick="event.stopPropagation();toggleAccountMenu()">${initial}</div><div id="accountMenu" class="account-menu" hidden><button class="account-menu-item" onclick="event.stopPropagation();closeAccountMenu();showView('feed');if(!showingSaved) toggleSaved();">Saved articles</button><button class="account-menu-item account-menu-signout" onclick="event.stopPropagation();closeAccountMenu();sb.auth.signOut().then(()=>location.reload())">Sign out</button></div></div>`
+  area.innerHTML = `${greeting ? `<span class="user-greeting">${_escHtml(greeting)}</span>` : ''}<div class="account-wrap"><div class="user-avatar" title="${_escHtml(tooltip)}" onclick="event.stopPropagation();toggleAccountMenu()">${initial}</div><div id="accountMenu" class="account-menu" hidden><button class="account-menu-item" onclick="event.stopPropagation();closeAccountMenu();showView('feed');if(!showingSaved) toggleSaved();">Saved articles</button><button class="account-menu-item" onclick="event.stopPropagation();closeAccountMenu();openSettings()">Account settings</button><button class="account-menu-item account-menu-signout" onclick="event.stopPropagation();closeAccountMenu();sb.auth.signOut().then(()=>location.reload())">Sign out</button></div></div>`
 }
 window.toggleAccountMenu = function(){
   const el = document.getElementById('accountMenu')
@@ -4103,6 +4161,109 @@ function accountMenuOutsideClose(e){
   if(!menu || menu.hasAttribute('hidden')) return
   if(wrap && wrap.contains(e.target)) return  // inside — låt en ny click-listener bindas nästa toggle
   menu.setAttribute('hidden','')
+}
+
+// ─── SETTINGS (ORDER 128) ────────────────────────────────────────────────────
+// Lokal state — vald roll i modalen (persisteras först vid Save).
+let _settingsSelectedRole = null
+
+function _settingsPickRole(r, btn){
+  if(!VALID_ROLE_CHIPS.has(r)) return
+  _settingsSelectedRole = r
+  document.querySelectorAll('#settingsRoleChips .role-chip').forEach(b => b.classList.remove('on'))
+  if(btn) btn.classList.add('on')
+}
+
+window.openSettings = async function(){
+  const {data:{session}} = await sb.auth.getSession()
+  if(!session){ openModal('authModal'); return }
+
+  // E-post — direkt från sessionen, ingen roundtrip.
+  const emailEl = document.getElementById('settingsEmail')
+  if(emailEl) emailEl.textContent = session.user.email || ''
+
+  // Läs profil för roll + digest. Faller tillbaka på window-cache om DB-läs failar.
+  let profRole = null, profDigest = false
+  try {
+    const {data:p} = await sb.from('profiles')
+      .select('role, digest_enabled')
+      .eq('id', session.user.id).maybeSingle()
+    profRole   = p?.role || null
+    profDigest = p?.digest_enabled === true
+  } catch(_){}
+
+  // Roll — DB har prio, annars localStorage (samma pattern som initAuth).
+  const initialRole = profRole
+    || toChipRole(localStorage.getItem('gs_role') || localStorage.getItem('gustoRole') || '')
+    || ''
+  _settingsSelectedRole = VALID_ROLE_CHIPS.has(initialRole) ? initialRole : null
+  document.querySelectorAll('#settingsRoleChips .role-chip').forEach(b => {
+    b.classList.toggle('on', b.dataset.role === _settingsSelectedRole)
+  })
+
+  // Digest — DB är källan.
+  const digestEl = document.getElementById('settingsDigest')
+  if(digestEl) digestEl.checked = profDigest
+
+  // Plan-badge — samma trial-logik som freeBar (rad ~2598).
+  const trialEnds  = window._trialEndsAt ? new Date(window._trialEndsAt) : null
+  const now        = new Date()
+  const trialActive= !!(trialEnds && trialEnds > now)
+  const isProDb    = window._isProDb === true
+  const planEl     = document.getElementById('settingsPlan')
+  const billingEl  = document.getElementById('settingsBilling')
+  if(planEl){
+    if(isProDb && !trialActive){
+      planEl.innerHTML = '<span class="settings-plan-badge settings-plan-pro">Pro</span>'
+    } else if(trialActive){
+      const daysLeft = Math.max(0, Math.ceil((trialEnds - now) / 86400000))
+      const ends = trialEnds.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'})
+      planEl.innerHTML = `<span class="settings-plan-badge settings-plan-trial">Trial</span> <span style="font-size:12px;color:var(--text-secondary);margin-left:8px">${daysLeft} day${daysLeft===1?'':'s'} left · ends ${_escHtml(ends)}</span>`
+    } else {
+      planEl.innerHTML = '<span class="settings-plan-badge settings-plan-free">Free</span> <span style="font-size:12px;color:var(--text-secondary);margin-left:8px">3 TRIAD analyses per month · 3 Ask questions per day</span>'
+    }
+  }
+  // Item 4 (Stripe billing portal) — deferred till egen order. Ingen dead link.
+  if(billingEl){
+    billingEl.textContent = (isProDb || trialActive)
+      ? 'Payment method — coming soon.'
+      : ''
+  }
+
+  document.getElementById('settingsStatus').textContent = ''
+  openModal('settingsModal')
+}
+
+window.saveSettings = async function(){
+  const status = document.getElementById('settingsStatus')
+  const {data:{session}} = await sb.auth.getSession()
+  if(!session){ if(status) status.textContent = 'Not signed in.'; return }
+
+  const chosenRole   = VALID_ROLE_CHIPS.has(_settingsSelectedRole) ? _settingsSelectedRole : null
+  const chosenDigest = document.getElementById('settingsDigest')?.checked === true
+
+  if(status) status.textContent = 'Saving…'
+  try {
+    const {error} = await sb.from('profiles')
+      .update({ role: chosenRole, digest_enabled: chosenDigest })
+      .eq('id', session.user.id)
+    if(error) throw error
+  } catch(e){
+    if(status) status.textContent = 'Could not save — try again.'
+    console.log('[ORDER 128] settings save failed:', e?.message || e)
+    return
+  }
+
+  // Sync roll till localStorage + top-chips + feed så vyn matchar den nya rollen.
+  if(chosenRole){
+    localStorage.setItem('gs_role', chosenRole)
+    // window.setRole är patchad (rad ~4745) — fire-and-forget update till profiles
+    // körs igen där, men det är idempotent (samma värde) och håller UI:t enkelt.
+    try { window.setRole(chosenRole, null) } catch(_){}
+  }
+
+  if(status) status.textContent = 'Saved.'
+  setTimeout(() => closeModal('settingsModal'), 700)
 }
 async function initAuth(){
   const {data:{session}}=await sb.auth.getSession()
