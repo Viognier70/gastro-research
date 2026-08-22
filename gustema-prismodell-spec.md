@@ -110,14 +110,31 @@ praktiker.
 
 ## LAUNCH-FÖRUTSÄTTNINGAR (ej optional)
 
-1. **Seeda cachen** — generera TRIAD för topp ~500-1000 artiklar/roll så
+1. **TRIAD-kvalitetsmätning (Del A) genomförd med grönt utfall** — 2026-07-23:
+   FÖRE-mätning på 25 stickprov avslöjade konsekvent fabricering av specifika
+   värden (pH, temperatur, ingrediensnamn) attribuerade till artiklar som inte
+   innehöll dem. Rotorsak identifierad (abstract-only + krav på konkretion),
+   prompt-fix implementerad (v4, deployad), full batch-regenerering i pipeline
+   (~$400, Anthropic Batches API). **Slutgiltig bedömning kvarstår tills
+   EFTER-mätning på nytt stickprov visar grönt mot förbestämda trösklar** — se
+   `gustema-triad-eftermatning.md`. Utan grönt utfall får Ask/Pro inte lanseras
+   till Free — falsk auktoritet är farligare än frånvaro för vetenskaplig publik.
+2. **Ask-per-user-kvot (steg 2) byggd** — se `gustema-lanseringschecklista.md`.
+   Nödvändigt säkerhetsvillkor UTÖVER kvalitetsmätningen (steg 1).
+   Ask-fn steg 1 (deploy 2026-07-22) saknar per-user-räkning by design; steg 2
+   (`ask_quota`-tabell + JWT-läsning + Free 3/mån) krävs innan Free-CTA exponeras.
+3. **Felrapporterings-UI** — knapp under varje TRIAD/Ask-svar → skriver till
+   `analysis_flags`-tabell. Utan detta kan vi inte fånga fel i produktion. Låg
+   byggkostnad, hög värde för community-verifieringen (Del B) och för att
+   kalibrera vidare kvalitetsförbättringar. Ska finnas från dag ett.
+4. **Seeda cachen** — generera TRIAD för topp ~500-1000 artiklar/roll så
    gratis-smaken (3 uppslag) träffar substans, ej tomma väggar. Kontrollerat av
    dig, inom budget-cappen. Utan detta: Free-user klickar → o-cachat → lås →
    ingen aha → ingen konvertering.
-2. **Map-backfill** — 89 av 1809 artiklar har institutionskoordinater nu.
+5. **Map-backfill** — 89 av 1809 artiklar har institutionskoordinater nu.
    Forskare (första målgruppen) är mest krävande på just den datan → fyll mer
    innan de möter kartan.
-3. **Instrumentera "låst TRIAD klickad"** — den mätpunkt forskningen pekar ut
+6. **Instrumentera "låst TRIAD klickad"** — den mätpunkt forskningen pekar ut
    som konverteringsmotorn. Bygg från dag ett; visa uppgraderings-prompt I
    KONTEXT vid den låsta väggen efter förbrukad X (ej prissida, ej mejldrip).
 
