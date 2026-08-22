@@ -993,7 +993,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 /* MODALS */
 .modal-bg{position:fixed;inset:0;background:rgba(12,11,9,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .modal-bg.open{display:flex}
-.modal{background:var(--white);border-radius:12px;padding:28px 24px;width:100%;position:relative;max-height:90vh;overflow-y:auto}
+.modal{background:var(--white);border-radius:12px;padding:28px 24px;width:100%;position:relative;max-height:90vh;overflow-y:auto;overflow-x:hidden}
 .modal-close{position:absolute;top:14px;right:16px;font-size:20px;background:none;border:none;cursor:pointer;color:var(--text-tertiary);line-height:1}
 .modal-eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
 .modal-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;margin-bottom:14px;line-height:1.2}
@@ -2221,6 +2221,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
            toggleAuthMode togglar #authSignupExtras.style.display. Rollvärden
            måste matcha VALID_ROLE_CHIPS och profiles.role CHECK-constraint. -->
       <div id="authSignupExtras" style="display:none">
+        <div style="font-size:11px;color:#9C9484;margin:2px 0 6px;line-height:1.5">Your role — this shapes how every study is read for you.</div>
         <select id="authRole" name="role" style="width:100%;padding:12px 14px;margin-bottom:10px;font-size:14px;font-family:'Outfit',sans-serif;background:#fff;border:1px solid #E8E0D0;border-radius:8px;color:#0C0B09">
           <option value="">Select your role</option>
           <option value="sommelier">Sommelier</option>
@@ -2231,7 +2232,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         </select>
         <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12.5px;color:#5C5649;line-height:1.55;cursor:pointer">
           <input type="checkbox" id="authDigest" name="digest_enabled" style="margin-top:3px;flex-shrink:0">
-          <span>Send me the weekly digest — five new studies for your role, every week.</span>
+          <!-- ORDER 126-fix: flex:1 + min-width:0 hindrar span:en från att
+               överflöda modalen. Utan detta använder browsern spännets
+               naturliga content-bredd (default min-width:auto på flex-items)
+               och texten byggs upp till en smal höger-kolumn utanför den
+               vita rutan. Med flex:1 tar spännen resterande flex-utrymme;
+               min-width:0 tillåter word-wrap under content-bredden. -->
+          <span style="flex:1;min-width:0">Send me the weekly digest — five new studies for your role, every week.</span>
         </label>
       </div>
       <button type="submit">Sign in</button>
