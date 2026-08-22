@@ -50,22 +50,31 @@ Deno.serve(async (req) => {
 Articles:
 ${summaries.slice(0,8000)}
 
-Assess the evidence pattern honestly. Do NOT invent disagreement that isn't
-there. If the articles converge, set divergence to null (not "" and not a
-soft caveat). Only describe divergence when the source articles substantively
-contradict or split.
+Assess the evidence pattern honestly. Divergence means the studies reach
+OPPOSING CONCLUSIONS about the SAME QUESTION. Methodological variation,
+different measurement methods, different sample populations, nuance, or
+"further research needed" are NOT divergence — they are ordinary
+scientific practice and MUST be treated as convergence if the substantive
+findings align.
+
+If the articles converge, set divergence to null (not "" and not a soft
+caveat). Only describe divergence when the source articles substantively
+contradict each other on a claim, or when the articles don't address a
+question this role needs answered.
 
 evidence_type:
-  "convergence" — articles agree; divergence is null
-  "mixed"       — a minority position or nuance exists; divergence names it
-  "divergence"  — articles clearly split; divergence describes the split
+  "convergence" — articles agree on the substantive claim; divergence is null
+  "divergence"  — articles substantively contradict; divergence describes
+                  the split
+  "gap"         — the articles do not address a question this role would
+                  need answered; divergence names what is missing
 
 Return ONLY JSON:
 {
   "title": "5-8 words",
   "convergence": "Research consistently shows X.",
   "divergence": null | "…",
-  "evidence_type": "convergence" | "mixed" | "divergence",
+  "evidence_type": "convergence" | "divergence" | "gap",
   "synthesis": "For you as a ${dbRole}, X.",
   "evidence_strength": "strong" | "moderate" | "emerging"
 }`
@@ -103,10 +112,25 @@ Return ONLY JSON:
   }
   const cleanEvidenceType = (v:any):string => {
     const s = String(v||'').trim().toLowerCase()
-    return (s === 'mixed' || s === 'divergence') ? s : 'convergence'
+    // ORDER 122 följdfix: enum-värden matchar DB-check-constraint
+    // research_syntheses_evidence_type_check = (convergence, divergence, gap).
+    // "mixed" (som fanns i initial prompt-utökning) avvisas 23514 av
+    // constraint. "gap" är rätt term för "artiklarna svarar inte på frågan
+    // rollen behöver besvarad".
+    return (s === 'divergence' || s === 'gap') ? s : 'convergence'
   }
 
   const synth = parsed.synthesis||parsed.convergence||''
+
+  // ORDER 122 följdfix: hård regel — om evidence_type är "convergence"
+  // MÅSTE divergence vara null. Prompten säger det men Haiku ljuger:
+  // observerat 2026-08-22 var att modellen skickade en "mjuk brasklapp"
+  // ("methodological nuance to otherwise consistent findings") som divergence-
+  // text medan evidence_type samtidigt sattes till "convergence". Metodologisk
+  // nyans är inte divergens. Koden ska aldrig låta den kombinationen passera.
+  const evidenceType = cleanEvidenceType(parsed.evidence_type)
+  const divergence   = evidenceType === 'convergence' ? null : cleanDivergence(parsed.divergence)
+
   const { error: saveErr } = await supabase
     .from('research_syntheses')
     .upsert({
@@ -116,8 +140,8 @@ Return ONLY JSON:
       synthesis_text: synth,
       convergence: parsed.convergence||'',
       // ORDER 122: nya fält från utökad prompt.
-      divergence: cleanDivergence(parsed.divergence),
-      evidence_type: cleanEvidenceType(parsed.evidence_type),
+      divergence,
+      evidence_type: evidenceType,
       evidence_strength: parsed.evidence_strength||'moderate',
       article_count: articles.length,
       // ORDER 122: spara underlags-artiklarnas id:n så veckobrev och andra
