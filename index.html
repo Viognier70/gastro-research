@@ -246,6 +246,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   .lh-stats{flex-direction:column;gap:20px;padding-top:20px}
 }
 
+/* TRIAL WELCOME STRIP (ORDER 131) — engångsrad ovanför app-container */
+#trialWelcomeStrip{background:var(--warm-100);border-top:0.5px solid var(--gold);border-bottom:0.5px solid var(--border-mid);padding:10px 32px;font-family:'Outfit',sans-serif;font-size:12.5px;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;gap:12px;line-height:1.5}
+#trialWelcomeStrip[hidden]{display:none}
+#trialWelcomeStrip .tws-eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-right:8px}
+#trialWelcomeStrip .tws-close{background:none;border:none;font-size:18px;line-height:1;color:var(--text-tertiary);cursor:pointer;padding:0 4px;flex-shrink:0}
+#trialWelcomeStrip .tws-close:hover{color:var(--text-primary)}
+@media(max-width:600px){#trialWelcomeStrip{padding:10px 16px;font-size:12px}}
+
 /* APP NAV (legacy — kvar tills gamla .topbar/.app-nav-markup rensats bort) */
 .app-nav{position:sticky;top:54px;z-index:99;background:var(--white);border-bottom:0.5px solid var(--border);display:flex;gap:0;padding:0 32px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .app-nav::-webkit-scrollbar{display:none}
@@ -1709,6 +1717,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- Sentinel för IntersectionObserver — headern kollapsar när denna
      scrollas ut ur viewport. 1px hög, osynlig, direkt under headern. -->
 <div id="siteHeaderSentinel" aria-hidden="true" style="height:1px"></div>
+
+<!-- TRIAL WELCOME STRIP (ORDER 131) — visas EN gång vid ankomst efter trial-
+     start (auto via bekräftelselänk eller explicit via doStartTrial). Flaggan
+     gs_trial_welcome_shown_<userId> sätts vid visning, INTE vid dismiss —
+     hon ska aldrig se den igen efter första pageload. Löpande "N dagar kvar"
+     hanteras av freeBar. -->
+<div id="trialWelcomeStrip" hidden>
+  <span id="trialWelcomeText"></span>
+  <button type="button" class="tws-close" onclick="dismissTrialWelcomeStrip()" aria-label="Dismiss">×</button>
+</div>
 
 <!-- APP VIEWS — Feed default (no [hidden]). Steg 2-4 flyttar innehåll hit. -->
 <!-- APP VIEW: Översikt — landning från 2026-07-16. Skeleton nu; moduler i nästa session. -->
@@ -4273,6 +4291,51 @@ window.saveSettings = async function(){
   setTimeout(() => closeModal('settingsModal'), 700)
 }
 
+// ─── TRIAL WELCOME STRIP (ORDER 131) ────────────────────────────────────────
+// Ersätter alert('Your 14-day Pro trial has started...') med en tunn topp-rad
+// ovanför app-container. Visas EN gång per konto — flaggan sätts vid visning,
+// inte vid dismiss, så nästa pageload ser flaggan och renderar inte om.
+// Löpande "Trial · N days left" hanteras av freeBar (rad ~2660).
+
+function _fmtTrialEndDate(iso){
+  if(!iso) return ''
+  const d = new Date(iso)
+  if(isNaN(d.getTime())) return ''
+  const now = new Date()
+  const sameYear = d.getFullYear() === now.getFullYear()
+  const opts = sameYear
+    ? {day:'numeric', month:'long'}
+    : {day:'numeric', month:'long', year:'numeric'}
+  return d.toLocaleDateString('en-GB', opts)
+}
+
+window.showTrialWelcomeStrip = function(trialEndsIso){
+  const uid = window._userId
+  if(!uid) return
+  const flagKey = 'gs_trial_welcome_shown_' + uid
+  if(localStorage.getItem(flagKey) === '1') return  // redan visad, aldrig igen
+
+  const strip = document.getElementById('trialWelcomeStrip')
+  const text  = document.getElementById('trialWelcomeText')
+  if(!strip || !text) return
+
+  const endStr = _fmtTrialEndDate(trialEndsIso || window._trialEndsAt)
+  if(!endStr) return  // utan datum vill vi inte visa en halv mening
+
+  text.innerHTML = `<span class="tws-eyebrow">Pro trial</span>You're on a 14-day Pro trial — full access until ${_escHtml(endStr)}.`
+  strip.hidden = false
+
+  // Sätt flaggan DIREKT vid visning (per ORDER 131). Om hon inte klickar × och
+  // bara byter vy eller stänger fliken har hon ändå sett den — nästa pageload
+  // ska inte upprepa möbeln.
+  localStorage.setItem(flagKey, '1')
+}
+
+window.dismissTrialWelcomeStrip = function(){
+  const strip = document.getElementById('trialWelcomeStrip')
+  if(strip) strip.hidden = true
+}
+
 // ─── STRIPE BILLING PORTAL (ORDER 129) ───────────────────────────────────────
 // Frontend anropar edge-fn stripe-portal (JWT-verifierad server-side). Fn:en
 // dubbelkollar is_pro + stripe_customer_id; success → { url } → window.location.
@@ -4381,9 +4444,10 @@ async function initAuth(){
           // Fire-and-forget — initAuth ska inte blocka på detta.
           try { if(typeof loadArticles==='function') loadArticles() } catch(e){ console.log('loadArticles re-render failed', e) }
           try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight re-render failed', e) }
-          // Diskret engångsnotis — idempotens säkras av trial_used-guarden
-          // ovan; nästa initAuth ser trial_used=true och skippar hela blocket.
-          setTimeout(()=>alert('Your 14-day Pro trial has started. Enjoy full access.'), 300)
+          // ORDER 131: alert ersatt med tunn topp-strip. Sätter flaggan vid
+          // visning så nästa pageload inte upprepar möbeln. Kort delay av samma
+          // skäl som tidigare — låt initAuth-cyklen landa först.
+          setTimeout(()=>showTrialWelcomeStrip(res.trial_ends_at), 300)
         }
         // Övriga svar (already_used / no_profile / RPC-fel) → tyst no-op,
         // free-tier eller befintligt trial-tillstånd gäller.
@@ -7087,7 +7151,10 @@ window.doStartTrial = async function(){
     loadArticles()
     loadSpotlight()
     if(data.reason === 'trial_started'){
-      alert('Your 14-day Pro trial has started. Enjoy full access.')
+      // ORDER 131: alert ersatt med tunn topp-strip (samma UI som auto-start
+      // efter bekräftelselänken). window._trialEndsAt hydraterades av initAuth
+      // ovan så showTrialWelcomeStrip kan hämta datumet därifrån.
+      showTrialWelcomeStrip(window._trialEndsAt)
     }
   } else if(data?.reason === 'trial_already_used'){
     if(window._obSelectedRole) saveObRoleAndExplore()
