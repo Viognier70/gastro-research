@@ -108,13 +108,21 @@ function humanizeRoleSlugs(text: string | null | undefined): string {
 }
 // Item 3: hälsning "Hi <name>," kräver att namnet ser ut som ett namn.
 // "ds", "x", tomsträng, siffror etc → fall back till plain "Hi,".
-// Kriterier: minst 2 tecken efter trim OCH innehåller minst en bokstav
-// (unicode-aware för Å/Ä/Ö och andra icke-ASCII-namn).
+// Kriterier (ORDER 125-skärpning):
+//   - minst 3 tecken efter trim (var 2 — "ds" passade genom)
+//   - måste innehålla minst en bokstav (unicode-aware Å/Ä/Ö m.fl.)
+//   - vid exakt 3 tecken krävs minst en versal (t !== t.toLowerCase())
+//     — ett tvåbokstavsnamn är i praktiken alltid testkonto/slarv,
+//     ett trebokstavsnamn i lowercase (abc, xyz, def) likaså. Namn
+//     >=4 tecken släpps oavsett skiftläge — "test" kan vara Testa,
+//     "adam" kan vara Adam skrivet slarvigt.
 function isValidGreetingName(n: string | null | undefined): boolean {
   if (!n) return false
   const t = n.trim()
-  if (t.length < 2) return false
-  return /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(t)
+  if (t.length < 3) return false
+  if (!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(t)) return false
+  if (t.length === 3 && t === t.toLowerCase()) return false
+  return true
 }
 
 // ── Typer ─────────────────────────────────────────────────────────────────
