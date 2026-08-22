@@ -337,10 +337,22 @@ async function sectionE(seedIds: string[], excludeIds: Set<string>): Promise<Art
 
   for (const seedId of seeds) {
     try {
+      // ORDER 122 (fix 2026-08-22): parameternamnen enligt migration
+      // 20260731120000_articles_hnsw_match_related_grants.sql:
+      // (p_article_id uuid, p_k int, p_floor float). Tidigare anrop med
+      // match_count/similarity_threshold var fel — PGRST202 fångades tyst
+      // av catch-blocket och Section E rapporterade konsekvent E0.
+      //
+      // p_floor 0.55 avviker från funktionens default 0.70 med avsikt:
+      // 0.70 är en strikt tröskel för "in-app related research"-widgeten
+      // (loadRelated i article-modal) där vi vill visa få men mycket
+      // relevanta träffar. Veckobrevet är bredare i tonen — 0.55 matchar
+      // ask-synth:s STRONG_SIM-tröskel och ger fler kandidater att välja
+      // topp-2 från. Vid för många ovidkommande träffar kan tröskeln höjas.
       const rows = await sbRpc('match_related', {
         p_article_id: seedId,
-        match_count: 5,
-        similarity_threshold: 0.55,
+        p_k:          5,
+        p_floor:      0.55,
       })
       if (!Array.isArray(rows)) continue
       for (const row of rows) {
