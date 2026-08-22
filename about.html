@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Name — Gusto Science</title>
 <meta name="description" content="Gustème, Lévi-Strauss, and the movement between Episteme, Techne, and Phronesis. An etymology from the founder's reading of structuralism.">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
@@ -62,18 +62,6 @@ body {
 }
 .home-link .wm-gusto { color: var(--gusto-ink); font-weight: 500 }
 .home-link .wm-science { color: var(--gusto-gold); font-weight: 400 }
-.lang-btn {
-  font-family: 'Outfit', sans-serif;
-  font-size: 11px;
-  color: rgba(58,50,38,.65);
-  border: .5px solid rgba(58,50,38,.22);
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: none;
-  cursor: pointer;
-  letter-spacing: .01em;
-}
-.lang-btn:hover { color: var(--gusto-ink); border-color: rgba(58,50,38,.4) }
 
 /* ── Main / typography ──────────────────────────────── */
 main {
@@ -140,11 +128,6 @@ main {
 .fotnot a { color: inherit; text-decoration: underline; text-underline-offset: 2px }
 .fotnot a:hover { color: var(--gusto-ink) }
 
-/* ── Språkväxling ───────────────────────────────────── */
-[data-lang] { display: none }
-body[data-lang-active="en"] [data-lang="en"] { display: block }
-body[data-lang-active="sv"] [data-lang="sv"] { display: block }
-
 /* ── Responsive ─────────────────────────────────────── */
 @media (max-width: 640px) {
   .about-header { padding: 16px 20px }
@@ -158,65 +141,19 @@ body[data-lang-active="sv"] [data-lang="sv"] { display: block }
 }
 </style>
 </head>
-<body data-lang-active="en">
+<body>
 
 <header class="about-header">
   <a class="home-link" href="index.html">
     <img src="gusto-science-logo.svg" alt="">
     <span class="wm-gusto">gusto</span><span class="wm-science"> science</span>
   </a>
-  <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
 </header>
 
 <main>
   <img class="mark" src="gusto-science-logo.svg" alt="Gusto Science">
 
-  <!-- ── SVENSKA ───────────────────────────────────── -->
-  <section data-lang="sv">
-    <p class="eyebrow">Namnet</p>
-    <h1 class="rubrik">Gustème</h1>
-
-    <p class="brodtext">
-      <em>Gustème</em> — smakens minsta betydelsebärande enhet. Claude
-      Lévi-Strauss myntade ordet 1945, när han föreslog att ett kök kan
-      läsas som ett språk: precis som talet bryts ned i fonem, kan en
-      kulturs matlagning brytas ned i enheter som får sin mening genom
-      kontrast. Sött mot surt. Rått mot tillagat. Vardag mot fest.
-    </p>
-
-    <p class="blockrad">Vi gör samma sak med forskningen.</p>
-
-    <p class="brodtext">
-      Varje artikel bryts ned i tre former av kunskap, för varje
-      yrkesroll. <strong>Episteme</strong> — vad forskningen fastställer.
-      <strong>Techne</strong> — hur det tillämpas.
-      <strong>Phronesis</strong> — det situerade omdömet, det som
-      skiljer den som kan reglerna från den som vet när de ska brytas.
-    </p>
-
-    <p class="brodtext">
-      Lévi-Strauss ställde <em>gustema</em> mot <em>tecnema</em>:
-      smakens enhet mot teknikens. Vi lägger till den tredje. För en
-      profession är varken teori eller teknik — den är rörelsen mellan
-      dem, om och om igen.
-    </p>
-
-    <p class="brodtext">
-      Gustème är begreppet som ligger under — smaken som en enhet av
-      betydelse, inte bara av kemi. Namnet Gusto Science säger i stället
-      vad som görs här: forskning, läst för yrket.
-    </p>
-
-    <p class="fotnot">
-      Lévi-Strauss, C. (1945). L'analyse structurale en linguistique et
-      en anthropologie. <em>Word</em>, 1(1), 33–53.
-      <a href="https://doi.org/10.1080/00437956.1945.11659244">https://doi.org/10.1080/00437956.1945.11659244</a>
-    </p>
-  </section>
-
-  <!-- ── ENGLISH ───────────────────────────────────── -->
-  <section data-lang="en">
-    <p class="eyebrow">The Name</p>
+  <p class="eyebrow">The Name</p>
     <h1 class="rubrik">Gustème</h1>
 
     <p class="brodtext">
@@ -256,33 +193,7 @@ body[data-lang-active="sv"] [data-lang="sv"] { display: block }
       en anthropologie. <em>Word</em>, 1(1), 33–53.
       <a href="https://doi.org/10.1080/00437956.1945.11659244">https://doi.org/10.1080/00437956.1945.11659244</a>
     </p>
-  </section>
 </main>
-
-<script>
-(function() {
-  // Läs språk från localStorage om det finns, annars browser-preferens,
-  // annars default 'en'. Persistas så språkval följer med tillbaka till
-  // index.html när vi gör det stödet där också.
-  var saved
-  try { saved = localStorage.getItem('lang') } catch(e) {}
-  var lang = (saved === 'sv' || saved === 'en')
-    ? saved
-    : ((navigator.language || '').toLowerCase().indexOf('sv') === 0 ? 'sv' : 'en')
-  document.body.setAttribute('data-lang-active', lang)
-  document.documentElement.setAttribute('lang', lang)
-  var btn = document.getElementById('langBtn')
-  btn.textContent = lang === 'en' ? 'SV' : 'EN'
-
-  window.toggleLang = function() {
-    lang = lang === 'en' ? 'sv' : 'en'
-    try { localStorage.setItem('lang', lang) } catch(e) {}
-    document.body.setAttribute('data-lang-active', lang)
-    document.documentElement.setAttribute('lang', lang)
-    btn.textContent = lang === 'en' ? 'SV' : 'EN'
-  }
-})()
-</script>
 
 </body>
 </html>
