@@ -78,7 +78,7 @@ async function fetchPopulation(limit: number): Promise<Article[]> {
 async function fetchOpenAlexBatch(dois: string[]): Promise<Map<string, any>> {
   const filter = 'doi:' + dois.join('|')
   const url = `https://api.openalex.org/works?filter=${encodeURIComponent(filter)}&per-page=${BATCH_SIZE}&mailto=${MAILTO}`
-  const r = await fetch(url, { headers: { 'User-Agent': 'gustema-backfill-fn/1.0' } })
+  const r = await fetch(url, { headers: { 'User-Agent': 'gusto-science-backfill-fn/1.0' } })
   if (!r.ok) return new Map()
   const d = await r.json()
   const out = new Map<string, any>()

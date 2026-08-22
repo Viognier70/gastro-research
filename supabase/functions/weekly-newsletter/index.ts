@@ -41,8 +41,8 @@ async function getArticlesForRole(roleKey: string, limit=4): Promise<any[]> {
     educator_researcher: 'educator_researcher',
   }
   const col = colMap[roleKey]
-  // Roller utanför Gustema-namnrymden (pastry_chef, hotelier, food_photographer
-  // etc från ROLE_LABELS) har ingen Gustema-analys. Returnera [] tydligt
+  // Roller utanför Gusto Science-namnrymden (pastry_chef, hotelier, food_photographer
+  // etc från ROLE_LABELS) har ingen TRIAD-analys. Returnera [] tydligt
   // istället för att bygga en säker-men-tom SQL — och undvik injection-yta.
   if(!col) return []
   const oneWeekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString()

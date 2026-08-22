@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — relevans lager 1: DEPLOY-PLAN (batchning)
 **Datum:** 2026-07-17
 **Princip:** maximera ändringar per deploy UTAN kvalitetsbrott. Batcha det som

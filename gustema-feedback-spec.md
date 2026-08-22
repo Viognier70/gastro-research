@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — Feedback: användbarhet + felflaggning
 **Spec 2026-07-23 · bygg före lansering**
 

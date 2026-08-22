@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — redesign-spec
 **Datum:** 2026-07-16
 **Status:** Vision + struktur fastställd (Översikt + Feed). EJ byggd.

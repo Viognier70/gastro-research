@@ -1,4 +1,4 @@
-# Gustema — lanseringschecklista
+# Gusto Science — lanseringschecklista
 **Datum:** 2026-07-16
 **Syfte:** Allt som står mellan nuläget och skarp lansering, samlat.
 **Källor:** kontextexport 2026-07-15 + tillägg + backlogg + tidigare sessioner.
@@ -145,7 +145,7 @@
 - `index.html:27` har hårdkodad OG-description: "5,200+ studies analyzed
   in depth through the TRIAD framework, drawn from 453,000+ scanned
   publications." — visas i LinkedIn/X/FB-preview när någon delar
-  gustema.com-länken.
+  gusto.science-länken.
 - Baseline 2026-08-02: verkliga tal är **32,728+ TRIAD-analyzed** (från
   screening_funnel.triad_analyserade) och **466,908+ scanned** (r1-count
   på articles_public).
@@ -215,18 +215,9 @@
 
 ---
 
-## 🔵 PRIO 3 — DOMÄNBYTE gustema.com (eget samlat projekt, checklista)
-
-> En bruten auth-redirect/DKIM märks FÖRST när en användare inte kan logga
-> in. Gör samlat, verifiera varje steg.
-
-- DNS → Cloudflare Pages
-- gustema.science + gusto.science redirect → gustema.com
-- SPF/DKIM/DMARC för gustema.com
-- Brevo avsändardomän GustoSci → Gustema
-- Stripe checkout-domän
-- **Supabase Auth redirect-URL:er** (annars bryts inloggning)
-- `CANONICAL_ORIGIN='https://gustema.com'` redan satt i kod.
+<!-- PRIO 3 — DOMÄNBYTE gustema.com: BORTTAGET 2026-08-22.
+     Gustema-namnet förkastades till förmån för Gusto Science.
+     Domänen gustema.com är inte längre aktuell. -->
 
 ---
 

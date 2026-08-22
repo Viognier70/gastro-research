@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — relevans-diagnos: bortfall + arkitekturprincip
 **Datum:** 2026-07-17
 **Ursprung:** Anders fråga — tappar vi artiklar för en profession pga andra

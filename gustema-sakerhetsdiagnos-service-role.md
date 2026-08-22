@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — säkerhetsdiagnos: service_role-standardisering
 **Datum:** 2026-07-17
 **Status:** DIAGNOS KOMPLETT. Fas 2 (rotation) EJ påbörjad — egen utvilad session.

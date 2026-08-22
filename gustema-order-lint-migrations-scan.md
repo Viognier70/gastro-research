@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # ORDER — utöka lint-role-columns.sh att skanna migrations/
 **Datum:** 2026-07-16
 **Rot:** lärdom 7 (RPC utanför git osynlig) + lärdom 11 (mät hela mängden)

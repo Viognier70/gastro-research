@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # ORDER — Navigation K2.2, Fas 2: bygg skelettet
 **Datum:** 2026-07-16
 **Scope:** BARA navigations-skelett. INTE Översiktens moduler (nästa session,

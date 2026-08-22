@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Kontextexport — TILLÄGG 2026-07-16 (RPC-adoption + navigation)
 **Klistras in i gustema-kontextexport (§0 lärdomar, §3, §8).**
 **Sessionen: redesign-genomgång (Feed/Översikt) + navigation K2.2 +

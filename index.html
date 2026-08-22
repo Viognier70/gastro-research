@@ -75,7 +75,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  /* Gustema-varumärke — accentlager över sajtens varma estetik. */
+  /* Gusto Science-varumärke — accentlager över sajtens varma estetik. */
   --gusto-ink:      #3A3226;
   --gusto-gold:     #A08A55;
   --gusto-gold-dark:#836428;
@@ -1109,14 +1109,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
    perifert seende, långsamt nog att inte stressa vid en 60-75s väntan.
    Applied av requestTriadAnalysis + doSemanticSearch, alltid removed
    i try/finally så logon aldrig fastnar snurrande vid fel. Samma
-   spin-keyframe återanvänds av väntevyns roterande gustema-mark
+   spin-keyframe återanvänds av väntevyns roterande gusto-mark
    (.triad-wait-mark) — konsekvent cadence mellan header och wait-view. */
 .logo-mark.analysing{animation:gustoSpin 3s linear infinite;transform-origin:50% 50%}
 @keyframes gustoSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 /* TRIAD-väntevy — ersätter CTA-boxen under de 60-75s Sonnet analyserar.
    Bygger på samma warm-100-bakgrund som .triad-cta men med större
    vertikal luft (roterande mark + text tar mer plats än en knapp).
-   Wait-mark är gustema-symbolen ~24px, roterande i samma cadence som
+   Wait-mark är gusto-mark-symbolen ~24px, roterande i samma cadence som
    header-logon. Recent-boxen är kortlistor i art-related-stil för
    visuell kontinuitet med Related research-sektionen (renderas
    nedanför efter analys). */
@@ -1624,7 +1624,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </style>
 </head>
 <body>
-<!-- Shared SVG-symbol för Gustema-marken. Definieras EN gång — referenseras
+<!-- Shared SVG-symbol för gusto-mark. Definieras EN gång — referenseras
      via <use href="#gusto-mark-solid"/> (default) eller
      <use href="#gusto-mark-cutout"/> (mot mörk bg: header, hero, article-modal
      TRIAD-knapp). Sparar ~200 kB på en 50-kort-Feed. -->
@@ -1938,7 +1938,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 
 <!-- LENS PANEL borttagen 2026-07-12: den gamla "two triangles / double grip"-
-     grafiken konkurrerade med Gustema-märket och Lévi-Strauss-berättelsen.
+     grafiken konkurrerade med gusto-mark och Lévi-Strauss-berättelsen.
      CSS-regler (.lens-*, .lc-*) och JS-handlers (#lensSvg, .lens-seg-hit)
      är dead code och tas i separat cleanup-commit. -->
 
@@ -2962,7 +2962,7 @@ window.toggleCardCite = function(artId){
 
 // APA 7-referens — ärlig: hittar aldrig på fält som saknas.
 // Volume/issue/pages utelämnas när de saknas (korrekt APA-praktik).
-// Titel = ORIGINALTITELN, inte Gustemas rubrik.
+// Titel = ORIGINALTITELN, inte Gusto Sciences rubrik.
 //
 // Författarparsning: fall tillbaka till rå sträng vid minsta tvekan
 // (non-latin, >3 ord, mellannamn med prefix "van der" osv). Hellre
@@ -3146,14 +3146,14 @@ function cardHTML(a,idx){
   const st = window.__cardExpansion.get(a.id) || {triad:false, imrad:false}
   // headline_sv (dead-data 2026-08-02: aldrig skriven av nuvarande pipeline,
   // haiku-sci.ts prompt begär bara headline_en). Läses inte längre.
-  const hasGustemaHeadline = !!a.headline_en
+  const hasRoleHeadline = !!a.headline_en
   // Defensive decode av text-fält från DB. Efter migration 20260806140000
   // + daily-fetch cleanText är befintlig data ren, men cleanTextField här
   // fångar entiteter från framtida källor innan de når rendering.
   const _title    = cleanTextField(a.title || '')
   const _authors  = cleanTextField(a.authors || '')
   const _journal  = cleanTextField(a.journal || '')
-  const roleHeadline = cleanTextField(hasGustemaHeadline ? a.headline_en : (a.title||''))
+  const roleHeadline = cleanTextField(hasRoleHeadline ? a.headline_en : (a.title||''))
   const l = k => ({
     original:'ORIGINAL TITLE', authors:'AUTHORS', journal:'JOURNAL',
     showTriad:'Show TRIAD analysis ↓', hideTriad:'Hide analysis ↑',
@@ -3187,7 +3187,7 @@ function cardHTML(a,idx){
     <h3 class="card-headline" onclick="openArticleFromId('${a.id||''}')" title="Open article">${roleHeadline}</h3>
     ${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${(a.primary_institution||'').replace(/'/g,"\\'")}',event)" title="Filter by institution" style="margin-bottom:14px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
     <dl class="card-meta-list">
-      ${hasGustemaHeadline?`<dt>${l('original')}</dt><dd class="cm-original-title">${_title}</dd>`:''}
+      ${hasRoleHeadline?`<dt>${l('original')}</dt><dd class="cm-original-title">${_title}</dd>`:''}
       ${_authors?`<dt>${l('authors')}</dt><dd>${_authors}</dd>`:''}
       ${_journal?`<dt>${l('journal')}</dt><dd>${_journal}${a.year?' · '+a.year:''}</dd>`:''}
     </dl>
@@ -3833,7 +3833,7 @@ function openShareFor(data){
   openModal('shareModal')
 }
 function doShare(type){
-  // 2026-07-15: Share pekar på GUSTEMAS vy (TRIAD-analysen), inte
+  // 2026-07-15: Share pekar på Gusto Sciences vy (TRIAD-analysen), inte
   // DOI-källan bakom betalvägg. Läs artikeln ↗ pekar fortfarande på
   // DOI. Om articleId saknas (edge-case, delning från sida utan
   // uuid), fall tillbaka till sourceUrl/location.href.
@@ -5314,7 +5314,7 @@ window.addEventListener('popstate', () => {
 //
 // Tre vyer i #artTriadContent:
 //   1. CTA (renderTriadCta)   — "Analyse with TRIAD"-knapp, ingångsläget.
-//   2. Wait (renderTriadWait) — roterande gustema-mark, "recent research"-
+//   2. Wait (renderTriadWait) — roterande gusto-mark, "recent research"-
 //      preload (match_related-RPC), degraderad fascykel. Ersätter CTA från
 //      requestTriadAnalysis-start till backend-svar.
 //   3. TRIAD-tabs (renderTriadInline) — ersätter wait-view när svar landar.
@@ -6997,7 +6997,7 @@ setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*10
 @media(max-width:640px){.triad-cards{grid-template-columns:1fr}}
 .triad-card{border-radius:8px;padding:20px;cursor:pointer;transition:transform .15s,box-shadow .15s}
 .triad-card:hover{transform:translateY(-2px)}
-/* Gustema-harmoniserade TRIAD-färger. Enbart .triad-card-reglerna påverkas
+/* Gusto Science-harmoniserade TRIAD-färger. Enbart .triad-card-reglerna påverkas
    — övriga användningar av --episteme/--techne/--phronesis (ticker, filter,
    IMRaD-labels m.fl.) behåller sina originalfärger tills en bredare
    harmonisering görs separat. */
@@ -7665,7 +7665,7 @@ window.showInstPopup = function(d, event) {
       <button onclick="document.getElementById('instPopup').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;padding:0 0 0 8px">×</button>
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:12px">${d.country}${d.rank&&d.rank<999?' · QS #'+d.rank:''}</div>
-    <div style="font-size:11px;color:rgba(201,168,76,.7);margin-bottom:12px">${d.count} gastronomy articles identified in the Gustema database · may include co-authored works</div>
+    <div style="font-size:11px;color:rgba(201,168,76,.7);margin-bottom:12px">${d.count} gastronomy articles identified in the Gusto Science database · may include co-authored works</div>
     ${sortedTopics.length ? `
     <div style="margin-bottom:12px">
       <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(201,168,76,.6);text-transform:uppercase;margin-bottom:8px">Research areas</div>

@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — relevans lager 1: åtgärdsplan (verifierad)
 **Datum:** 2026-07-17
 **Status:** Diagnos KOMPLETT och verifierad. Bygge = nästa session.

@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # ORDER — Relevans lager 1: score → ranking, inte gate. FAS 1 DIAGNOS.
 **Datum:** 2026-07-17
 **Beslut:** modell 2 — score RANKAR prominens, GATE:ar inte existens. Inget

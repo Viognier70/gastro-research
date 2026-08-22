@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — Kvalitetssäkring av TRIAD & praktikerkunskap
 **Skapad 2026-07-23 · Status: DEL A pågår (FÖRE-mätning klar, batch-regen kör, EFTER-mätning väntar)**
 

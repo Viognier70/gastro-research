@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Kontextexport — TILLÄGG 2026-07-15 (sen kväll)
 **Klistras in i gustema-kontextexport-2026-07-15.md (§3 + §8 + §5).**
 **Sessionen efter kontextexporten: Explore-UX + Hink 1-buggar.**

@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # SPEC — Research landscape 2.0: semantisk karta med filter
 **Datum:** 2026-07-15
 **Status:** Beslutad riktning, EJ påbörjad. Egen byggsession (Hink 2).

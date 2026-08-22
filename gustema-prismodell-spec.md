@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — prismodell & positionering
 
 **Datum:** 2026-07-19

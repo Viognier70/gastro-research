@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # ORDER — Lager 1 Del 3: keyword-backfill (Grupp B). FAS 1 DIAGNOS.
 **Datum:** 2026-07-17
 **Deploy-grupp:** B (egen deploy — massdataskrivning 13k, isolerad verifiering).

@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # ORDER — Säkerhetspass Fas 1: DIAGNOS (ingen ändring)
 **Datum:** 2026-07-17
 **Endast läsning/kartläggning. INGEN rotation, INGEN rename, INGEN deploy.**

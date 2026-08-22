@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # ORDER — keyword-kolumnbugg (fel kolumn läses)
 **Datum:** 2026-07-15
 **Typ:** Egen liten fix-session, lågrisk, hög produktpåverkan.

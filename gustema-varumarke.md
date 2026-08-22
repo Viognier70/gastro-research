@@ -1,6 +1,8 @@
 # Gustema — varumärke och namn
 **Datum:** 2026-07-12
-**Status:** Beslutat av Anders. Detta dokument är den samlade referensen.
+**Status:** SUPERSEDED 2026-08-22 — namnet Gustema förkastades till förmån för Gusto Science. Detta dokument bevaras som historisk motivering till namnvalet + färgpaletten (som fortfarande gäller). Ignorera avsnitt om Gustema-namnet, gustema.com-domänen och brand-typografin — se aktuella specs för nuvarande varumärke.
+**Datum för ursprungsbeslut:** 2026-07-12
+**Status vid skrivning:** Beslutat av Anders. Detta dokument var den samlade referensen.
 **OBS:** Det blå brand-arket (ChatGPT, 2026-07-12) är PENSIONERAT. Paletten nedan gäller.
 
 ---

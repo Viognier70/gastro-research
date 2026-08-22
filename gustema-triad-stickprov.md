@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # TRIAD-kvalitetsmätning — stickprov & granskningsprotokoll
 **Del A i `gustema-kvalitetssakring-spec.md` · 2026-07-23**
 

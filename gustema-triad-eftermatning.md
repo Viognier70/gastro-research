@@ -1,3 +1,5 @@
+> _Arkiv — skriven under namnet Gustema, nu Gusto Science._
+
 # Gustema — TRIAD-eftermätning (Del A slutgiltig)
 
 **Skapad:** 2026-07-23
