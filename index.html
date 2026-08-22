@@ -2614,7 +2614,14 @@ function updateFreeBar(){
 function openModal(id){
   // ORDER 115: authModal kan lämnas i confirmation-läget efter signup.
   // Nästa öppning ska visa vanlig form, inte gammal "Check your inbox".
-  if(id === 'authModal') resetAuthConfirmationStep()
+  if(id === 'authModal') {
+    resetAuthConfirmationStep()
+    // ORDER 126: prefill rollväljare från localStorage.gs_role om vi
+    // hamnar direkt i signup-läge (t.ex. via ob-flöde som satt authMode).
+    // toggleAuthMode täcker vanliga fallet (klicka "Create one"); denna
+    // säkerhetslinje täcker direktöppning som skippar toggleAuthMode.
+    if(authMode === 'signup') prefillSignupRole()
+  }
   document.getElementById(id).classList.add('open')
 }
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -3803,6 +3810,19 @@ async function loadSavedArticles(){
 }
 
 
+// ORDER 126: prefill rollväljaren i signup-formen från localStorage.
+// gs_role sätts när user väljer roll i UI:t innan hon registrerar sig
+// (och/eller vid onboarding-flödet). Om välj-fältet redan har ett
+// värde satt (t.ex. hon växlade mode fram och tillbaka) rör vi det inte
+// — respekterar hennes explicit val. Bara skriv en giltig chip-slug.
+function prefillSignupRole(){
+  const roleSelect = document.getElementById('authRole')
+  if(!roleSelect || roleSelect.value) return
+  const raw = localStorage.getItem('gs_role') || localStorage.getItem('gustoRole') || ''
+  const lsRole = (typeof toChipRole === 'function') ? toChipRole(raw) : raw
+  if(lsRole && VALID_ROLE_CHIPS.has(lsRole)) roleSelect.value = lsRole
+}
+
 // ORDER 115 — bekräftelsesteg efter signup som kräver e-postverifiering.
 // showAuthConfirmationStep byter ut form + switch mot en informationsyta;
 // resetAuthConfirmationStep återställer till vanligt läge (kallas av
@@ -3890,6 +3910,7 @@ window.toggleAuthMode=function(){
     if(nameInput) nameInput.style.display=''
     if(pwInput) pwInput.setAttribute('autocomplete','new-password')
     if(signupExtras) signupExtras.style.display=''
+    prefillSignupRole()
   }else{
     if(title)title.textContent='Sign in'
     if(btn)btn.textContent='Sign in'
