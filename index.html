@@ -2230,15 +2230,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
           <option value="fb_manager">Hospitality Management</option>
           <option value="food_researcher">Food Researcher &amp; Educator</option>
         </select>
-        <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12.5px;color:#5C5649;line-height:1.55;cursor:pointer">
-          <input type="checkbox" id="authDigest" name="digest_enabled" style="margin-top:3px;flex-shrink:0">
-          <!-- ORDER 126-fix: flex:1 + min-width:0 hindrar span:en från att
-               överflöda modalen. Utan detta använder browsern spännets
-               naturliga content-bredd (default min-width:auto på flex-items)
-               och texten byggs upp till en smal höger-kolumn utanför den
-               vita rutan. Med flex:1 tar spännen resterande flex-utrymme;
-               min-width:0 tillåter word-wrap under content-bredden. -->
-          <span style="flex:1;min-width:0">Send me the weekly digest — five new studies for your role, every week.</span>
+        <!-- ORDER 126-fix (rev 2): rot-orsak till att kryssrutans text
+             bröt ut var .auth-form-regeln `input { width:100% }` (rad 1011).
+             I flex-label:n försökte checkboxen bli 100% bred, min flex-
+             shrink:0 lät den behålla den bredden, span:en fick 0 utrymme
+             och texten wrappade i en smal osynlig kolumn.
+             Fixen är att slopa flex helt och overrida width:auto på
+             checkboxen. Plain inline-layout — checkbox följt av text,
+             vertical-align:middle centrar checkboxen mot första radens
+             baseline. Text wrappar normalt inuti label-bredden. -->
+        <label style="display:block;margin-bottom:12px;font-size:12.5px;color:#5C5649;line-height:1.55;cursor:pointer">
+          <input type="checkbox" id="authDigest" name="digest_enabled" style="width:auto;vertical-align:middle;margin-right:8px">
+          Send me the weekly digest — five new studies for your role, every week.
         </label>
       </div>
       <button type="submit">Sign in</button>
