@@ -104,20 +104,20 @@ Deno.serve(async (req) => {
   const batchSize = body.batch_size || BATCH_SIZE
   const dryRun = body.dry_run !== undefined ? body.dry_run : DRY_RUN
 
-  // Hämta obedömda artiklar med abstract. LIKE-filtret med 100 underscores
-  // ('%__________...%') var full seq scan över 455k rader och dödade edge-fn:en
-  // så fort kön växte (37k+ matchande rader → statement_timeout). Byt till
-  // ett indexerbart predikat som träffar det partiella indexet
-  // idx_relevance_queue (migration 20260711120000). Kravet på >=100 tecken
-  // fångas av JS-guarden på rad 124 nedan — korta/tomma abstracts hämtas
-  // med i batchen men skippas per artikel utan att skriva relevance_checked,
-  // så de återkommer när backfill-abstracts fyllt dem.
+  // Hämta obedömda artiklar via RPC. Server-side filter + ORDER BY id.
+  // Ersatte 2026-08-04 den direkta .from('articles').select(...).limit()
+  // som saknade ORDER BY: partial-indexet idx_relevance_queue är på (id),
+  // så Postgres returnerade de 400 lägsta id:na varje anrop. Eftersom de
+  // 400 lägsta råkade vara korta abstracts (< 100 tecken) skippades hela
+  // batchen av JS-vakten utan att skriva relevance_checked=true, samma
+  // 400 hämtades nästa minut. 1 440 no-op-anrop/dygn sedan 2026-07-12.
+  //
+  // RPC:n har char_length(abstract) >= 100 i WHERE:t (migration
+  // 20260804140000) → shorts filtreras bort server-side och når aldrig
+  // JS-loopen. Vakten på rad ~145 nedan är defence-in-depth mot nya
+  // shorts som skulle komma in före ny partial-index-refresh.
   const { data: articles, error } = await supabase
-    .from('articles')
-    .select('id, title, abstract, journal, insight')
-    .eq('relevance_checked', false)
-    .not('abstract', 'is', null)
-    .limit(batchSize)
+    .rpc('next_relevance_batch', { p_limit: batchSize })
 
   if (error) {
     return new Response(JSON.stringify({ ok: false, error: error.message }),
@@ -170,8 +170,16 @@ Deno.serve(async (req) => {
     if (!dryRun) {
       // relevance_checked_at fyller relevance_takt_1h-signalen i
       // gusto_health så health-alert kan detektera stall + loop-mönster.
+      // relevance_check_reason ('haiku' / '0kw') spårar bedömningsmetoden
+      // så framtida granskningar kan skilja model-classified från auto-
+      // irrelevant (0kw) och från cleanup-markerade shorts ('no_abstract').
       await supabase.from('articles')
-        .update({ irrelevant: !isRelevant, relevance_checked: true, relevance_checked_at: new Date().toISOString() })
+        .update({
+          irrelevant: !isRelevant,
+          relevance_checked: true,
+          relevance_checked_at: new Date().toISOString(),
+          relevance_check_reason: method,
+        })
         .eq('id', a.id)
     }
 
@@ -183,8 +191,13 @@ Deno.serve(async (req) => {
 
   console.log(`Klar: ${articles.length} hämtade, ${relevant} relevanta, ${irrelevant} irrelevanta, ${haikuCalls} haiku-anrop, ${deferred} uppskjutna, ${skipped} hoppade`)
 
-  // Kvarvarande kö. count=exact + head=true = ingen data hämtas, bara Content-
-  // Range-headern räknar över samma partiella index som selecten ovan använder.
+  // Kvarvarande kö. count=exact + head=true = ingen data hämtas, bara
+  // Content-Range-headern räknar över samma partiella index som RPC:n.
+  // NOTA: Detta count är BREDARE än RPC-batchen — det inkluderar shorts
+  // (< 100 tecken) om nya sådana kommer in. Efter cleanup 2026-08-04 är
+  // populationen 0 nya shorts men signaturen kan drifta något om
+  // backfill-abstracts fyller korta strängar. Överväg count_relevance_
+  // queue() RPC om driften blir bekymmersam.
   const { count: queueRemaining } = await supabase
     .from('articles')
     .select('*', { count: 'exact', head: true })
