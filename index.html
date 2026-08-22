@@ -5139,7 +5139,12 @@ async function loadRelated(articleId){
     // Race-skydd: användaren kan öppna en annan artikel medan RPC:n väntar
     // (särskilt vid grannklick). Släpp tyst om vi inte längre är aktuell.
     if(window._relatedFor !== articleId) return
-    if(error || !Array.isArray(data) || data.length === 0) return
+    // ORDER 130: felet var helt tyst tidigare — 42501 permission denied från
+    // match_related-INVOKER-anropet mot articles gick förbi utan spår i loggen.
+    // Warn så nästa fel av samma slag syns i konsolen; UI-degradering (ingen
+    // grannlista) står kvar oförändrad — kompletterande data, inte kritisk.
+    if(error){ console.warn('[ORDER 130] match_related RPC error:', error.code || '', error.message || error); return }
+    if(!Array.isArray(data) || data.length === 0) return
     window._relatedRows = data
     window._relatedShown = Math.min(10, data.length)
     renderRelated()
@@ -5152,7 +5157,7 @@ async function loadRelated(articleId){
     } else {
       more.style.display = 'none'
     }
-  } catch(e) { /* stay silent — grannlistan är kompletterande, inte kritisk */ }
+  } catch(e) { console.warn('[ORDER 130] loadRelated threw:', e?.message || e) }
 }
 function renderRelated(){
   const list = document.getElementById('artRelatedList')
