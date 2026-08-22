@@ -4182,14 +4182,17 @@ window.openSettings = async function(){
   const emailEl = document.getElementById('settingsEmail')
   if(emailEl) emailEl.textContent = session.user.email || ''
 
-  // Läs profil för roll + digest. Faller tillbaka på window-cache om DB-läs failar.
-  let profRole = null, profDigest = false
+  // Läs profil för roll + digest + stripe_customer_id. Faller tillbaka på
+  // window-cache om DB-läs failar. stripe_customer_id styr om Manage
+  // subscription-knappen renderas (ORDER 129).
+  let profRole = null, profDigest = false, profStripeCustomerId = null
   try {
     const {data:p} = await sb.from('profiles')
-      .select('role, digest_enabled')
+      .select('role, digest_enabled, stripe_customer_id')
       .eq('id', session.user.id).maybeSingle()
-    profRole   = p?.role || null
-    profDigest = p?.digest_enabled === true
+    profRole             = p?.role || null
+    profDigest           = p?.digest_enabled === true
+    profStripeCustomerId = p?.stripe_customer_id || null
   } catch(_){}
 
   // Roll — DB har prio, annars localStorage (samma pattern som initAuth).
@@ -4223,11 +4226,15 @@ window.openSettings = async function(){
       planEl.innerHTML = '<span class="settings-plan-badge settings-plan-free">Free</span> <span style="font-size:12px;color:var(--text-secondary);margin-left:8px">3 TRIAD analyses per month · 3 Ask questions per day</span>'
     }
   }
-  // Item 4 (Stripe billing portal) — deferred till egen order. Ingen dead link.
+  // Manage subscription — Stripe billing portal (ORDER 129).
+  // Villkor: is_pro=true (DB) OCH stripe_customer_id finns. Trial-konton har
+  // inget customer_id än — knappen renderas inte alls, ingen "visa och fela".
   if(billingEl){
-    billingEl.textContent = (isProDb || trialActive)
-      ? 'Payment method — coming soon.'
-      : ''
+    if(isProDb && profStripeCustomerId){
+      billingEl.innerHTML = `<button type="button" onclick="openBillingPortal()" style="background:none;border:0.5px solid var(--border-mid);border-radius:8px;padding:8px 14px;font-size:12px;font-family:'Outfit',sans-serif;color:var(--text-primary);cursor:pointer">Manage subscription →</button><span id="billingPortalStatus" style="display:block;font-size:11px;color:var(--text-tertiary);margin-top:6px;min-height:14px"></span>`
+    } else {
+      billingEl.innerHTML = ''
+    }
   }
 
   document.getElementById('settingsStatus').textContent = ''
@@ -4265,6 +4272,27 @@ window.saveSettings = async function(){
   if(status) status.textContent = 'Saved.'
   setTimeout(() => closeModal('settingsModal'), 700)
 }
+
+// ─── STRIPE BILLING PORTAL (ORDER 129) ───────────────────────────────────────
+// Frontend anropar edge-fn stripe-portal (JWT-verifierad server-side). Fn:en
+// dubbelkollar is_pro + stripe_customer_id; success → { url } → window.location.
+// Knappen renderas bara när villkoren är uppfyllda (openSettings), så error-
+// grenarna här ska aldrig triggas för legitima klick — de finns för att inte
+// tystna om något gått fel (nätverk, Stripe nere, race mot downgrade).
+window.openBillingPortal = async function(){
+  const status = document.getElementById('billingPortalStatus')
+  if(status) status.textContent = 'Opening…'
+  try {
+    const {data, error} = await sb.functions.invoke('stripe-portal', { body: {} })
+    if(error) throw error
+    if(!data?.url) throw new Error('no_url')
+    window.location.href = data.url
+  } catch(e){
+    if(status) status.textContent = 'Could not open — try again in a moment.'
+    console.log('[ORDER 129] portal invoke failed:', e?.message || e)
+  }
+}
+
 async function initAuth(){
   const {data:{session}}=await sb.auth.getSession()
   if(session){
