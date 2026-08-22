@@ -9,6 +9,10 @@ deno.lock
 # Supabase local
 supabase/.temp/
 
+# Genererad output — dry-run-previews (send-weekly-digest → out/digest-preview/
+# innehåller e-postadresser i filnamn), extract-repaired-ids etc. Regenererbart.
+out/
+
 # Editor/OS junk
 *.swp
 *~
