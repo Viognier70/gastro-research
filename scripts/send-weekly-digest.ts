@@ -86,6 +86,36 @@ const ROLE_LABEL: Record<string, string> = {
   fb_manager:      'Hospitality Management',
   food_researcher: 'Food Researcher & Educator',
 }
+// ORDER 124: science-slug → human label. Speglar ROLE_LABEL men indexeras
+// på DB-fältets namn så vi kan rensa slug-läckage från Sonnet/Haiku-svar
+// (t.ex. "For you as a culinary_pro" → "For you as a Chef").
+const SCIENCE_TO_LABEL: Record<string, string> = {
+  sensory_pro:         'Sommelier',
+  culinary_pro:        'Chef',
+  gastronomy_culture:  'Meal Creator',
+  hospitality_mgmt:    'Hospitality Management',
+  educator_researcher: 'Food Researcher & Educator',
+}
+// Rensa science-slug ur AI-genererad text som ska visas för användaren.
+// Rättar de 25 befintliga syntheses-raderna (prompten skickade dbRole
+// rakt in), och skyddar mot framtida drift även om prompten uppdateras.
+function humanizeRoleSlugs(text: string | null | undefined): string {
+  if (!text) return ''
+  return String(text).replace(
+    /\b(sensory_pro|culinary_pro|gastronomy_culture|hospitality_mgmt|educator_researcher)\b/g,
+    m => SCIENCE_TO_LABEL[m] || m
+  )
+}
+// Item 3: hälsning "Hi <name>," kräver att namnet ser ut som ett namn.
+// "ds", "x", tomsträng, siffror etc → fall back till plain "Hi,".
+// Kriterier: minst 2 tecken efter trim OCH innehåller minst en bokstav
+// (unicode-aware för Å/Ä/Ö och andra icke-ASCII-namn).
+function isValidGreetingName(n: string | null | undefined): boolean {
+  if (!n) return false
+  const t = n.trim()
+  if (t.length < 2) return false
+  return /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(t)
+}
 
 // ── Typer ─────────────────────────────────────────────────────────────────
 type Recipient = {
@@ -456,19 +486,25 @@ function phronesisHtml(text: string, sourceTitle: string, isPro: boolean): strin
       </p>
       <a href="https://gusto.science" style="display:inline-block;font-size:11px;font-weight:600;color:#fff;background:#C9A84C;padding:6px 14px;border-radius:16px;text-decoration:none">Upgrade to Pro →</a>
     </div>` : ''
+  // ORDER 124 item 2 (defensiv): humanize science-slug även i phronesis-
+  // texten. Sonnet-prompten säger "for Sommelier/sensory scientist" så
+  // slug-läckage är osannolik här, men samma helper — försumbar kostnad.
   return `<div style="background:#F5EDE3;border-left:3px solid #5C2D00;padding:16px 18px;margin-bottom:14px;border-radius:6px">
-    <div style="font-size:13px;color:#5C2D00;line-height:1.7;margin:0 0 10px">${esc(text)}</div>
+    <div style="font-size:13px;color:#5C2D00;line-height:1.7;margin:0 0 10px">${esc(humanizeRoleSlugs(text))}</div>
     <div style="font-size:10px;color:#7A3D00;font-style:italic">From: ${esc(sourceTitle)}</div>
     ${upsell}
   </div>`
 }
 
 function institutionHtml(inst: {name: string; count: number}, topicLabel: string): string {
+  // ORDER 124 item 4 (Alt A): copyn är nu ärlig om vad topTopic är —
+  // det är vanligaste ämnet i user:s saved_articles, inte roll-derivat.
+  // Rubriken "Institution watch" står kvar; kroppen förklarar kopplingen.
   return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:14px">
     <p style="font-size:13px;color:#0C0B09;margin:0;line-height:1.7">
       <strong>${esc(inst.name)}</strong> published ${inst.count} new
       ${inst.count === 1 ? 'study' : 'studies'} on
-      <em>${esc(topicLabel)}</em> in the last month.
+      <em>${esc(topicLabel)}</em> — a topic you've been saving.
     </p>
   </div>`
 }
@@ -492,8 +528,11 @@ function savedRelatedHtml(articles: Article[]): string {
 // länk till Syntheses-vyn. Ingen divergence (fältet bär ingen information
 // idag — alla 25 rader är convergence).
 function synthesisHtml(s: Synthesis): string {
-  const title = s.title ? esc(s.title) : ''
-  const body  = s.synthesis ? esc(s.synthesis) : ''
+  // ORDER 124 item 2: humanize science-slug före escape. Fixar de 25
+  // befintliga raderna som har "For you as a culinary_pro" — rätt term
+  // är "Chef" (samma etikett som brevets rubriker).
+  const title = s.title ? esc(humanizeRoleSlugs(s.title)) : ''
+  const body  = s.synthesis ? esc(humanizeRoleSlugs(s.synthesis)) : ''
   // "Based on N studies" — använd article_count som huvudsiffra. ids_count
   // kan skilja sig (t.ex. legacy 19 vs 10) men article_count är den
   // konsistenta siffran som edge-fn skriver.
@@ -544,8 +583,12 @@ function introHtml(d: EmailData): string {
 function buildEmail(d: EmailData): string {
   const weekStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const unsubUrl = `${UNSUB_BASE}?t=${encodeURIComponent(d.recipient.digest_token)}`
-  const greeting = d.recipient.display_name
-    ? `Hi ${esc(d.recipient.display_name)},`
+  // ORDER 124 item 3: fallback till "Hi," om display_name är för kort
+  // eller ser ut som skräp (siffror/symboler). "Hi ds," ser sämre ut än
+  // "Hi,". isValidGreetingName kräver ≥2 tecken efter trim + minst en
+  // bokstav (unicode-aware).
+  const greeting = isValidGreetingName(d.recipient.display_name)
+    ? `Hi ${esc(d.recipient.display_name!.trim())},`
     : `Hi,`
 
   const sections: string[] = []
