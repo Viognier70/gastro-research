@@ -266,6 +266,47 @@ async function sectionB(): Promise<PulseKw[]> {
   return Array.isArray(data) ? data.slice(0, 4) : []
 }
 
+// ── Section F: rollens synthesis för mottagarens vanligaste topic ─────────
+// Primär query: (role, topic) exakt match. Fallback: role only, senast
+// uppdaterad. Om ingen match för rollen alls → null → sektionen skippas.
+// Divergence-fältet läses INTE — alla 25 rader är convergence (2026-08-22)
+// och fältet bär ingen information i nuläget.
+type Synthesis = {
+  title:         string
+  synthesis:     string
+  article_count: number
+  ids_count:     number
+  updated_at:    string
+}
+async function sectionF(scienceRole: string, topTopic: string | null): Promise<Synthesis | null> {
+  const mapRow = (row: any): Synthesis => ({
+    title:         row.title || '',
+    synthesis:     row.synthesis || '',
+    article_count: row.article_count ?? 0,
+    ids_count:     Array.isArray(row.article_ids) ? row.article_ids.length : 0,
+    updated_at:    row.updated_at,
+  })
+  // Primär: role + topTopic
+  if (topTopic) {
+    const p = new URLSearchParams()
+    p.append('select', 'title,synthesis,article_count,article_ids,updated_at')
+    p.append('role',   `eq.${scienceRole}`)
+    p.append('topic',  `eq.${topTopic}`)
+    p.append('limit',  '1')
+    const rows: any[] = await sbGet(`/rest/v1/research_syntheses?${p.toString()}`)
+    if (rows.length && (rows[0].synthesis || rows[0].title)) return mapRow(rows[0])
+  }
+  // Fallback: role only, senast uppdaterad
+  const p = new URLSearchParams()
+  p.append('select', 'title,synthesis,article_count,article_ids,updated_at')
+  p.append('role',   `eq.${scienceRole}`)
+  p.append('order',  'updated_at.desc')
+  p.append('limit',  '1')
+  const rows: any[] = await sbGet(`/rest/v1/research_syntheses?${p.toString()}`)
+  if (rows.length && (rows[0].synthesis || rows[0].title)) return mapRow(rows[0])
+  return null
+}
+
 // ── Section D: institution som publicerat mest inom user:s topTopic ───────
 async function sectionD(topTopic: string | null): Promise<{name: string; count: number} | null> {
   if (!topTopic) return null
@@ -434,6 +475,27 @@ function savedRelatedHtml(articles: Article[]): string {
   return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:14px">${rows}</div>`
 }
 
+// ── Section F HTML: rollens konvergerade läsning ─────────────────────────
+// Kort card med title, synthesis-text, "Based on N studies"-metrik och
+// länk till Syntheses-vyn. Ingen divergence (fältet bär ingen information
+// idag — alla 25 rader är convergence).
+function synthesisHtml(s: Synthesis): string {
+  const title = s.title ? esc(s.title) : ''
+  const body  = s.synthesis ? esc(s.synthesis) : ''
+  // "Based on N studies" — använd article_count som huvudsiffra. ids_count
+  // kan skilja sig (t.ex. legacy 19 vs 10) men article_count är den
+  // konsistenta siffran som edge-fn skriver.
+  const n = s.article_count || s.ids_count
+  const meta = n
+    ? `Based on ${n} ${n === 1 ? 'study' : 'studies'} · <a href="https://gusto.science" style="color:#836428;text-decoration:none">Explore more →</a>`
+    : `<a href="https://gusto.science" style="color:#836428;text-decoration:none">Explore more →</a>`
+  return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:20px">
+    ${title ? `<h3 style="font-size:15px;font-weight:600;margin:0 0 10px;color:#0C0B09;line-height:1.4">${title}</h3>` : ''}
+    ${body ? `<p style="font-size:13px;color:#5C5649;line-height:1.7;margin:0 0 14px">${body}</p>` : ''}
+    <div style="font-size:11px;color:#9C9484;margin:0">${meta}</div>
+  </div>`
+}
+
 function sectionHeader(label: string): string {
   return `<h2 style="font-family:Georgia,serif;font-size:16px;font-weight:400;color:#0C0B09;margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid #E8E0D0">${esc(label)}</h2>`
 }
@@ -448,6 +510,7 @@ type EmailData = {
   institution: {name: string; count: number} | null
   institutionTopic: string | null
   savedRelated: Article[]
+  synthesis: Synthesis | null   // ORDER 123 — Section F
 }
 
 // ORDER 122-fix item 1: bygg ingressen dynamiskt utifrån vilka sektioner
@@ -503,6 +566,16 @@ function buildEmail(d: EmailData): string {
   if (d.savedRelated.length) {
     sections.push(sectionHeader('Related to what you\'ve saved'))
     sections.push(savedRelatedHtml(d.savedRelated))
+  }
+
+  // F. Rollens konvergerade läsning (ORDER 123). Rubrik "Where the field
+  // aligns" — inte "Synthesis". Speglar current state där alla 25
+  // research_syntheses-rader är evidence_type=convergence. Divergence
+  // används inte (fältet bär ingen information idag). Toleras tom via
+  // if(d.synthesis)-guarden — samma mönster som C/D/E.
+  if (d.synthesis) {
+    sections.push(sectionHeader('Where the field aligns'))
+    sections.push(synthesisHtml(d.synthesis))
   }
 
   const tierBadge = d.isPro
@@ -628,10 +701,18 @@ async function main() {
       const excludeIds = new Set(savedMeta.ids)
       const savedRelated = await sectionE(savedMeta.ids.slice(0, 3), excludeIds)
 
+      // Section F (ORDER 123): rollens synthesis för mottagarens vanligaste
+      // topic. Faller tillbaka på rollens senast uppdaterade om topTopic
+      // saknas eller ingen (role, topic)-match finns. Skippas i buildEmail
+      // om null (samma tolerans som C/D/E).
+      let synthesis: Synthesis | null = null
+      try { synthesis = await sectionF(science, savedMeta.topTopic) }
+      catch (e) { console.log(`  [section-F] ${r.email}: ${(e as Error).message}`) }
+
       const emailData: EmailData = {
         recipient: r, isPro, roleLabel, articles, pulse,
         phronesisFrom, institution, institutionTopic: savedMeta.topTopic,
-        savedRelated,
+        savedRelated, synthesis,
       }
       const html    = buildEmail(emailData)
       // ORDER 122-fix item 2: subject speglar rubriken — "newly analysed"
@@ -644,7 +725,7 @@ async function main() {
           const marked = await markSent(r.id)
           if (marked) {
             counters.sent++
-            console.log(`  [sent] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length}`)
+            console.log(`  [sent] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length} F${synthesis ? 1 : 0}`)
           } else {
             counters.failed++
             console.log(`  [warn] ${r.email}: mail sent men last_digest_at kunde inte uppdateras — nästa run skickar igen`)
@@ -658,7 +739,7 @@ async function main() {
         const safeName = r.email.replace(/[^\w.-]/g, '_')
         await Deno.writeTextFile(`${OUT_DIR}/${safeName}.html`, html)
         counters.would_send++
-        console.log(`  [preview] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length}`)
+        console.log(`  [preview] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length} F${synthesis ? 1 : 0}`)
       }
     } catch (e) {
       counters.failed++
