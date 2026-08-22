@@ -2217,6 +2217,23 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <input type="text" id="authName" name="name" autocomplete="name" placeholder="Your name (e.g. Dr. Crichton-Fock)" style="display:none">
       <input type="email" id="authEmail" name="email" autocomplete="email" placeholder="Email address">
       <input type="password" id="authPassword" name="password" autocomplete="current-password" placeholder="Password">
+      <!-- ORDER 126: rollväljare + digest-opt-in visas bara i signup-läge.
+           toggleAuthMode togglar #authSignupExtras.style.display. Rollvärden
+           måste matcha VALID_ROLE_CHIPS och profiles.role CHECK-constraint. -->
+      <div id="authSignupExtras" style="display:none">
+        <select id="authRole" name="role" style="width:100%;padding:12px 14px;margin-bottom:10px;font-size:14px;font-family:'Outfit',sans-serif;background:#fff;border:1px solid #E8E0D0;border-radius:8px;color:#0C0B09">
+          <option value="">Select your role</option>
+          <option value="sommelier">Sommelier</option>
+          <option value="chef">Chef</option>
+          <option value="gastronomy">Meal Creator</option>
+          <option value="fb_manager">Hospitality Management</option>
+          <option value="food_researcher">Food Researcher &amp; Educator</option>
+        </select>
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12.5px;color:#5C5649;line-height:1.55;cursor:pointer">
+          <input type="checkbox" id="authDigest" name="digest_enabled" style="margin-top:3px;flex-shrink:0">
+          <span>Send me the weekly digest — five new studies for your role, every week.</span>
+        </label>
+      </div>
       <button type="submit">Sign in</button>
     </form>
     <div class="auth-switch" id="authSwitch">No account? <span onclick="toggleAuthMode()">Create one</span></div>
@@ -3864,18 +3881,22 @@ window.toggleAuthMode=function(){
   // Lösenordshanterare behöver rätt autocomplete-hint per mode: signup =
   // new-password (be inte om aktuellt), signin = current-password.
   const pwInput=document.getElementById('authPassword')
+  // ORDER 126: rollväljare + digest-checkbox visas bara i signup-läge.
+  const signupExtras = document.getElementById('authSignupExtras')
   if(authMode==='signup'){
     if(title)title.textContent='Create account'
     if(btn)btn.textContent='Create account'
     if(sw)sw.innerHTML='Already have an account? <span onclick="toggleAuthMode()">Sign in</span>'
     if(nameInput) nameInput.style.display=''
     if(pwInput) pwInput.setAttribute('autocomplete','new-password')
+    if(signupExtras) signupExtras.style.display=''
   }else{
     if(title)title.textContent='Sign in'
     if(btn)btn.textContent='Sign in'
     if(sw)sw.innerHTML='No account? <span onclick="toggleAuthMode()">Create one</span>'
     if(nameInput) nameInput.style.display='none'
     if(pwInput) pwInput.setAttribute('autocomplete','current-password')
+    if(signupExtras) signupExtras.style.display='none'
   }
 }
 
@@ -3889,12 +3910,25 @@ async function handleAuth(){
     // display_name skickas som user_metadata (om trigger finns kopieras det till profiles),
     // och sparas lokalt så initAuth kan skriva det efter e-postverifiering.
     if(displayName) localStorage.setItem('gs_pending_display_name', displayName)
+    // ORDER 126: läs roll + digest-opt-in ur signup-formuläret.
+    // handle_new_user-triggern (migration 20260822140000) läser role +
+    // digest_enabled ur raw_user_meta_data. profiles.role CHECK-constraint
+    // whitelistar chip-slugs — select-optionerna matchar. Tom sträng skickas
+    // aldrig eftersom vi bara sätter fältet om värdet är sanningsvärde.
+    const roleSelect = document.getElementById('authRole')
+    const digestChk  = document.getElementById('authDigest')
+    const signupRole = roleSelect?.value && VALID_ROLE_CHIPS.has(roleSelect.value) ? roleSelect.value : null
+    const digestEnabled = !!(digestChk?.checked)
+    const metadata = {}
+    if(displayName)    metadata.display_name    = displayName
+    if(signupRole)     metadata.role            = signupRole
+    metadata.digest_enabled = digestEnabled     // alltid boolean (default false om ur-checkad)
     const {data,error}=await sb.auth.signUp({
       email,
       password,
       options:{
         emailRedirectTo:'https://gusto.science',
-        data: displayName ? {display_name: displayName} : undefined
+        data: metadata
       }
     })
     authError=error
