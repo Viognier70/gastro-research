@@ -101,7 +101,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .logo-mark,.hero-logo{color:#4A3F2E}
 @media (prefers-color-scheme:dark){.logo-mark,.hero-logo{color:#A08A55}}
 .logo-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:21px;font-weight:600;color:var(--gusto-ink);letter-spacing:-.02em}
-.hero-wordmark{font-family:'Inter','Outfit',sans-serif;font-size:32px;font-weight:600;color:var(--gusto-ink);letter-spacing:-.02em;line-height:1;margin-bottom:10px;text-align:center}
+.hero-wordmark{font-family:'Outfit',sans-serif;font-size:24px;font-weight:500;color:var(--gusto-ink);line-height:1;margin-bottom:10px;text-align:center}
 /* Gamla klasser bevarade — kan tas bort i cleanup-commit när inga referenser finns kvar. */
 .logo-gusto{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
 .logo-science{font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--gold);letter-spacing:-.01em;font-variation-settings:'WONK' 1,'opsz' 40}
@@ -139,15 +139,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   display:flex;align-items:center;justify-content:center;
   gap:10px;padding-bottom:8px;cursor:pointer;
 }
-.site-header .logo-mark{color:#A08A55;height:30px;width:auto;display:block}
+.site-header .logo-mark{color:#A08A55;height:34px;width:auto;display:block}
 /* Wordmark-tvåfärg — global så .hero-wordmark också får rätt uppdelning.
-   Ärver font-size från parent (site-header 18px, hero-wordmark 32px). */
-.wm-gusto{font-family:'Inter','Outfit',sans-serif;font-weight:500;color:var(--gusto-ink);letter-spacing:-.01em}
-.wm-science{font-family:'Inter','Outfit',sans-serif;font-weight:400;color:#A08A55;letter-spacing:-.01em}
+   ORDER 132: Outfit versaler, 0.25em spärrning, färgdelning behållen.
+   Font-size sätts av parent (.site-header wordmark 13px, .hero-wordmark 24px). */
+.wm-gusto,.wm-science{font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:.25em;line-height:1}
+.wm-gusto{font-weight:500;color:var(--gusto-ink)}
+.wm-science{font-weight:400;color:#A08A55}
+.site-header .wm-gusto,.site-header .wm-science{font-size:13px}
 .site-header .wm-gusto{color:#F2EFE6}
 .site-header-eyebrow{
-  font-size:11px;letter-spacing:1.7px;text-transform:uppercase;
-  color:#6E675A;text-align:center;padding-bottom:14px;
+  font-size:9px;letter-spacing:1.4px;text-transform:uppercase;
+  color:#4A443A;text-align:center;padding-bottom:14px;
 }
 .site-header-nav{
   display:flex;justify-content:center;align-items:center;gap:6px;
@@ -171,7 +174,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .site-header.is-compact .site-header-brand{
   justify-content:flex-start;padding-bottom:0;
 }
-.site-header.is-compact .logo-mark{height:28px}
+.site-header.is-compact .logo-mark{height:32px}
 .site-header.is-compact .site-header-eyebrow{display:none}
 .site-header.is-compact .site-header-nav{
   border:none;padding:0;gap:2px;
@@ -184,9 +187,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 @media (max-width:480px){
   .site-header{padding:16px 12px 0}
   .site-header-brand{gap:8px}
-  .site-header .wm-gusto,.site-header .wm-science{font-size:16px}
-  .site-header .logo-mark{height:26px}
-  .site-header-eyebrow{font-size:10px;letter-spacing:1.4px;padding-bottom:10px}
+  .site-header .wm-gusto,.site-header .wm-science{font-size:11px}
+  .site-header .logo-mark{height:30px}
+  .site-header-eyebrow{font-size:8px;letter-spacing:1.2px;padding-bottom:10px}
   .site-header-nav{gap:0;padding:8px 0;flex-wrap:wrap}
   .site-header-nav .app-nav-tab{font-size:12px;padding:6px 6px}
   .site-header.is-compact .site-header-nav{position:static;padding:6px 0;border-top:0.5px solid #191510}
@@ -1877,7 +1880,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 </div>
 <!-- HERO -->
 <div class="hero">
-  <svg class="hero-logo" aria-hidden="true" viewBox="0 0 1500 1500" style="display:block;width:120px;height:120px;margin:0 auto 14px"><use href="#gusto-mark-cutout"/></svg>
+  <svg class="hero-logo" aria-hidden="true" viewBox="0 0 1500 1500" style="display:block;width:132px;height:132px;margin:0 auto 14px"><use href="#gusto-mark-cutout"/></svg>
   <div class="hero-wordmark"><span class="wm-gusto">gusto</span><span class="wm-science"> science</span></div>
   <div class="gusto-tagline" aria-label="Gusto Science tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
   <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
