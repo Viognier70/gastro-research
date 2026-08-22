@@ -198,6 +198,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   background:#0a0a0a;color:#F2EFE6;text-align:center;
   padding:40px 24px 32px;
 }
+/* .landing-hero:s bg är hårdkodad #0a0a0a — inte color-scheme-responsiv.
+   Default .hero-logo-color (#4A3F2E) hade kontrast ~1.5:1 mot bg i light
+   mode → märket osynligt. Överrida till samma guld som .site-header
+   .logo-mark (rad 142) för konsekvent varumärkes-look mot mörk brand-yta. */
+.landing-hero .hero-logo{color:#A08A55}
 .lh-source{
   font-size:11px;letter-spacing:1.7px;text-transform:uppercase;
   color:#6E675A;margin-bottom:20px;
