@@ -8,12 +8,18 @@
 // (vyn trasig, kolumn borta) — larma inte, annars spammar vi vid varje
 // operationell drift i vyn.
 //
-// Larmtyper (2 st initialt; utöka via ALERTS-arrayen):
-//   abstract_stalled: abstract_takt_1h = 0 AND abstract_kvar_att_hamta > 1000
-//   affil_stalled:    affil_takt_1h    = 0 AND affil-kö (räknad live)   > 1000
+// v4 (2026-08-18): två ändringar efter genomgång av 13 dygns larmhistorik.
+//   1. ko_failed_alert larmar nu på ÖKNING, inte på totalsumma. Den gamla
+//      versionen larmade var 24:e timme om samma 161 rader i tretton dygn.
+//      Delta-jämförelsen läser senast larmade värde ur public.alert_state.
+//   2. synt_stale är avstängd. TRIAD gick över till on-demand 2026-08-07
+//      (triad-background enabled=false), vilket gör att gamla syntheses är
+//      normaltillstånd och inte ett fel. Larmet mätte ett villkor som inte
+//      längre kan uppfyllas. Behåll koden för den dag bakgrundsjobbet
+//      eventuellt slås på igen.
 //
-// Test: sänk trösklarna i ALERTS tillfälligt (t.ex. queueMin: 0, taktMustBe:
-// null) för att tvinga utskick. Återställ efter verifierat SMS.
+// Test: sänk trösklarna i ALERTS tillfälligt för att tvinga utskick.
+// Återställ efter verifierat SMS.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -87,6 +93,21 @@ async function markSent(alertType: string): Promise<void> {
   if (error) throw new Error(`alert_log upsert ${alertType}: ${error.message}`)
 }
 
+// v4: senast larmade värde per nyckel, för delta-jämförelse. Skild från
+// alert_log, som bara håller tidpunkt — här behövs själva talet.
+async function readLastAlerted(key: string): Promise<number | null> {
+  const { data } = await supabase
+    .from('alert_state').select('value').eq('key', key).maybeSingle()
+  return toNum((data?.value as Record<string, unknown> | undefined)?.count)
+}
+
+async function writeLastAlerted(key: string, count: number): Promise<void> {
+  await supabase.from('alert_state').upsert(
+    { key, value: { count }, updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  )
+}
+
 async function sendSms(text: string): Promise<{ ok: boolean, status: number, body: any }> {
   const resp = await fetch('https://api.brevo.com/v3/transactionalSMS/sms', {
     method: 'POST',
@@ -128,6 +149,8 @@ type SignalBundle = {
   sciGhosts:         number | null      // sci_spoken
   syntRecencyH:      number | null      // synt_senaste_alder_h
   queueFailed:       number | null      // ko_failed
+  // v4 (2026-08-18): senast larmade ko_failed. null = aldrig larmat.
+  queueFailedLastAlerted: number | null
   // v3 (2026-07-13): TRIAD-motorn. triadTakt24h är enda takt-signalen
   // som just NU inte kräver takt-utan-kö-paring i alarmet — canary triadQueue
   // ska inte tömmas (TRIAD är gated lazy caching, ~26k kandidater by design).
@@ -231,23 +254,49 @@ const ALERTS: AlertSpec[] = [
     message: (s) =>
       `GUSTO alert: sci queue GROWING. Pipeline running but losing ground. +${fmtCompact(s.sciQueueGrowth)} in 2h. Check batch size vs enqueue rate.`,
   },
-  {
-    type: 'synt_stale',
-    // synt_senaste_alder_h > 48. Cron kör dagligen 04:00 UTC, så 48h
-    // ger EN missad natt innan larm — inte känsligt för enstaka fail.
-    fires: (s) => s.syntRecencyH !== null && s.syntRecencyH > 48,
-    // ~80 tecken.
-    message: (s) =>
-      `GUSTO alert: syntheses stale ${fmtCompact(s.syntRecencyH)}h. Daily cron dead or synthesize saving to NULL.`,
-  },
+  // ───────────────────────────────────────────────────────────────────────
+  // synt_stale — AVSTÄNGD 2026-08-18.
+  //
+  // Larmet byggdes när syntheses matades av triad-background varje natt.
+  // Sedan 2026-08-07 kör TRIAD on-demand (enabled=false på bakgrundsjobbet),
+  // och då är gamla syntheses designen, inte ett haveri. Villkoret
+  // syntRecencyH > 48 är därmed permanent uppfyllt och larmet blev en
+  // daglig påminnelse om ett medvetet val.
+  //
+  // Slå på igen om bakgrundsjobbet återaktiveras. Höj i så fall tröskeln
+  // efter hur ofta syntheses faktiskt förväntas produceras.
+  //
+  // {
+  //   type: 'synt_stale',
+  //   fires: (s) => s.syntRecencyH !== null && s.syntRecencyH > 48,
+  //   message: (s) =>
+  //     `GUSTO alert: syntheses stale ${fmtCompact(s.syntRecencyH)}h. Daily cron dead or synthesize saving to NULL.`,
+  // },
+  // ───────────────────────────────────────────────────────────────────────
   {
     type: 'ko_failed_alert',
-    // > 10 permanent failed rader. Enskilda är sällsynta (MAX_ATTEMPTS
-    // uppnått) och varje bör undersökas — 50 vore för generöst.
-    fires: (s) => s.queueFailed !== null && s.queueFailed > 10,
-    // ~70 tecken.
+    // v4: larmar på ÖKNING sedan förra larmet, inte på totalsumma.
+    //
+    // Gamla villkoret var `queueFailed > 10`. Med 161 permanent failed
+    // rader som ingen städar blev det ett SMS var 24:e timme i tretton
+    // dygn med identisk text — trettio meddelanden utan ett enda nytt
+    // faktum. Ett larm som alltid larmar läses till slut inte alls, och
+    // då missas det som faktiskt är nytt.
+    //
+    // Nu krävs att talet stigit sedan senast larmade värde. Första
+    // körningen efter deploy har inget lagrat värde och larmar därför en
+    // gång, vilket sätter utgångsläget. Därefter tyst tills nya rader
+    // fallerar. Sjunker talet (någon städar kön) skrivs inget nytt värde
+    // förrän nästa larm — och eftersom villkoret är strikt ökning kan en
+    // städad kö inte trigga larm.
+    fires: (s) =>
+      s.queueFailed !== null && s.queueFailed > 10 &&
+      (s.queueFailedLastAlerted === null || s.queueFailed > s.queueFailedLastAlerted),
+    // ~95 tecken.
     message: (s) =>
-      `GUSTO alert: ${fmtCompact(s.queueFailed)} queue rows permanently failed. Investigate last_error.`,
+      s.queueFailedLastAlerted === null
+        ? `GUSTO alert: ${fmtCompact(s.queueFailed)} queue rows permanently failed. Investigate last_error.`
+        : `GUSTO alert: queue failures up to ${fmtCompact(s.queueFailed)} from ${fmtCompact(s.queueFailedLastAlerted)}. Investigate last_error.`,
   },
   {
     type: 'triad_stalled',
@@ -258,7 +307,7 @@ const ALERTS: AlertSpec[] = [
     // "queue" i budskapet.
     //
     // Warmup-guard: triadHistoryTrusted är false innan någon skrivning
-    // med triad_completed_at äldre än 24h finns. Före det är 0-taljet
+    // med triad_completed_at äldre än 24h finns. Före det är 0-talet
     // en artefakt av kolumnens födelse (2026-07-13), inte "engine dead".
     // Handler skriver false → fires() returnerar false → ingen larm.
     fires: (s) =>
@@ -318,6 +367,9 @@ Deno.serve(async (req) => {
 
   const unjudgedNow = toNum(row.obedomd_ko)
   const sciQueueNow = toNum(row.sci_ko)
+
+  // v4: senast larmade ko_failed, för delta-jämförelsen.
+  const queueFailedLastAlerted = await readLastAlerted('ko_failed')
 
   // Warmup-guard för triad_stalled: existerar ≥1 skrivning äldre än 24h?
   // Om nej → kolumnen är för färsk för att lita på "0 senaste 24h"-signalen.
@@ -385,6 +437,7 @@ Deno.serve(async (req) => {
     sciGhosts:      toNum(row.sci_spoken),
     syntRecencyH:   toNum(row.synt_senaste_alder_h),
     queueFailed:    toNum(row.ko_failed),
+    queueFailedLastAlerted,
     triadTakt24h:   toNum(row.triad_takt_24h),
     triadQueue:     toNum(row.triad_queue),
     triadHistoryTrusted,
@@ -412,6 +465,15 @@ Deno.serve(async (req) => {
       continue
     }
     await markSent(alert.type)
+
+    // v4: spara talet vi just larmade om, så nästa körning kan jämföra.
+    // Skrivs bara vid faktiskt skickat SMS — inte vid cooldown eller
+    // send_failed. Annars skulle ett misslyckat utskick höja ribban och
+    // dölja ökningen permanent.
+    if (alert.type === 'ko_failed_alert' && signals.queueFailed !== null) {
+      await writeLastAlerted('ko_failed', signals.queueFailed)
+    }
+
     results.push({ type: alert.type, action: 'sent', text, forced, message_id: sms.body?.messageId ?? null })
   }
 
