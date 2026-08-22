@@ -45,16 +45,23 @@ body {
   gap: 10px;
   color: var(--gusto-ink);
   text-decoration: none;
-  font-family: 'Inter', 'Outfit', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -.01em;
+  line-height: 1;
 }
 .home-link img {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: block;
 }
+/* ORDER 132: Outfit versaler + 0.25em, färgdelning gusto/science. */
+.home-link .wm-gusto, .home-link .wm-science {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .25em;
+  line-height: 1;
+}
+.home-link .wm-gusto { color: var(--gusto-ink); font-weight: 500 }
+.home-link .wm-science { color: var(--gusto-gold); font-weight: 400 }
 .lang-btn {
   font-family: 'Outfit', sans-serif;
   font-size: 11px;
@@ -75,8 +82,8 @@ main {
   padding: 96px 32px 128px;
 }
 .mark {
-  width: 120px;
-  height: 120px;
+  width: 132px;
+  height: 132px;
   display: block;
   margin: 0 0 48px;
 }
@@ -142,7 +149,9 @@ body[data-lang-active="sv"] [data-lang="sv"] { display: block }
 @media (max-width: 640px) {
   .about-header { padding: 16px 20px }
   main { padding: 56px 20px 96px }
-  .mark { width: 96px; height: 96px; margin-bottom: 32px }
+  .mark { width: 108px; height: 108px; margin-bottom: 32px }
+  .home-link img { width: 28px; height: 28px }
+  .home-link .wm-gusto, .home-link .wm-science { font-size: 11px }
   .rubrik { font-size: 28px }
   .brodtext { font-size: 15.5px }
   .blockrad { font-size: 18px }
@@ -154,7 +163,7 @@ body[data-lang-active="sv"] [data-lang="sv"] { display: block }
 <header class="about-header">
   <a class="home-link" href="index.html">
     <img src="gusto-science-logo.svg" alt="">
-    <span>Gustema</span>
+    <span class="wm-gusto">gusto</span><span class="wm-science"> science</span>
   </a>
   <button class="lang-btn" id="langBtn" onclick="toggleLang()">SV</button>
 </header>
