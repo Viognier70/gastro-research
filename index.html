@@ -3130,7 +3130,7 @@ function citeCopyToClipboard(artId, btn){
 function cardHTML(a,idx){
   const locked=!isPro&&idx>=FREE_LIMIT
   if(!locked){const next=Math.max(freeCount,idx+1);if(next!==freeCount){freeCount=next;writeFreeCount(freeCount)}}
-  const topicLabel=(a.topic||'').replace(/_/g,' ')
+  const topicLabelStr=topicLabel(a.topic)
   const hasIMRaD=a.imrad_introduction&&a.imrad_introduction.length>5
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
@@ -3187,7 +3187,7 @@ function cardHTML(a,idx){
 
   const inner=`
     <div class="card-eyebrow">
-      ${topicLabel?`<span class="topic-badge">${topicLabel}</span>`:''}
+      ${topicLabelStr?`<span class="topic-badge">${topicLabelStr}</span>`:''}
       ${a.study_type?`<span class="study-badge">${a.study_type}</span>`:''}
       ${role!=='all'&&relevance>0?`<div class="rel-badge-wrap" onmouseenter="this.querySelector('.rel-tooltip').classList.add('show')" onmouseleave="this.querySelector('.rel-tooltip').classList.remove('show')">
         <span class="relevance-badge">${relevance}/10 · ${roleName}</span>
@@ -3422,7 +3422,7 @@ function renderFeed(){
       emptyMsg=`No results for "${searchVal}"`
       emptyHint='Try a broader search term, or <a href="#" onclick="document.getElementById(&quot;searchInput&quot;).value=&quot;&quot;;loadArticles();return false" style="color:var(--gold)">clear the search</a> to browse all articles.'
     } else if(topicVal&&topicVal!=='all'){
-      emptyMsg=`No TRIAD analyses yet for "${topicVal.replace(/_/g,' ')}"`
+      emptyMsg=`No TRIAD analyses yet for "${topicLabel(topicVal)}"`
       emptyHint='Our pipeline processes new articles daily. <a href="#" onclick="document.getElementById(&quot;topicSel&quot;).value=&quot;all&quot;;loadArticles();return false" style="color:var(--gold)">Browse all topics</a> to find related research.'
     } else {
       emptyMsg=`No articles found for ${roleName}`
@@ -3888,7 +3888,7 @@ function updateAlertBtn(topic){
   if(!btn)return
   if(!topic||topic==='all'){btn.style.display='none';return}
   btn.style.display='inline-flex'
-  btn.textContent='🔔 Alert me on '+topic.replace(/_/g,' ')
+  btn.textContent='🔔 Alert me on '+topicLabel(topic)
 }
 async function toggleAlert(){
   const topic=document.getElementById('topicSel')?.value
@@ -3898,7 +3898,7 @@ async function toggleAlert(){
   try{
     await fetch(`${SB_URL}/rest/v1/subscribers`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({email,topics:[topic],active:true})})
     const btn=document.getElementById('alertBtn')
-    if(btn){btn.textContent='✓ Alert set for '+topic.replace(/_/g,' ');btn.classList.add('on')}
+    if(btn){btn.textContent='✓ Alert set for '+topicLabel(topic);btn.classList.add('on')}
   }catch(e){console.log('Alert error:',e)}
 }
 
@@ -4636,6 +4636,18 @@ const TOPIC_LABELS = {
   crossmodal:'Crossmodal'
 }
 
+// topicLabel — ORDER 143 (2026-08-24). Kanonisk topic-slug → visningsnamn.
+// Slår upp TOPIC_LABELS (26 entries med rätt casing/stavning: "Art & food",
+// "Flavour science", "Molecular gastronomy") och faller tillbaka till
+// underscore→space för slugs som inte finns i dicten (nya topics,
+// 'general' m.fl.). Ersätter ~14 spridda topic.replace(/_/g,' ')-callsites
+// som gav slug-namn ("art science", "flavor science" osv).
+// Idempotent på null/undefined/tom sträng — returnerar tom sträng.
+function topicLabel(slug){
+  if(!slug) return ''
+  return TOPIC_LABELS[slug] || slug.replace(/_/g, ' ')
+}
+
 let selectedTopics = new Set()
 
 function openTopicGraph(){
@@ -4720,7 +4732,7 @@ async function loadKnowledgeMap(){
 
     mapTopicData = rows.map(t => ({
       ...t,
-      label: TOPIC_LABELS[t.topic] || (t.topic || '').replace(/_/g,' ')
+      label: topicLabel(t.topic)
     }))
     // Rendera bägge kartor. Osynliga vyer skriver till dolda containers —
     // ingen visuell effekt förrän showView öppnar dem.
@@ -4751,7 +4763,7 @@ function populateTopicSelect(){
 
   const parts = ['<option value="all">All topics</option>']
   for(const t of topics){
-    const label = TOPIC_LABELS[t.topic] || t.topic.replace(/_/g, ' ')
+    const label = topicLabel(t.topic)
     const count = Number(t.count || 0).toLocaleString('en-US')
     parts.push(`<option value="${_escHtml(t.topic)}">${_escHtml(label)} (${count})</option>`)
   }
@@ -5109,7 +5121,7 @@ async function loadExploreArticles(topic){
   const wrap = document.getElementById('explorePane')
   if(!pane || !wrap) return
   wrap.hidden = false
-  if(label) label.textContent = (topic || '').replace(/_/g, ' ')
+  if(label) label.textContent = topicLabel(topic)
   pane.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading articles…</span></div>'
 
   // ORDER 108: explore_articles() RPC hanterar BÅDE role='all' och role-
@@ -5182,7 +5194,7 @@ async function showMapTopicPopup(topic){
   popup.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:1000;background:#1a1914;border:0.5px solid rgba(201,168,76,0.4);border-radius:12px;padding:16px;width:280px;max-height:60vh;overflow-y:auto;box-shadow:0 4px 24px rgba(0,0,0,0.5)'
   popup.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:500;color:#C9A84C">${topic.replace(/_/g,' ')}</div>
+      <div style="font-size:13px;font-weight:500;color:#C9A84C">${topicLabel(topic)}</div>
       <button onclick="activeMapTopics.clear();renderLiveMap();loadArticles();hideMapPopup()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:16px">×</button>
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px">${node.count} articles · click to filter feed</div>
@@ -5268,7 +5280,7 @@ function openArticleOverlay(article){
   // för allt analyserat efter migrationen.
   const rRaw = (typeof role!=='undefined' && role && role!=='all') ? role : 'sensory_pro'
   const dbRole = toDbRole(rRaw)
-  const topic = (article.topic||'').replace(/_/g,' ')
+  const topic = topicLabel(article.topic)
   // 2026-07-15: source_label bort ur badges — 11 719 Scopus-taggar från
   // före OpenAlex-migreringen bär ingen läsarnytta; DOI + journal räcker.
   // Fältet kvar i DB för intern intern-metadata.
@@ -6668,7 +6680,7 @@ window.renderMyLibrary = async function() {
   const groups = {}
   if(sort === 'topic'){
     filtered.forEach(a => {
-      const t = (a.topic||'general').replace(/_/g,' ')
+      const t = topicLabel(a.topic || 'general')
       if(!groups[t]) groups[t] = []
       groups[t].push(a)
     })
@@ -7159,7 +7171,7 @@ window.loadSyntheses = async function() {
     const formatDate = d => d ? new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''
     grid.innerHTML = synths.map(s => `
       <div class="synth-card" onclick="var b=this.querySelector('.synth-body');b.style.display=b.style.display==='none'?'block':'none'">
-        <div class="gs-sp-journal">${(s.topic||'').replace(/_/g,' ')}</div>
+        <div class="gs-sp-journal">${topicLabel(s.topic)}</div>
         ${s.article_count>=5?'<span class="synth-tag converging">Converging</span>':'<span class="synth-tag tension">Emerging</span>'}
         <div class="gs-sp-title-sm" style="margin-bottom:4px">${s.title||''}</div>
         <div class="gs-sp-meta">${s.article_count||0} articles · Updated ${formatDate(s.updated_at)}</div>
@@ -7885,7 +7897,7 @@ window.showInstPopup = function(d, event) {
       ${sortedTopics.map(([t,n])=>`
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
           <div style="width:8px;height:8px;border-radius:50%;background:${getTopicColor(t)};flex-shrink:0"></div>
-          <div style="flex:1;font-size:11px;color:rgba(255,255,255,.8)">${t.replace(/_/g,' ')}</div>
+          <div style="flex:1;font-size:11px;color:rgba(255,255,255,.8)">${topicLabel(t)}</div>
           <div style="font-size:10px;color:rgba(255,255,255,.6)">${n}</div>
         </div>
       `).join('')}
@@ -8037,7 +8049,7 @@ window.renderTopicPills = function() {
     return `<button onclick="toggleTopicPill('${topic}')" data-topic="${topic}"
       style="font-size:11px;padding:4px 10px 4px 8px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;display:inline-flex;align-items:center;gap:6px;background:${active ? color : 'rgba(255,255,255,.04)'};color:${active ? '#0C0B09' : 'rgba(255,255,255,.75)'};border:0.5px solid ${active ? color : 'rgba(255,255,255,.18)'};font-weight:${active ? '500' : '400'}">
         <span style="width:7px;height:7px;border-radius:50%;background:${active ? '#0C0B09' : color};display:inline-block"></span>
-        <span>${topic.replace(/_/g,' ')}</span>
+        <span>${topicLabel(topic)}</span>
         <span style="font-size:10px;opacity:.7">${n}</span>
       </button>`
   }).join('')
@@ -8171,7 +8183,7 @@ window.showInstitutionPanel = async function(name) {
       return `
         <div style="margin-bottom:6px">
           <div style="display:flex;justify-content:space-between;font-size:11px;color:${isSel ? '#fff' : 'rgba(255,255,255,.72)'};margin-bottom:3px">
-            <span>${(t.topic || '').replace(/_/g,' ')}${isSel ? ' <span style=\"color:var(--gold);font-size:9px\">● selected</span>' : ''}</span>
+            <span>${topicLabel(t.topic)}${isSel ? ' <span style=\"color:var(--gold);font-size:9px\">● selected</span>' : ''}</span>
             <span style="color:rgba(255,255,255,.5)">${t.count}</span>
           </div>
           <div style="height:${isSel ? 6 : 4}px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
