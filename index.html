@@ -676,7 +676,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   /* Artikel padding */
   .article-card{padding:16px!important}
   /* Knowledge map höjd */
-  #liveKnowledgeMap{height:320px!important;overflow:hidden!important}
+  /* ORDER 139b: #liveKnowledgeMap height-override borttagen. Höjden sätts
+     nu av renderLiveMap via container.style.height (mobile: min(340, w*0.9))
+     — !important här stängde ute JS-uppdateringen efter ORDER 138s h-höjning
+     till 500 desktop, vilket klippte kartans topp. overflow:hidden är
+     redundant (samma sätts av inline på containern). */
   #liveKnowledgeMap svg{max-width:100%!important}
   .map-legend-top{display:none!important}
   /* Spotlight wrap */
@@ -1831,7 +1835,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div class="oversikt-map-wrap" id="oversiktMapWrap">
         <div class="oversikt-map-eyebrow">Research landscape</div>
         <div class="oversikt-map-help">A map of gastronomy research — each node a topic, sized by article count. Click a node to see its studies.</div>
-        <div id="overviewKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px;margin-top:12px">
+        <!-- ORDER 139b (2026-08-23): height:480px borttaget från inline —
+             ORDER 138 höjde SVG till 500 desktop / min(340, w*0.9) mobile
+             via container.style.height, men hardkodad 480 klippte topp
+             tills JS hann köra. Höjden sätts nu helt av renderOverviewMap. -->
+        <div id="overviewKnowledgeMap" style="width:100%;min-height:120px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px;margin-top:12px">
           <div class="loading-state"><div class="spinner"></div><span>Building knowledge map…</span></div>
         </div>
       </div>
@@ -2031,7 +2039,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <span class="si-sep">·</span>
     <span class="si-not">Not shown: areas with fewer than 5 studies · unclassified articles</span>
   </div>
-  <div id="liveKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
+  <!-- ORDER 139b (2026-08-23): height:480px borttaget — se overview-container. -->
+  <div id="liveKnowledgeMap" style="width:100%;min-height:120px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px">
     <div class="loading-state"><div class="spinner"></div><span>Building knowledge map...</span></div>
   </div>
   <!-- ORDER 135b: tredje-legenden ("Core topic for your role · Related area
