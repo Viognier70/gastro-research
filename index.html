@@ -360,6 +360,23 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .oversikt-watch-signal strong { color: var(--gusto-ink, #3A3226); font-weight: 600; }
 .oversikt-watch-loading { font-size: 12px; color: var(--text-tertiary); font-style: italic; }
 
+/* ORDER 135: kunskapskarta på Overview (rollagnostisk variant av Explore-kartan). */
+.oversikt-map-wrap {
+  margin: 0 0 32px;
+}
+.oversikt-map-eyebrow {
+  font-family: 'Inter','Outfit',sans-serif;
+  font-weight: 500; font-size: 10.5px;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--gusto-gold);
+  margin: 0 0 6px;
+}
+.oversikt-map-help {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px; color: var(--text-secondary, #5C5649);
+  line-height: 1.55; margin: 0 0 12px;
+}
+
 .oversikt-lead-wrap {
   padding: 20px 0 26px; margin-bottom: 28px;
   border-bottom: 0.5px solid rgba(160,138,85,.2);
@@ -1789,6 +1806,19 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <button class="oversikt-ask-btn"
                 onclick="doSemanticSearch('oversiktSemanticInput','oversiktSemanticResults')">Search →</button>
         <div class="oversikt-ask-results" id="oversiktSemanticResults"></div>
+      </div>
+
+      <!-- 2b. Kunskapskarta — hela forskningsfältet, rollagnostiskt (ORDER 135).
+           Skiljer sig från Explore-kartan: gusto-mark + total i mitten istället
+           för rollnamn, ingen rollpåverkan alls, klick jumpar till Explore med
+           topic förvalt. Delar helpers computeMapLayout + drawTopicNode med
+           Explore-kartan; delar data (mapTopicData) via loadKnowledgeMap. -->
+      <div class="oversikt-map-wrap" id="oversiktMapWrap">
+        <div class="oversikt-map-eyebrow">Research landscape</div>
+        <div class="oversikt-map-help">A map of gastronomy research — each node a topic, sized by article count. Click a node to see its studies.</div>
+        <div id="overviewKnowledgeMap" style="width:100%;height:480px;position:relative;overflow:hidden;box-sizing:border-box;background:#0C0B09;border-radius:8px;margin-top:12px">
+          <div class="loading-state"><div class="spinner"></div><span>Building knowledge map…</span></div>
+        </div>
       </div>
 
       <!-- 3. Aktuella fynd — kurerad aptitretare (hybrid: 6m fetched_at + year-tiebreaker). -->
@@ -4667,6 +4697,13 @@ async function loadKnowledgeMap(){
   // Svars-fältnamn (rel_sommelier/chef/creator/waiter/educator) matchar
   // getTopicRelevance:s `t['rel_'+role]`-lookup direkt. label saknas i
   // RPC-svaret — fylls här från TOPIC_LABELS-dict.
+  // ORDER 135: idempotent — om data redan hämtats, rendera bägge kartor
+  // och returnera. Overview och Explore delar samma mapTopicData-cache.
+  if(mapTopicData.length > 0){
+    renderLiveMap()
+    renderOverviewMap()
+    return
+  }
   try {
     const r = await fetch(`${SB_URL}/rest/v1/rpc/knowledge_map_topics`, {
       method: 'POST',
@@ -4680,7 +4717,10 @@ async function loadKnowledgeMap(){
       ...t,
       label: TOPIC_LABELS[t.topic] || (t.topic || '').replace(/_/g,' ')
     }))
+    // Rendera bägge kartor. Osynliga vyer skriver till dolda containers —
+    // ingen visuell effekt förrän showView öppnar dem.
     renderLiveMap()
+    renderOverviewMap()
   } catch(e){ console.log('Map error:',e) }
 }
 
@@ -4689,198 +4729,284 @@ function getTopicRelevance(t){
   return t['rel_'+role]||0
 }
 
-function renderLiveMap(){
-  const container=document.getElementById('liveKnowledgeMap')
-  console.log('renderLiveMap called, container:', !!container, 'data:', mapTopicData.length)
-  if(!container||!mapTopicData.length) return
+// ─── ORDER 135: extraherade helpers delade av renderLiveMap + renderOverviewMap
+// ─────────────────────────────────────────────────────────────────────────────
+// computeMapLayout — pure computational: positioning + sizing + edges.
+// sortFn injiceras explicit så bägge renderers styr rangordning oberoende
+// (Explore = roll-viktad via getTopicRelevance, Overview = alltid genomsnitt
+// över alla 5 roller). Motverkar det gamla implicit-global-role-läckaget.
+// Edges byggs alltid från cosine similarity över alla 5 rollers rel-vektor
+// (rollagnostiskt, samma i bägge vyer — kanterna beskriver semantisk
+// släktskap mellan ämnen, inte "denna rolls landskap").
+function computeMapLayout(mapData, sortFn, w, h, isMobile){
+  const RING1_R = isMobile ? Math.min(90, w*0.28) : 140
+  const RING2_R = isMobile ? Math.min(140, w*0.42) : 200
+  const ROLE_R  = isMobile ? 36 : 52
+  const cx = w/2, cy = h/2
 
-  const w=container.offsetWidth||860
-  const isMob = w < 500
-  const isMobile = isMob
-  const h=isMob ? Math.min(300, w*0.85) : 460
-  const mapRoleName = role === 'all' ? 'All professions' : (roleLabel(role) || role)
-  document.getElementById('mapRoleTitle').textContent = mapRoleName + ' — research landscape'
-  const mapHint=document.getElementById('mapHint')
-  if(mapHint&&!localStorage.getItem('gs_map_seen')){
-    mapHint.innerHTML='<span style="color:var(--gold)">↓ Try clicking a topic node to filter articles</span>'
-    mapHint.onclick=()=>{localStorage.setItem('gs_map_seen','1');mapHint.innerHTML='Click again to deselect'}
-  }
+  const sorted = [...mapData].sort((a,b) => sortFn(b) - sortFn(a))
+  const inner = sorted.slice(0, 5)
+  const outer = sorted.slice(5, 16)
 
-  const maxCount=Math.max(...mapTopicData.map(t=>t.count))
+  inner.forEach((t, i) => {
+    const angle = (i/inner.length)*Math.PI*2 - Math.PI/2
+    t._x = cx + Math.cos(angle)*RING1_R
+    t._y = cy + Math.sin(angle)*RING1_R
+    t._ring = 1
+  })
+  outer.forEach((t, i) => {
+    const angle = (i/outer.length)*Math.PI*2 - Math.PI/2 + (Math.PI/outer.length)
+    t._x = cx + Math.cos(angle)*RING2_R
+    t._y = cy + Math.sin(angle)*RING2_R
+    t._ring = 2
+  })
+  const allNodes = [...inner, ...outer]
 
-  // Sort by relevance for current role
-  const sorted=[...mapTopicData].sort((a,b)=>getTopicRelevance(b)-getTopicRelevance(a))
-
-  const cx=w/2, cy=h/2
-
-  // Concentric rings: center role node, then topic rings — skala efter skärmbredd
-  const RING1_R=isMobile ? Math.min(90, w*0.28) : 140
-  const RING2_R=isMobile ? Math.min(140, w*0.42) : 200
-  const ROLE_R=isMobile ? 36 : 52
-
-  // Top topics for each ring
-  const inner=sorted.slice(0,5)
-  const outer=sorted.slice(5,16)
-
-  // Position inner ring
-  inner.forEach((t,i)=>{
-    const angle=(i/inner.length)*Math.PI*2 - Math.PI/2
-    t._x=cx+Math.cos(angle)*RING1_R
-    t._y=cy+Math.sin(angle)*RING1_R
-    t._ring=1
+  const maxCount = Math.max(...mapData.map(t => t.count))
+  const minR = 14, maxR = 44
+  allNodes.forEach(t => {
+    t._r = minR + Math.sqrt(t.count/maxCount)*(maxR-minR)
   })
 
-  // Position outer ring
-  outer.forEach((t,i)=>{
-    const angle=(i/outer.length)*Math.PI*2 - Math.PI/2 + (Math.PI/outer.length)
-    t._x=cx+Math.cos(angle)*RING2_R
-    t._y=cy+Math.sin(angle)*RING2_R
-    t._ring=2
-  })
-
-  const allNodes=[...inner,...outer]
-
-  // Node size: based on article count (proportional)
-  const minR=14, maxR=44
-  allNodes.forEach(t=>{
-    t._r=minR+Math.sqrt(t.count/maxCount)*(maxR-minR)
-    t._rel=getTopicRelevance(t)
-  })
-
-  // Build semantic edges using cosine similarity of relevance vectors
-  const roles=['sommelier','chef','creator','waiter','educator']
-  const edges=[]
-  for(let i=0;i<inner.length;i++){
-    for(let j=i+1;j<inner.length;j++){
-      const a=inner[i],b=inner[j]
-      const dot=roles.reduce((s,r)=>s+(a['rel_'+r]||0)*(b['rel_'+r]||0),0)
-      const ma=Math.sqrt(roles.reduce((s,r)=>s+Math.pow(a['rel_'+r]||0,2),0))
-      const mb=Math.sqrt(roles.reduce((s,r)=>s+Math.pow(b['rel_'+r]||0,2),0))
-      const sim=ma&&mb?dot/(ma*mb):0
-      if(sim>0.4) edges.push({a,b,sim,type:'inner'})
+  const roles = ['sommelier','chef','creator','waiter','educator']
+  const edges = []
+  for(let i=0; i<inner.length; i++){
+    for(let j=i+1; j<inner.length; j++){
+      const a = inner[i], b = inner[j]
+      const dot = roles.reduce((s,r) => s + (a['rel_'+r]||0)*(b['rel_'+r]||0), 0)
+      const ma = Math.sqrt(roles.reduce((s,r) => s + Math.pow(a['rel_'+r]||0, 2), 0))
+      const mb = Math.sqrt(roles.reduce((s,r) => s + Math.pow(b['rel_'+r]||0, 2), 0))
+      const sim = ma&&mb ? dot/(ma*mb) : 0
+      if(sim > 0.4) edges.push({a, b, sim, type:'inner'})
     }
   }
-  // Connect inner to outer
-  outer.forEach(o=>{
-    let best={sim:0,node:null}
-    inner.forEach(i=>{
-      const dot=roles.reduce((s,r)=>s+(i['rel_'+r]||0)*(o['rel_'+r]||0),0)
-      const ma=Math.sqrt(roles.reduce((s,r)=>s+Math.pow(i['rel_'+r]||0,2),0))
-      const mb=Math.sqrt(roles.reduce((s,r)=>s+Math.pow(o['rel_'+r]||0,2),0))
-      const sim=ma&&mb?dot/(ma*mb):0
-      if(sim>best.sim){best={sim,node:i}}
+  outer.forEach(o => {
+    let best = {sim:0, node:null}
+    inner.forEach(i => {
+      const dot = roles.reduce((s,r) => s + (i['rel_'+r]||0)*(o['rel_'+r]||0), 0)
+      const ma = Math.sqrt(roles.reduce((s,r) => s + Math.pow(i['rel_'+r]||0, 2), 0))
+      const mb = Math.sqrt(roles.reduce((s,r) => s + Math.pow(o['rel_'+r]||0, 2), 0))
+      const sim = ma&&mb ? dot/(ma*mb) : 0
+      if(sim > best.sim) best = {sim, node:i}
     })
-    if(best.node&&best.sim>0.3) edges.push({a:best.node,b:o,sim:best.sim,type:'spoke'})
+    if(best.node && best.sim > 0.3) edges.push({a:best.node, b:o, sim:best.sim, type:'spoke'})
   })
 
-  // SVG — dark background
-  let svg=`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:#0C0B09">`
+  return { inner, outer, allNodes, edges, cx, cy, RING1_R, RING2_R, ROLE_R, maxCount }
+}
 
-  // Subtle ring guides
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
-
-  // Edges — visas i research landscape
-  edges.forEach(e=>{
-    const s=e.sim
-    const sw=e.type==='inner'?(s>0.8?3:s>0.6?1.8:0.8):(s>0.7?1.5:0.7)
-    const op=e.type==='inner'?(s>0.8?0.5:s>0.6?0.3:0.15):(s>0.7?0.25:0.12)
-    const dash=s<0.6||e.type==='spoke'&&s<0.7?'stroke-dasharray="5,4"':''
-    svg+=`<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
-  })
-  // Topic → färg: använder shared TOPIC_COLORS + getTopicColor (definierad
-  // vid rad ~1791). Tidigare lokal topicColors + fallback #C9A84C konsoli-
-  // derad 2026-07-16 så samma ämne får samma färg överallt (Explore,
-  // worldMap, popup, Feed).
-
-  // Center: profession node
-  // Använder roleLabel() (canonical helper från DEL A) istället för den lokala
-  // roleNames-mappen som togs bort i d5bb536. Utan denna byte kastas
-  // ReferenceError och renderLiveMap avbryts före container.innerHTML=svg
-  // → loadern "Building knowledge map..." stannar för alltid.
-  const rname = role === 'all' ? 'All' : (roleLabel(role) || role)
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="2"/>`
-  svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#C9A84C">${rname}</text>`
-  svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.5)">Aristotle·TRIAD</text>`
-
-  // Topic nodes
-  allNodes.forEach(n=>{
-    const sel=activeMapTopics.has(n.topic)
-    // ORDER 134: recent kommer från knowledge_map_topics-RPC:n
-    // (count(*) filter where fetched_at > now() - interval '7 days').
-    const isRecent=(n.recent||0) > 0
-    const tc=getTopicColor(n.topic)
-    const alpha=sel?1:0.55+0.45*(n.count/maxCount)
-    const hexToRgba=(h,a)=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a.toFixed(2)})`}
-    const fill=sel?tc:hexToRgba(tc,alpha)
-    // Stroke-precedens: (1) selektion vinner — topic-färg 2.5px, användaren
-    // ska alltid se vad hen just klickat på. (2) icke-vald med recent>0 →
-    // guld 2px, "ny denna vecka"-indikator. (3) övriga → subtil vit 0.15/0.8px.
-    // Fyllningen rörs inte — den semantiska färgkodningen ligger kvar.
-    const stroke=sel ? tc : (isRecent ? '#C9A84C' : 'rgba(255,255,255,0.15)')
-    const sw    =sel ? 2.5 : (isRecent ? 2 : 0.8)
-    const textCol=sel?'#0C0B09':'rgba(255,255,255,0.9)'
-
-    svg+=`<g onclick="toggleMapTopic('${n.topic}')" style="cursor:pointer" class="map-node" data-idx="${allNodes.indexOf(n)}">`
-    svg+=`<circle cx="${n._x}" cy="${n._y}" r="${n._r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`
-
-    // Word wrap
-    const words=n.label.split(' ')
-    const fs=n._r>36?10:n._r>24?9:8
-    if(words.length<=2){
-      svg+=`<text x="${n._x}" y="${n._y+1}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" fill="${textCol}" font-weight="${sel?'600':'400'}">${n.label}</text>`
-    } else {
-      const mid=Math.ceil(words.length/2)
-      svg+=`<text x="${n._x}" y="${n._y-5}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="${sel?'600':'400'}">${words.slice(0,mid).join(' ')}</text>`
-      svg+=`<text x="${n._x}" y="${n._y+7}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="${sel?'600':'400'}">${words.slice(mid).join(' ')}</text>`
-    }
-    // Article count
-    if(n._r>22) svg+=`<text x="${n._x}" y="${n._y+n._r+10}" text-anchor="middle" font-size="7.5" fill="rgba(255,255,255,0.3)">${n.count}</text>`
-    svg+='</g>'
-  })
-
-  // Aristotle quote at bottom
-  svg+=`<text x="${cx}" y="${h-8}" text-anchor="middle" font-size="8" fill="rgba(201,168,76,0.3)" font-style="italic">Excellence, then, is not an act, but a habit. — Aristotle</text>`
-  // ORDER 134: sammanslagen legend — tre visuella tillstånd på samma bas-swatch
-  // (blå från multisensory-familjen som neutral representant, ingen gold-familj
-  // → ingen förväxling med recency-guldet). Skillnaden mellan items är stroke,
-  // inte fill: (1) subtil vit ring = ämnesfärg står för research area,
-  // (2) guld ring = fetched_at inom 7 dygn, (3) tjock topic-color ring på full
-  // opacitet = vald.
-  svg+=`<circle cx="20"  cy="${h-38}" r="6" fill="rgba(74,123,176,0.55)" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>`
-  svg+=`<text   x="30"  y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Colour = research area</text>`
-  svg+=`<circle cx="170" cy="${h-38}" r="6" fill="rgba(74,123,176,0.55)" stroke="#C9A84C" stroke-width="2"/>`
-  svg+=`<text   x="180" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">New this week</text>`
-  svg+=`<circle cx="270" cy="${h-38}" r="6" fill="rgba(74,123,176,1)"    stroke="rgba(74,123,176,1)" stroke-width="2.5"/>`
-  svg+=`<text   x="280" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Selected</text>`
-
-  svg+='</svg>'
-  container.innerHTML=svg
-  container.style.height=h+'px'
-  container.style.background='#0C0B09'
-  container.style.borderRadius='8px'
-  // Intersection Observer — animera när kartan scrollas in i vy
-  const animateMap=()=>{
-    // Edges — sätt synliga direkt
-    container.querySelectorAll('line').forEach(e=>e.setAttribute('opacity','1'))
-    // Noder — fade in en efter en
-    container.querySelectorAll('g').forEach((n,i)=>{
-      n.style.opacity='0'
-      setTimeout(()=>{n.style.transition='opacity 0.5s';n.style.opacity='1'},i*80+100)
-    })
+// drawTopicNode — SVG-sträng för en klickbar topic-nod. isSelected, isRecent
+// och clickHandler injiceras så samma renderare tjänar bägge vyer:
+// Explore skickar activeMapTopics.has(topic) + toggleMapTopic;
+// Overview skickar false + jumpToExploreWithTopic.
+function drawTopicNode(n, {isSelected, isRecent, maxCount, clickHandler}){
+  const tc = getTopicColor(n.topic)
+  const alpha = isSelected ? 1 : 0.55 + 0.45*(n.count/maxCount)
+  const hexToRgba = (h,a) => {
+    const r = parseInt(h.slice(1,3), 16)
+    const g = parseInt(h.slice(3,5), 16)
+    const b = parseInt(h.slice(5,7), 16)
+    return `rgba(${r},${g},${b},${a.toFixed(2)})`
   }
-  // Starta animation direkt om kartan redan är synlig, annars observer
-  const rect=container.getBoundingClientRect()
-  const alreadyVisible=rect.top < window.innerHeight && rect.bottom > 0
-  if(alreadyVisible){
-    setTimeout(animateMap, 300)
+  const fill = isSelected ? tc : hexToRgba(tc, alpha)
+  // Stroke-precedens (ORDER 134): selektion vinner (topic-color 2.5px);
+  // sedan recent → guld 2px; annars subtil vit.
+  const stroke = isSelected ? tc : (isRecent ? '#C9A84C' : 'rgba(255,255,255,0.15)')
+  const sw     = isSelected ? 2.5 : (isRecent ? 2 : 0.8)
+  const textCol = isSelected ? '#0C0B09' : 'rgba(255,255,255,0.9)'
+
+  let svg = `<g onclick="${clickHandler}" style="cursor:pointer" class="map-node">`
+  svg += `<circle cx="${n._x}" cy="${n._y}" r="${n._r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`
+  const words = n.label.split(' ')
+  const fs = n._r > 36 ? 10 : n._r > 24 ? 9 : 8
+  if(words.length <= 2){
+    svg += `<text x="${n._x}" y="${n._y+1}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" fill="${textCol}" font-weight="${isSelected?'600':'400'}">${n.label}</text>`
   } else {
-    const obs=new IntersectionObserver((entries)=>{
-      if(entries[0].isIntersecting){animateMap();obs.disconnect()}
-    },{threshold:0.1})
+    const mid = Math.ceil(words.length/2)
+    svg += `<text x="${n._x}" y="${n._y-5}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="${isSelected?'600':'400'}">${words.slice(0,mid).join(' ')}</text>`
+    svg += `<text x="${n._x}" y="${n._y+7}" text-anchor="middle" font-size="${fs}" fill="${textCol}" font-weight="${isSelected?'600':'400'}">${words.slice(mid).join(' ')}</text>`
+  }
+  if(n._r > 22) svg += `<text x="${n._x}" y="${n._y+n._r+10}" text-anchor="middle" font-size="7.5" fill="rgba(255,255,255,0.3)">${n.count}</text>`
+  svg += '</g>'
+  return svg
+}
+
+// drawMapAnimation — Intersection Observer + node-fade-cadence.
+// Extraherad så bägge kartor får samma animation vid scroll-in.
+function drawMapAnimation(container){
+  const animate = () => {
+    container.querySelectorAll('line').forEach(e => e.setAttribute('opacity', '1'))
+    container.querySelectorAll('g').forEach((n, i) => {
+      n.style.opacity = '0'
+      setTimeout(() => { n.style.transition = 'opacity 0.5s'; n.style.opacity = '1' }, i*80 + 100)
+    })
+  }
+  const rect = container.getBoundingClientRect()
+  const visible = rect.top < window.innerHeight && rect.bottom > 0
+  if(visible){
+    setTimeout(animate, 300)
+  } else {
+    const obs = new IntersectionObserver(entries => {
+      if(entries[0].isIntersecting){ animate(); obs.disconnect() }
+    }, {threshold:0.1})
     obs.observe(container)
   }
 }
+
+function renderLiveMap(){
+  const container = document.getElementById('liveKnowledgeMap')
+  console.log('renderLiveMap called, container:', !!container, 'data:', mapTopicData.length)
+  if(!container || !mapTopicData.length) return
+
+  const w = container.offsetWidth || 860
+  const isMob = w < 500
+  const h = isMob ? Math.min(300, w*0.85) : 460
+  const mapRoleName = role === 'all' ? 'All professions' : (roleLabel(role) || role)
+  document.getElementById('mapRoleTitle').textContent = mapRoleName + ' — research landscape'
+  const mapHint = document.getElementById('mapHint')
+  if(mapHint && !localStorage.getItem('gs_map_seen')){
+    mapHint.innerHTML = '<span style="color:var(--gold)">↓ Try clicking a topic node to filter articles</span>'
+    mapHint.onclick = () => { localStorage.setItem('gs_map_seen','1'); mapHint.innerHTML = 'Click again to deselect' }
+  }
+
+  // ORDER 135: explicit sortFn-injection. Explore-callsiten skickar in
+  // getTopicRelevance direkt — inte helpern som läser global `role`. Utan
+  // det ordet skulle helpern läsa role från closure vilket bryter Overview
+  // (Overview vill alltid genomsnitt, oavsett vad Feed-rollen är satt till).
+  const { inner, outer, allNodes, edges, cx, cy, RING1_R, RING2_R, ROLE_R, maxCount } =
+    computeMapLayout(mapTopicData, t => getTopicRelevance(t), w, h, isMob)
+
+  let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:#0C0B09">`
+  svg += `<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
+  svg += `<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
+
+  edges.forEach(e => {
+    const s = e.sim
+    const sw = e.type==='inner' ? (s>0.8?3:s>0.6?1.8:0.8) : (s>0.7?1.5:0.7)
+    const op = e.type==='inner' ? (s>0.8?0.5:s>0.6?0.3:0.15) : (s>0.7?0.25:0.12)
+    const dash = s<0.6 || e.type==='spoke' && s<0.7 ? 'stroke-dasharray="5,4"' : ''
+    svg += `<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
+  })
+
+  // Center: profession node (role-scoped, "Aristotle·TRIAD" byline). Overview-
+  // kartan har en helt annan center — se renderOverviewMap.
+  const rname = role === 'all' ? 'All' : (roleLabel(role) || role)
+  svg += `<circle cx="${cx}" cy="${cy}" r="${ROLE_R}" fill="#0C0B09" stroke="#C9A84C" stroke-width="2"/>`
+  svg += `<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#C9A84C">${rname}</text>`
+  svg += `<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="rgba(201,168,76,0.5)">Aristotle·TRIAD</text>`
+
+  allNodes.forEach(n => {
+    svg += drawTopicNode(n, {
+      isSelected: activeMapTopics.has(n.topic),
+      isRecent: (n.recent||0) > 0,
+      maxCount,
+      clickHandler: `toggleMapTopic('${n.topic}')`
+    })
+  })
+
+  svg += `<text x="${cx}" y="${h-8}" text-anchor="middle" font-size="8" fill="rgba(201,168,76,0.3)" font-style="italic">Excellence, then, is not an act, but a habit. — Aristotle</text>`
+  // ORDER 134 legend — samma tre items i Explore-kartan
+  svg += `<circle cx="20"  cy="${h-38}" r="6" fill="rgba(74,123,176,0.55)" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>`
+  svg += `<text   x="30"  y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Colour = research area</text>`
+  svg += `<circle cx="170" cy="${h-38}" r="6" fill="rgba(74,123,176,0.55)" stroke="#C9A84C" stroke-width="2"/>`
+  svg += `<text   x="180" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">New this week</text>`
+  svg += `<circle cx="270" cy="${h-38}" r="6" fill="rgba(74,123,176,1)"    stroke="rgba(74,123,176,1)" stroke-width="2.5"/>`
+  svg += `<text   x="280" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Selected</text>`
+
+  svg += '</svg>'
+  container.innerHTML = svg
+  container.style.height = h + 'px'
+  container.style.background = '#0C0B09'
+  container.style.borderRadius = '8px'
+  drawMapAnimation(container)
+}
+
+// ─── ORDER 135: Overview-kartan — rollagnostisk, gusto-mark i mitten ────
+// Skiljer sig från renderLiveMap på fyra punkter:
+//   1. sortFn: alltid genomsnitt över alla 5 roller (aldrig läser global role)
+//   2. center: <use href="#gusto-mark-cutout"> + totalsumma + label
+//              (ingen rollnamn, ingen "Aristotle·TRIAD"-byline)
+//   3. isSelected: alltid false (Overview har ingen selektion)
+//   4. clickHandler: jumpToExploreWithTopic (byter till Explore-vyn + preselect)
+// Delar allt annat via computeMapLayout + drawTopicNode + drawMapAnimation.
+function renderOverviewMap(){
+  const container = document.getElementById('overviewKnowledgeMap')
+  if(!container || !mapTopicData.length) return
+
+  const w = container.offsetWidth || 860
+  const isMob = w < 500
+  const h = isMob ? Math.min(300, w*0.85) : 460
+
+  const sortFn = t =>
+    ((t.rel_sommelier||0) + (t.rel_chef||0) + (t.rel_creator||0) + (t.rel_waiter||0) + (t.rel_educator||0)) / 5
+
+  const { inner, outer, allNodes, edges, cx, cy, RING1_R, RING2_R, ROLE_R, maxCount } =
+    computeMapLayout(mapTopicData, sortFn, w, h, isMob)
+
+  // Totalsumma över ALLA 27 topics (inte bara de 16 synliga noderna) —
+  // ärlig representation av hela topic-klassificerade populationen.
+  const total = mapTopicData.reduce((s, t) => s + (t.count || 0), 0)
+
+  let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Outfit',sans-serif;display:block;background:#0C0B09">`
+  svg += `<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
+  svg += `<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
+
+  edges.forEach(e => {
+    const s = e.sim
+    const sw = e.type==='inner' ? (s>0.8?3:s>0.6?1.8:0.8) : (s>0.7?1.5:0.7)
+    const op = e.type==='inner' ? (s>0.8?0.5:s>0.6?0.3:0.15) : (s>0.7?0.25:0.12)
+    const dash = s<0.6 || e.type==='spoke' && s<0.7 ? 'stroke-dasharray="5,4"' : ''
+    svg += `<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
+  })
+
+  // Center: gusto-mark-cutout ovanför totalsumman + label. Markens storlek
+  // proportionerlig mot ROLE_R × 1.4 så den fyller centrum-området utan
+  // att kollidera med inner-ringen (RING1_R är ~2.7× ROLE_R).
+  const markSize = ROLE_R * 1.4
+  svg += `<svg x="${cx - markSize/2}" y="${cy - markSize/2 - 14}" width="${markSize}" height="${markSize}" viewBox="0 0 1500 1500" style="color:#C9A84C"><use href="#gusto-mark-cutout"/></svg>`
+  svg += `<text x="${cx}" y="${cy + markSize/2 - 6}" text-anchor="middle" font-size="18" font-weight="600" fill="#C9A84C">${total.toLocaleString()}</text>`
+  svg += `<text x="${cx}" y="${cy + markSize/2 + 10}" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,0.55)">articles classified across research areas</text>`
+
+  allNodes.forEach(n => {
+    svg += drawTopicNode(n, {
+      isSelected: false,
+      isRecent: (n.recent||0) > 0,
+      maxCount,
+      clickHandler: `jumpToExploreWithTopic('${n.topic}')`
+    })
+  })
+
+  svg += `<text x="${cx}" y="${h-8}" text-anchor="middle" font-size="8" fill="rgba(201,168,76,0.3)" font-style="italic">Excellence, then, is not an act, but a habit. — Aristotle</text>`
+  // Overview-legend: två items (ingen "Selected" eftersom Overview inte har
+  // selektion — klick jumpar till Explore som visar den där).
+  svg += `<circle cx="20"  cy="${h-38}" r="6" fill="rgba(74,123,176,0.55)" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>`
+  svg += `<text   x="30"  y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">Colour = research area</text>`
+  svg += `<circle cx="170" cy="${h-38}" r="6" fill="rgba(74,123,176,0.55)" stroke="#C9A84C" stroke-width="2"/>`
+  svg += `<text   x="180" y="${h-34}" font-size="8" fill="rgba(255,255,255,0.5)">New this week</text>`
+
+  svg += '</svg>'
+  container.innerHTML = svg
+  container.style.height = h + 'px'
+  container.style.background = '#0C0B09'
+  container.style.borderRadius = '8px'
+  drawMapAnimation(container)
+}
+
+// jumpToExploreWithTopic — Overview klick-handler. Byter till Explore-vyn
+// med topic förvalt. renderLiveMap plockar upp activeMapTopics vid nästa
+// render (via lazy-load i showView eller direkt setTimeout här).
+window.jumpToExploreWithTopic = function(topic){
+  activeMapTopics.clear()
+  activeMapTopics.add(topic)
+  window.showView('explore')
+  setTimeout(() => {
+    if(typeof renderLiveMap === 'function') renderLiveMap()
+    if(typeof loadExploreArticles === 'function') loadExploreArticles(topic)
+    const pane = document.getElementById('explorePane')
+    if(pane) pane.scrollIntoView({behavior:'smooth', block:'start'})
+  }, 120)
+}
+
 
 // Explore-scoped topic focus. Sedan STEG 2 lever Explore i egen vy — så
 // klick på nod filtrerar INTE Feed (den är dold), utan öppnar en artikel-
@@ -6812,12 +6938,15 @@ window.renderOversiktPulse = async function() {
 }
 
 window.renderOversikt = function() {
-  // Orkestrerar de tre sub-renders. Async parallellt, ingen await mellan
+  // Orkestrerar sub-renders. Async parallellt, ingen await mellan
   // dem — samma pattern som loadSpotlight/loadTrending/loadMostCited i
   // renderFeed-pipelinen.
   try { window.renderOversiktWatchBar() } catch(e) { console.log('watchbar throw', e) }
   try { window.renderOversiktLead() } catch(e) { console.log('lead throw', e) }
   try { window.renderOversiktPulse() } catch(e) { console.log('pulse throw', e) }
+  // ORDER 135: kunskapskarta. loadKnowledgeMap är idempotent — vid cache-hit
+  // ritar den bägge kartor utan re-fetch.
+  try { if(typeof loadKnowledgeMap === 'function') loadKnowledgeMap() } catch(e) { console.log('map throw', e) }
 }
 
 window.loadSpotlight = async function() {
