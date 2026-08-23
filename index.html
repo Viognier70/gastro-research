@@ -891,7 +891,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .main-layout{display:grid;grid-template-columns:1fr 220px;gap:0;max-width:1100px;margin:0 auto;padding:24px 32px}
 .feed-pane{min-width:0}
 .sidebar{padding-left:28px;border-left:0.5px solid var(--border)}
-.feed-count{font-size:12px;color:var(--text-tertiary);margin-bottom:16px}
+/* .feed-count borttagen — ORDER 137 rev 2: räknaren är nu i section-intro
+   (updateFeedIntro fyller #siFeedIntro). Två parallella count-rader var en
+   duplicat. */
 .new-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--techne);background:var(--techne-light);padding:3px 10px;border-radius:20px;margin-left:8px}
 
 /* ARTICLE CARDS */
@@ -2042,7 +2044,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <span class="free-text" id="freeText"></span>
       <span class="upgrade-link" onclick="openModal('upgradeModal')">Upgrade to Pro</span>
     </div>
-    <div class="feed-count" id="feedCount"></div>
+    <!-- #feedCount borttagen — ORDER 137 rev 2. Räknaren är nu i
+         section-intro (#siFeedIntro) som säger samma sak + total + growth. -->
     <div id="synthContainer"></div>
   <div class="section-intro">
     <!-- ORDER 137 (2026-08-23): fylls dynamiskt av updateFeedIntro. Läser
@@ -2712,21 +2715,36 @@ function updateSectionIntros(r){
 }
 
 // Feed section-intro — dynamisk label med urval + total + veckotillväxt + roll.
-// Fyra villkorsgrenar (kombinationer av sort-mode + role):
+// Tre lägen: search / saved / browse. Läggas i #siFeedIntro (rad ~2050).
+//
+// BROWSE-läget (default) — fyra villkorsgrenar (sort × role):
 //   sort='relevance', role != 'all':  "Showing 199 most relevant of 34,983 [· N added this week] · sorted for X"
 //   sort='newest',    role != 'all':  "Showing 199 of 34,983 [· N added this week] · sorted for X"
-//   sort='relevance', role == 'all':  "Showing 199 of 34,983 [· N added this week]"
-//   sort='newest',    role == 'all':  "Showing 199 of 34,983 [· N added this week]"
+//   sort='*',         role == 'all':  "Showing 199 of 34,983 [· N added this week]"
 //
-// "most relevant" bara när sort='relevance' — undviker att ljuga om sort-modet.
-// Growth-tillägget (· N added this week) utelämnas HELT vid N=0 — inte "0 added".
-// "sorted for X" utelämnas vid role='all' — ingen roll är vald, ingen att sortera för.
+// SEARCH-läget (searchInput.length > 1):
+//   role != 'all':  "Showing 199 results for 'music' · sorted for X"
+//   role == 'all':  "Showing 199 results for 'music'"
 //
-// Ingen sort-listener behövs — updateFeedIntro anropas av renderFeed vid varje
-// omladdning, och renderFeed triggas av sortSel:s onchange.
+// SAVED-läget (showingSaved global true):
+//   "Showing 199 saved articles"
+//   ("sorted for X" utelämnas — saved är inneboende user-scoped, roll-frasen
+//    tillför inte information)
+//
+// Regler över alla lägen:
+//   * "most relevant" bara i browse när sort='relevance' AND role != 'all'
+//   * Growth-tillägget "· N added this week" utelämnas HELT vid N=0 —
+//     aldrig "0 added". Bara i browse-läget (search/saved har annan semantik).
+//   * "sorted for X" utelämnas vid role='all' och i saved-läget.
+//   * Ingen sort-listener behövs — updateFeedIntro anropas av renderFeed vid
+//     varje omladdning, och renderFeed triggas av sortSel:s onchange.
 function updateFeedIntro(count){
   const el = document.getElementById('siFeedIntro')
   if(!el || typeof count !== 'number') return
+
+  const searchVal = document.getElementById('searchInput')?.value?.trim() || ''
+  const isSearch  = searchVal.length > 1
+  const isSaved   = !!showingSaved
 
   const total       = Number(window._feedableCount  || 0)
   const recentAdded = Number(window._feedableRecent || 0)
@@ -2734,21 +2752,29 @@ function updateFeedIntro(count){
   const isRelevance = (sortSel?.value || 'relevance') === 'relevance'
 
   const countStr = count.toLocaleString('en-US')
-  // Total kan vara 0 om loadCounts inte hunnit svara — visa "—" tills det landat.
-  // Nästa loadCounts-avslut triggar renderFeed → uppdaterar labelen.
   const totalStr = total > 0 ? total.toLocaleString('en-US') : '—'
 
-  // Segment 1: urval + total, ev. med "most relevant" när relevance-sortering är vald
-  const relPhrase = (isRelevance && role !== 'all') ? 'most relevant ' : ''
-  const parts = [`Showing ${countStr} ${relPhrase}of ${totalStr}`]
+  const parts = []
 
-  // Segment 2: veckotillväxt — utelämnas vid 0
-  if(recentAdded > 0){
-    parts.push(`${recentAdded.toLocaleString('en-US')} added this week`)
+  if(isSearch){
+    // Search-läge — "N results for 'query'". Ingen total ("of X" ger inte
+    // mening för sökning som är corpus-wide match-fråga, inte urval av topp-N).
+    parts.push(`Showing ${countStr} results for &ldquo;${_escHtml(searchVal)}&rdquo;`)
+  } else if(isSaved){
+    // Saved-läge — bara antalet sparade artiklar. Ingen total, ingen roll.
+    parts.push(`Showing ${countStr} saved articles`)
+  } else {
+    // Browse-läge — "Showing 199 [most relevant] of 34,983"
+    const relPhrase = (isRelevance && role !== 'all') ? 'most relevant ' : ''
+    parts.push(`Showing ${countStr} ${relPhrase}of ${totalStr}`)
+    // Growth-tillägget bara i browse (search/saved har annan semantik)
+    if(recentAdded > 0){
+      parts.push(`${recentAdded.toLocaleString('en-US')} added this week`)
+    }
   }
 
-  // Segment 3: roll — utelämnas vid role='all'
-  if(role !== 'all'){
+  // Roll-frasen — utelämnas vid role='all' OCH i saved-läget
+  if(role !== 'all' && !isSaved){
     const roleName = roleLabel(role) || role
     parts.push(`sorted for <strong>${_escHtml(roleName)}</strong>`)
   }
@@ -3459,7 +3485,8 @@ function renderFeed(){
   }
 
   freeCount=readFreeCount()
-  document.getElementById('feedCount').textContent=source.length+' articles'+(showingSaved?' (saved)':'')
+  // ORDER 137 rev 2: #feedCount-DOM-noden borttagen; updateFeedIntro läser
+  // showingSaved-global själv och lägger "saved articles" i sin sträng.
   updateFeedIntro(source.length)
   if(source.length===0){
     const topicVal=document.getElementById('topicSel')?.value
@@ -3532,7 +3559,8 @@ async function loadArticles(){
       articles=await r.json()
       if(!Array.isArray(articles)) articles=[]
       if(window.__cardExpansion) window.__cardExpansion.clear()
-      document.getElementById('feedCount').textContent=`${articles.length} results for "${search}"`
+      // ORDER 137 rev 2: #feedCount-DOM-noden borttagen; updateFeedIntro
+      // läser searchInput själv och formulerar "results for 'X'" i sin sträng.
       updateFeedIntro(articles.length)
     } else {
       // BROWSE MODE: show most relevant for current role
