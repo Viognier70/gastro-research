@@ -1790,6 +1790,19 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
   </section>
 
+  <!-- ORDER 139 (2026-08-23): mini-ticker flyttad från Feed. Rörelse
+       hör hemma på Overview — passiv "fältet är i rörelse"-signal när
+       user landar. Full-width dark, syskon till landing-hero. -->
+<div class="mini-ticker" id="miniTicker">
+  <div style="flex-shrink:0;padding:0 20px 0 24px;border-right:0.5px solid rgba(201,168,76,.2);height:100%;display:flex;align-items:center;gap:6px;min-width:fit-content">
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:mapPulse 1.8s ease-in-out infinite;flex-shrink:0"></span>
+    <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);white-space:nowrap">Incoming research</span>
+  </div>
+  <div class="mini-ticker-track" id="miniTickerTrack">
+    <span class="mini-ticker-item"><span class="mini-ticker-dot"></span>New research loading...</span>
+  </div>
+</div>
+
   <div class="oversikt-wrap">
     <div class="oversikt-modules">
       <!-- 1. Bevaknings-rad. Inloggad → delta sedan besök. Anonym → static intro. -->
@@ -1822,6 +1835,21 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
           <div class="loading-state"><div class="spinner"></div><span>Building knowledge map…</span></div>
         </div>
       </div>
+
+      <!-- 2c. Screening funnel (ORDER 139, 2026-08-23) — flyttad från Feed.
+           Kvalitet-berättelsen: efter kartan visat landskapets STRUKTUR
+           visar funneln hur det curerats, INNAN användaren möter de
+           faktiska fynden nedanför. Landskap → curatering → fynd. -->
+      <section class="funnel" id="screeningFunnel" hidden aria-label="Screening funnel">
+        <div class="funnel-eyebrow" id="funnelEyebrow">SCREENING</div>
+        <h2 class="funnel-title" id="funnelTitle">What survives the screening</h2>
+        <p class="funnel-sub" id="funnelSub">This is about scientific quality, not quantity. That only a fraction makes it through is not a weakness — it is the proof of rigor.</p>
+        <ul class="funnel-bars" id="funnelBars"></ul>
+        <div class="funnel-footer">
+          <span class="funnel-footer-left" id="funnelFooterLeft">Uppdateras live</span>
+          <span class="funnel-footer-right" id="funnelFooterRight"></span>
+        </div>
+      </section>
 
       <!-- 3. Aktuella fynd — kurerad aptitretare (hybrid: 6m fetched_at + year-tiebreaker). -->
       <div class="oversikt-lead-wrap" id="oversiktSpotlightLead">
@@ -1861,101 +1889,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <div id="view-feed" class="app-view" role="tabpanel" aria-labelledby="feed-tab" hidden>
 
 <div id="returnBar" style="display:none"></div>
-<div style="background:#F8F5EF;width:100%;padding-bottom:0"><div class="spotlight-wrap" id="spotlightWrap">
-  <div class="spotlight-header">
-    <span class="spotlight-label"><span class="live-dot"></span>Research Spotlight</span>
-    <span class="spotlight-sub" id="spotlightDate">Latest high-impact findings for your profession</span>
-    <span style="font-size:10px;color:rgba(255,255,255,.3);font-style:italic" id="spotlightLastUpdate"></span>
-  </div>
-  <div class="section-intro">
-    <span class="si-what">Latest high-relevance articles for <strong id="siSpotlightRole">your profession</strong> — updated daily.</span>
-    <span class="si-sep">·</span>
-    <span class="si-ai">TRIAD: <span class="si-ai-badge">AI</span> ε close to source · τ and φ interpretive</span>
-    <span class="si-sep">·</span>
-    <span class="si-not">Not shown: preprints · non-English · articles without abstracts</span>
-  </div>
-  <div class="spotlight-grid" id="spotlightGrid">
-    <div class="spotlight-card" style="opacity:.3"><div class="spotlight-claim" style="font-size:12px">Loading latest findings...</div></div>
-  </div>
 
-</div>
-</div>
-
-<div class="mini-ticker" id="miniTicker">
-  <div style="flex-shrink:0;padding:0 20px 0 24px;border-right:0.5px solid rgba(201,168,76,.2);height:100%;display:flex;align-items:center;gap:6px;min-width:fit-content">
-    <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:mapPulse 1.8s ease-in-out infinite;flex-shrink:0"></span>
-    <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);white-space:nowrap">Incoming research</span>
-  </div>
-  <div class="mini-ticker-track" id="miniTickerTrack">
-    <span class="mini-ticker-item"><span class="mini-ticker-dot"></span>New research loading...</span>
-  </div>
-</div>
-
-
-<div style="background:var(--warm-100);border-bottom:0.5px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:32px;flex-wrap:wrap">
-  <div style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);flex-shrink:0">The TRIAD Model</div>
-  <div style="display:flex;gap:20px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="width:28px;height:28px;border-radius:50%;background:var(--episteme);display:flex;align-items:center;justify-content:center;font-size:13px;color:#E8EFF6;font-family:Georgia,serif;flex-shrink:0">ε</span>
-      <div><div style="font-size:11px;font-weight:600;color:var(--episteme)">Episteme</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">What the research found</div></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="width:28px;height:28px;border-radius:50%;background:var(--techne);display:flex;align-items:center;justify-content:center;font-size:13px;color:#EAF0E5;font-family:Georgia,serif;flex-shrink:0">τ</span>
-      <div><div style="font-size:11px;font-weight:600;color:var(--techne)">Techne</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">What to do with it</div></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="width:28px;height:28px;border-radius:50%;background:var(--phronesis);display:flex;align-items:center;justify-content:center;font-size:13px;color:#F5EDE3;font-family:Georgia,serif;flex-shrink:0">φ</span>
-      <div><div style="font-size:11px;font-weight:600;color:var(--phronesis)">Phronesis</div><div style="font-size:10px;color:var(--text-tertiary);line-height:1.4">When it applies — and when it doesn't</div></div>
-    </div>
-  </div>
-  <a href="/foundation" style="margin-left:auto;font-size:11px;color:var(--gold);background:none;border:0.5px solid rgba(201,168,76,.3);padding:5px 14px;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;flex-shrink:0;text-decoration:none">The Foundation →</a>
-</div>
-<!-- HERO -->
-<div class="hero">
-  <svg class="hero-logo" aria-hidden="true" viewBox="0 0 1500 1500" style="display:block;width:132px;height:132px;margin:0 auto 14px"><use href="#gusto-mark-cutout"/></svg>
-  <div class="hero-wordmark"><span class="wm-gusto">gusto</span><span class="wm-science"> science</span></div>
-  <div class="gusto-tagline" aria-label="Gusto Science tagline">EPISTEME &middot; TECHNE &middot; PHRONESIS</div>
-  <div class="hero-eyebrow" id="heroEyebrow">Peer-reviewed gastronomy research — through three lenses of knowledge</div>
-  <h1 class="hero-title" id="heroTitle">Science that tells you<br><em>what, how, and when.</em></h1>
-  <p class="hero-sub" id="heroSub">Most scientific platforms give you the finding. TRIAD gives you more: what the research establishes (<em>Episteme</em>), how it applies in practice (<em>Techne</em>), and the situated judgment that binds them (<em>Phronesis</em>) — the double grip that makes professional knowledge possible. Dr Anders Crichton-Fock's model, after Aristotle. Select your role below — every article is translated for your perspective.</p>
-  <div class="hero-stats">
-    <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">articles tracked</div></div>
-    <!-- Fallback "39,000+" per ORDER 092 §4 — samma som landing-hero. Om
-         public.triad_coverage() svarar sätts talet i loadCounts (rad ~3417). -->
-    <div class="stat-item"><div class="stat-num" id="triadCount">39,000+</div><div class="stat-label">TRIAD analyses</div></div>
-    <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">research areas</div></div>
-  </div><!-- /hero-stats -->
-</div><!-- /hero -->
-
-<!-- SCREENING FUNNEL — live via public.screening_funnel-vyn.
-     Sex granskningssteg med logaritmisk stapelbredd (sista steget är 2 %
-     av det första — linjär bredd hade gjort den osynlig). Färgstegen
-     går från bläck till guld: de överlevande blir gyllene. Fotraden
-     räknas dynamiskt från samma vy — inga hårdkodade tal. -->
-<section class="funnel" id="screeningFunnel" hidden aria-label="Screening funnel">
-  <div class="funnel-eyebrow" id="funnelEyebrow">SCREENING</div>
-  <h2 class="funnel-title" id="funnelTitle">What survives the screening</h2>
-  <p class="funnel-sub" id="funnelSub">This is about scientific quality, not quantity. That only a fraction makes it through is not a weakness — it is the proof of rigor.</p>
-  <ul class="funnel-bars" id="funnelBars"></ul>
-  <div class="funnel-footer">
-    <span class="funnel-footer-left" id="funnelFooterLeft">Uppdateras live</span>
-    <span class="funnel-footer-right" id="funnelFooterRight"></span>
-  </div>
-</section>
-
-<!-- PYRAMID + MAP GRID -->
-<!-- TRIAD BAR -->
-<div class="filter-bar">
-  <span class="triad-label">TRIAD</span>
-  <span class="triad-desc">
-    <span class="triad-dim" style="color:#4A7BC4">ε Episteme <span class="triad-dim-sub">science, analytical</span></span>
-    <span class="triad-sep">·</span>
-    <span class="triad-dim" style="color:#3A6020">τ Techne <span class="triad-dim-sub">where the two meet</span></span>
-    <span class="triad-sep">·</span>
-    <span class="triad-dim" style="color:#7A3D00">φ Phronesis <span class="triad-dim-sub">art, analogical</span></span>
-  </span>
-  <button class="triad-btn" onclick="openTriad()">The Foundation →</button>
-</div>
 
 <!-- ROLE FILTER -->
 <div class="role-bar">
@@ -2033,12 +1967,6 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- MAIN LAYOUT -->
 <div class="main-layout">
   <div class="feed-pane">
-    <div class="semantic-search-wrap" id="semanticSearchWrap">
-      <div class="semantic-search-label"><span class="ask-diamond">◈</span> Ask the research</div>
-      <input class="semantic-search-input" id="semanticInput" placeholder="e.g. How does music affect taste perception?" onkeydown="if(event.key==='Enter')doSemanticSearch()">
-      <button class="semantic-search-btn" onclick="doSemanticSearch()">Search →</button>
-      <div class="semantic-results" id="semanticResults"></div>
-    </div>
     <div class="free-bar" id="freeBar">
       <div class="free-progress"><div class="free-fill" id="freeFill" style="width:0%"></div></div>
       <span class="free-text" id="freeText"></span>
