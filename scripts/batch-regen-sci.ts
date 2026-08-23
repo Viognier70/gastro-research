@@ -59,6 +59,11 @@
 //   deno run --allow-net --allow-env --allow-read --allow-write \
 //     scripts/batch-regen-sci.ts
 //
+// SAMPLE (preview N slumpartiklar via LIVE Haiku, ingen batch, inga DB-writes;
+// skriver till stdout: per-rad före/efter + top-10 by NEW score med titel):
+//   deno run --allow-net --allow-env --allow-read --allow-write \
+//     scripts/batch-regen-sci.ts --sample 20
+//
 // SUBMIT batch, poll, apply UPDATEs skarpt:
 //   deno run --allow-net --allow-env --allow-read --allow-write \
 //     scripts/batch-regen-sci.ts --apply
@@ -90,14 +95,34 @@ const REPORT_PATH     = 'out/rescore-educator.md'
 const STATE_DIR       = '/tmp'
 
 // ── Args ─────────────────────────────────────────────────────────────────────
-type Args = { apply: boolean, resume?: string }
+type Args = { apply: boolean, resume?: string, sample?: number }
 function parseArgs(): Args {
   const a: Args = { apply: false }
   const argv = Deno.args
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--apply')       a.apply = true
     else if (argv[i] === '--resume') a.resume = argv[++i]
+    else if (argv[i] === '--sample') {
+      const n = parseInt(argv[++i] || '', 10)
+      if (!Number.isFinite(n) || n < 1) {
+        console.error(`--sample requires a positive integer, got: ${argv[i] ?? '(nothing)'}`)
+        Deno.exit(2)
+      }
+      a.sample = n
+    }
     else { console.error(`Unknown arg: ${argv[i]}`); Deno.exit(2) }
+  }
+  // Mutex: --sample konflikterar med både --apply och --resume.
+  // --sample är preview-mode (live Haiku, ingen batch, ingen DB-skrivning);
+  // --apply är produktion (batch + DB); --resume är fortsätt-en-batch. Att
+  // blanda dem skulle vara oklart vad som ska hända.
+  if (a.sample !== undefined && a.apply) {
+    console.error('--sample and --apply are mutually exclusive. --sample is preview-only (no DB writes).')
+    Deno.exit(2)
+  }
+  if (a.sample !== undefined && a.resume) {
+    console.error('--sample and --resume are mutually exclusive. --sample runs fresh live calls, --resume polls an existing batch.')
+    Deno.exit(2)
   }
   return a
 }
@@ -182,30 +207,46 @@ type Article = {
 }
 
 async function fetchPopulation(): Promise<Article[]> {
-  // Range-paginering — Supabase svarar med Content-Range: A-B/TOTAL.
-  // Sortera på id ASC för stabil paginering (samma pattern som ORDER 105/107
-  // RPC:erna — pagination-tiebreakers 20260820180000).
+  // KEYSET-paginering (fix 2026-08-23). Tidigare OFFSET-baserad Range-header
+  // tippade över statement_timeout vid offset ~20 000: Postgres tvingades
+  // per request filtrera 466k rader mot IS NOT NULL, sortera hela 45k-
+  // resultatet på id, skippa <offset> rader, returnera 1000. Kvadratiskt
+  // beteende ju djupare — plus Prefer:count=exact på VARJE request tvingade
+  // parallell COUNT(*).
+  //
+  // Keyset använder PK-indexet på id för att skjuta cursor konstant tid
+  // framåt: WHERE id > <lastId>. Ingen sortering-om-hela-populationen per
+  // request, ingen OFFSET-hopp. Chunk-tid är O(chunk_size) oavsett djup.
+  //
+  // count=exact körs BARA på första requesten (behövs en gång för progress-
+  // loggen). Efterföljande requests skippar den — sparar 45 × redundant COUNT.
+  //
+  // Ingen ny index behövs. PK på articles.id räcker; per-chunk-filtret mot
+  // IS NOT NULL kostar Postgres att skumma ~10× chunk-size rader (10% match-
+  // densitet: 45k av 466k), vilket är billigt inom en enda index-range-scan.
   const out: Article[] = []
-  let offset = 0
-  let total = 0
+  let lastId: string | null = null
+  let total: number | null = null
 
   while (true) {
-    const res = await sbFetch(
+    const isFirst = total === null
+    const keyFilter = lastId ? `&id=gt.${lastId}` : ''
+    const url =
       `articles?select=id,title,abstract,journal,relevance_sci_educator_researcher` +
-      `&relevance_sci_educator_researcher=not.is.null&order=id.asc`,
-      {
-        headers: {
-          'Range': `${offset}-${offset + DB_PAGE - 1}`,
-          'Prefer': 'count=exact',
-        },
-      }
-    )
+      `&relevance_sci_educator_researcher=not.is.null${keyFilter}` +
+      `&order=id.asc&limit=${DB_PAGE}`
+    const headers: Record<string, string> = {}
+    if (isFirst) headers['Prefer'] = 'count=exact'
+
+    const res = await sbFetch(url, { headers })
     if (!res.ok && res.status !== 206) {
-      console.error(`Fetch failed at offset ${offset}: HTTP ${res.status} ${await res.text().catch(() => '')}`)
+      console.error(`Fetch failed at lastId=${lastId ?? 'start'}: HTTP ${res.status} ${await res.text().catch(() => '')}`)
       Deno.exit(3)
     }
-    const range = res.headers.get('content-range') || ''
-    total = parseInt(range.split('/')[1] || '0', 10)
+    if (isFirst) {
+      const range = res.headers.get('content-range') || ''
+      total = parseInt(range.split('/')[1] || '0', 10)
+    }
     const rows = await res.json() as Array<{
       id: string
       title: string | null
@@ -222,9 +263,9 @@ async function fetchPopulation(): Promise<Article[]> {
         educator_before: Number(r.relevance_sci_educator_researcher) || 0,
       })
     }
-    console.log(`  Fetched ${out.length}/${total}`)
-    if (rows.length < DB_PAGE || out.length >= total) break
-    offset += DB_PAGE
+    console.log(`  Fetched ${out.length}/${total ?? '?'}`)
+    if (rows.length < DB_PAGE) break
+    lastId = rows[rows.length - 1].id
   }
   return out
 }
@@ -452,6 +493,117 @@ async function writeReport(
   console.log(`\nReport written: ${REPORT_PATH} (${(md.length / 1024).toFixed(1)} KB, ${outcomes.length.toLocaleString()} rows)`)
 }
 
+// ── SAMPLE MODE (live Haiku, ingen batch, inga DB-writes) ──────────────────
+// Snabbt preview-läge för att verifiera att den skärpta prompten producerar
+// vettiga scores INNAN vi commiterar $43 till Batches. Kör N slumpartiklar
+// mot live-Haiku sekventiellt med rate-limit, skriver före/efter till stdout
+// per rad + top-10 by new score med titel så bias-fixet kan inspekteras.
+
+const SAMPLE_RATE_LIMIT_MS = 200  // 5 rps — väl under Haikus tak
+
+async function liveHaikuCall(art: Article): Promise<number | null> {
+  const prompt = buildSharpenedPrompt(art)
+  try {
+    const res = await anthropicFetch('/v1/messages', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    if (!res.ok) {
+      console.error(`  [${art.id.slice(0, 8)}] Haiku HTTP ${res.status}: ${(await res.text()).slice(0, 120)}`)
+      return null
+    }
+    const d = await res.json()
+    const txt = d?.content?.[0]?.text || ''
+    const score = parseEducatorScore(txt)
+    if (score === null) {
+      console.error(`  [${art.id.slice(0, 8)}] parse-fail: ${txt.slice(0, 120)}`)
+    }
+    return score
+  } catch (e: any) {
+    console.error(`  [${art.id.slice(0, 8)}] exception: ${e?.message ?? e}`)
+    return null
+  }
+}
+
+async function sampleFlow(n: number): Promise<void> {
+  console.log(`Sample mode: ${n} random articles via live Haiku (no batch, no DB writes)`)
+  console.log(`Fetching population...`)
+  const pop = await fetchPopulation()
+  if (pop.length === 0) {
+    console.log('Empty population. Exiting.')
+    return
+  }
+  console.log(`  ${pop.length.toLocaleString()} articles in population`)
+
+  // Fisher-Yates shuffle → första N. Random ger bredare täckning än first-N-
+  // by-id (som skulle vara skewat mot en godtycklig UUID-region).
+  const shuffled = [...pop]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  const sample = shuffled.slice(0, Math.min(n, shuffled.length))
+  console.log(`Sampling ${sample.length} articles.`)
+  console.log(`Est. wall-time: ~${Math.ceil(sample.length * 2.5)}s (Haiku ~2s + ${SAMPLE_RATE_LIMIT_MS}ms rate-limit per call)\n`)
+
+  type SampleRow = { art: Article, after: number | null }
+  const results: SampleRow[] = []
+
+  // Per-rad-header
+  console.log(`  #  BEFORE   AFTER   DELTA  TITLE`)
+  console.log(`  ─  ─────  ──────  ──────  ─────`)
+
+  for (let i = 0; i < sample.length; i++) {
+    const art = sample[i]
+    const after = await liveHaikuCall(art)
+    results.push({ art, after })
+
+    const idx    = String(i + 1).padStart(3)
+    const before = art.educator_before.toFixed(2).padStart(5)
+    const afterS = after === null ? '   —  ' : after.toFixed(2).padStart(6)
+    const delta  = after === null ? '   —  ' : (
+      ((after - art.educator_before) >= 0 ? '+' : '') + (after - art.educator_before).toFixed(2)
+    ).padStart(6)
+    const title  = (art.title || '(no title)').slice(0, 90)
+    console.log(`  ${idx}  ${before}  ${afterS}  ${delta}  ${title}`)
+
+    if (i < sample.length - 1) await new Promise(r => setTimeout(r, SAMPLE_RATE_LIMIT_MS))
+  }
+
+  // Summary
+  const withAfter = results.filter(r => r.after !== null)
+  const err       = results.length - withAfter.length
+  const meanBefore = withAfter.length ? withAfter.reduce((s, r) => s + r.art.educator_before, 0) / withAfter.length : 0
+  const meanAfter  = withAfter.length ? withAfter.reduce((s, r) => s + (r.after || 0), 0)     / withAfter.length : 0
+
+  console.log(`\n─── SUMMARY ───`)
+  console.log(`  Sampled:     ${sample.length}`)
+  console.log(`  Haiku ok:    ${withAfter.length}`)
+  console.log(`  Haiku err:   ${err}`)
+  console.log(`  Mean before: ${meanBefore.toFixed(2)}`)
+  console.log(`  Mean after:  ${meanAfter.toFixed(2)}`)
+  console.log(`  Mean delta:  ${(meanAfter - meanBefore >= 0 ? '+' : '') + (meanAfter - meanBefore).toFixed(2)}`)
+
+  // Top-10 by NEW score — svarar på "handlar de faktiskt om pedagogik/metod?"
+  const top10 = [...withAfter].sort((a, b) => (b.after || 0) - (a.after || 0)).slice(0, 10)
+  console.log(`\n─── TOP-10 BY NEW SCORE (verifiering: är dessa faktiskt pedagogik/metod?) ───`)
+  console.log(`  NEW  BEFORE  DELTA  TITLE / JOURNAL`)
+  console.log(`  ───  ──────  ─────  ───────────────`)
+  for (const r of top10) {
+    const newS   = (r.after || 0).toFixed(2)
+    const beforeS = r.art.educator_before.toFixed(2)
+    const deltaN = (r.after || 0) - r.art.educator_before
+    const deltaS = (deltaN >= 0 ? '+' : '') + deltaN.toFixed(2)
+    console.log(`  ${newS}   ${beforeS}   ${deltaS}  ${(r.art.title || '(no title)').slice(0, 110)}`)
+    if (r.art.journal) console.log(`                       · ${r.art.journal.slice(0, 100)}`)
+  }
+  console.log(`\nDone. No DB writes were made. Re-run with --apply to submit batch for full 45k re-score.`)
+}
+
 // ── Main-flow för submit-vägen ──────────────────────────────────────────────
 async function processResults(
   results: BatchResult[],
@@ -505,6 +657,13 @@ async function main() {
   requireEnv()
 
   const startedAt = new Date().toISOString()
+
+  // Sample-läge: live Haiku på N slumpartiklar, stdout-preview, inga writes.
+  // Kort-vägen — INTE via batch, INGEN state-fil, INGET rapport-.md.
+  if (args.sample !== undefined) {
+    await sampleFlow(args.sample)
+    return
+  }
 
   // Resume-läge: hoppa direkt till poll+process med känd batch-id.
   // Vi behöver dock ändå population-fetch (för before-värden i rapporten).
