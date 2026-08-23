@@ -17,7 +17,14 @@ export const ROLES = [
   { role_key: 'culinary_pro',        role_label: 'Chef' },
   { role_key: 'gastronomy_culture',  role_label: 'Gastronomy' },
   { role_key: 'hospitality_mgmt',    role_label: 'F&B Manager' },
-  { role_key: 'educator_researcher', role_label: 'Food Researcher & Educator' },
+  // 2026-08-23: label omskriven från 'Food Researcher & Educator' till
+  // operationellt scope. Bakgrund: analys visade kluster 7.03-8.78 (snitt
+  // ~8) över alla 27 topics för denna roll — Haiku tolkade "researcher's
+  // core task" som "läsa peer-reviewed forskning", vilket är trivialt
+  // uppfyllt av varje artikel. Nya label:n + role-specifika rubrik-clause
+  // nedan (rad ~64) fokuserar scoringen på pedagogik/metod/study-design
+  // istället för läsvärdhet.
+  { role_key: 'educator_researcher', role_label: 'Educator/researcher — method & pedagogy in gastronomy' },
 ] as const
 
 export interface SciRoleScores {
@@ -55,6 +62,9 @@ Abstract: "${(article.abstract || '').slice(0, 400)}"
 Journal: "${article.journal || ''}"
 Score relevance 0-10. BE STRICT: only high if professional can directly apply in daily work.
 8-10: directly addresses core tasks. 5-7: clear indirect application. 1-4: marginal. 0: irrelevant.
+
+For educator_researcher, high scores (8-10) apply ONLY to studies about HOW gastronomy is taught, learned, or investigated — pedagogy, curriculum, research method, study design. Do NOT score high just because a researcher would find the paper interesting to read; reading peer-reviewed literature is not by itself a scoring criterion.
+
 Roles: {${roleList}}
 Return ONLY JSON: {"role_scores":{"sensory_pro":0,"culinary_pro":0,"gastronomy_culture":0,"hospitality_mgmt":0,"educator_researcher":0},"keywords":["k1","k2"],"core_claim":"one precise factual finding","headline_en":"max 8 words no punctuation","study_type":"experimental|observational|review|meta-analysis|qualitative"}`
 
