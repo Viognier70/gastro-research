@@ -3373,10 +3373,17 @@ function renderFeed(){
     if(sort==='newest'){
       // Only show articles with TRIAD when sorting newest. Use presence booleans
       // from articles_public — payload episteme_* is Pro-only via RPC.
-      // toDbRole mappar chip-slug (sommelier osv.) och legacy science-nycklar
-      // till kanoniska science-namn som matchar articles_public-kolumnerna.
-      const ecol = role==='all' ? 'sensory_pro' : toDbRole(role)
-      source=source.filter(a=>a['has_episteme_'+ecol]===true)
+      // ORDER 136 (2026-08-23): "TRIAD för NÅGON roll" istället för "TRIAD
+      // för aktuell roll". Rollen är sortnyckel, inte filter — vi vill inte
+      // utestänga en artikel bara för att den saknar TRIAD för min roll.
+      // "Newest first" ska ändå kräva att TRIAD finns (annars är sort-nyckeln
+      // year meningslös utan lins), så vi accepterar TRIAD från valfri roll.
+      source=source.filter(a=>
+           a.has_episteme_sensory_pro         === true
+        || a.has_episteme_culinary_pro        === true
+        || a.has_episteme_gastronomy_culture  === true
+        || a.has_episteme_hospitality_mgmt    === true
+        || a.has_episteme_educator_researcher === true)
       source=[...source].sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0))
     } else {
       // Sort by relevance (default). Relevance-kolumnerna är science-namn.
@@ -3487,7 +3494,11 @@ async function loadArticles(){
         // "Analyze with TRIAD" (triggerar on-demand Sonnet, kvoterat).
         // URL byggs bara för topic/src-filtergrenen — ren rollfetch
         // går via feed_articles_by_role() RPC (30s timeout).
-        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&or=(has_episteme_${dbRole}.is.true,has_sci_${dbRole}.is.true)&order=relevance_sci_${dbRole}.desc.nullslast,fetched_at.desc&limit=200`
+        // ORDER 136 (2026-08-23): has_episteme/has_sci-filtret borttaget.
+        // Rollen är sortnyckel, inte filter — hela non-irrelevant-korpusen
+        // är nåbar oavsett roll. Matchar samma ändring i feed_articles_by_role-
+        // RPC:n; denna direktfetch används bara när topic ELLER src är valt.
+        url=`${SB_URL}/rest/v1/articles_public?select=${fields}&irrelevant=is.false&order=relevance_sci_${dbRole}.desc.nullslast,fetched_at.desc&limit=200`
         if(topic!=='all') url+=`&topic=eq.${topic}`
         if(src!=='all') url+=`&source=eq.${src}`
       } else {
@@ -6805,10 +6816,15 @@ window.renderOversiktWatchBar = async function() {
       if(gen !== window._watchbarGen) return
       if(profile?.last_visit) {
         const daysSince = Math.max(1, Math.floor((Date.now() - new Date(profile.last_visit).getTime()) / 86400000))
-        // Rollfiltrera bara när en riktig roll är vald; 'all' → alla nya artiklar.
-        let q = sb.from('articles_public').select('*', {count:'exact', head:true}).gt('fetched_at', profile.last_visit)
-        if(rRaw !== 'all') q = q.eq('has_episteme_' + toDbRole(rRaw), true)
-        const {count} = await q
+        // ORDER 136 (2026-08-23): rollfilter borttaget. Rollen är sortnyckel,
+        // inte filter — watch-räknaren visar ALLA nya non-irrelevant-artiklar
+        // sedan senaste besök, oavsett vilken roll som är vald. Etiketten
+        // "Your watch · <role>" står kvar för kontinuitet, men räknaren
+        // reflekterar det bredare korpus-flödet.
+        const {count} = await sb.from('articles_public')
+          .select('*', {count:'exact', head:true})
+          .gt('fetched_at', profile.last_visit)
+          .not('irrelevant', 'is', true)
         if(gen !== window._watchbarGen) return
         el.innerHTML =
           '<div class="oversikt-watch-eyebrow">Your watch · ' + escapeHtmlOversikt(rLabel) + '</div>' +
