@@ -1918,34 +1918,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 
 <!-- TOOLBAR -->
 <div class="toolbar">
+  <!-- ORDER 140 (2026-08-23): options fylls av populateTopicSelect() från
+       mapTopicData (knowledge_map_topics-RPC). Hardkodade counts var av med
+       3-100x mot verkligheten. uncategorized (fallback-bucket) exkluderas. -->
   <select class="filter-select" id="topicSel" onchange="loadArticles();const _t=this.value;if(_t&&_t!=='all')loadSynthesis(role,_t)">
     <option value="all">All topics</option>
-    <option value="gastronomy">Gastronomy (794)</option>
-    <option value="sommellerie">Sommellerie (319)</option>
-    <option value="multisensory">Multisensory (234)</option>
-    <option value="hospitality">Hospitality (169)</option>
-    <option value="flavor_science">Flavour science (165)</option>
-    <option value="sensory_evaluation">Sensory evaluation (129)</option>
-    <option value="appetite_research">Appetite research (119)</option>
-    <option value="food_science">Food science (102)</option>
-    <option value="culinary_science">Culinary science (101)</option>
-    <option value="food_psychology">Food psychology (98)</option>
-    <option value="fermentation_science">Fermentation science (97)</option>
-    <option value="nutritional_science">Nutrition science (96)</option>
-    <option value="neurogastronomy">Neurogastronomy (93)</option>
-    <option value="novel_foods">Novel foods (92)</option>
-    <option value="sensory_training">Sensory training (90)</option>
-    <option value="food_behavior">Food behavior (86)</option>
-    <option value="food_technology">Food technology (85)</option>
-    <option value="culinary_education">Culinary education (80)</option>
-    <option value="food_anthropology">Food anthropology (77)</option>
-    <option value="food_pairing">Food pairing (76)</option>
-    <option value="atmospherics">Atmospherics (71)</option>
-    <option value="servicescape">Servicescape (65)</option>
-    <option value="art_science">Art &amp; food (64)</option>
-    <option value="experiential_dining">Experiential dining (61)</option>
-    <option value="molecular_mixology">Molecular gastronomy (51)</option>
-    <option value="crossmodal">Crossmodal (45)</option>
+    <option disabled>Loading topics…</option>
   </select>
   <select class="filter-select" id="yearSel" onchange="renderFeed()">
     <option value="all">All years</option>
@@ -4735,6 +4713,7 @@ async function loadKnowledgeMap(){
   if(mapTopicData.length > 0){
     renderLiveMap()
     renderOverviewMap()
+    populateTopicSelect()   // ORDER 140: säkerställ att Feed-toolbaren har levande options även vid cache-hit
     return
   }
   try {
@@ -4754,7 +4733,41 @@ async function loadKnowledgeMap(){
     // ingen visuell effekt förrän showView öppnar dem.
     renderLiveMap()
     renderOverviewMap()
+    // ORDER 140 (2026-08-23): Feed-toolbarens #topicSel fylls från samma
+    // mapTopicData. Hardkodade counts hade drivat 3-100x från verklig
+    // populationstorlek. uncategorized (fallback-bucket) exkluderas.
+    populateTopicSelect()
   } catch(e){ console.log('Map error:',e) }
+}
+
+// populateTopicSelect — ORDER 140. Fyller Feed-toolbarens #topicSel med
+// levande topic-counts från mapTopicData. Sorterat på count desc; behåller
+// användarens val om det fortfarande finns i listan; exkluderar
+// uncategorized (det är soppan alla artiklar utan keyword-match hamnar i,
+// inte ett ämne man vill filtrera på). Idempotent — får köras hur ofta
+// som helst utan effekt om <select> saknas eller data-arrayet är tomt.
+function populateTopicSelect(){
+  const sel = document.getElementById('topicSel')
+  if(!sel || !mapTopicData.length) return
+
+  const currentValue = sel.value   // bevara användarens val om det finns
+
+  const topics = mapTopicData
+    .filter(t => t.topic && t.topic !== 'uncategorized')
+    .sort((a, b) => (b.count || 0) - (a.count || 0))
+
+  const parts = ['<option value="all">All topics</option>']
+  for(const t of topics){
+    const label = TOPIC_LABELS[t.topic] || t.topic.replace(/_/g, ' ')
+    const count = Number(t.count || 0).toLocaleString('en-US')
+    parts.push(`<option value="${_escHtml(t.topic)}">${_escHtml(label)} (${count})</option>`)
+  }
+  sel.innerHTML = parts.join('')
+
+  // Restore valid selection ('all' finns alltid; annars kolla att topic finns kvar)
+  if(currentValue && (currentValue === 'all' || topics.some(t => t.topic === currentValue))){
+    sel.value = currentValue
+  }
 }
 
 function getTopicRelevance(t){
@@ -7174,7 +7187,13 @@ window.loadSyntheses = async function() {
 // loadKnowledgeMap (Explore) och initWorldMap (Map) triggas av showView() vid
 // första öppning. Sparar ~2s på förstasidan + Anthropic-kvot om användaren
 // aldrig öppnar de tunga vyerna.
-initAuthGuarded().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u);
+initAuthGuarded().then(async ()=>{loadArticles();loadCounts();loadScreeningFunnel();
+  // ORDER 140 (2026-08-23): loadKnowledgeMap säkerställd vid boot oavsett vy.
+  // Fyller mapTopicData (Overview-karta, Explore-karta) och triggar
+  // populateTopicSelect (Feed-toolbaren). Idempotent — om renderOversikt
+  // nedan också kallar den blir det ett cache-hit på andra anropet.
+  if(typeof loadKnowledgeMap === 'function') loadKnowledgeMap()
+  const u=sb?.auth?.getUser?(await sb.auth.getUser()).data?.user:null;if(u) showReturnSignal(u);
   // Översikt är default-vy: fyras direkt vid boot (showView triggas inte
   // för default). loadCounts→renderOversiktWatchBar re-renderar watchbar
   // med riktiga siffror när fetchen landat (B1, 2026-07-22).
