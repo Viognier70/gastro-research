@@ -2045,7 +2045,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     <div class="feed-count" id="feedCount"></div>
     <div id="synthContainer"></div>
   <div class="section-intro">
-    <span class="si-what"><span id="siFeedCount">—</span> articles filtered for <strong id="siFeedRole">your role</strong>.</span>
+    <!-- ORDER 137 (2026-08-23): fylls dynamiskt av updateFeedIntro. Läser
+         window._feedableCount + window._feedableRecent (från page_counts,
+         satt i loadCounts) + role-global + #sortSel-value. "most relevant"
+         bara när sort='relevance'; growth-tillägget utelämnas vid 0;
+         "sorted for X" utelämnas vid role='all'. -->
+    <span class="si-what" id="siFeedIntro">—</span>
     <span class="si-sep">·</span>
     <span class="si-ai">TRIAD analyses: <span class="si-ai-badge">AI</span> — not peer-reviewed</span>
     <span class="si-sep">·</span>
@@ -2694,15 +2699,61 @@ document.addEventListener('mouseout', e => {
   }
 })
 
-// A2: Section intros — role + feed count
+// A2: Section intros — role (Spotlight) + Feed dynamic label.
+// ORDER 137 (2026-08-23):
+//   * Spotlight-intro fortsatt "for X" — spotlight är genuint role-viktad
+//     via >= 5-tröskeln (kvalitetsfilter behållet i ORDER 136 §2).
+//   * Feed-intro helt omskriven — se updateFeedIntro nedan. updateSection-
+//     Intros triggar INTE feed-intro-render här; det sker automatiskt när
+//     setRole → loadArticles → renderFeed → updateFeedIntro körs i sekvens.
 function updateSectionIntros(r){
-  const name = r === 'all' ? 'your profession' : (roleLabel(r) || 'your profession')
-  const sp = document.getElementById('siSpotlightRole'); if(sp) sp.textContent = name
-  const fr = document.getElementById('siFeedRole'); if(fr) fr.textContent = name
+  const spName = r === 'all' ? 'your profession' : (roleLabel(r) || 'your profession')
+  const sp = document.getElementById('siSpotlightRole'); if(sp) sp.textContent = spName
 }
+
+// Feed section-intro — dynamisk label med urval + total + veckotillväxt + roll.
+// Fyra villkorsgrenar (kombinationer av sort-mode + role):
+//   sort='relevance', role != 'all':  "Showing 199 most relevant of 34,983 [· N added this week] · sorted for X"
+//   sort='newest',    role != 'all':  "Showing 199 of 34,983 [· N added this week] · sorted for X"
+//   sort='relevance', role == 'all':  "Showing 199 of 34,983 [· N added this week]"
+//   sort='newest',    role == 'all':  "Showing 199 of 34,983 [· N added this week]"
+//
+// "most relevant" bara när sort='relevance' — undviker att ljuga om sort-modet.
+// Growth-tillägget (· N added this week) utelämnas HELT vid N=0 — inte "0 added".
+// "sorted for X" utelämnas vid role='all' — ingen roll är vald, ingen att sortera för.
+//
+// Ingen sort-listener behövs — updateFeedIntro anropas av renderFeed vid varje
+// omladdning, och renderFeed triggas av sortSel:s onchange.
 function updateFeedIntro(count){
-  const el = document.getElementById('siFeedCount')
-  if(el && typeof count === 'number') el.textContent = count.toLocaleString()
+  const el = document.getElementById('siFeedIntro')
+  if(!el || typeof count !== 'number') return
+
+  const total       = Number(window._feedableCount  || 0)
+  const recentAdded = Number(window._feedableRecent || 0)
+  const sortSel     = document.getElementById('sortSel')
+  const isRelevance = (sortSel?.value || 'relevance') === 'relevance'
+
+  const countStr = count.toLocaleString('en-US')
+  // Total kan vara 0 om loadCounts inte hunnit svara — visa "—" tills det landat.
+  // Nästa loadCounts-avslut triggar renderFeed → uppdaterar labelen.
+  const totalStr = total > 0 ? total.toLocaleString('en-US') : '—'
+
+  // Segment 1: urval + total, ev. med "most relevant" när relevance-sortering är vald
+  const relPhrase = (isRelevance && role !== 'all') ? 'most relevant ' : ''
+  const parts = [`Showing ${countStr} ${relPhrase}of ${totalStr}`]
+
+  // Segment 2: veckotillväxt — utelämnas vid 0
+  if(recentAdded > 0){
+    parts.push(`${recentAdded.toLocaleString('en-US')} added this week`)
+  }
+
+  // Segment 3: roll — utelämnas vid role='all'
+  if(role !== 'all'){
+    const roleName = roleLabel(role) || role
+    parts.push(`sorted for <strong>${_escHtml(roleName)}</strong>`)
+  }
+
+  el.innerHTML = parts.join(' · ')
 }
 function updateFreeBar(){
   const remaining=Math.max(0,FREE_LIMIT-freeCount)
@@ -3783,6 +3834,17 @@ async function loadCounts(){
     const analyzed = Number(pc?.analyzed ?? 0)
     const relevant = Number(pc?.relevant ?? 0)
     const triad    = Number(pc?.triad    ?? 0)
+    // ORDER 137: feedable/feedable_recent för Feed section-intro-labelen.
+    // Stashas globalt så updateFeedIntro kan läsa vid varje renderFeed.
+    // Om loadCounts svarar EFTER loadArticles → renderFeed → labelen visar
+    // "of —" tills här. Re-triggar renderFeed nedan så labelen uppdateras.
+    const feedable       = Number(pc?.feedable        ?? 0)
+    const feedableRecent = Number(pc?.feedable_recent ?? 0)
+    if(feedable > 0){
+      window._feedableCount  = feedable
+      window._feedableRecent = feedableRecent
+      if(articles && articles.length > 0 && typeof renderFeed === 'function') renderFeed()
+    }
     // TRIAD-count läses från public.triad_coverage() (§6, ORDER 091 2026-08-18)
     // — kanonisk siffra för "artiklar med minst en TRIAD-roll ifylld". Ersätter
     // screening_funnel.triad_analyserade (som gate:ade på relevance + irrelevant
