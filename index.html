@@ -1976,10 +1976,12 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <div id="feedPane"><div class="loading-state"><div class="spinner"></div><span>Loading research...</span></div></div>
   </div>
   <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-title">Top topics</div>
-      <div id="topicList"></div>
-    </div>
+    <!-- ORDER 142 (2026-08-24): "Top topics"-sektionen borttagen. Efter
+         ORDER 140 (levande topic-counts i toolbar) och ORDER 141 (samma
+         siffror) var tag-clouden funktionellt redundant — samma data,
+         samma siffror, samma filtrering. Toolbaren är den kanoniska
+         topic-väljaren nu. Journals/Research pulse/Most cited är unika
+         data-cuts och står kvar. -->
     <div class="sidebar-section">
       <div class="sidebar-title">Research pulse</div>
       <div id="trendingMeta" style="font-size:9px;color:var(--text-tertiary);line-height:1.5;margin-bottom:8px;font-style:italic">Keyword frequency in TRIAD-analysed articles · trend vs previous year</div>
@@ -3559,24 +3561,15 @@ async function loadArticles(){
 }
 
 async function loadSidebar(){
+  // ORDER 142 (2026-08-24): topics-branchen borttagen — Feed-toolbaren
+  // (ORDER 140) och Overview-kartan är kanoniska topic-väljare. Sidopanelen
+  // fyller nu bara journalList från samma RPC. Samtidig migration
+  // 20260824120000 tar bort topics-fältet ur get_sidebar_stats-svaret
+  // helt — data.topics är alltid undefined framåt.
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/get_sidebar_stats`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'})
     const data=await r.json()
-   if(data.topics) {
-     const topics = data.topics.slice(0, 20)
-     const maxCount = Math.max(...topics.map(t => t[1]))
-     const minCount = Math.min(...topics.map(t => t[1]))
-     document.getElementById('topicList').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0">' +
-       topics.map((t, i) => {
-         const size = 11 + Math.round(((t[1] - minCount) / (maxCount - minCount || 1)) * 7)
-         const ci = i % 3
-         const bg = ['#E8EFF6','#EAF0E5','#F5EDE3'][ci]
-         const bc = ['#1A3A5C','#2D5016','#7A3D00'][ci]
-         const tc = ['#1A3A5C','#2D5016','#7A3D00'][ci]
-         return '<div onclick="filterTopic(\'' + t[0] + '\')" style="cursor:pointer;background:' + bg + ';border:0.5px solid ' + bc + ';border-radius:20px;padding:4px 10px;font-size:' + size + 'px;color:' + tc + ';font-family:Outfit,sans-serif;font-weight:500" onmouseover="this.style.opacity=.7" onmouseout="this.style.opacity=1">' + t[0].replace(/_/g,' ') + ' <span style="font-size:9px;opacity:.6">' + t[1].toLocaleString() + '</span></div>'
-       }).join('') + '</div>'
-   }
-if(data.journals) document.getElementById('journalList').innerHTML=data.journals.map(j=>`<div class="journal-item" onclick="filterJournal('${j[0].replace(/'/g,"\\'")}')"><span class="journal-name" title="${j[0]}">${j[0]}</span><span class="journal-count">${j[1]}</span></div>`).join('')
+    if(data.journals) document.getElementById('journalList').innerHTML=data.journals.map(j=>`<div class="journal-item" onclick="filterJournal('${j[0].replace(/'/g,"\\'")}')"><span class="journal-name" title="${j[0]}">${j[0]}</span><span class="journal-count">${j[1]}</span></div>`).join('')
   }catch(e){console.log('sidebar error',e)}
 }
 
