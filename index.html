@@ -2490,6 +2490,24 @@ const DB_ROLE = {
 function toDbRole(r){ return DB_ROLE[r] || r }
 // Alla fem science-namn för OR-kedjor mot articles_public.
 const DB_ROLES_ALL = ['sensory_pro','culinary_pro','gastronomy_culture','hospitality_mgmt','educator_researcher']
+
+// ORDER 150 (2026-08-24): returnerar science-rollen med högst
+// relevance_sci_ bland de roller där has_episteme_<role> === true.
+// Returnerar null när ingen roll har TRIAD.
+// Tie-brytning: iterations-ordning i DB_ROLES_ALL (sensory → culinary
+// → gastronomy → hospitality → educator). Deterministisk, INTE
+// alfabetisk — ordningen ska matcha ROLES-listan i _shared/haiku-sci.ts.
+// Används av cardHTML-fallbacken när läsarens roll saknar TRIAD, och
+// som primär TRIAD-källa i role='all'-läget (Feed default + Overview).
+function argmaxRoleByRelevance(a){
+  let best = null, bestScore = -1
+  for(const dbRole of DB_ROLES_ALL){
+    if(a['has_episteme_'+dbRole] !== true) continue
+    const s = Number(a['relevance_sci_'+dbRole] || 0)
+    if(s > bestScore){ best = dbRole; bestScore = s }
+  }
+  return best
+}
 // ORDER 120: chip-slug-whitelist för profiles.role-sync. Matchar CHECK-
 // constraint i migration 20260821120000. 'all' är INTE en riktig roll —
 // null i profiles betyder "ingen roll vald" och veckobrev hoppar över dem.
@@ -3166,28 +3184,32 @@ function cardHTML(a,idx){
   const cid='c'+(a.id||idx).toString().replace(/-/g,'').slice(0,10)
   const relevance=getRelevanceScore(a)
   const isSaved=savedArticleIds.has(a.id)
-  // Science-namn för alla property-accesser mot article-objektet.
-  // role='all' → fallback till sensory_pro. Legacy chip-nycklar (sommelier
-  // osv.) och legacy science-nycklar mappas via toDbRole så cards aldrig
-  // visar "No TRIAD" bara för att gs_role råkar vara chip-slug.
-  const dbRoleName = role==='all' ? 'sensory_pro' : toDbRole(role)
-  // Chip-slug behåller vi bara för display-lookup i roles-objektet.
-  const r = role==='all' ? 'sommelier' : toChipRole(role)
-  const roleName=ROLE_NAMES[r]||r
-  const ep=a['episteme_'+dbRoleName]||''
-  // scenario_+chip var en pre-migration alias som ingen writer fyller längre.
-  // Dead fallback = tyst felmatchning maskerad som "graceful degradation".
-  const tc=a['techne_'+dbRoleName]||''
-  const ph=a['phronesis_'+dbRoleName]||''
-  const bridgeET=a['bridge_episteme_techne_'+dbRoleName]||''
-  const bridgeTP=a['bridge_techne_phronesis_'+dbRoleName]||''
-  const hasPremiumPayload=ep.length>10||tc.length>10||ph.length>10
-  // Presence-boolean från articles_public: finns TRIAD för aktuell roll?
-  // För role='all' räcker att någon roll har TRIAD (matchar server-OR).
-  const hasTriadPresence = a['has_episteme_'+dbRoleName]===true || (role==='all' && (
-    a.has_episteme_sensory_pro===true||a.has_episteme_culinary_pro===true||
-    a.has_episteme_gastronomy_culture===true||a.has_episteme_hospitality_mgmt===true||
-    a.has_episteme_educator_researcher===true))
+  // ORDER 150 (2026-08-24): TRIAD visas alltid när den finns, märkt med
+  // vilken roll den skrevs för. En enda regel:
+  //   Visa TRIAD från den roll som har högst relevanspoäng på artikeln —
+  //   utom när läsaren har en vald roll OCH den rollen har en egen TRIAD,
+  //   då visas den.
+  // Läsarens roll (readerDbRole) används fortfarande för header-badges
+  // (relevance-poängen och roleName), bara TRIAD-fälten skiftar till
+  // triadSourceRole. Se addendum i migration 20260823130000_role_as_sort_
+  // not_filter.sql för fullständigt beslut och skäl.
+  const readerDbRole = role==='all' ? null : toDbRole(role)
+  const readerChip   = role==='all' ? 'sommelier' : toChipRole(role)
+  const roleName     = ROLE_NAMES[readerChip]||readerChip
+  // triadSourceRole: läsarens roll om den har egen TRIAD; annars argmax
+  // över rollerna där has_episteme_ är true. null när ingen roll har TRIAD.
+  const triadSourceRole = (readerDbRole && a['has_episteme_'+readerDbRole]===true)
+    ? readerDbRole
+    : argmaxRoleByRelevance(a)
+  // TRIAD-textinnehåll läses från triadSourceRole, inte läsarens roll.
+  // I 'all'-läget och när läsarens roll saknar TRIAD är detta den enda
+  // TRIAD-källan för artikeln.
+  const ep       = triadSourceRole ? (a['episteme_'+triadSourceRole]||'')                 : ''
+  const tc       = triadSourceRole ? (a['techne_'+triadSourceRole]||'')                   : ''
+  const ph       = triadSourceRole ? (a['phronesis_'+triadSourceRole]||'')                : ''
+  const bridgeET = triadSourceRole ? (a['bridge_episteme_techne_'+triadSourceRole]||'')   : ''
+  const bridgeTP = triadSourceRole ? (a['bridge_techne_phronesis_'+triadSourceRole]||'')  : ''
+  const hasPremiumPayload = ep.length>10 || tc.length>10 || ph.length>10
   const keywords=a.keywords||[]
   const coreClaim=a.core_claim||a.insight||''
   const citCount=a.citation_count||null
@@ -3227,7 +3249,7 @@ function cardHTML(a,idx){
           <div class="rt-row"><span>Role match</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,relevance*10)}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${relevance}/10</span></div>
           <div class="rt-row"><span>Citations</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${Math.min(100,Math.log10((a.citation_count||0)+1)/Math.log10(1000)*100)}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${(a.citation_count||0).toLocaleString()}</span></div>
           <div class="rt-row"><span>Recency</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${a.year>=2024?95:a.year>=2022?80:a.year>=2020?65:a.year>=2015?45:25}%"></div></div><span style="font-size:9px;color:rgba(255,255,255,.4);margin-left:4px">${a.year||'?'}</span></div>
-          <div class="rt-row"><span>TRIAD depth</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:hasTriadPresence?60:30}%"></div></div></div>
+          <div class="rt-row"><span>TRIAD depth</span><div class="rt-bar-wrap"><div class="rt-bar" style="width:${ep.length>10&&tc.length>10&&ph.length>10?100:ep.length>10||tc.length>10?60:triadSourceRole!==null?60:30}%"></div></div></div>
           <div class="rt-footer">Citations · recency · AI role match · peer sources only</div>
         </div>
       </div>`:''}
@@ -3244,8 +3266,8 @@ function cardHTML(a,idx){
     ${a.limitation&&!locked?`<div class="card-limitation-inline">⚠ ${a.limitation}</div>`:''}
     <div class="card-actions-v2">
       ${!locked&&hasPremiumPayload?`<button class="btn-triad-toggle" onclick="toggleCardTriad('${a.id||''}')">${st.triad?l('hideTriad'):l('showTriad')}</button>`:''}
-      ${!locked&&!hasPremiumPayload&&hasTriadPresence?`<button class="btn-triad-toggle" onclick="openModal('upgradeModal')">${l('upgradePrompt')}</button>`:''}
-      ${!locked&&!hasTriadPresence?`<button class="btn-triad-toggle" onclick="event.stopPropagation();(async(id)=>{await openArticleFromId(id);setTimeout(()=>{const b=document.getElementById('triadCtaBtn'); if(b) b.click();},600)})('${a.id||''}')"><svg viewBox="0 0 1500 1500" aria-hidden="true" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px"><use href="#gusto-mark-solid"/></svg>${l('triadCta')}</button>`:''}
+      ${!locked&&!hasPremiumPayload&&triadSourceRole!==null?`<button class="btn-triad-toggle" onclick="openModal('upgradeModal')">${l('upgradePrompt')}</button>`:''}
+      ${!locked&&triadSourceRole===null?`<button class="btn-triad-toggle" onclick="event.stopPropagation();(async(id)=>{await openArticleFromId(id);setTimeout(()=>{const b=document.getElementById('triadCtaBtn'); if(b) b.click();},600)})('${a.id||''}')"><svg viewBox="0 0 1500 1500" aria-hidden="true" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px"><use href="#gusto-mark-solid"/></svg>${l('triadCta')}</button>`:''}
       <button class="btn-cite-toggle" onclick="toggleCardCite('${a.id||''}')">Cite</button>
       <button class="btn-share-v2" onclick="openShareFor(${JSON.stringify({title:a.title,articleId:a.id||'',sourceUrl:a.url,insight:a.insight||coreClaim}).replace(/"/g,'&quot;')})">Share</button>
       ${a.url&&!locked?`<a class="btn-read-paper" href="${a.url}" target="_blank" rel="noopener">${l('read')} ↗</a>`:''}
@@ -3295,7 +3317,7 @@ function cardHTML(a,idx){
     <div class="art-timestamps" style="margin-top:12px">
       ${a.year?`<span>Published ${a.year}</span>`:''}
       ${a.fetched_at?`<span>Added ${new Date(a.fetched_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-      ${hasTriadPresence?`<span class="art-ai-tag">TRIAD: AI-generated</span>`:''}
+      ${triadSourceRole!==null?`<span class="art-ai-tag">TRIAD: AI-generated${triadSourceRole===readerDbRole?'':` · written for ${_escHtml(ROLE_NAMES[toChipRole(triadSourceRole)]||triadSourceRole)}`}</span>`:''}
       ${countryFlags(a.countries||[a.country])?`<span>${countryFlags(a.countries||[a.country])}</span>`:''}
     </div>`
 
@@ -3317,7 +3339,9 @@ function cardHTML(a,idx){
   </div>` : ''
 
   if(locked){
-    const phText=a['phronesis_'+dbRoleName]||a['phronesis_sensory_pro']||''
+    // ORDER 150: phronesis-teaser läses från samma triadSourceRole som
+    // ovan — konsistens med den TRIAD som visas i kortet.
+    const phText=triadSourceRole ? (a['phronesis_'+triadSourceRole]||'') : ''
     const phPreview=phText.length>20?phText.slice(0,120)+'…':''
     const lockedExtra=phPreview?`<div style="margin-top:8px;position:relative;overflow:hidden;border-radius:0 0 6px 6px">
       <div style="background:var(--phronesis-light);border-left:3px solid var(--phronesis);padding:12px 14px;filter:blur(3px);user-select:none;pointer-events:none">
@@ -3517,7 +3541,7 @@ async function loadArticles(){
         // Get top articles by relevance for this role (science-namn).
         // Feed-filter läser has_episteme (full TRIAD) ELLER has_sci
         // (score>=5, Del 3-backfill 2026-07-19). Sci-only artiklar
-        // renderar rätt CTA via card:s !hasTriadPresence-branch:
+        // renderar rätt CTA via card:s triadSourceRole===null-branch:
         // "Analyze with TRIAD" (triggerar on-demand Sonnet, kvoterat).
         // URL byggs bara för topic/src-filtergrenen — ren rollfetch
         // går via feed_articles_by_role() RPC (30s timeout).

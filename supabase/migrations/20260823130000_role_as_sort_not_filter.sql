@@ -48,6 +48,33 @@
 --     är brevets värde, inte ett rollfilter (edge-fn, ej migration)
 --   * hasTriadPresence per-kort UI-check — separat designfråga (index.html)
 --
+-- ADDENDUM 2026-08-24 (ORDER 150) — löser hasTriadPresence-punktet:
+--
+--   Beslut: TRIAD visas alltid när den finns, märkt med vilken roll den
+--   skrevs för. En enda regel styr valet:
+--
+--     Visa TRIAD från den roll som har högst relevanspoäng på artikeln
+--     — utom när läsaren har en vald roll OCH den rollen har en egen
+--     TRIAD, då visas den.
+--
+--   Skäl: Rollen är sortering, inte filter (denna migration ORDER 136).
+--   Att dölja innehåll för att det skrevs för en annan roll är precis
+--   den filtrering vi tog bort på server-sidan. Regeln fungerar också
+--   i rollagnostiskt läge (Overview, ORDER 135) och Feed:s 'all'-chip
+--   där ingen egen roll finns — fallbacken (argmax över relevance_sci_*)
+--   är grundfallet, inte specialfallet.
+--
+--   Namn: hasTriadPresence blir missvisande — inte längre ja/nej utan
+--   VILKEN roll TRIAD:en hör hemma i. Döps om till triadSourceRole
+--   (rollnyckel eller null när ingen roll har TRIAD).
+--
+--   Ingen migration behövs — beslutet är UI-only. Frontend-ändringar
+--   spårar tillbaka hit via ORDER 150-taggen. get_articles_full RPC:n
+--   (Pro-payload) ska returnera episteme_/techne_/phronesis_-fält för
+--   ALLA fem roller så att frontend kan välja rätt fält dynamiskt.
+--   (Verifiering av att den redan gör det, samt eventuell utökning,
+--   sker i ORDER 150:s implementation-commit.)
+--
 -- INGA POPULATIONSFÖRLUSTER: mätt 2026-08-23, sommelier-Feed går från
 -- 34,465 rader till 34,983 rader (+518, ~1.5 %). Diffen är så liten
 -- eftersom TRIAD skrivs atomärt över alla 5 roller — filtren utestängde
