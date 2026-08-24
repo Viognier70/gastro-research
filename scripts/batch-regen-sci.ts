@@ -171,18 +171,52 @@ async function anthropicFetch(path: string, init: RequestInit = {}): Promise<Res
 // hållas i synk för samma version — annars kör en resume-batch en annan
 // prompt än vad pipeline gör. Uppdatera version-taggen nedan vid ändring.
 //
-// PROMPT-VERSION: v2026-08-23 (motsvarar _shared/haiku-sci.ts vid samma
-// datum-commit). Diff mot v-innan: (a) role_label 'Food Researcher & Educator'
-// → 'Educator/researcher — method & pedagogy in gastronomy'. (b) Ny role-
-// specifik rubrik-clause inskjuten före Roles-JSON, säger explicit att
-// att-läsa-forskning INTE räknas som scoring-kriterium.
+// PROMPT-VERSION: v2026-08-24d (ORDER 149 rev 3). Diff mot v2026-08-23:
+//   (a) role_label 'Educator/researcher — method & pedagogy in gastronomy'
+//       → 'Academic'.
+//   (b) Role-specifik clause omskriven från FILTER-fråga ("does this belong
+//       to the role?") till PLACERINGS-fråga ("how high should this rank
+//       for this reader?"). Motiv: föregående version över-korrigerade —
+//       60/100 sample landade på 2. Rollen är sortnyckel, inte filter;
+//       varje artikel ska få en placering, inget exkluderas.
+//   (c) 8-band rubrik med SPLITTAT 7-8-band: 9-10 / 8 / 7 / 6 / 5 / 3-4 /
+//       1-2 / 0. Motiv: sample v-b visade 54/100 på exakt 7 och 81/100 i
+//       7-8-bandet — klumpen flyttades från 8-9 utan att lösas upp. Sci-
+//       korpusen är dominerad av substantiell fältforskning (precis vad
+//       gamla 7-8 beskrev); ett band räckte inte. Ny distinktion:
+//         8 = reach beyond specialization
+//         7 = self-contained inom specialisering
+//         6 = smal/inkrementell inom specialisering
+//   (d) "Relevant background" flyttat från 5-6 till bara 5.
+//       "Peripheral but present" ligger kvar på 3-4.
+//   (e) CRITICAL DISTINCTION skärpt lexikalt: titlar "X using Y" / "X by
+//       means of Y" är studie av X med Y som instrument → poängsätt X.
+//       9-10 endast när metoden själv introduceras/valideras/jämförs.
+//       Motiv: v-b-sample:s enda 9:a-fel var "extrinsic cues on wine
+//       evaluation using projective mapping" — projective mapping är
+//       verktyg, extrinsic cues är ämnet.
+//   (f) Exemption från BE-STRICT-daily-application-basraden oförändrad
+//       (v-b). Base score-scale (0-10) och output-JSON oförändrade.
+//
+// Revidering v2026-08-24c → v2026-08-24d: mjukat upp CRITICAL DISTINCTION.
+//   v-c stängde 9-10-bandet helt (0/100) — pedagogik + metod-som-ämne
+//   kunde inte nå toppen. Sista stycket omskrivet med explicit pedagogy/
+//   curriculum/skills-transfer på 9-10-sidan + "typically 7-8" på "X using
+//   Y"-sidan (istället för hård "only 9-10 when method itself").
+// Revidering v2026-08-24b → v2026-08-24c: splittad 7-8 + skärpt CRITICAL
+// DISTINCTION.
+// Revidering v2026-08-24 → v2026-08-24b: 1-5-skala mappad till 0-10.
+//
+// SYNK: _shared/haiku-sci.ts synkad till v-d i föregående commit
+// (order-149 branch). Iterativ kalibrering v-b → v-c → v-d skedde här
+// först; efter godkänt v-d-sample fördes prompten över till shared.
 function buildSharpenedPrompt(article: { title: string, abstract: string, journal: string }): string {
   const roleList =
     '"sensory_pro":"Sommelier",' +
     '"culinary_pro":"Chef",' +
     '"gastronomy_culture":"Gastronomy",' +
     '"hospitality_mgmt":"F&B Manager",' +
-    '"educator_researcher":"Educator/researcher — method & pedagogy in gastronomy"'
+    '"educator_researcher":"Academic"'
 
   return `Analyze for Gusto Science (culinary/hospitality platform).
 Title: "${(article.title || '').slice(0, 200)}"
@@ -191,7 +225,35 @@ Journal: "${article.journal || ''}"
 Score relevance 0-10. BE STRICT: only high if professional can directly apply in daily work.
 8-10: directly addresses core tasks. 5-7: clear indirect application. 1-4: marginal. 0: irrelevant.
 
-For educator_researcher, high scores (8-10) apply ONLY to studies about HOW gastronomy is taught, learned, or investigated — pedagogy, curriculum, research method, study design. Do NOT score high just because a researcher would find the paper interesting to read; reading peer-reviewed literature is not by itself a scoring criterion.
+The daily-application test above does not apply to educator_researcher. For this role, relevance is measured by transferability across specializations, per the rubric below.
+
+For educator_researcher (the Academic role):
+
+Academic — researchers and educators in gastronomy. This role is defined by breadth of curiosity, not by subject boundary. Specializations vary widely (fermentation science, food policy, sensory analysis, culinary pedagogy), so the corpus is never filtered — only ordered.
+
+Rank by transferability across specializations, not by topical fit.
+
+9-10 — Portable across the whole role. Articles about how gastronomic knowledge is taught, trained, and transmitted (pedagogy, didactics, curriculum, skills transfer), and articles *about* research methods or data collection — new instruments, protocols, sampling approaches, panel design, measurement validity. Useful to every academic regardless of specialization.
+
+8 — Strong within a specialization, with reach beyond it. Findings, techniques, or framings a researcher in an adjacent gastronomic field could act on.
+
+7 — Solid within a specialization, self-contained. Valuable to those already in that field.
+
+6 — Narrow or incremental within a specialization. Small effect, replication, or a single-context result.
+
+5 — Relevant background. Industry, policy, production, or cultural coverage an academic would read for context.
+
+3-4 — Peripheral but present. Consumer, trade, or lifestyle coverage with thin analytical content.
+
+1-2 — Barely touches gastronomy.
+
+0 — Not gastronomy at all.
+
+CRITICAL DISTINCTION: an article that *uses* a method is not an article *about* a method. Standard research reporting with a methods section belongs at 6-8. Reserve 9-10 for work whose subject is the method itself.
+
+Titles of the form "X using Y" describe a study of X with Y as the instrument — score these on X, typically 7-8. Score 9-10 when the article's own contribution is the method, the instrument, or the teaching of the field: introducing, validating, comparing, or reviewing methods, or any work on pedagogy, curriculum, or skills transfer.
+
+Nothing is excluded. Every article receives a placement. If unsure between two scores, choose the higher — this role reads widely by disposition.
 
 Roles: {${roleList}}
 Return ONLY JSON: {"role_scores":{"sensory_pro":0,"culinary_pro":0,"gastronomy_culture":0,"hospitality_mgmt":0,"educator_researcher":0},"keywords":["k1","k2"],"core_claim":"one precise factual finding","headline_en":"max 8 words no punctuation","study_type":"experimental|observational|review|meta-analysis|qualitative"}`
