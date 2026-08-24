@@ -3317,7 +3317,7 @@ function cardHTML(a,idx){
     <div class="art-timestamps" style="margin-top:12px">
       ${a.year?`<span>Published ${a.year}</span>`:''}
       ${a.fetched_at?`<span>Added ${new Date(a.fetched_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-      ${triadSourceRole!==null?`<span class="art-ai-tag">TRIAD: AI-generated · written for ${_escHtml(ROLE_NAMES[toChipRole(triadSourceRole)]||triadSourceRole)}</span>`:''}
+      ${triadSourceRole!==null?`<span class="art-ai-tag">TRIAD: AI-generated${triadSourceRole===readerDbRole?'':` · written for ${_escHtml(ROLE_NAMES[toChipRole(triadSourceRole)]||triadSourceRole)}`}</span>`:''}
       ${countryFlags(a.countries||[a.country])?`<span>${countryFlags(a.countries||[a.country])}</span>`:''}
     </div>`
 
