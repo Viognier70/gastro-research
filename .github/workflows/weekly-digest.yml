@@ -1,0 +1,44 @@
+name: weekly-digest
+# ORDER 148 (2026-08-24): schemalägg send-weekly-digest via GHA istället
+# för pg_cron. Motiv: undvika ~850 rader portering till edge-fn. Trade-off
+# dokumenterad i script-header + memory.
+#
+# Body-scheduler kör `deno run scripts/send-weekly-digest.ts --send` med
+# service_role + Brevo-nyckel injicerade som env. Scriptet skriver till
+# public.weekly_digest_runs (heartbeat) vid start/slut/fatal_error.
+# health-alert (var 30 min) läser vyn gusto_health.veckobrev_alder_h och
+# larmar om > 8 dygn med > 0 kandidater.
+#
+# TID: måndag 06:00 UTC = 08:00 CEST (07:00 CET vintertid). Kolliderar
+# inte med health_mail_daily (05:00 UTC).
+#
+# MANUELL TRIGGER: workflow_dispatch — kör från Actions-fliken i GitHub.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  send:
+    name: Send weekly digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15   # ~5 mottagare × ~5s Brevo + fetches → 5 min normal, 15 min tak
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Run send-weekly-digest --send
+        env:
+          SUPABASE_URL:              https://igmkzhdovyhbfgjomrsc.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BREVO_API_KEY:             ${{ secrets.BREVO_API_KEY }}
+        run: |
+          deno run --allow-net --allow-env --allow-read --allow-write \
+            scripts/send-weekly-digest.ts --send
