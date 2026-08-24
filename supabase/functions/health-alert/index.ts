@@ -162,6 +162,15 @@ type SignalBundle = {
   // äldre än 24h. False positive av triad_stalled fick ETT SMS strax efter
   // deploy; guarden förhindrar upprepning.
   triadHistoryTrusted: boolean
+  // ORDER 148 (2026-08-24): veckobrev-schemaläggning via GHA måndagar 06:00 UTC.
+  // veckobrevAlderH = timmar sedan senast lyckade send-weekly-digest-run
+  //   (max finished_at from weekly_digest_runs where fatal_error IS NULL).
+  //   NULL = aldrig lyckats — larmar INTE (samma NULL-guard-mönster som
+  //   övriga signaler).
+  // veckobrevKandidater = profiles WHERE role IS NOT NULL AND digest_enabled=true.
+  //   Paras alltid med alderH per feedback_takt_utan_ko-mönstret.
+  veckobrevAlderH:      number | null
+  veckobrevKandidater:  number | null
 }
 
 type AlertSpec = {
@@ -318,6 +327,23 @@ const ALERTS: AlertSpec[] = [
     message: (_s) =>
       `GUSTO alert: TRIAD background dead. 0 written in 24h. Check triad-background timeout + Sonnet quota.`,
   },
+  {
+    // ORDER 148 (2026-08-24): GHA-schemalagt veckobrev måndagar 06:00 UTC.
+    // Larmar när senaste lyckade körning är > 8 dygn gammal OCH minst en
+    // profil vill ha digest. Paras alltid kandidater > 0 per feedback_
+    // takt_utan_ko-mönstret — noll kandidater = normal nolltillstånd.
+    // NULL alderH = aldrig lyckats än (fresh install) → larmar inte;
+    // GHA-workflow-UI:et fångar Day 0-failures.
+    // 8-dygns-tröskel ger 24h marginal efter måndagens 06:00 UTC-slot innan
+    // vi larmar (missad måndag + halv dag är rimlig slack före SMS).
+    type: 'digest_stalled',
+    fires: (s) =>
+      s.veckobrevAlderH     !== null && s.veckobrevAlderH > 192 &&
+      s.veckobrevKandidater !== null && s.veckobrevKandidater > 0,
+    // ~112 tecken. Roundar alderH till dygn för läsbarhet i SMS.
+    message: (s) =>
+      `GUSTO alert: weekly digest stalled ${Math.round((s.veckobrevAlderH ?? 0) / 24)}d, ${fmtCompact(s.veckobrevKandidater)} candidates. Check GHA workflow + weekly_digest_runs.`,
+  },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -441,6 +467,9 @@ Deno.serve(async (req) => {
     triadTakt24h:   toNum(row.triad_takt_24h),
     triadQueue:     toNum(row.triad_queue),
     triadHistoryTrusted,
+    // ORDER 148: vy-utökning i migration 20260824160000_gusto_health_veckobrev.sql
+    veckobrevAlderH:     toNum(row.veckobrev_alder_h),
+    veckobrevKandidater: toNum(row.veckobrev_kandidater),
   }
 
   // 3. Utvärdera larm, respektera cooldown, skicka.

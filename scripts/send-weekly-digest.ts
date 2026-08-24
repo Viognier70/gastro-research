@@ -2,9 +2,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 // ORDER 122 (2026-08-21) — veckobrev till profiler med roll + aktiv digest.
 //
-// Fristående Deno-skript. Följer samma pattern som scripts/repair-abstracts.ts
-// och two-track-test.ts. Cron-triggning från Supabase Dashboard kan
-// wrapas i en tunn edge-fn senare — utanför scope här.
+// SCHEMALÄGGNING (ORDER 148, 2026-08-24): körs varje MÅNDAG 06:00 UTC via
+// GitHub Actions — .github/workflows/weekly-digest.yml. INTE via pg_cron
+// (som alla andra crons i projektet). Motiv: undvika ~850 rader portering
+// till edge-fn. Trade-off: mönster-avvikelse (framtida läsare hittar inte
+// jobbet i cron.job) — ligger istället i .github/workflows/. Alarming
+// integrerad via heartbeat till public.weekly_digest_runs + gusto_health-
+// utökning + health-alert digest_stalled-larm.
 //
 // FLÖDE PER MOTTAGARE:
 //   A. Fem artiklar — nya sedan last_digest_at (eller senaste 7 dagarna
@@ -698,16 +702,75 @@ async function markSent(uid: string): Promise<boolean> {
   return r.ok
 }
 
+// ── Heartbeat (ORDER 148) ─────────────────────────────────────────────────
+// Skriver rad till public.weekly_digest_runs vid start + slut + fatal_error.
+// Health-alert läser senaste rad via gusto_health.veckobrev_alder_h och
+// larmar om > 8 dygn med > 0 kandidater. Skippas i DRY-RUN — bara
+// APPLY-läget signalerar pipeline-hälsa.
+const TRIGGERED_BY = Deno.env.get('GITHUB_RUN_ID') ? 'gha' : 'manual'
+
+async function heartbeatStart(): Promise<number | null> {
+  if (!APPLY) return null
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/weekly_digest_runs`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({ triggered_by: TRIGGERED_BY }),
+    })
+    if (!r.ok) {
+      console.log('[heartbeat] start INSERT failed:', r.status, (await r.text()).slice(0, 200))
+      return null
+    }
+    const rows = await r.json()
+    return rows?.[0]?.id ?? null
+  } catch (e) {
+    console.log('[heartbeat] start threw:', (e as Error).message)
+    return null
+  }
+}
+
+async function heartbeatUpdate(runId: number | null, patch: Record<string, unknown>): Promise<void> {
+  if (!APPLY || runId === null) return
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/weekly_digest_runs?id=eq.${runId}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patch),
+    })
+    if (!r.ok) {
+      console.log('[heartbeat] PATCH failed:', r.status, (await r.text()).slice(0, 200))
+    }
+  } catch (e) {
+    console.log('[heartbeat] PATCH threw:', (e as Error).message)
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 async function main() {
   const startedAt = new Date().toISOString()
-  console.log(`[start] mode=${APPLY ? 'APPLY (skickar)' : 'DRY-RUN'}  at=${startedAt}`)
+  console.log(`[start] mode=${APPLY ? 'APPLY (skickar)' : 'DRY-RUN'}  at=${startedAt}  trigger=${TRIGGERED_BY}`)
+
+  const runId = await heartbeatStart()
+  if (runId !== null) console.log(`[heartbeat] weekly_digest_runs.id = ${runId}`)
 
   const recipients = await fetchRecipients()
   console.log(`[fetch] ${recipients.length} mottagare (role satt, digest_enabled, cooldown passerad)`)
 
   if (!recipients.length) {
     console.log('[done] inga mottagare — inget att göra')
+    await heartbeatUpdate(runId, {
+      finished_at: new Date().toISOString(),
+      recipients: 0, sent_ok: 0, sent_error: 0,
+    })
     return
   }
 
@@ -818,6 +881,42 @@ async function main() {
     console.log(`  would_send=${counters.would_send}  failed=${counters.failed}  skipped_no_articles=${counters.skipped_no_articles}`)
     console.log(`  preview HTML: ${OUT_DIR}/<email>.html`)
   }
+  await heartbeatUpdate(runId, {
+    finished_at: finishedAt,
+    recipients:  recipients.length,
+    sent_ok:     counters.sent,
+    sent_error:  counters.failed,
+  })
 }
 
-main().catch(e => { console.error('[FATAL]', e); Deno.exit(1) })
+// ORDER 148: catch fatal_error och skriv till heartbeat innan exit. Kräver
+// separat POST eftersom runId inte är i scope här — läser istället senaste
+// öppna rad (finished_at IS NULL) för denna trigger. Om heartbeatStart
+// misslyckats finns ingen rad att uppdatera; loggar det vi vet till stderr.
+main().catch(async (e) => {
+  console.error('[FATAL]', e)
+  if (APPLY) {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/weekly_digest_runs?finished_at=is.null&order=id.desc&limit=1`, {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+      })
+      const rows = r.ok ? await r.json() : []
+      const openRow = rows?.[0]
+      if (openRow?.id) {
+        await fetch(`${SB_URL}/rest/v1/weekly_digest_runs?id=eq.${openRow.id}`, {
+          method: 'PATCH',
+          headers: {
+            apikey: SB_KEY,
+            Authorization: `Bearer ${SB_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            finished_at: new Date().toISOString(),
+            fatal_error: String((e as Error).message || e).slice(0, 500),
+          }),
+        })
+      }
+    } catch (_) { /* swallow — vi håller på att exit:a med felkod */ }
+  }
+  Deno.exit(1)
+})
