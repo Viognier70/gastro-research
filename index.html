@@ -1794,7 +1794,9 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <!-- LANDING HERO (§5) — full-width dark, sitter över .oversikt-wrap.
        Sifferbandets TRIAD-tal läses från public.triad_coverage() (se §6);
        fallback "39,000+" står i markup så vi aldrig visar tomt fält.
-       466,905 är hårdkodat per §5 (aggregerar bibliotekets nuvarande storlek). -->
+       ORDER 146 (2026-08-24): total-talet läses nu från page_counts.total
+       (samma mönster som landingTriadCount). Markup-fallback "466,905" är
+       senast kända värdet — visas bara om page_counts-anropet failar. -->
   <section class="landing-hero" aria-label="About Gusto Science">
     <div class="lh-source">OPENALEX &middot; PUBMED</div>
     <h1 class="lh-title">Peer-reviewed research, read for the kitchen and the cellar</h1>
@@ -1809,7 +1811,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <div class="lh-stat-label">studies with full TRIAD analysis</div>
       </div>
       <div class="lh-stat">
-        <div class="lh-stat-num">466,905</div>
+        <div class="lh-stat-num" id="landingTotalCount">466,905</div>
         <div class="lh-stat-label">peer-reviewed articles tracked</div>
       </div>
     </div>
@@ -3849,6 +3851,11 @@ async function loadCounts(){
       // Data-panelens "Publications scanned" — samma tal som top-panelens
       // #totalCount (r1). "+" som suffix för att markera att biblioteket växer.
       const dpTot=document.getElementById('dp-total-count'); if(dpTot) dpTot.textContent=total.toLocaleString('en-US')+'+'
+      // ORDER 146 (2026-08-24): landing-hero sifferbandets "tracked"-tal.
+      // Samma mönster som landingTriadCount (rad ovan). Markup-fallback
+      // "466,905" ersätts med levande siffra så trilogi-fotnoten under
+      // aldrig visar högre tal än hero-siffran ovanför.
+      const lhTot=document.getElementById('landingTotalCount'); if(lhTot) lhTot.textContent=total.toLocaleString('en-US')
       const obSub=document.getElementById('obSubText')
       if(obSub){
         // Separera de två talen: TRIAD-analyserade (~39 000) vs genomsökta (~466 000).
