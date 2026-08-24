@@ -707,8 +707,18 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 @keyframes map-pulse{0%,100%{opacity:.7}50%{opacity:1}}
 @keyframes map-pulse-ring{0%,100%{r:var(--pr);opacity:.2}50%{r:calc(var(--pr) + 6);opacity:0}}
 .map-node-new{animation:map-pulse 2s ease-in-out infinite}
-.mini-ticker{height:48px;overflow:hidden;background:var(--black);border-top:0.5px solid rgba(201,168,76,0.3);border-bottom:0.5px solid rgba(201,168,76,0.15);display:flex;align-items:center;margin-top:0;clear:both}
-.mini-ticker-track{display:flex;align-items:center;white-space:nowrap;animation:ticker-scroll 240s linear infinite;gap:0}
+/* ORDER 144 (2026-08-24): mini-ticker konverterad från flex-layout till
+   absolute-position-mönstret som gamla .ticker (rad 533+) använder. Efter
+   flytten från Feed till Overview (ORDER 139) tappade flex-baserade
+   labeldiven sin visuella plats — rot är att transform på .mini-ticker-
+   track skapar eget stacking context OCH att flex-algoritmen räknade
+   label-widths annorlunda i det nya parent-kontexten. Absolut-position +
+   z-index:2 är beprövad ledning; padding-left på track ger visuell plats. */
+.mini-ticker{height:48px;overflow:hidden;background:var(--black);border-top:0.5px solid rgba(201,168,76,0.3);border-bottom:0.5px solid rgba(201,168,76,0.15);position:relative;margin-top:0;clear:both}
+.mini-ticker-label{position:absolute;left:0;top:0;height:100%;z-index:2;background:var(--black);border-right:0.5px solid rgba(201,168,76,.2);padding:0 20px 0 24px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.mini-ticker-label-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:mapPulse 1.8s ease-in-out infinite;flex-shrink:0}
+.mini-ticker-label-text{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.mini-ticker-track{display:flex;align-items:center;height:48px;white-space:nowrap;animation:ticker-scroll 240s linear infinite;gap:0;padding-left:200px}
 .mini-ticker-track:hover{animation-play-state:paused}
 .mini-ticker-item{display:inline-flex;align-items:center;gap:8px;padding:0 56px;font-size:13px;color:rgba(255,255,255,.9);letter-spacing:.02em}
 .mini-ticker-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.8;flex-shrink:0}
@@ -1797,10 +1807,13 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   <!-- ORDER 139 (2026-08-23): mini-ticker flyttad från Feed. Rörelse
        hör hemma på Overview — passiv "fältet är i rörelse"-signal när
        user landar. Full-width dark, syskon till landing-hero. -->
+<!-- ORDER 144 (2026-08-24): inline styles ersatta av .mini-ticker-label-
+     klasser. Layout-mönster: label position:absolute + z-index:2 över
+     track:s padding-left:200px-yta. Se CSS-kommentar vid .mini-ticker. -->
 <div class="mini-ticker" id="miniTicker">
-  <div style="flex-shrink:0;padding:0 20px 0 24px;border-right:0.5px solid rgba(201,168,76,.2);height:100%;display:flex;align-items:center;gap:6px;min-width:fit-content">
-    <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:mapPulse 1.8s ease-in-out infinite;flex-shrink:0"></span>
-    <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);white-space:nowrap">Incoming research</span>
+  <div class="mini-ticker-label">
+    <span class="mini-ticker-label-dot"></span>
+    <span class="mini-ticker-label-text">Incoming research</span>
   </div>
   <div class="mini-ticker-track" id="miniTickerTrack">
     <span class="mini-ticker-item"><span class="mini-ticker-dot"></span>New research loading...</span>
