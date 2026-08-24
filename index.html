@@ -246,12 +246,23 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .lh-stat-label{
   font-size:12px;color:#6E675A;margin-top:6px;letter-spacing:.02em;
 }
+/* ORDER 145 (2026-08-24): fotnots-rad under .lh-stats. Dämpad
+   typografi — mindre än .lh-stat-label, mörkare warm-grå så det
+   läser som anteckning till siffrorna ovan, inte som en tredje
+   rubrik. tabular-nums för att siffrorna radar sig snyggt. */
+.lh-trilogy{
+  margin-top:14px;font-size:10.5px;color:#4A443A;
+  letter-spacing:.04em;text-align:center;
+  font-variant-numeric:tabular-nums;line-height:1.5;
+}
+.lh-trilogy[hidden]{display:none}
 @media (max-width:480px){
   .landing-hero{padding:32px 16px 24px}
   .lh-title{font-size:26px;max-width:320px}
   .lh-sub{font-size:14px;max-width:320px}
   .lh-cta{gap:12px;margin-bottom:24px}
   .lh-stats{flex-direction:column;gap:20px;padding-top:20px}
+  .lh-trilogy{margin-top:16px;font-size:10px;line-height:1.6}
 }
 
 /* TRIAL WELCOME STRIP (ORDER 131) — engångsrad ovanför app-container */
@@ -1802,6 +1813,11 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
         <div class="lh-stat-label">peer-reviewed articles tracked</div>
       </div>
     </div>
+    <!-- ORDER 145 (2026-08-24): trilogi-fotnot under sifferbandet. Visar
+         alla tre totaler i fallande ordning (tracked → TRIAD → feedable)
+         så trappan blir synlig. Fylls av renderLandingTrilogy() från
+         loadCounts när alla tre globals landat; annars förblir hidden. -->
+    <div class="lh-trilogy" id="landingTrilogy" hidden></div>
   </section>
 
   <!-- ORDER 139 (2026-08-23): mini-ticker flyttad från Feed. Rörelse
@@ -3866,7 +3882,33 @@ async function loadCounts(){
     }catch(e){}
     const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
     const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
+    // ORDER 145 (2026-08-24): trilogi-fotnot under landing-hero-sifferbandet.
+    // Alla tre RPC-svar har landat (eller failat) vid denna punkt; funktionen
+    // guardar internt på att alla tre globals finns — utelämnar hela raden
+    // hellre än att visa "—" om något inte hunnit landa.
+    renderLandingTrilogy()
   }catch(e){console.error("loadCounts error:",e)}
+}
+
+// ORDER 145 (2026-08-24): fyller .lh-trilogy under sifferbandet med
+// tre totaler i fallande ordning: tracked → TRIAD-analyserade → feedable.
+// Läser globals som loadCounts stashat (_totalCount, _triadCount,
+// _feedableCount). Om NÅGON saknas: håll [hidden] — hellre tyst än
+// halv rad med "—". Kartans etikett och Feed-raden är orörda; denna
+// gör bara skillnaden mellan de tre synlig på landing.
+function renderLandingTrilogy(){
+  const el = document.getElementById('landingTrilogy')
+  if(!el) return
+  const total    = Number(window._totalCount    || 0)
+  const triad    = Number(window._triadCount    || 0)
+  const feedable = Number(window._feedableCount || 0)
+  if(!(total > 0 && triad > 0 && feedable > 0)){
+    el.hidden = true
+    return
+  }
+  const fmt = n => n.toLocaleString('en-US')
+  el.textContent = `${fmt(total)} tracked · ${fmt(triad)} with TRIAD analysis · ${fmt(feedable)} classified by research area`
+  el.hidden = false
 }
 
 function filterTopic(topic){document.getElementById('topicSel').value=topic;loadArticles()}
