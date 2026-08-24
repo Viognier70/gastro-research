@@ -21,10 +21,13 @@ export const ROLES = [
   // operationellt scope. Bakgrund: analys visade kluster 7.03-8.78 (snitt
   // ~8) över alla 27 topics för denna roll — Haiku tolkade "researcher's
   // core task" som "läsa peer-reviewed forskning", vilket är trivialt
-  // uppfyllt av varje artikel. Nya label:n + role-specifika rubrik-clause
-  // nedan (rad ~64) fokuserar scoringen på pedagogik/metod/study-design
-  // istället för läsvärdhet.
-  { role_key: 'educator_researcher', role_label: 'Educator/researcher — method & pedagogy in gastronomy' },
+  // uppfyllt av varje artikel.
+  // 2026-08-24 (ORDER 149 v-d): label → 'Academic' och rubrik omskriven
+  // från FILTER till PLACERINGS-fråga (rollen är sortnyckel, inte filter).
+  // Iterativt kalibrerad över fyra sample-körningar; slutform verifierad
+  // med 100-sample-sample: 9-10-band = 3 rader (metod-som-ämne + pedagogy),
+  // klump på 7 = 48/100. Denna prompt matchar batch-regen-sci.ts v2026-08-24d.
+  { role_key: 'educator_researcher', role_label: 'Academic' },
 ] as const
 
 export interface SciRoleScores {
@@ -63,7 +66,35 @@ Journal: "${article.journal || ''}"
 Score relevance 0-10. BE STRICT: only high if professional can directly apply in daily work.
 8-10: directly addresses core tasks. 5-7: clear indirect application. 1-4: marginal. 0: irrelevant.
 
-For educator_researcher, high scores (8-10) apply ONLY to studies about HOW gastronomy is taught, learned, or investigated — pedagogy, curriculum, research method, study design. Do NOT score high just because a researcher would find the paper interesting to read; reading peer-reviewed literature is not by itself a scoring criterion.
+The daily-application test above does not apply to educator_researcher. For this role, relevance is measured by transferability across specializations, per the rubric below.
+
+For educator_researcher (the Academic role):
+
+Academic — researchers and educators in gastronomy. This role is defined by breadth of curiosity, not by subject boundary. Specializations vary widely (fermentation science, food policy, sensory analysis, culinary pedagogy), so the corpus is never filtered — only ordered.
+
+Rank by transferability across specializations, not by topical fit.
+
+9-10 — Portable across the whole role. Articles about how gastronomic knowledge is taught, trained, and transmitted (pedagogy, didactics, curriculum, skills transfer), and articles *about* research methods or data collection — new instruments, protocols, sampling approaches, panel design, measurement validity. Useful to every academic regardless of specialization.
+
+8 — Strong within a specialization, with reach beyond it. Findings, techniques, or framings a researcher in an adjacent gastronomic field could act on.
+
+7 — Solid within a specialization, self-contained. Valuable to those already in that field.
+
+6 — Narrow or incremental within a specialization. Small effect, replication, or a single-context result.
+
+5 — Relevant background. Industry, policy, production, or cultural coverage an academic would read for context.
+
+3-4 — Peripheral but present. Consumer, trade, or lifestyle coverage with thin analytical content.
+
+1-2 — Barely touches gastronomy.
+
+0 — Not gastronomy at all.
+
+CRITICAL DISTINCTION: an article that *uses* a method is not an article *about* a method. Standard research reporting with a methods section belongs at 6-8. Reserve 9-10 for work whose subject is the method itself.
+
+Titles of the form "X using Y" describe a study of X with Y as the instrument — score these on X, typically 7-8. Score 9-10 when the article's own contribution is the method, the instrument, or the teaching of the field: introducing, validating, comparing, or reviewing methods, or any work on pedagogy, curriculum, or skills transfer.
+
+Nothing is excluded. Every article receives a placement. If unsure between two scores, choose the higher — this role reads widely by disposition.
 
 Roles: {${roleList}}
 Return ONLY JSON: {"role_scores":{"sensory_pro":0,"culinary_pro":0,"gastronomy_culture":0,"hospitality_mgmt":0,"educator_researcher":0},"keywords":["k1","k2"],"core_claim":"one precise factual finding","headline_en":"max 8 words no punctuation","study_type":"experimental|observational|review|meta-analysis|qualitative"}`
