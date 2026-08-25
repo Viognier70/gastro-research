@@ -170,10 +170,24 @@ async function openalexLookup(row: Row): Promise<
 async function writeJournal(id: string, journal: string): Promise<{ ok: true } | { ok: false, reason: string }> {
   const res = await sbFetch(`articles?id=eq.${id}`, {
     method: 'PATCH',
-    headers: { 'Prefer': 'return=minimal' },
+    // ORDER 161-v3 (2026-08-25): return=representation ger de uppdaterade
+    // raderna tillbaka som JSON-array. Array-length verifierar att filtret
+    // faktiskt träffade en rad. Före: return=minimal returnerade 204 även
+    // när filtret matchade 0 rader — tyst felkälla där "success" räknades
+    // utan att en enda cell ändrats. Kalibrerad ORDER 161 råkade inte
+    // trigga bug:en (335 av 335 skrevs) men mönstret är fel och bör inte
+    // spridas till nästa backfill-script.
+    headers: { 'Prefer': 'return=representation' },
     body: JSON.stringify({ journal }),
   })
   if (!res.ok) return { ok: false, reason: `db ${res.status}: ${(await res.text()).slice(0, 200)}` }
+  let rows: unknown
+  try { rows = await res.json() } catch (_e) {
+    return { ok: false, reason: 'db parse-error i return=representation-body' }
+  }
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { ok: false, reason: 'no rows matched (filter träffade 0 rader)' }
+  }
   return { ok: true }
 }
 
