@@ -1865,7 +1865,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
            Explore-kartan; delar data (mapTopicData) via loadKnowledgeMap. -->
       <div class="oversikt-map-wrap" id="oversiktMapWrap">
         <div class="oversikt-map-eyebrow">Research landscape</div>
-        <div class="oversikt-map-help">A map of gastronomy research — each node a topic, sized by article count. Click a node to see its studies.</div>
+        <div class="oversikt-map-help">A map of gastronomy research — each node a topic, sized by article count · lines = shared focus. Click a node to see its studies.</div>
         <!-- ORDER 139b (2026-08-23): height:480px borttaget från inline —
              ORDER 138 höjde SVG till 500 desktop / min(340, w*0.9) mobile
              via container.style.height, men hardkodad 480 klippte topp
@@ -4880,9 +4880,14 @@ function getTopicRelevance(t){
 // sortFn injiceras explicit så bägge renderers styr rangordning oberoende
 // (Explore = roll-viktad via getTopicRelevance, Overview = alltid genomsnitt
 // över alla 5 roller). Motverkar det gamla implicit-global-role-läckaget.
-// Edges byggs alltid från cosine similarity över alla 5 rollers rel-vektor
-// (rollagnostiskt, samma i bägge vyer — kanterna beskriver semantisk
-// släktskap mellan ämnen, inte "denna rolls landskap").
+// Edges byggs alltid från CENTRERAD cosine similarity över alla 5 rollers
+// rel-vektor (rollagnostiskt, samma i bägge vyer — kanterna beskriver
+// semantisk släktskap mellan ämnen, inte "denna rolls landskap"). Centreringen
+// (ORDER 160) drar bort per-roll medelvärdet över alla ämnen så att cosinus
+// blir Pearson-korrelation i stället för vinkeln mellan två nästan parallella
+// positiva vektorer. Utan centrering låg alla topic-cos > 0,88 (bandet
+// 4,92-6,78 på 0-10-skalan gjorde vektorerna nästan enhetligt positiva) →
+// tröskeln 0,4 trivialt överträffad, linjerna diskriminerade inget.
 function computeMapLayout(mapData, sortFn, w, h, isMobile){
   const RING1_R = isMobile ? Math.min(90, w*0.28) : 140
   // ORDER 138 (2026-08-23): RING2_R minskad till 175 (desktop) och
@@ -4923,27 +4928,59 @@ function computeMapLayout(mapData, sortFn, w, h, isMobile){
   })
 
   const roles = ['sommelier','chef','creator','waiter','educator']
+
+  // ORDER 160: rollmedel över ALLA ämnen (μ_i per roll). NULL exkluderas per
+  // roll (matchar knowledge_map_topics-RPC:ns FILTER-uttryck). μ_i dras sedan
+  // bort från varje ämnes rel_i → Pearson-basen.
+  const roleMeans = roles.map(r => {
+    const vals = mapData.map(t => t['rel_'+r]).filter(v => v != null)
+    return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0
+  })
+
+  // ORDER 160: NULL som hoppad dimension. Före: ||0 tolkade "vet inte" som
+  // "score 0" — efter centrering blev det -μ ≈ -5,85 = falsk extrem-låg-signal.
+  // Nu: null bevaras i den centrerade vektorn och hoppas i cosinus (dot + |a|
+  // + |b| summeras bara över dimensioner där BÅDA vektorerna har data).
+  const centered = t => roles.map((r, i) => {
+    const v = t['rel_'+r]
+    return v == null ? null : v - roleMeans[i]
+  })
+
+  const centeredCosine = (a, b) => {
+    const ca = centered(a), cb = centered(b)
+    let dot = 0, na = 0, nb = 0
+    for(let i = 0; i < roles.length; i++){
+      if(ca[i] == null || cb[i] == null) continue
+      dot += ca[i] * cb[i]
+      na  += ca[i] * ca[i]
+      nb  += cb[i] * cb[i]
+    }
+    return (na && nb) ? dot / Math.sqrt(na * nb) : 0
+  }
+
+  // ORDER 160-trösklar (kalibrerade 2026-08-25 mot verklig par-fördelning i
+  // SQL-frågan; alla 26 topics × pairs + spoke-best-per-outer).
+  //   inner > 0.25  — fångar de 5 par som ligger över naturlig cliff-gräns.
+  //                    Sensory/flavour toppar på 0.911; de fyra andra 0.26-0.36.
+  //   spoke > 0.30  — släpper igenom 7 av 11 outers där bäst-inner faktiskt
+  //                    indikerar shared focus. Fermentation/anthropology på
+  //                    0.323 är gränsfallet.
+  // Val A: sim < tröskel dropas silent — anti-korrelation (sim < 0) ritas
+  // aldrig som edge. Kartan visar bara shared focus, inte opposite.
   const edges = []
-  for(let i=0; i<inner.length; i++){
-    for(let j=i+1; j<inner.length; j++){
-      const a = inner[i], b = inner[j]
-      const dot = roles.reduce((s,r) => s + (a['rel_'+r]||0)*(b['rel_'+r]||0), 0)
-      const ma = Math.sqrt(roles.reduce((s,r) => s + Math.pow(a['rel_'+r]||0, 2), 0))
-      const mb = Math.sqrt(roles.reduce((s,r) => s + Math.pow(b['rel_'+r]||0, 2), 0))
-      const sim = ma&&mb ? dot/(ma*mb) : 0
-      if(sim > 0.4) edges.push({a, b, sim, type:'inner'})
+  for(let i = 0; i < inner.length; i++){
+    for(let j = i+1; j < inner.length; j++){
+      const sim = centeredCosine(inner[i], inner[j])
+      if(sim > 0.25) edges.push({a: inner[i], b: inner[j], sim, type: 'inner'})
     }
   }
   outer.forEach(o => {
-    let best = {sim:0, node:null}
+    let best = {sim: 0, node: null}
     inner.forEach(i => {
-      const dot = roles.reduce((s,r) => s + (i['rel_'+r]||0)*(o['rel_'+r]||0), 0)
-      const ma = Math.sqrt(roles.reduce((s,r) => s + Math.pow(i['rel_'+r]||0, 2), 0))
-      const mb = Math.sqrt(roles.reduce((s,r) => s + Math.pow(o['rel_'+r]||0, 2), 0))
-      const sim = ma&&mb ? dot/(ma*mb) : 0
-      if(sim > best.sim) best = {sim, node:i}
+      const sim = centeredCosine(i, o)
+      if(sim > best.sim) best = {sim, node: i}
     })
-    if(best.node && best.sim > 0.3) edges.push({a:best.node, b:o, sim:best.sim, type:'spoke'})
+    if(best.node && best.sim > 0.30) edges.push({a: best.node, b: o, sim: best.sim, type: 'spoke'})
   })
 
   return { inner, outer, allNodes, edges, cx, cy, RING1_R, RING2_R, ROLE_R, maxCount }
@@ -5037,11 +5074,17 @@ function renderLiveMap(){
   svg += `<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
   svg += `<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
 
+  // ORDER 160 stil-band, kalibrerade mot centrerad-cosinus-fördelning:
+  //   inner  > 0.80 → 3 px / 0.50 solid  (bara sensory/flavour i verklig data)
+  //   inner  > 0.30 → 1.8 px / 0.30 solid
+  //   inner  > 0.25 → 0.8 px / 0.15 dashed  (svag-band, edge-tröskel = 0.25)
+  //   spoke  > 0.80 → 1.5 px / 0.25 solid  (sällsynt topp-spoke)
+  //   spoke  > 0.30 → 0.7 px / 0.12 dashed  (edge-tröskel = 0.30, mesta bandet)
   edges.forEach(e => {
     const s = e.sim
-    const sw = e.type==='inner' ? (s>0.8?3:s>0.6?1.8:0.8) : (s>0.7?1.5:0.7)
-    const op = e.type==='inner' ? (s>0.8?0.5:s>0.6?0.3:0.15) : (s>0.7?0.25:0.12)
-    const dash = s<0.6 || e.type==='spoke' && s<0.7 ? 'stroke-dasharray="5,4"' : ''
+    const sw = e.type==='inner' ? (s>0.80?3:s>0.30?1.8:0.8) : (s>0.80?1.5:0.7)
+    const op = e.type==='inner' ? (s>0.80?0.50:s>0.30?0.30:0.15) : (s>0.80?0.25:0.12)
+    const dash = (e.type==='inner' && s<=0.30) || (e.type==='spoke' && s<=0.80) ? 'stroke-dasharray="5,4"' : ''
     svg += `<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
   })
 
@@ -5124,11 +5167,17 @@ function renderOverviewMap(){
   svg += `<circle cx="${cx}" cy="${cy}" r="${RING1_R}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`
   svg += `<circle cx="${cx}" cy="${cy}" r="${RING2_R}" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>`
 
+  // ORDER 160 stil-band, kalibrerade mot centrerad-cosinus-fördelning:
+  //   inner  > 0.80 → 3 px / 0.50 solid  (bara sensory/flavour i verklig data)
+  //   inner  > 0.30 → 1.8 px / 0.30 solid
+  //   inner  > 0.25 → 0.8 px / 0.15 dashed  (svag-band, edge-tröskel = 0.25)
+  //   spoke  > 0.80 → 1.5 px / 0.25 solid  (sällsynt topp-spoke)
+  //   spoke  > 0.30 → 0.7 px / 0.12 dashed  (edge-tröskel = 0.30, mesta bandet)
   edges.forEach(e => {
     const s = e.sim
-    const sw = e.type==='inner' ? (s>0.8?3:s>0.6?1.8:0.8) : (s>0.7?1.5:0.7)
-    const op = e.type==='inner' ? (s>0.8?0.5:s>0.6?0.3:0.15) : (s>0.7?0.25:0.12)
-    const dash = s<0.6 || e.type==='spoke' && s<0.7 ? 'stroke-dasharray="5,4"' : ''
+    const sw = e.type==='inner' ? (s>0.80?3:s>0.30?1.8:0.8) : (s>0.80?1.5:0.7)
+    const op = e.type==='inner' ? (s>0.80?0.50:s>0.30?0.30:0.15) : (s>0.80?0.25:0.12)
+    const dash = (e.type==='inner' && s<=0.30) || (e.type==='spoke' && s<=0.80) ? 'stroke-dasharray="5,4"' : ''
     svg += `<line x1="${e.a._x}" y1="${e.a._y}" x2="${e.b._x}" y2="${e.b._y}" stroke="rgba(201,168,76,${op})" stroke-width="${sw}" ${dash} class="map-edge"/>`
   })
 
