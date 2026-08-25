@@ -2586,11 +2586,10 @@ function roleLabel(r){ return ROLE_LABELS[toChipRole(r)] || r }
 function roleSubtitle(r){ return ROLE_SUBTITLES[toChipRole(r)] || '' }
 const sb=supabase.createClient(SB_URL,SB_ANON)
 
-// Debug: test API connection
-fetch(SB_URL+'/rest/v1/articles_public?select=id&limit=1',{headers:H})
-  .then(r=>{console.log('API test status:',r.status);return r.json()})
-  .then(d=>console.log('API test data:',d))
-  .catch(e=>console.log('API test error:',e))
+// ORDER 163: debug-fetch borttagen. Fyrade GET articles_public?select=id&
+// limit=1 vid varje sidladdning bara för att logga status till console.
+// Trivial payload (~50 B) men ett round-trip på kritisk boot-path som inte
+// gjorde något användarnyttigt. Behåll koden borta.
 
 let articles=[],role='all',isPro=false,savedArticleIds=new Set(),showingSaved=false,freeCount=0,currentShare={},searchTimeout,authMode='signin',selectedPlan='monthly',roleManuallySet=false
 
@@ -3597,22 +3596,40 @@ async function loadArticles(){
     }
     await enrichWithPremiumIfPro(articles)
     renderFeed()
-    loadSidebar()
-    loadTrending()
-    loadMostCited()
-    // Isolera varje sektionsladdare — en synkron throw i en av dem får inte
-    // stoppa de andra från att fyras. Async-fel fångas redan av respektive
-    // funktions inbyggda try/catch och rejected promises studsar tyst.
-    setTimeout(()=>{
-      try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight sync throw', e) }
-      try { if(typeof loadTrends==='function') loadTrends() } catch(e){ console.log('loadTrends sync throw', e) }
-      try { if(typeof loadHotProducts==='function') loadHotProducts() } catch(e){ console.log('loadHotProducts sync throw', e) }
-    }, 800)
+    // ORDER 163: Feed-tail-kedjan (sidebar-widgets + trending + most-cited +
+    // spotlight + mini-ticker) gate:as på aktiv vy. När default är Overview
+    // fyras loadArticles vid boot för att fylla `articles` (feed cards
+    // pre-populeras) men tail-widgets — som bara skriver till Feed-vyns DOM —
+    // hoppas över. showView('feed') triggar loadFeedTail() vid första öppning
+    // via _viewLoaded.feed-flaggan; efterföljande filter-ändringar inne i
+    // Feed fyrar loadArticles igen och tail-gaten släpper då genom eftersom
+    // _appView === 'feed'. checkOnboarding är inte Feed-specifik och stannar
+    // utanför gaten.
+    if(window._appView === 'feed') loadFeedTail()
     checkOnboarding()
-    loadMiniTicker()
   }catch(e){
     pane.innerHTML='<div class="loading-state">Error loading articles. Please refresh.</div>'
   }
+}
+
+// ORDER 163: Feed-tail-widgets samlade i en funktion. Anropas från
+// loadArticles (bara när aktiv vy är Feed) och från showView('feed') vid
+// första öppning. Idempotens hanteras av respektive laddar via egna
+// generation- eller cache-mönster; multiplikat kall vid filter-byte inne i
+// Feed är designat.
+function loadFeedTail(){
+  loadSidebar()
+  loadTrending()
+  loadMostCited()
+  // Spotlight/trends/hot-products fördröjs med 800 ms så feed-panelen
+  // kan animera in innan sidopanelerna slår i. Isolera varje sektions-
+  // laddare — en synkron throw i en av dem får inte stoppa de andra.
+  setTimeout(()=>{
+    try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight sync throw', e) }
+    try { if(typeof loadTrends==='function') loadTrends() } catch(e){ console.log('loadTrends sync throw', e) }
+    try { if(typeof loadHotProducts==='function') loadHotProducts() } catch(e){ console.log('loadHotProducts sync throw', e) }
+  }, 800)
+  loadMiniTicker()
 }
 
 async function loadSidebar(){
@@ -3628,6 +3645,26 @@ async function loadSidebar(){
   }catch(e){console.log('sidebar error',e)}
 }
 
+// ORDER 163: delad cache för get_trending_keywords. Tre olika callers vid boot
+// (loadTrending för Feed, renderOversiktPulse för Overview, samt en tredje
+// via loadCounts→loadTrending) fetchade tidigare parallellt med olika
+// limit_n. Nu fetchas en gång med limit_n=30 (max som någon konsument
+// behöver), promiset delas, konsumenter slicar. Cache-invalidering behövs
+// inte — trending-datan uppdateras dygnsvis av pipeline, inte per sida.
+window._trendingKeywordsPromise = null
+window.getTrendingKeywords = function(){
+  if(window._trendingKeywordsPromise) return window._trendingKeywordsPromise
+  window._trendingKeywordsPromise = fetch(`${SB_URL}/rest/v1/rpc/get_trending_keywords`, {
+    method: 'POST',
+    headers: {...H, 'Content-Type': 'application/json'},
+    body: JSON.stringify({limit_n: 30})
+  })
+    .then(r => r.json())
+    .then(d => Array.isArray(d) ? d : [])
+    .catch(_ => [])
+  return window._trendingKeywordsPromise
+}
+
 // Trending-race: loadArticles→loadTrending körs innan loadCounts hunnit sätta
 // window._triadCount, loadCounts→loadTrending igen efter. Om första fetchen
 // resolvar sist skrivs trendingMeta med fallback 39,000 över live-siffran.
@@ -3636,8 +3673,8 @@ window._trendingGen = 0
 async function loadTrending(){
   const gen = ++window._trendingGen
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/get_trending_keywords`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({limit_n:8})})
-    const data=await r.json()
+    const all = await window.getTrendingKeywords()
+    const data = all.slice(0, 8)
     if(gen !== window._trendingGen) return  // stale
     if(!Array.isArray(data)||!data.length) return
     const maxCount = Math.max(...data.map(k => k.total_count||0))
@@ -6128,6 +6165,18 @@ window.showView = function(name){
       .then(() => { window._viewLoaded.oversikt = true })
       .catch(e => { console.log('Oversikt lazy-load failed', e) })
   }
+  // ORDER 163: Feed-tail-widgets fyrar vid första Feed-öppning. Feed-korten
+  // själva är redan populerade av loadArticles vid boot (rad ~7358 —
+  // artikellistan behöver renderas oavsett aktiv vy för snabb första-klick).
+  // Endast sidopanelerna (sidebar/trending/most-cited/spotlight/mini-ticker)
+  // gate:as. Latens vid första Feed-klick: ~4 parallella RPC:er, ~300-500 ms
+  // typisk — feed-panelen är redan renderad, sidopanelerna fyller in.
+  if(name === 'feed' && !window._viewLoaded.feed){
+    Promise.resolve()
+      .then(() => { if(typeof loadFeedTail === 'function') loadFeedTail() })
+      .then(() => { window._viewLoaded.feed = true })
+      .catch(e => { console.log('Feed lazy-load failed', e) })
+  }
   if(name === 'explore' && !window._viewLoaded.explore){
     Promise.resolve()
       .then(() => (typeof loadKnowledgeMap === 'function') ? loadKnowledgeMap() : Promise.resolve())
@@ -7148,14 +7197,13 @@ window.renderOversiktPulse = async function() {
   if(!el) return
   el.innerHTML = '<div class="oversikt-pulse-loading">Reading the field\'s pulse…</div>'
   try {
-    const r = await fetch(SB_URL + '/rest/v1/rpc/get_trending_keywords', {
-      method: 'POST',
-      headers: {...H, 'Content-Type': 'application/json'},
-      body: JSON.stringify({limit_n: 4})
-    })
-    const data = await r.json()
+    // ORDER 163: delad cache. Tidigare fetchade Overview-pulse egen kopia med
+    // limit_n=4 parallellt med loadTrending:s limit_n=8. Nu återanvänds
+    // getTrendingKeywords()-promiset som fetchar limit_n=30 en gång.
+    const all = await window.getTrendingKeywords()
+    const data = all.slice(0, 4)
     if(!Array.isArray(data) || !data.length) { el.innerHTML = ''; return }
-    const rows = data.slice(0, 4).map((k, i) => {
+    const rows = data.map((k, i) => {
       const dir = k.trend_direction || 'stable'
       const label = dir === 'rising' ? '↑ +' + (k.trend_pct || 0) + '% vs 2024'
                   : dir === 'declining' ? '↓ ' + (k.trend_pct || 0) + '% vs 2024'
