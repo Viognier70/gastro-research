@@ -623,7 +623,18 @@ async function fetchOpenAlexPage(
         // the text so new OpenAlex-sourced articles land with abstract,
         // available for relevance-check and the map-institution flow.
         abstract: reconstructAbstract(w.abstract_inverted_index),
-        journal: w.primary_location?.source?.display_name || '',
+        // ORDER 161: journal-fältet var tomt för ~20 conf-papers i uncat-
+        // residualen 2026-08-25. primary_location.source.display_name (nedan)
+        // är OpenAlex nyare fält och används redan — men det är också ofta
+        // null för konferensbidrag där primary-location:en inte är matchad
+        // mot ett venue-record. Fallback till locations[]-arrayen: sekundär-
+        // locations (preprint-servrar, konf-webbplatser) har typiskt source.
+        // display_name satt även när primary_location saknar det.
+        journal: w.primary_location?.source?.display_name
+               || (w.locations || [])
+                    .map((l: any) => l?.source?.display_name)
+                    .find((n: any) => typeof n === 'string' && n.trim().length > 0)
+               || '',
         year: w.publication_year || year,
         doi: normalizeDoi(w.doi || ''),
         url: w.doi || w.id || '',
