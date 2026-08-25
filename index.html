@@ -4816,10 +4816,18 @@ async function loadKnowledgeMap(){
     const rows = await r.json()
     if(!Array.isArray(rows) || rows.length === 0) return
 
-    mapTopicData = rows.map(t => ({
-      ...t,
-      label: topicLabel(t.topic)
-    }))
+    // ORDER 157: filtrera uncategorized ur cachen globalt. Overview och
+    // Explore visar bägge "research areas"; uncategorized är residual-
+    // hinken, inte ett ämne. populateTopicSelect gjorde redan filtret
+    // lokalt (rad ~4847) — nu delat med båda kartrenderer. Effekt på
+    // center-siffran: uncategorized-populationen (~215 efter ORDER 155)
+    // subtraheras från total.
+    mapTopicData = rows
+      .filter(t => t.topic && t.topic !== 'uncategorized')
+      .map(t => ({
+        ...t,
+        label: topicLabel(t.topic)
+      }))
     // Rendera bägge kartor. Osynliga vyer skriver till dolda containers —
     // ingen visuell effekt förrän showView öppnar dem.
     renderLiveMap()
@@ -5089,8 +5097,21 @@ function renderOverviewMap(){
   // ~6 px marginal från outer-nod-etikettens undre kant till SVG-botten.
   const h = isMob ? Math.min(340, w*0.9) : 500
 
-  const sortFn = t =>
-    ((t.rel_sommelier||0) + (t.rel_chef||0) + (t.rel_creator||0) + (t.rel_waiter||0) + (t.rel_educator||0)) / 5
+  // ORDER 157: sortera på count. Tidigare medelvärde över 5 rel_-poäng gav
+  // sort_key-spread 4.92-6.78 (2 poängs bredd över hela taxonomin) — signal
+  // drunknad i brus. Rot-orsak = samma diagnos som ORDER 149: role-relevans
+  // mäter passform PER artikel, inte ämnes-storlek. Breda ämnen (food_science
+  // 9 746, fermentation_science 7 142) fick lägre medel och puttades ut till
+  // förmån för smala (food_pairing 65). Overview svarar på "hur ser korpusen
+  // ut" — det är en volymfråga.
+  //
+  // Post-fix inner-5 (count desc, 2026-08-25): food_science, fermentation_
+  // science, sensory_evaluation, flavor_science, food_psychology. food_
+  // anthropology (1 905) hamnar #7 = första yttre-ring-plats.
+  //
+  // Explore/renderLiveMap fortsätter använda role-viktad sortering
+  // (getTopicRelevance) — det är rätt där, "vad är relevant för min roll".
+  const sortFn = t => (t.count || 0)
 
   const { inner, outer, allNodes, edges, cx, cy, RING1_R, RING2_R, ROLE_R, maxCount } =
     computeMapLayout(mapTopicData, sortFn, w, h, isMob)
