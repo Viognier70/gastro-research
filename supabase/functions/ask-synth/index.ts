@@ -44,7 +44,7 @@ function roleLabelHuman(r: string): string {
     culinary_pro: 'Chef',
     gastronomy_culture: 'Meal Creator',
     hospitality_mgmt: 'Hospitality Management',
-    educator_researcher: 'Food Researcher & Educator',
+    educator_researcher: 'Academic',
   }
   return map[r] || r
 }

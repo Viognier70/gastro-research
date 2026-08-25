@@ -88,7 +88,7 @@ const ROLE_LABEL: Record<string, string> = {
   chef:            'Chef',
   gastronomy:      'Meal Creator',
   fb_manager:      'Hospitality Management',
-  food_researcher: 'Food Researcher & Educator',
+  food_researcher: 'Academic',
 }
 // ORDER 124: science-slug → human label. Speglar ROLE_LABEL men indexeras
 // på DB-fältets namn så vi kan rensa slug-läckage från Sonnet/Haiku-svar
@@ -98,7 +98,7 @@ const SCIENCE_TO_LABEL: Record<string, string> = {
   culinary_pro:        'Chef',
   gastronomy_culture:  'Meal Creator',
   hospitality_mgmt:    'Hospitality Management',
-  educator_researcher: 'Food Researcher & Educator',
+  educator_researcher: 'Academic',
 }
 // Rensa science-slug ur AI-genererad text som ska visas för användaren.
 // Rättar de 25 befintliga syntheses-raderna (prompten skickade dbRole
