@@ -385,18 +385,52 @@ async function fetchResults(url: string): Promise<BatchResult[]> {
 // Parse topic-slug ur Haiku-JSON. Whitelist mot VALID_TOPICS + 'uncategorized'.
 // Ogiltig slug (typo, hallucinerad kategori, ny topic som saknas i taxonomin)
 // → null, hamnar som parse_error i outcome-listan.
-function parseTopicResult(txt: string): string | null {
-  let t = txt.trim().replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```[\s\S]*$/, '').trim()
-  try {
-    const j = JSON.parse(t)
-    const v = j?.topic
-    if (typeof v !== 'string') return null
-    const slug = v.trim().toLowerCase()
-    if (!VALID_TOPIC_SET.has(slug as any)) return null
-    return slug
-  } catch (_) {
-    return null
+//
+// TOLERANS-FIX (ORDER 154): Haiku 4.5 lade i praktiken till "Reasoning:"-
+// fritext efter JSON-blocket i ~3 % av svaren, vilket gjorde att JSON.parse
+// på hela strängen kastade (116/3 715 rader gick förlorade i ORDER 153).
+// Parsern har nu tre nivåer: (1) JSON.parse hela strängen — snabb bana,
+// (2) extrahera första balanserade {…}-blocket och parsa det, (3) regex
+// direkt på "topic":"…"-fältet som sista utväg.
+function extractFirstJsonObject(s: string): string | null {
+  const i = s.indexOf('{')
+  if (i < 0) return null
+  let depth = 0
+  let inStr = false
+  let esc = false
+  for (let j = i; j < s.length; j++) {
+    const c = s[j]
+    if (esc) { esc = false; continue }
+    if (c === '\\') { esc = true; continue }
+    if (c === '"') { inStr = !inStr; continue }
+    if (inStr) continue
+    if (c === '{') depth++
+    else if (c === '}') {
+      depth--
+      if (depth === 0) return s.slice(i, j + 1)
+    }
   }
+  return null
+}
+
+function parseTopicResult(txt: string): string | null {
+  const t = txt.trim().replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```[\s\S]*$/, '').trim()
+  let obj: any = null
+  try { obj = JSON.parse(t) } catch (_) { /* faller igenom */ }
+  if (!obj) {
+    const objStr = extractFirstJsonObject(t)
+    if (objStr) { try { obj = JSON.parse(objStr) } catch (_) { /* faller igenom */ } }
+  }
+  if (!obj) {
+    const m = t.match(/"topic"\s*:\s*"([a-z_]+)"/)
+    if (m) obj = { topic: m[1] }
+  }
+  if (!obj) return null
+  const v = obj?.topic
+  if (typeof v !== 'string') return null
+  const slug = v.trim().toLowerCase()
+  if (!VALID_TOPIC_SET.has(slug as any)) return null
+  return slug
 }
 
 // ── Steg 8: EXPLICIT SINGLE-COLUMN UPDATE ───────────────────────────────────
