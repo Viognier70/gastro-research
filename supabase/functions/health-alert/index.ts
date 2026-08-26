@@ -354,13 +354,16 @@ const ALERTS: AlertSpec[] = [
   {
     // ORDER 175 (2026-08-26): citation-backfill schemalagd via GHA måndag +
     // torsdag 06:00 UTC. Larmar när senaste lyckade körning är > 96 h (4 dygn
-    // = missad Mon+Thu-slot + halv dag) OCH backlog > 5000 (godtycklig tröskel
-    // över den långsiktiga plataserings-nivån på ~1500-2000 rader utan lookup-
-    // nyckel). NULL alderH = aldrig lyckats än (fresh install) → larmar inte.
+    // = missad Mon+Thu-slot + halv dag) OCH backlog > 2000. Tröskeln sänkt
+    // från 5000 → 2000 efter första full-backfill: uppmätt plataserings-nivå
+    // ~945 rader (utan lookup-nyckel + OpenAlex-not-found). 5000-tröskeln
+    // hade gjort larmet omöjligt att trigga; 2000 lämnar ~1000-rads-marginal
+    // över plateaun för normal drift. NULL alderH = aldrig lyckats än (fresh
+    // install) → larmar inte.
     type: 'citations_stalled',
     fires: (s) =>
       s.citationsAlderH  !== null && s.citationsAlderH  > 96 &&
-      s.citationsBacklog !== null && s.citationsBacklog > 5000,
+      s.citationsBacklog !== null && s.citationsBacklog > 2000,
     // ~110 tecken. Roundar alderH till dygn.
     message: (s) =>
       `GUSTO alert: citation backfill stalled ${Math.round((s.citationsAlderH ?? 0) / 24)}d, ${fmtCompact(s.citationsBacklog)} backlog. Check GHA workflow + citation_updates_runs.`,
