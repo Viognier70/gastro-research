@@ -1,0 +1,42 @@
+name: citation-updates
+# ORDER 175 (2026-08-26): schemalägg backfill-citation-counts via GHA.
+# Samma mönster som ORDER 148:s weekly-digest — deno run mot service_role,
+# heartbeat till public.citation_updates_runs, health-alert citations_stalled
+# larmar via gusto_health-vyn om alder_h > 96h.
+#
+# TID: måndag + torsdag 06:00 UTC. Kolliderar inte med weekly-digest (måndag
+# 06:00 UTC också — GHA kör dem parallellt eftersom de använder olika secrets
+# och olika DB-tabeller). Body: OpenAlex bulk-endpoint 100 IDs/anrop; delta
+# skrivs via bulk_update_citation_counts RPC i chunks om 5000. Efter första
+# fullkörning är typiskt utfall ~30k checked → ~1500 delta → ~65s körning.
+#
+# MANUELL TRIGGER: workflow_dispatch — kör från Actions-fliken i GitHub.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1,4'    # måndag + torsdag 06:00 UTC = 08:00 CEST
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Backfill citation counts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60      # GHA-tak; typisk körning <2 min efter första backfill
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Run backfill-citation-counts --apply
+        env:
+          SUPABASE_URL:              https://igmkzhdovyhbfgjomrsc.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENALEX_MAILTO:           anders@crichton-fock.com
+        run: |
+          deno run --allow-net --allow-env --allow-read \
+            scripts/backfill-citation-counts.ts --apply

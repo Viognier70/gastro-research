@@ -171,6 +171,13 @@ type SignalBundle = {
   //   Paras alltid med alderH per feedback_takt_utan_ko-mönstret.
   veckobrevAlderH:      number | null
   veckobrevKandidater:  number | null
+  // ORDER 175 (2026-08-26): citation-backfill via GHA måndag+torsdag 06:00 UTC.
+  // citationsAlderH = timmar sedan senast lyckade backfill-citation-counts-run.
+  //   NULL = aldrig lyckats — larmar INTE.
+  // citationsBacklog = articles utan citation_count men med lookup-nyckel
+  //   (openalex.org/W\d+ eller doi.org/ i url). Paras alltid med alderH.
+  citationsAlderH:      number | null
+  citationsBacklog:     number | null
 }
 
 type AlertSpec = {
@@ -344,6 +351,20 @@ const ALERTS: AlertSpec[] = [
     message: (s) =>
       `GUSTO alert: weekly digest stalled ${Math.round((s.veckobrevAlderH ?? 0) / 24)}d, ${fmtCompact(s.veckobrevKandidater)} candidates. Check GHA workflow + weekly_digest_runs.`,
   },
+  {
+    // ORDER 175 (2026-08-26): citation-backfill schemalagd via GHA måndag +
+    // torsdag 06:00 UTC. Larmar när senaste lyckade körning är > 96 h (4 dygn
+    // = missad Mon+Thu-slot + halv dag) OCH backlog > 5000 (godtycklig tröskel
+    // över den långsiktiga plataserings-nivån på ~1500-2000 rader utan lookup-
+    // nyckel). NULL alderH = aldrig lyckats än (fresh install) → larmar inte.
+    type: 'citations_stalled',
+    fires: (s) =>
+      s.citationsAlderH  !== null && s.citationsAlderH  > 96 &&
+      s.citationsBacklog !== null && s.citationsBacklog > 5000,
+    // ~110 tecken. Roundar alderH till dygn.
+    message: (s) =>
+      `GUSTO alert: citation backfill stalled ${Math.round((s.citationsAlderH ?? 0) / 24)}d, ${fmtCompact(s.citationsBacklog)} backlog. Check GHA workflow + citation_updates_runs.`,
+  },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -470,6 +491,9 @@ Deno.serve(async (req) => {
     // ORDER 148: vy-utökning i migration 20260824160000_gusto_health_veckobrev.sql
     veckobrevAlderH:     toNum(row.veckobrev_alder_h),
     veckobrevKandidater: toNum(row.veckobrev_kandidater),
+    // ORDER 175: vy-utökning i migration 20260826150000_gusto_health_citations.sql
+    citationsAlderH:     toNum(row.citations_alder_h),
+    citationsBacklog:    toNum(row.citations_backlog),
   }
 
   // 3. Utvärdera larm, respektera cooldown, skicka.

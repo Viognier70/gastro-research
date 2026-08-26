@@ -337,6 +337,11 @@ async function saveArticle(article: any, topic: string): Promise<boolean> {
       // pipeline runSci fyller senare via merge. Så framåt-fixen påverkar
       // bara OpenAlex-vägen; övriga källor får samma beteende som förr.
       keywords: article.keywords?.length ? article.keywords : null,
+      // ORDER 175 (2026-08-26): citation_count från OpenAlex/Scopus/S2
+      // (cited_by_count / citedby-count / citationCount). PubMed skickar
+      // inte fältet (kräver separat NIH iCite-lookup) → null → backfill-
+      // scriptet fångar den via DOI-uppslag mot OpenAlex.
+      citation_count: typeof article.citation_count === 'number' ? article.citation_count : null,
       fetched_at: new Date().toISOString()
     }, { onConflict: 'url', ignoreDuplicates: true })
       .select('id')
@@ -407,6 +412,11 @@ function mapScopusEntry(e: any, defaultJournal: string, yearFallback: number): a
     primary_institution: institutions[0] || null,
     doi,
     url: doi ? `https://doi.org/${doi}` : (e['prism:url'] || ''),
+    // ORDER 175 (2026-08-26): citation_count från Scopus. Fältet heter
+    // "citedby-count" (bindestreck) och returneras som sträng — parseInt
+    // med NaN-fallback till 0. Backfill-scriptet uppdaterar sedan värdet
+    // två gånger i veckan; nyingest värde är utgångsläge.
+    citation_count: parseInt(e['citedby-count'] || '0') || 0,
     source: 'scopus', source_label: 'Scopus'
   }
 }
@@ -647,6 +657,11 @@ async function fetchOpenAlexPage(
         affiliations,
         primary_institution: institutions[0] || null,
         keywords: openAlexKeywords,
+        // ORDER 175 (2026-08-26): citation_count från OpenAlex. Fältet
+        // cited_by_count är top-level integer, alltid present, default 0.
+        // Backfill-scriptet uppdaterar sedan värdet två gånger i veckan;
+        // nyingest värde är utgångsläge.
+        citation_count: w.cited_by_count ?? 0,
         source: 'openalex', source_label: 'OpenAlex'
       }
     }).filter((a: any) => a.title.length > 5 && !isBlockedJournal(a.journal||'', a.title||'', a.abstract||''))
@@ -670,7 +685,10 @@ function isBlockedArxiv(externalIds: any): boolean {
 
 async function fetchSemanticScholar(query: string, year: number): Promise<any[]> {
   try {
-    const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=10&fields=title,abstract,authors,year,externalIds,venue&year=${year}`
+    // ORDER 175 (2026-08-26): citationCount tillagd i fields-parametern.
+    // Utan den returnerar S2 inte fältet — konsistent med hur Scopus och
+    // OpenAlex hämtas nu.
+    const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=10&fields=title,abstract,authors,year,externalIds,venue,citationCount&year=${year}`
     const r = await fetch(url, { headers: { 'User-Agent': 'GustoScience/1.0' } })
     if (!r.ok) return []
     const d = await r.json()
@@ -684,6 +702,9 @@ async function fetchSemanticScholar(query: string, year: number): Promise<any[]>
         doi,
         url: doi ? `https://doi.org/${doi}` : '',
         authors: (p.authors || []).map((a: any) => a.name || '').filter(Boolean).join(', '),
+        // ORDER 175 (2026-08-26): citationCount från Semantic Scholar.
+        // Fältet är camelCase i S2 API, integer, default 0 om null.
+        citation_count: p.citationCount ?? 0,
         source: 'semantic_scholar', source_label: 'Semantic Scholar'
       }
     }).filter((a: any) => a.title.length > 5)
