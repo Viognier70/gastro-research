@@ -2847,7 +2847,6 @@ function setRole(r,btn){
   if(btn) btn.classList.add('on')
   document.querySelector(`.role-chip[data-role='${r}']`)?.classList.add('on')
   loadArticles()
-  loadSpotlight()
   updateRoleNavBadge(r)
   // Uppdatera hero-eyebrow med roll
   const heroEyebrow = document.getElementById('heroEyebrow')
@@ -2858,8 +2857,8 @@ function setRole(r,btn){
   updateSectionIntros(r)
   updateLensPanel(r)
   // Håll Översikt i sync med aktiv roll (bevakning + huvudfynd rerenderas
-  // per roll; pulsen är rollagnostisk men rerendas cheap). Samma pattern
-  // som loadSpotlight ovan — fyras oavsett aktiv vy för att förenkla.
+  // per roll; pulsen är rollagnostisk men rerendas cheap). Fyras oavsett
+  // aktiv vy för att förenkla — cheap idempotent no-op när vyn är dold.
   if(typeof window.renderOversikt === 'function') window.renderOversikt()
 }
 
@@ -3641,14 +3640,6 @@ function loadFeedTail(){
   loadSidebar()
   loadTrending()
   loadMostCited()
-  // Spotlight/trends/hot-products fördröjs med 800 ms så feed-panelen
-  // kan animera in innan sidopanelerna slår i. Isolera varje sektions-
-  // laddare — en synkron throw i en av dem får inte stoppa de andra.
-  setTimeout(()=>{
-    try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight sync throw', e) }
-    try { if(typeof loadTrends==='function') loadTrends() } catch(e){ console.log('loadTrends sync throw', e) }
-    try { if(typeof loadHotProducts==='function') loadHotProducts() } catch(e){ console.log('loadHotProducts sync throw', e) }
-  }, 800)
   loadMiniTicker()
 }
 
@@ -3738,7 +3729,7 @@ async function loadMostCited(){
     const el=document.getElementById('citedList')
     if(!el) return
     if(!Array.isArray(data)||!data.length){el.innerHTML='<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">Citations loading...</div>';return}
-    el.innerHTML=data.map(a=>`<div style="padding:5px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="fetchAndOpenModal('${a.id}')"><div style="display:flex;gap:8px;align-items:flex-start"><span style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);min-width:36px;text-align:right;flex-shrink:0">${(a.citation_count||0).toLocaleString()}</span><div><div style="font-size:11px;font-weight:500;line-height:1.4">${(a.headline_en||a.title||'').slice(0,55)}…</div><div style="font-size:10px;color:var(--text-tertiary)">${a.journal||''} · ${a.year||''}</div></div></div></div>`).join('')
+    el.innerHTML=data.map(a=>`<div style="padding:5px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id}')"><div style="display:flex;gap:8px;align-items:flex-start"><span style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);min-width:36px;text-align:right;flex-shrink:0">${(a.citation_count||0).toLocaleString()}</span><div><div style="font-size:11px;font-weight:500;line-height:1.4">${(a.headline_en||a.title||'').slice(0,55)}…</div><div style="font-size:10px;color:var(--text-tertiary)">${a.journal||''} · ${a.year||''}</div></div></div></div>`).join('')
   }catch(e){}
 }
 
@@ -4628,7 +4619,6 @@ async function initAuth(){
           // en till loadArticles så enrich fyras och cards visar TRIAD.
           // Fire-and-forget — initAuth ska inte blocka på detta.
           try { if(typeof loadArticles==='function') loadArticles() } catch(e){ console.log('loadArticles re-render failed', e) }
-          try { if(typeof loadSpotlight==='function') loadSpotlight() } catch(e){ console.log('loadSpotlight re-render failed', e) }
           // ORDER 131: alert ersatt med tunn topp-strip. Sätter flaggan vid
           // visning så nästa pageload inte upprepar möbeln. Kort delay av samma
           // skäl som tidigare — låt initAuth-cyklen landa först.
@@ -7046,16 +7036,6 @@ window.loadMiniTicker = async function() {
   } catch(e) { console.log('ticker error:', e) }
 }
 
-window.loadTrends = async function() {
-  const el = document.getElementById('trendsContent')
-  if(!el) return
-}
-
-window.loadHotProducts = async function() {
-  const el = document.getElementById('hotProductsContent')
-  if(!el) return
-}
-
 // === Översikt-modulerna (B1, 2026-07-22, UX/IA-omstrukturering) =========
 // Fyra sub-renders (watchbar / lead / puls) mot NYA #oversikt*-id:n. Ask-
 // widgeten delar doSemanticSearch via inputId/resultsId-params. B3 rensar
@@ -7237,8 +7217,8 @@ window.renderOversiktPulse = async function() {
 
 window.renderOversikt = function() {
   // Orkestrerar sub-renders. Async parallellt, ingen await mellan
-  // dem — samma pattern som loadSpotlight/loadTrending/loadMostCited i
-  // renderFeed-pipelinen.
+  // dem — samma pattern som loadTrending/loadMostCited i renderFeed-
+  // pipelinen.
   try { window.renderOversiktWatchBar() } catch(e) { console.log('watchbar throw', e) }
   try { window.renderOversiktLead() } catch(e) { console.log('lead throw', e) }
   try { window.renderOversiktPulse() } catch(e) { console.log('pulse throw', e) }
@@ -7247,115 +7227,8 @@ window.renderOversikt = function() {
   try { if(typeof loadKnowledgeMap === 'function') loadKnowledgeMap() } catch(e) { console.log('map throw', e) }
 }
 
-window.loadSpotlight = async function() {
-  const el = document.getElementById('spotlightGrid')
-  if(!el) return
-  el.innerHTML = '<div style="color:#888;font-size:12px;padding:16px 0;font-family:Outfit,sans-serif">Loading latest findings...</div>'
-  try {
-    // Science-namn (via toDbRole) för ALLA DB-kolumnaccesser. Kommentaren
-    // ovan var direkt fel: articles_public har både chip- och science-kolumner
-    // efter additiva migrationen, men pipeline/triad-* skriver enbart science.
-    // Att bygga URL:er med chip gav tysta noll-resultat sedan 2026-07-12
-    // → "Loading latest findings" fastnade eller gick tom.
-    // rChip behålls för roleLabel-lookup (display-namn), aldrig som DB-nyckel.
-    const rRaw = (window.role && window.role !== 'all') ? window.role : (localStorage.getItem('gs_role') || 'sensory_pro')
-    const dbRole = toDbRole(rRaw)
-    const rChip  = toChipRole(rRaw)
-    const epCol = `episteme_${dbRole}`
-    const tcCol = `techne_${dbRole}`
-    const phCol = `phronesis_${dbRole}`
-    const relCol = `relevance_sci_${dbRole}`
-    const spotlightRoleLabel = window.roleLabel(rRaw) || rChip
-    const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
-
-    // Research Synthesis-korten hämtas av loadSyntheses() i Syntheses-vyn.
-    // loadSpotlight fokuserar på Feed:s artikel-highlights.
-    // ORDER 107: spotlight_articles() RPC — aliaserar relevance_sci_<role>
-    // → relevance_sci och has_episteme_<role> → has_episteme. 30s timeout.
-    const artResp = await fetch(`${SB_URL}/rest/v1/rpc/spotlight_articles`, {
-      method: 'POST',
-      headers: {...H, 'Content-Type': 'application/json'},
-      body: JSON.stringify({ p_role: dbRole, p_limit: 7 })
-    })
-
-    const arts = await artResp.json()
-    if(!Array.isArray(arts) || !arts.length) { el.innerHTML = '<p style="color:#888;font-size:13px;padding:16px 0">No findings yet for this role.</p>'; return }
-    await enrichWithPremiumIfPro(arts)
-
-    // Sortering läser den aliaserade a.relevance_sci från RPC:n.
-    // epCol/tcCol/phCol behållna för TRIAD-payload som enrich (Pro)
-    // skjuter in via Object.assign efter get_articles_full.
-    const big = arts.filter(a => (a.relevance_sci||0) >= 8)
-    const mid = arts.filter(a => (a.relevance_sci||0) >= 6 && (a.relevance_sci||0) < 8)
-    const small = arts.filter(a => (a.relevance_sci||0) >= 5 && (a.relevance_sci||0) < 6)
-
-    const lead = big[0] || mid[0] || arts[0]
-    const ep0 = lead[epCol]||'', tc0 = lead[tcCol]||'', ph0 = lead[phCol]||''
-    const rel0 = lead.relevance_sci||0
-
-    const formatDate = (d) => {
-      if(!d) return ''
-      const dt = new Date(d)
-      return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
-    }
-
-    const midCards = [...big.slice(1), ...mid].slice(0,4).map(a => {
-      const ep = a[epCol]||''
-      const rel = a.relevance_sci||0
-      return `<div style="border-bottom:0.5px solid #C8C0B0;padding-bottom:14px;margin-bottom:14px">
-        <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
-        <span class="gs-sp-rel">Relevance ${rel}/10</span>
-        <div class="gs-sp-title-md">${a.headline_en||a.title?.slice(0,80)||''}</div>
-        ${a.headline_en?`<div style="font-size:9px;color:#aaa;font-family:'Outfit',sans-serif;border-left:2px solid #C8C0B0;padding-left:6px;margin-bottom:4px">${a.title?.slice(0,90)}</div>`:''}
-        ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.length>120?a.core_claim.slice(0,120)+'…':a.core_claim}</div>`:''}
-        ${ep?`<div class="gs-sp-e" style="margin-top:6px"><div class="gs-sp-tl">ε Episteme</div><div class="gs-sp-tx-sm">${ep.length>150?ep.slice(0,150)+'…':ep}</div></div>`:''}
-        <div class="gs-sp-meta">Added ${formatDate(a.fetched_at)}${a.citation_count>0?' · '+a.citation_count+' citations':''} · <a href="${a.url||'#'}" target="_blank" style="color:#1A3A5C;text-decoration:none">Full paper ↗</a></div>
-      </div>`
-    }).join('')
-
-    const smallCards = small.slice(0,3).map(a => {
-      const rel = a.relevance_sci||0
-      return `<div style="border-bottom:0.5px solid #C8C0B0;padding-bottom:10px;margin-bottom:10px">
-        <div class="gs-sp-journal">${a.journal||''} · ${a.year||''}</div>
-        <div class="gs-sp-title-sm">${a.headline_en||a.title?.slice(0,70)||''}</div>
-        ${a.core_claim?`<div class="gs-sp-claim-sm">${a.core_claim.length>90?a.core_claim.slice(0,90)+'…':a.core_claim}</div>`:''}
-        <div class="gs-sp-meta">Added ${formatDate(a.fetched_at)}</div>
-      </div>`
-    }).join('')
-
-    el.innerHTML = `<div class="gs-spotlight">
-      <div class="gs-sp-header">
-        <span class="gs-sp-section">Research Spotlight</span>
-        <span class="gs-sp-date">${today} · ${spotlightRoleLabel}</span>
-      </div>
-      <div class="gs-sp-grid">
-        <div class="gs-sp-lead">
-          <div class="gs-sp-journal">${lead.journal||''} · ${lead.year||''}</div>
-          <span class="gs-sp-rel">Relevance ${rel0}/10</span>
-          ${lead.headline_en?`<div class="gs-sp-title-lg">${lead.headline_en}</div><div style="font-size:10px;color:#999;font-family:'Outfit',sans-serif;margin-bottom:8px;border-left:2px solid #C8C0B0;padding-left:8px;margin-top:4px">${lead.title?.slice(0,120)}</div>`:`<div class="gs-sp-title-lg">${lead.title?.slice(0,160)||''}</div>`}
-          ${lead.core_claim?`<div class="gs-sp-claim">${lead.core_claim.length>220?lead.core_claim.slice(0,220)+'…':lead.core_claim}</div>`:''}
-          <div class="gs-sp-triad">
-            ${ep0?`<div class="gs-sp-e"><div class="gs-sp-tl">ε Episteme — what the research establishes</div><div class="gs-sp-tx">${ep0.length>400?ep0.slice(0,400)+'…':ep0}</div></div>`:''}
-            ${tc0?`<div class="gs-sp-t"><div class="gs-sp-tl">τ Techne — how to apply in practice</div><div class="gs-sp-tx">${tc0.length>400?tc0.slice(0,400)+'…':tc0}</div></div>`:''}
-            ${ph0?`<div class="gs-sp-p"><div class="gs-sp-tl">φ Phronesis — the situated judgment</div><div class="gs-sp-tx">${ph0.length>400?ph0.slice(0,400)+'…':ph0}</div></div>`:''}
-          </div>
-          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-            <a href="${lead.url||'#'}" target="_blank" style="font-size:10px;font-weight:700;color:#1A3A5C;border:1px solid #1A3A5C;padding:4px 12px;text-decoration:none;font-family:'Outfit',sans-serif">Full paper ↗</a>
-            <span style="font-size:10px;color:#888;font-family:'Outfit',sans-serif;padding:4px 0">Added ${formatDate(lead.fetched_at)}${lead.citation_count>0?' · '+lead.citation_count+' citations':''}</span>
-          </div>
-        </div>
-        <div class="gs-sp-side">
-          ${midCards}
-          ${smallCards}
-        </div>
-      </div>
-    </div>`
-  } catch(e) { console.log('Spotlight error:', e); el.innerHTML = '' }
-}
-
-// Research Synthesis-korten — lyft ut från loadSpotlight så de bor i sin egen
-// vy (Syntheses). Samma data (research_syntheses) + samma role→role-kolumn-map,
-// men renderas som en fokuserad grid utan Spotlight-omgivningen.
+// Research Synthesis-korten — egen vy (Syntheses). Läser research_syntheses
+// per roll och renderas som fokuserad grid. Role→role-kolumn-map via toDbRole.
 window.loadSyntheses = async function() {
   const grid = document.getElementById('synthesesGrid')
   const roleEl = document.getElementById('synthesesRoleLabel')
@@ -7421,7 +7294,6 @@ initAuthGuarded().then(async ()=>{loadArticles();loadCounts();loadScreeningFunne
   // med riktiga siffror när fetchen landat (B1, 2026-07-22).
   if(typeof window.renderOversikt === 'function'){ window.renderOversikt(); window._viewLoaded.oversikt = true }
 })
-setInterval(()=>{if(typeof loadSpotlight==='function') loadSpotlight()}, 5*60*1000)
 </script>
 <!-- TRIAD MODAL — paste this block into index.html -->
 <!-- Add this CSS to the <style> section -->
@@ -7607,7 +7479,6 @@ window.doStartTrial = async function(){
     if(window._obSelectedRole) saveObRoleAndExplore()
     await initAuth()
     loadArticles()
-    loadSpotlight()
     if(data.reason === 'trial_started'){
       // ORDER 131: alert ersatt med tunn topp-strip (samma UI som auto-start
       // efter bekräftelselänken). window._trialEndsAt hydraterades av initAuth
@@ -7663,7 +7534,6 @@ function saveObRoleAndExplore(){
   document.querySelectorAll('.role-chip').forEach(b=>b.classList.toggle('on',b.dataset.role===feedRole))
   closeOnboarding()
   loadArticles()
-  loadSpotlight()
 }
 </script>
 <div class="ob-overlay" id="obOverlay">
