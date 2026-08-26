@@ -2039,7 +2039,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div id="trendingList"></div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between">Most cited<span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
+      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between"><span>Most cited <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0;text-transform:none">· last 5 years</span></span><span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
       <div id="citedList"></div>
     </div>
     <div class="sidebar-section">
@@ -3727,7 +3727,11 @@ async function loadTrending(){
 }
 async function loadMostCited(){
   try{
-    const body={limit_n:5}
+    // ORDER 174 (2026-08-26): årsfilter så panelen inte blir ålders-ranking.
+    // Efter ORDER 175-backfill har 28 750 artiklar citation_count > 0; utan
+    // cutoff trycker 2005-artiklar med 20 års citeringsförsprång undan aktuell
+    // forskning. current_year - 5 = 5-årsfönster (2026 → ≥ 2021).
+    const body={limit_n:5, filter_year_min: new Date().getFullYear() - 5}
     if(role&&role!=='all') body.filter_role=toDbRole(role)
     const r=await fetch(`${SB_URL}/rest/v1/rpc/get_most_cited`,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify(body)})
     const data=await r.json()

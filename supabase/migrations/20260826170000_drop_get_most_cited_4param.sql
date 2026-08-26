@@ -1,0 +1,48 @@
+-- ORDER 174 (2026-08-26): droppa gamla 4-param get_most_cited.
+--
+-- Problem: föregående migration (20260826160000) körde CREATE OR REPLACE
+-- FUNCTION med en NY signatur (lade till filter_year_min). Postgres
+-- REPLACE:ar bara vid EXAKT signatur-match — annars skapas en ny
+-- överlagring bredvid den gamla. Prod hade efter apply:
+--
+--   get_most_cited(integer, text, text, text)                    -- gammal
+--   get_most_cited(integer, text, text, text, integer)           -- ny
+--
+-- Alla parametrar har DEFAULT i båda, så anrop som `get_most_cited(5)`
+-- eller `{limit_n:5}` via PostgREST blir tvetydiga → funktionen kastar
+-- "could not choose the best candidate function" (SQLSTATE 42725).
+--
+-- Fix: droppa den gamla 4-param-versionen explicit. Signaturen matchas
+-- på arg-typerna. IF EXISTS gör migrationen idempotent (kan replay:as på
+-- fresh DB där gamla aldrig existerat).
+--
+-- Caller-check (git grep get_most_cited): enda produktions-caller är
+-- index.html:3736 som sedan ORDER 174-frontend-fixen skickar body med
+-- filter_year_min → matchar bara 5-param. Övriga träffar är .md-doks
+-- och verification-kommentarer i migrations (inte runtime).
+--
+-- Efter drop: anrop utan filter_year_min funkar fortfarande (5-param
+-- har filter_year_min integer default null → all-time-beteende), så
+-- inga callers går sönder även om de tappar bort argumentet.
+
+drop function if exists public.get_most_cited(integer, text, text, text);
+
+
+-- =============================================================================
+-- Verifiering efter apply:
+--
+--   -- 1. Bara EN överlagring kvar?
+--   select pg_get_function_identity_arguments(oid)
+--   from pg_proc where proname='get_most_cited'
+--     and pronamespace='public'::regnamespace;
+--   -- expected: en rad — "limit_n integer, filter_topic text,
+--   --                     filter_keyword text, filter_role text,
+--   --                     filter_year_min integer"
+--
+--   -- 2. Frontend-style anrop utan filter_year_min funkar (fallback):
+--   select count(*) from public.get_most_cited(limit_n := 5);
+--   -- expected: 5 rader utan 42725-fel.
+--
+--   -- 3. Frontend-style anrop med filter_year_min funkar:
+--   select count(*) from public.get_most_cited(limit_n := 5, filter_year_min := 2021);
+--   -- expected: 5 rader.
