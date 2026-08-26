@@ -47,6 +47,22 @@
 //   deno run --allow-net --allow-env --allow-read \
 //     scripts/backfill-citation-counts.ts --apply
 //
+//   # Återuppta efter kvot-slut — hoppa över alla rader med id ≤ <uuid>
+//   # vid fetchPopulation-steget. Läs "sista id" från förra körningens
+//   # progress-logg och kör vidare därifrån.
+//   deno run --allow-net --allow-env --allow-read \
+//     scripts/backfill-citation-counts.ts --apply --since-id <uuid>
+//
+// OPENALEX-KVOT (2026-08-26)
+// --------------------------
+// Polite pool har ~100 000 requests/dag per mailto. En full körning =
+// ~350 requests (~35 000 rader ÷ 100 per batch), så GHA-schemat 2×/vecka
+// har rejäl marginal. VARNING: manuella omkörningar under utveckling
+// har spräckt dygnskvoten (3 fulla körningar på en timme = kvot-slut med
+// Retry-After 51 835 s ≈ 14 h). Skriptet abort:ar nu vid Retry-After
+// > 300 s istället för att sova ut väntetiden. Testa mot --limit N eller
+// --since-id-delmängd innan full körning under utveckling.
+//
 // MILJÖ
 // -----
 //   SUPABASE_URL              — default: prod-URL
@@ -67,18 +83,38 @@ if (!SB_KEY) {
 const args = Deno.args
 const APPLY = args.includes('--apply')
 let LIMIT = 0
+let SINCE_ID = ''
 for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--limit' && args[i + 1]) LIMIT = parseInt(args[i + 1]) || 0
+  if (args[i] === '--limit'    && args[i + 1]) LIMIT    = parseInt(args[i + 1]) || 0
+  if (args[i] === '--since-id' && args[i + 1]) SINCE_ID = args[i + 1]
 }
 
 const OPENALEX_BATCH = 100
 const RPC_BATCH      = 5000
 const REQ_DELAY_MS   = 120    // ~8 req/s, snällare än polite pool-tak
 
+// ByYear-typen definieras tidigare än fetchOpenAlexBulk-blocket för att
+// Row ska kunna referera den (ORDER 176 fix 2026-08-26 — hasDelta måste
+// jämföra citations_by_year, inte bara count).
+type ByYear = Array<{year: number, cited_by_count: number}>
+
 type Row = {
   id: string
   url: string | null
   citation_count: number | null
+  citations_by_year: ByYear | null
+}
+
+// Kanonisk sträng-representation för orderkänslig jämförelse mellan
+// pre-existing DB-värde och nyhämtad OpenAlex-payload. Sorterar på year
+// ASC + filtrerar felaktiga entries. Tom array → '' (samma som null).
+function byYearKey(x: unknown): string {
+  if (!Array.isArray(x)) return ''
+  const norm = x
+    .filter((e: any) => typeof e?.year === 'number' && typeof e?.cited_by_count === 'number')
+    .map((e: any) => ({ year: e.year, cited_by_count: e.cited_by_count }))
+    .sort((a, b) => a.year - b.year)
+  return norm.map(e => `${e.year}:${e.cited_by_count}`).join(',')
 }
 
 // ── Supabase helpers ──
@@ -116,13 +152,16 @@ async function sbFetch(path: string, init: RequestInit = {}): Promise<Response> 
 async function fetchPopulation(): Promise<Row[]> {
   const all: Row[] = []
   const pageSize = 1000
-  let lastId: string | null = null
+  // ORDER 176 fix (2026-08-26): --since-id-återupptagning. lastId startar
+  // som SINCE_ID (om satt) → första fetch:en använder id > SINCE_ID som
+  // keyset-filter → rader med id ≤ SINCE_ID hoppas över helt vid DB-nivå.
+  let lastId: string | null = SINCE_ID || null
   let total: number | null = null
 
   while (true) {
     const isFirst = total === null
     const keyFilter = lastId ? `&id=gt.${lastId}` : ''
-    const url = `articles?select=id,url,citation_count&irrelevant=not.is.true`
+    const url = `articles?select=id,url,citation_count,citations_by_year&irrelevant=not.is.true`
               + `&or=(url.match.openalex\\.org%2FW,url.ilike.%25doi.org%25)`
               + `${keyFilter}&order=id.asc&limit=${pageSize}`
     const headers: Record<string, string> = {}
@@ -138,7 +177,8 @@ async function fetchPopulation(): Promise<Row[]> {
     }
     const page = await res.json() as Row[]
     all.push(...page)
-    console.log(`  ...hämtat ${all.length.toLocaleString()}/${total ?? '?'}`)
+    const lastInPage = page.length > 0 ? page[page.length - 1].id : lastId
+    console.log(`  ...hämtat ${all.length.toLocaleString()}/${total ?? '?'} — sista id: ${lastInPage}`)
     if (page.length < pageSize) break
     lastId = page[page.length - 1].id
     if (LIMIT > 0 && all.length >= LIMIT) break
@@ -146,10 +186,20 @@ async function fetchPopulation(): Promise<Row[]> {
   return LIMIT > 0 ? all.slice(0, LIMIT) : all
 }
 
-async function bulkUpdate(payload: {id: string, c: number}[]): Promise<number> {
+// ORDER 176 (2026-08-26): RPC v2 accepterar valfritt by_year per rad +
+// p_run_id. by_year skrivs till articles.citations_by_year, delta-rad
+// skrivs till citation_deltas när p_run_id är satt. bulks utan runId
+// (t.ex. dry-run från terminal) skriver ingen delta-post — RPC-sidan
+// hanterar den grinden.
+async function bulkUpdate(
+  payload: {id: string, c: number, by_year?: unknown}[],
+  runId: number | null,
+): Promise<number> {
+  const body: Record<string, unknown> = { payload }
+  if (runId !== null) body.p_run_id = runId
   const res = await sbFetch(`rpc/bulk_update_citation_counts`, {
     method: 'POST',
-    body: JSON.stringify({ payload }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     throw new Error(`bulk_update RPC: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`)
@@ -207,10 +257,71 @@ function extractDoi(url: string | null | undefined): string | null {
 
 // ── OpenAlex bulk-fetch ──
 // Endpoint: /works?filter=openalex:W1|W2|... eller filter=doi:D1|D2|...
-// Retur: {results: [{id: "https://openalex.org/W...", cited_by_count: N}, ...]}
-// Fältet cited_by_count är top-level integer, alltid present.
-type FetchOk   = { ok: true,  citation_count: number }
+// Retur: {results: [{id, cited_by_count, counts_by_year: [{year, cited_by_count}, ...]}, ...]}
+// cited_by_count är top-level integer (alltid present).
+// counts_by_year är array (typiskt 5-10 år), null/[] för verk utan citeringar.
+// (ByYear-typen är deklarerad högre upp så Row kan referera den.)
+type FetchOk   = { ok: true,  citation_count: number, by_year: ByYear | null }
 type FetchFail = { ok: false, reason: string }
+
+// ORDER 176 fix (2026-08-26): retry-wrapper mot 429/503 + nätverksfel.
+// Tidigare räknades varje 429 som permanent api_error → 5 463 fel från
+// batch ~20 000 och framåt vid full-körning. OpenAlex skickar Retry-After
+// i sekunder — honorera den, fall tillbaka på 30 s för rate-limit och
+// 5 s för övriga transienta fel.
+//
+// TAK PÅ VÄNTETID (2026-08-26 fix efter kvot-slut-incident): Retry-After
+// > 300 s är per definition en dygnskvot-reset (uppmätt 51 835 s ≈ 14 h),
+// inte en burst-strypning. Skriptet abort:ar då hellre än att sova ut
+// väntan — dev startar om med --since-id efter kvoten återställts.
+const MAX_RETRY          = 3
+const MAX_RETRY_WAIT_SEC = 300
+
+class QuotaExhaustedError extends Error {
+  constructor(waitSec: number, lastId: string | null) {
+    const hint = lastId ? ` --since-id ${lastId}` : ''
+    super(
+      `OpenAlex-kvot slut: Retry-After ${waitSec}s ≈ ${(waitSec / 3600).toFixed(1)}h. ` +
+      `Överskrider MAX_RETRY_WAIT_SEC=${MAX_RETRY_WAIT_SEC}s. ` +
+      `Vänta tills kvoten återställs, kör sedan om med:${hint}`
+    )
+    this.name = 'QuotaExhaustedError'
+  }
+}
+
+// Referens till senaste bearbetade article-id — uppdateras i main:s
+// fetch-loop så QuotaExhaustedError-meddelandet kan förslå --since-id.
+let lastProcessedId: string | null = null
+
+async function fetchWithRetry(url: string, headers: Record<string, string>): Promise<Response | null> {
+  for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+    let res: Response
+    try {
+      res = await fetch(url, { headers })
+    } catch (_e) {
+      if (attempt === MAX_RETRY) return null
+      const wait = 5 * attempt
+      console.log(`  [network] fetch kastade (försök ${attempt}/${MAX_RETRY}) — retry om ${wait}s`)
+      await new Promise(r => setTimeout(r, wait * 1000))
+      continue
+    }
+    // Transienta HTTP-fel som är värda retry. Kastar utanför fetch-try/catch
+    // så QuotaExhaustedError-throwet inte fångas av nätverks-handlaren.
+    if (res.status === 429 || res.status === 503) {
+      const ra = parseInt(res.headers.get('retry-after') || '', 10)
+      const wait = Number.isFinite(ra) && ra > 0 ? ra : 30 * attempt
+      if (wait > MAX_RETRY_WAIT_SEC) {
+        throw new QuotaExhaustedError(wait, lastProcessedId)
+      }
+      if (attempt === MAX_RETRY) return res
+      console.log(`  [rate-limit] HTTP ${res.status}, Retry-After ${wait}s (försök ${attempt}/${MAX_RETRY})`)
+      await new Promise(r => setTimeout(r, wait * 1000))
+      continue
+    }
+    return res
+  }
+  return null
+}
 
 async function fetchOpenAlexBulk(
   keyType: 'openalex' | 'doi',
@@ -223,19 +334,19 @@ async function fetchOpenAlexBulk(
   const filterVal = keys.join('|')
   const url = `https://api.openalex.org/works?filter=${keyType}:${encodeURIComponent(filterVal)}`
             + `&per-page=100&mailto=${encodeURIComponent(OPENALEX_MAILTO)}`
-            + `&select=id,doi,cited_by_count`
+            + `&select=id,doi,cited_by_count,counts_by_year`
 
-  let res: Response
-  try {
-    res = await fetch(url, {
-      headers: { 'User-Agent': `GustoScience/1.0 (mailto:${OPENALEX_MAILTO})` },
-    })
-  } catch (_e) {
+  const res = await fetchWithRetry(url, {
+    'User-Agent': `GustoScience/1.0 (mailto:${OPENALEX_MAILTO})`,
+  })
+  if (res === null) {
+    // 3 nätverksfel i rad → ge upp, markera batchen som fel.
     for (const k of keys) map.set(k, { ok: false, reason: 'network_error' })
     return map
   }
-
   if (!res.ok) {
+    // Resterande HTTP-fel efter retry (t.ex. 429 efter 3 väntor, eller 4xx
+    // som inte är transient) räknas som permanent för batchen.
     const errText = `http_${res.status}`
     for (const k of keys) map.set(k, { ok: false, reason: errText })
     return map
@@ -254,13 +365,26 @@ async function fetchOpenAlexBulk(
   // nyckeln i samma form som våra keys-in.
   for (const w of results) {
     const cc = typeof w?.cited_by_count === 'number' ? w.cited_by_count : 0
+    // counts_by_year kan vara array, null, eller saknas. Filtrera till bara
+    // rader med både year + cited_by_count som numbers — försvar mot ev.
+    // felaktiga entries från OpenAlex (sett i praktiken vid API-glitchar).
+    // Sortera på year ASC — Postgres jsonb-array equality kräver samma
+    // element-ordning och OpenAlex garanterar inte sort-riktning. Sortering
+    // client-side gör server-side citations_by_year IS DISTINCT FROM stabil.
+    const rawBy = Array.isArray(w?.counts_by_year) ? w.counts_by_year : []
+    const by: ByYear = rawBy
+      .filter((x: any) => typeof x?.year === 'number' && typeof x?.cited_by_count === 'number')
+      .map((x: any) => ({ year: x.year, cited_by_count: x.cited_by_count }))
+      .sort((a, b) => a.year - b.year)
+    const byOrNull = by.length > 0 ? by : null
+
     if (keyType === 'openalex') {
       const wId = String(w?.id || '').replace(/^https?:\/\/openalex\.org\//i, '')
-      if (wId) map.set(wId, { ok: true, citation_count: cc })
+      if (wId) map.set(wId, { ok: true, citation_count: cc, by_year: byOrNull })
     } else {
       // DOI från OpenAlex kan innehålla https://doi.org/ prefix
       const wDoi = String(w?.doi || '').replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '')
-      if (wDoi) map.set(wDoi, { ok: true, citation_count: cc })
+      if (wDoi) map.set(wDoi, { ok: true, citation_count: cc, by_year: byOrNull })
     }
   }
 
@@ -275,6 +399,7 @@ async function fetchOpenAlexBulk(
 async function main() {
   const startedAt = new Date().toISOString()
   console.log(`[start] mode=${APPLY ? 'APPLY (skriver)' : 'DRY-RUN'}  at=${startedAt}  trigger=${TRIGGERED_BY}`)
+  if (SINCE_ID) console.log(`[resume] fetchPopulation hoppar över id ≤ ${SINCE_ID}`)
 
   const runId = await heartbeatStart()
   if (runId !== null) console.log(`[heartbeat] citation_updates_runs.id = ${runId}`)
@@ -312,7 +437,7 @@ async function main() {
     { kind: 'doi',      items: byDoi  },
   ]
 
-  const pendingWrites: {id: string, c: number}[] = []
+  const pendingWrites: {id: string, c: number, by_year?: ByYear | null}[] = []
 
   for (const pass of passes) {
     console.log(`\n[fetch] ${pass.kind} — ${pass.items.length.toLocaleString()} rader`)
@@ -329,16 +454,29 @@ async function main() {
           else                          results.api_errors++
           continue
         }
-        // Delta-check client-side (även om RPC:n gör om det server-side —
-        // spar RPC-payload-bytes i typfallet där ~95 % inte ändrats).
-        const existing = row.citation_count ?? null
-        if (existing !== r.citation_count) {
+        // Delta-check client-side. v2 jämförde bara citation_count — fel
+        // eftersom citations_by_year var NULL för hela korpusen men aldrig
+        // skrevs när count redan var korrekt sedan förra körningen (bug
+        // rapporterad ORDER 176 fix 2026-08-26: Rows updated: 0 varje run).
+        // v3 utökar villkoret: skriv också när by_year är NULL i DB eller
+        // skiljer sig från OpenAlex-svar (byYearKey normaliserar båda sidor).
+        const countChanged  = row.citation_count !== r.citation_count
+        const byYearChanged = byYearKey(row.citations_by_year) !== byYearKey(r.by_year)
+        if (countChanged || byYearChanged) {
           results.delta++
-          pendingWrites.push({ id: row.id, c: r.citation_count })
+          pendingWrites.push({ id: row.id, c: r.citation_count, by_year: r.by_year })
         }
       }
+      // Uppdatera resume-cursor efter varje batch. Ordningen är monoton
+      // per pass eftersom fetchPopulation ger id-asc och pass-listorna
+      // bygger i samma ordning. Två pass efter varandra (openalex → doi)
+      // → cursor från byOaId kan vara högre än början på byDoi; --since-id
+      // vid återstart är en KOARSE mekanism, vissa rader kan komma att
+      // göras om. Idempotent på server-sidan (WHERE IS DISTINCT FROM), så
+      // extra jobb kostar bara OpenAlex-kvot, inga dubbla skrivningar.
+      lastProcessedId = chunk[chunk.length - 1].row.id
       if ((i / OPENALEX_BATCH) % 10 === 0 && i > 0) {
-        console.log(`  ...${(i + chunk.length).toLocaleString()}/${pass.items.length.toLocaleString()} — delta=${results.delta}, not_found=${results.not_found}, errors=${results.api_errors}`)
+        console.log(`  ...${(i + chunk.length).toLocaleString()}/${pass.items.length.toLocaleString()} — sista id: ${lastProcessedId} — delta=${results.delta}, not_found=${results.not_found}, errors=${results.api_errors}`)
       }
       // Rate-limit mellan bulk-anrop
       await new Promise(r => setTimeout(r, REQ_DELAY_MS))
@@ -354,7 +492,7 @@ async function main() {
     for (let i = 0; i < pendingWrites.length; i += RPC_BATCH) {
       const chunk = pendingWrites.slice(i, i + RPC_BATCH)
       try {
-        const written = await bulkUpdate(chunk)
+        const written = await bulkUpdate(chunk, runId)
         results.written += written
         console.log(`  chunk ${(i / RPC_BATCH) + 1}: sent=${chunk.length}, updated=${written}`)
       } catch (e) {
@@ -387,7 +525,13 @@ async function main() {
 
 // ORDER 148-mönster: catch fatal + skriv till heartbeat innan exit.
 main().catch(async (e) => {
-  console.error('[FATAL]', e)
+  // Kvot-slut är förväntat vid utvecklings-omkörningar — särskilj det från
+  // äkta katastrof så meddelandet syns utan att drunkna i stack-trace.
+  if (e instanceof QuotaExhaustedError) {
+    console.error(`\n[ABORT] ${e.message}\n`)
+  } else {
+    console.error('[FATAL]', e)
+  }
   if (APPLY) {
     try {
       const r = await sbFetch(`citation_updates_runs?finished_at=is.null&order=id.desc&limit=1`)
