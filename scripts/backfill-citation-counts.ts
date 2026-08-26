@@ -98,22 +98,49 @@ async function sbFetch(path: string, init: RequestInit = {}): Promise<Response> 
 }
 
 // Population — artiklar med lookup-nyckel (OpenAlex-ID eller DOI i url).
-// url ~ 'openalex\.org/W\d+' ELLER url ilike '%doi.org%'. Läs i sidor om
-// 1000 så vi inte fastnar på PostgREST-limit.
+// url ~ 'openalex\.org/W\d+' ELLER url ilike '%doi.org%'.
+//
+// KEYSET-paginering (fix 2026-08-26). Tidigare OFFSET-baserad variant tippade
+// över statement_timeout (code 57014): OR-filtret använder regex/ilike på url
+// som inte kan slå på index, så Postgres tvingades filtrera hela 466k-korpusen
+// + sortera + skippa <offset> rader per request. Kvadratiskt beteende ju
+// djupare — och redan första sidan tickade timeout på prod.
+//
+// Keyset använder PK-indexet på id för att skanna framåt konstant tid:
+// WHERE id > <lastId>, ORDER BY id ASC. Postgres skummar id-index framåt och
+// applicerar OR-filtret per rad, stannar efter <pageSize> träffar. Ingen
+// full-tabell-filter, ingen OFFSET-hopp. Chunk-tid är O(pageSize / matchrate).
+//
+// count=exact körs BARA på första requesten (behövs för progress-loggen);
+// efterföljande requests skippar den — sparar N × redundant COUNT.
 async function fetchPopulation(): Promise<Row[]> {
   const all: Row[] = []
   const pageSize = 1000
-  let offset = 0
+  let lastId: string | null = null
+  let total: number | null = null
+
   while (true) {
+    const isFirst = total === null
+    const keyFilter = lastId ? `&id=gt.${lastId}` : ''
     const url = `articles?select=id,url,citation_count&irrelevant=not.is.true`
               + `&or=(url.match.openalex\\.org%2FW,url.ilike.%25doi.org%25)`
-              + `&order=id&limit=${pageSize}&offset=${offset}`
-    const res = await sbFetch(url)
-    if (!res.ok) throw new Error(`population fetch: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`)
+              + `${keyFilter}&order=id.asc&limit=${pageSize}`
+    const headers: Record<string, string> = {}
+    if (isFirst) headers['Prefer'] = 'count=exact'
+
+    const res = await sbFetch(url, { headers })
+    if (!res.ok && res.status !== 206) {
+      throw new Error(`population fetch: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`)
+    }
+    if (isFirst) {
+      const range = res.headers.get('content-range') || ''
+      total = parseInt(range.split('/')[1] || '0', 10)
+    }
     const page = await res.json() as Row[]
     all.push(...page)
+    console.log(`  ...hämtat ${all.length.toLocaleString()}/${total ?? '?'}`)
     if (page.length < pageSize) break
-    offset += pageSize
+    lastId = page[page.length - 1].id
     if (LIMIT > 0 && all.length >= LIMIT) break
   }
   return LIMIT > 0 ? all.slice(0, LIMIT) : all
