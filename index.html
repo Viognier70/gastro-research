@@ -1792,11 +1792,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 <!-- APP VIEW: Översikt — landning från 2026-07-16. Skeleton nu; moduler i nästa session. -->
 <div id="view-oversikt" class="app-view" role="tabpanel">
   <!-- LANDING HERO (§5) — full-width dark, sitter över .oversikt-wrap.
-       Sifferbandets TRIAD-tal läses från public.triad_coverage() (se §6);
-       fallback "39,000+" står i markup så vi aldrig visar tomt fält.
-       ORDER 146 (2026-08-24): total-talet läses nu från page_counts.total
-       (samma mönster som landingTriadCount). Markup-fallback "466,905" är
-       senast kända värdet — visas bara om page_counts-anropet failar. -->
+       ORDER 170 (2026-08-26): två tal berättar arbetet bakom urvalet.
+       Vänster: page_counts.total (~468k) = hela råskrapa-populationen från
+       source-API:erna, etikett "articles screened" — signalerar det
+       genomsökta arbetet. Höger: page_counts.feedable (~35k, filtreras på
+       irrelevant IS NOT TRUE) = den kuraterade korpusen som visas i
+       produkten, etikett "in the library". landingTriadCount utgår —
+       39k-talet var större än biblioteket och lurade besökaren om
+       bibliotekets storlek. Trilogi-fotnoten (ORDER 145) borttagen samma
+       skäl — tre tal introducerade samma förvirring en rad ner. -->
   <section class="landing-hero" aria-label="About Gusto Science">
     <div class="lh-source">OPENALEX &middot; PUBMED</div>
     <h1 class="lh-title">Peer-reviewed research, read for the kitchen and the cellar</h1>
@@ -1807,19 +1811,14 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
     </div>
     <div class="lh-stats">
       <div class="lh-stat">
-        <div class="lh-stat-num" id="landingTriadCount">39,000+</div>
-        <div class="lh-stat-label">studies with full TRIAD analysis</div>
+        <div class="lh-stat-num" id="landingTotalCount">468,000+</div>
+        <div class="lh-stat-label">articles screened</div>
       </div>
       <div class="lh-stat">
-        <div class="lh-stat-num" id="landingTotalCount">466,905</div>
-        <div class="lh-stat-label">peer-reviewed articles tracked</div>
+        <div class="lh-stat-num" id="landingLibraryCount">35,000+</div>
+        <div class="lh-stat-label">in the library</div>
       </div>
     </div>
-    <!-- ORDER 145 (2026-08-24): trilogi-fotnot under sifferbandet. Visar
-         alla tre totaler i fallande ordning (tracked → TRIAD → feedable)
-         så trappan blir synlig. Fylls av renderLandingTrilogy() från
-         loadCounts när alla tre globals landat; annars förblir hidden. -->
-    <div class="lh-trilogy" id="landingTrilogy" hidden></div>
   </section>
 
   <!-- ORDER 139 (2026-08-23): mini-ticker flyttad från Feed. Rörelse
@@ -3895,8 +3894,11 @@ async function loadCounts(){
       window._triadCount=triadTotal
       const dpT=document.getElementById('dp-triad-count'); if(dpT) dpT.textContent=triadTotal.toLocaleString('en-US')
       const upT=document.getElementById('upgrade-triad-count'); if(upT) upT.textContent=triadTotal.toLocaleString('en-US')+'+'
-      // Landing-hero sifferband (§5). Fallback "39,000+" står i markup.
-      const lhT=document.getElementById('landingTriadCount'); if(lhT) lhT.textContent=triadTotal.toLocaleString('en-US')
+      // ORDER 170 (2026-08-26): landingTriadCount utgår från landings-hero.
+      // triad_coverage() konsumeras fortfarande av Feed hero (#triadCount),
+      // data-panel (#dp-triad-count), upgrade-modal, onboarding och Watchbar
+      // via window._triadCount — alla oförändrade. Bara landings-siffran
+      // togs bort eftersom 39k > 35k lurade besökaren.
       // Watchbar och trending läser window._triadCount — trigga om nu, så
       // eventuella tidigare fallback-renders (från renderOversikt/loadArticles
       // som startade innan _triadCount fanns) skrivs över. Gen-tokens i
@@ -3912,11 +3914,15 @@ async function loadCounts(){
       // Data-panelens "Publications scanned" — samma tal som top-panelens
       // #totalCount (r1). "+" som suffix för att markera att biblioteket växer.
       const dpTot=document.getElementById('dp-total-count'); if(dpTot) dpTot.textContent=total.toLocaleString('en-US')+'+'
-      // ORDER 146 (2026-08-24): landing-hero sifferbandets "tracked"-tal.
-      // Samma mönster som landingTriadCount (rad ovan). Markup-fallback
-      // "466,905" ersätts med levande siffra så trilogi-fotnoten under
-      // aldrig visar högre tal än hero-siffran ovanför.
+      // ORDER 146 (2026-08-24): landings-hero sifferbandets "screened"-tal.
+      // ORDER 170 (2026-08-26): etikett bytt från "peer-reviewed articles
+      // tracked" till "articles screened" — matchar det populationen faktiskt
+      // mäter (hela råskrapan inkl. irrelevant-flaggade rader).
       const lhTot=document.getElementById('landingTotalCount'); if(lhTot) lhTot.textContent=total.toLocaleString('en-US')
+      // ORDER 170: nytt "in the library"-tal från page_counts.feedable
+      // (irrelevant IS NOT TRUE-populationen, redan i RPC-svaret sedan
+      // ORDER 137). Ingen ny RPC — bara ytterligare en DOM-write.
+      const lhLib=document.getElementById('landingLibraryCount'); if(lhLib) lhLib.textContent=feedable.toLocaleString('en-US')
       const obSub=document.getElementById('obSubText')
       if(obSub){
         // Separera de två talen: TRIAD-analyserade (~39 000) vs genomsökta (~466 000).
@@ -3950,33 +3956,12 @@ async function loadCounts(){
     }catch(e){}
     const dbConv=document.getElementById('dbConvergence');if(dbConv)dbConv.textContent=synthStats?.convergence||'—'
     const dbDiv=document.getElementById('dbDivergence');if(dbDiv)dbDiv.textContent=synthStats?.divergence||'—'
-    // ORDER 145 (2026-08-24): trilogi-fotnot under landing-hero-sifferbandet.
-    // Alla tre RPC-svar har landat (eller failat) vid denna punkt; funktionen
-    // guardar internt på att alla tre globals finns — utelämnar hela raden
-    // hellre än att visa "—" om något inte hunnit landa.
-    renderLandingTrilogy()
+    // ORDER 170 (2026-08-26): trilogi-fotnoten (ORDER 145) borttagen.
+    // Den visade en tredje rad "tracked · TRIAD · classified" under
+    // sifferbandet — samma 39k > 35k-förvirring som landings-hero:s
+    // TRIAD-tal. Sifferbandet visar nu "articles screened" + "in the
+    // library"; ingen fotnot behövs för att förklara skillnaden.
   }catch(e){console.error("loadCounts error:",e)}
-}
-
-// ORDER 145 (2026-08-24): fyller .lh-trilogy under sifferbandet med
-// tre totaler i fallande ordning: tracked → TRIAD-analyserade → feedable.
-// Läser globals som loadCounts stashat (_totalCount, _triadCount,
-// _feedableCount). Om NÅGON saknas: håll [hidden] — hellre tyst än
-// halv rad med "—". Kartans etikett och Feed-raden är orörda; denna
-// gör bara skillnaden mellan de tre synlig på landing.
-function renderLandingTrilogy(){
-  const el = document.getElementById('landingTrilogy')
-  if(!el) return
-  const total    = Number(window._totalCount    || 0)
-  const triad    = Number(window._triadCount    || 0)
-  const feedable = Number(window._feedableCount || 0)
-  if(!(total > 0 && triad > 0 && feedable > 0)){
-    el.hidden = true
-    return
-  }
-  const fmt = n => n.toLocaleString('en-US')
-  el.textContent = `${fmt(total)} tracked · ${fmt(triad)} with TRIAD analysis · ${fmt(feedable)} classified by research area`
-  el.hidden = false
 }
 
 function filterTopic(topic){document.getElementById('topicSel').value=topic;loadArticles()}
