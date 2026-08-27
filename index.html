@@ -2042,6 +2042,16 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between"><span>Most cited <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0;text-transform:none">· last 5 years</span></span><span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
       <div id="citedList"></div>
     </div>
+    <!-- ORDER 179 (2026-08-27): momentum-panelen, syskon till Most cited.
+         Most cited svarar på vad som är stort; momentum svarar på vad som
+         växer. Samma RPC som veckobrevets Section G (ORDER 177), roll-
+         parameter från läsarens val, min_prev 20, min_relevance 6, limit 5.
+         Compact "26→66"-form i sidoläget matchar brevets "26 citations in
+         2025, 66 already in 2026" — samma två råtal, kortare typografi. -->
+    <div class="sidebar-section">
+      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between">Gaining momentum<span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
+      <div id="momentumList"></div>
+    </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Journals</div>
       <div id="journalList" style="max-height:300px;overflow-y:auto;scrollbar-width:thin"></div>
@@ -3640,6 +3650,7 @@ function loadFeedTail(){
   loadSidebar()
   loadTrending()
   loadMostCited()
+  loadMomentum()
   loadMiniTicker()
 }
 
@@ -3716,6 +3727,52 @@ async function loadTrending(){
     }).join('')
   }catch(e){}
 }
+// ORDER 179 (2026-08-27): momentum-panelen — bredvid Most cited. Samma
+// RPC som veckobrevets Section G (ORDER 177). RPC:n kräver konkret roll
+// (CASE utan ELSE returnerar NULL för filter_role=null → episteme is not
+// null-gaten failar → 0 rader), så 'all'-läget visar placeholder istället.
+// Compact "26→66"-form matchar brevets råtal-copy — samma prev→cur, kortare
+// typografi som ryms i smal sidopanel. Klick öppnar artikel-modal via
+// openArticleFromId (samma pattern som Most cited).
+async function loadMomentum(){
+  try{
+    const el = document.getElementById('momentumList')
+    if(!el) return
+    if(!role || role === 'all'){
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0;font-style:italic;line-height:1.6">Pick a profession above to see what\'s accelerating in your field.</div>'
+      return
+    }
+    const body = {
+      filter_role:   toDbRole(role),
+      min_prev:      20,
+      min_relevance: 6,
+      limit_n:       5,
+    }
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/get_top_acceleration_articles`, {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    })
+    const data = await r.json()
+    if(!Array.isArray(data) || !data.length){
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">Momentum loading...</div>'
+      return
+    }
+    el.innerHTML = data.map(a => {
+      const arrow = `${a.prev_year_count||0}→${a.cur_year_count||0}`
+      return `<div style="padding:5px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id}')">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);min-width:44px;text-align:right;flex-shrink:0;white-space:nowrap">${arrow}</span>
+          <div>
+            <div style="font-size:11px;font-weight:500;line-height:1.4">${(a.headline_en||a.title||'').slice(0,55)}…</div>
+            <div style="font-size:10px;color:var(--text-tertiary)">${a.journal||''} · ${a.year||''}</div>
+          </div>
+        </div>
+      </div>`
+    }).join('')
+  }catch(e){}
+}
+
 async function loadMostCited(){
   try{
     // ORDER 174 (2026-08-26): årsfilter så panelen inte blir ålders-ranking.
