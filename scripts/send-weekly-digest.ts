@@ -100,6 +100,46 @@ const SCIENCE_TO_LABEL: Record<string, string> = {
   hospitality_mgmt:    'Hospitality Management',
   educator_researcher: 'Academic',
 }
+// ── Topic labels (ORDER 180 C, 2026-08-27) ───────────────────────────────
+// Duplicerad från index.html:TOPIC_LABELS. Script är fristående (ingen
+// shared module i denna kodbas), så mappningen kopieras för att veckobrevet
+// ska rendera topics i Title Case samma som frontend. Underhålls-nota:
+// om nya topics tillkommer i index.html-dicten, kopiera hit också.
+const TOPIC_LABELS: Record<string, string> = {
+  appetite_research:    'Appetite Research',
+  art_science:          'Art & Food Science',
+  atmospherics:         'Atmospherics',
+  crossmodal:           'Crossmodal Perception',
+  culinary_education:   'Culinary Education',
+  culinary_science:     'Culinary Science',
+  experiential_dining:  'Experiential Dining',
+  fermentation_science: 'Fermentation Science',
+  flavor_science:       'Flavour Science',
+  food_anthropology:    'Food Anthropology',
+  food_behavior:        'Food Behavior',
+  food_pairing:         'Food Pairing',
+  food_psychology:      'Food Psychology',
+  food_science:         'Food Science',
+  food_technology:      'Food Technology',
+  gastronomy:           'Gastronomy',
+  general:              'General',
+  hospitality:          'Hospitality',
+  molecular_mixology:   'Molecular Mixology',
+  multisensory:         'Multisensory',
+  neurogastronomy:      'Neurogastronomy',
+  novel_foods:          'Novel Foods',
+  nutritional_science:  'Nutrition Science',
+  sensory_evaluation:   'Sensory Evaluation',
+  sensory_training:     'Sensory Training',
+  servicescape:         'Dining Environment',
+  sommellerie:          'Sommellerie',
+  uncategorized:        'Other Research',
+}
+function topicLabel(slug: string | null | undefined): string {
+  if (!slug) return ''
+  return TOPIC_LABELS[slug] || slug.replace(/_/g, ' ')
+}
+
 // Rensa science-slug ur AI-genererad text som ska visas för användaren.
 // Rättar de 25 befintliga syntheses-raderna (prompten skickade dbRole
 // rakt in), och skyddar mot framtida drift även om prompten uppdateras.
@@ -728,7 +768,7 @@ function buildEmail(d: EmailData): string {
   // D. Institutionsobservation
   if (d.institution && d.institutionTopic) {
     sections.push(sectionHeader('Institution watch'))
-    sections.push(institutionHtml(d.institution, d.institutionTopic.replace(/_/g, ' ')))
+    sections.push(institutionHtml(d.institution, topicLabel(d.institutionTopic)))
   }
 
   // E. Sparat-påminnelse

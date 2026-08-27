@@ -2052,6 +2052,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between">Gaining momentum<span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
       <div id="momentumList"></div>
     </div>
+    <!-- ORDER 180 B (2026-08-27): "Most cited this year"-panel — trions
+         tredje mått. Most cited = störst kumulativt. Gaining momentum =
+         växer snabbast (ratio). Denna = mest citerad HITTILLS I ÅR
+         (absolut cur_year_count). Nya artiklar med snabb 2026-uppmärksamhet
+         lyfts fram utan att kräva föregående-år-baseline. -->
+    <div class="sidebar-section">
+      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between">Most cited this year<span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
+      <div id="citedThisYearList"></div>
+    </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Journals</div>
       <div id="journalList" style="max-height:300px;overflow-y:auto;scrollbar-width:thin"></div>
@@ -3651,6 +3660,7 @@ function loadFeedTail(){
   loadTrending()
   loadMostCited()
   loadMomentum()
+  loadCitedThisYear()
   loadMiniTicker()
 }
 
@@ -3770,6 +3780,48 @@ async function loadMomentum(){
         </div>
       </div>`
     }).join('')
+  }catch(e){}
+}
+
+// ORDER 180 B (2026-08-27): Most cited this year — trions tredje mått.
+// Samma role-gate som Momentum (RPC:n kräver konkret roll pga CASE utan
+// ELSE), samma placeholder-copy för 'all'-läget. Compact form: absolut
+// cur_year_count i Playfair Display guld, samma visuella pattern som
+// Most cited men skalär (inte pil). Radetiketten "citations in ${curYear}"
+// säger vad talet mäter.
+async function loadCitedThisYear(){
+  try{
+    const el = document.getElementById('citedThisYearList')
+    if(!el) return
+    if(!role || role === 'all'){
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0;font-style:italic;line-height:1.6">Pick a profession above to see what\'s being cited this year.</div>'
+      return
+    }
+    const body = {
+      filter_role:   toDbRole(role),
+      min_relevance: 6,
+      min_cur:       3,
+      limit_n:       5,
+    }
+    const r = await fetch(`${SB_URL}/rest/v1/rpc/get_top_cited_this_year`, {
+      method: 'POST',
+      headers: {...H, 'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    })
+    const data = await r.json()
+    if(!Array.isArray(data) || !data.length){
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">Loading…</div>'
+      return
+    }
+    el.innerHTML = data.map(a => `<div style="padding:5px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openArticleFromId('${a.id}')">
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <span style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);min-width:36px;text-align:right;flex-shrink:0">${(a.cur_year_count||0).toLocaleString()}</span>
+        <div>
+          <div style="font-size:11px;font-weight:500;line-height:1.4">${(a.headline_en||a.title||'').slice(0,55)}…</div>
+          <div style="font-size:10px;color:var(--text-tertiary)">${a.journal||''} · ${a.year||''}</div>
+        </div>
+      </div>
+    </div>`).join('')
   }catch(e){}
 }
 
@@ -4790,42 +4842,58 @@ const TOPIC_DATA = {
   }
 }
 
+// TOPIC_LABELS — ORDER 180 C (2026-08-27). Full 28-entry manuell mappning
+// i Title Case. Alfabetiskt sorterad för underhållbarhet. Editorial-val
+// dokumenterade:
+//   art_science         → "Art & Food Science" (slug + "science" hämtas fram)
+//   crossmodal          → "Crossmodal Perception" (term-kontext för läsare)
+//   flavor_science      → "Flavour Science" (British stavning bevarad)
+//   molecular_mixology  → "Molecular Mixology" (rättat från "Molecular Gastronomy"
+//                         — ämnet är teknikerna, inte barhantverket)
+//   nutritional_science → "Nutrition Science" (kortform bevarad)
+//   servicescape        → "Dining Environment" (fackterm ersatt — obegriplig
+//                         för kockar utanför miljöpsykologi)
+//   uncategorized       → "Other Research" (218 artiklar som är forskning
+//                         men inte gastronomi — "Uncategorized" läses som fel)
+// Småord (and, of, in, the, or, for, at, to, with, by, from, nor, a, an)
+// gemena mitt i namnet enligt Title Case-konvention — hanteras här manuellt
+// i mappningen, ingen algoritmisk transform i topicLabel-helpern.
 const TOPIC_LABELS = {
-  gastronomy:'Gastronomy',
-  sommellerie:'Sommellerie',
-  multisensory:'Multisensory',
-  hospitality:'Hospitality',
-  flavor_science:'Flavour science',
-  sensory_evaluation:'Sensory evaluation',
-  appetite_research:'Appetite research',
-  food_science:'Food science',
-  culinary_science:'Culinary science',
-  food_psychology:'Food psychology',
-  fermentation_science:'Fermentation science',
-  nutritional_science:'Nutrition science',
-  neurogastronomy:'Neurogastronomy',
-  novel_foods:'Novel foods',
-  sensory_training:'Sensory training',
-  food_behavior:'Food behavior',
-  food_technology:'Food technology',
-  culinary_education:'Culinary education',
-  food_anthropology:'Food anthropology',
-  food_pairing:'Food pairing',
-  atmospherics:'Atmospherics',
-  servicescape:'Servicescape',
-  art_science:'Art & food',
-  experiential_dining:'Experiential dining',
-  molecular_mixology:'Molecular gastronomy',
-  crossmodal:'Crossmodal'
+  appetite_research:   'Appetite Research',
+  art_science:         'Art & Food Science',
+  atmospherics:        'Atmospherics',
+  crossmodal:          'Crossmodal Perception',
+  culinary_education:  'Culinary Education',
+  culinary_science:    'Culinary Science',
+  experiential_dining: 'Experiential Dining',
+  fermentation_science:'Fermentation Science',
+  flavor_science:      'Flavour Science',
+  food_anthropology:   'Food Anthropology',
+  food_behavior:       'Food Behavior',
+  food_pairing:        'Food Pairing',
+  food_psychology:     'Food Psychology',
+  food_science:        'Food Science',
+  food_technology:     'Food Technology',
+  gastronomy:          'Gastronomy',
+  general:             'General',
+  hospitality:         'Hospitality',
+  molecular_mixology:  'Molecular Mixology',
+  multisensory:        'Multisensory',
+  neurogastronomy:     'Neurogastronomy',
+  novel_foods:         'Novel Foods',
+  nutritional_science: 'Nutrition Science',
+  sensory_evaluation:  'Sensory Evaluation',
+  sensory_training:    'Sensory Training',
+  servicescape:        'Dining Environment',
+  sommellerie:         'Sommellerie',
+  uncategorized:       'Other Research'
 }
 
-// topicLabel — ORDER 143 (2026-08-24). Kanonisk topic-slug → visningsnamn.
-// Slår upp TOPIC_LABELS (26 entries med rätt casing/stavning: "Art & food",
-// "Flavour science", "Molecular gastronomy") och faller tillbaka till
-// underscore→space för slugs som inte finns i dicten (nya topics,
-// 'general' m.fl.). Ersätter ~14 spridda topic.replace(/_/g,' ')-callsites
-// som gav slug-namn ("art science", "flavor science" osv).
-// Idempotent på null/undefined/tom sträng — returnerar tom sträng.
+// topicLabel — ORDER 143 (2026-08-24), fulländad ORDER 180 C (2026-08-27).
+// Slår upp TOPIC_LABELS (28 entries, Title Case). Fallback för okänd slug:
+// underscore → space, ingen casing-transform (medvetet val — okända slugs
+// ska sticka ut som lowercase-spaced så vi ser vad som behöver läggas
+// till i dicten). Idempotent på null/undefined/tom sträng.
 function topicLabel(slug){
   if(!slug) return ''
   return TOPIC_LABELS[slug] || slug.replace(/_/g, ' ')
