@@ -158,6 +158,16 @@ type Article = {
 type PulseKw = { keyword: string; trend_direction: string; trend_pct: number }
 type SavedMeta = { ids: string[]; topics: string[]; topTopic: string | null }
 
+// ORDER 177 (2026-08-27): "Gaining momentum"-artiklar — Article + de tre
+// accelerations-fälten från get_top_acceleration_articles-RPC:n. overlapWithA
+// sätts client-side genom att jämföra id mot sectionA:s resultat.
+type MomentumArticle = Article & {
+  acceleration:    number
+  prev_year_count: number
+  cur_year_count:  number
+  overlapWithA:    boolean
+}
+
 // ── HTTP-hjälpare ─────────────────────────────────────────────────────────
 async function sbFetch(path: string, init: RequestInit = {}): Promise<Response> {
   return fetch(`${SB_URL}${path}`, {
@@ -280,6 +290,47 @@ async function sectionA(r: Recipient, science: string, since: Date, topics: stri
     relevance:      a[`relevance_sci_${science}`],
     citation_count: a.citation_count ?? null,
   }))
+}
+
+// ── Section G: "Gaining momentum" (ORDER 177, 2026-08-27) ────────────────
+// Rankar topp-5 artiklar per roll efter citation_acceleration med golv 20
+// föregående-års-citeringar (utan golvet dominerar 1987-2008-artiklar där
+// 2 mot 1 citering ger falsk 2×-signal). RPC:n get_top_acceleration_articles
+// hanterar hela filtreringen server-side inkl jsonb_typeof-safety via
+// MATERIALIZED CTE. Överlapp med Section A tillåts (visa i båda är rätt
+// signal — en artikel som både är ny OCH accelererar är veckans starkaste).
+async function sectionG(scienceRole: string, aIds: Set<string>): Promise<MomentumArticle[]> {
+  try {
+    const rows = await sbRpc('get_top_acceleration_articles', {
+      filter_role:   scienceRole,
+      min_prev:      20,
+      min_relevance: 6,
+      limit_n:       5,
+    })
+    if (!Array.isArray(rows)) return []
+    return rows.map((a: any): MomentumArticle => ({
+      id:              a.id,
+      title:           a.title,
+      headline_en:     a.headline_en,
+      journal:         a.journal,
+      year:            a.year,
+      url:             a.url,
+      core_claim:      a.core_claim,
+      topic:           a.topic,
+      episteme:        a.episteme,
+      techne:          a.techne,
+      phronesis:       a.phronesis,
+      relevance:       a.relevance,
+      citation_count:  a.citation_count ?? null,
+      acceleration:    Number(a.acceleration) || 0,
+      prev_year_count: Number(a.prev_year_count) || 0,
+      cur_year_count:  Number(a.cur_year_count)  || 0,
+      overlapWithA:    aIds.has(a.id),
+    }))
+  } catch (e) {
+    console.log('[section-G] failed:', (e as Error).message)
+    return []
+  }
 }
 
 // ORDER 122-fix: välj phronesis-källa till Section C EXKLUSIVT från
@@ -535,6 +586,48 @@ function savedRelatedHtml(articles: Article[]): string {
   return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:16px 18px;margin-bottom:14px">${rows}</div>`
 }
 
+// ── Section G HTML: Gaining momentum (ORDER 177, 2026-08-27) ─────────────
+// Copy-form per artikel-rad (fixad 2026-08-27 efter första preview):
+//   "{prev} citations in {lastYear}, {cur} already in {curYear}"
+// Råtal, ingen projektion. Läsaren ser talen och drar slutsatsen själv.
+// Tidigare "pacing at ~101 in 2026 · a 3.9× pickup" pekade på siffror
+// läsaren inte kunde verifiera; 101 såg ut som fel. Rankningen använder
+// fortfarande acceleration (via RPC), men raden speglar bara det faktiska
+// datat. Rad-tonen italic så den läses som caption, inte titel.
+//
+// Överlappsmärkning: pill "Also newly analysed" bredvid metadata när
+// artikeln även finns i Section A (aIds sätts client-side i sectionG-call).
+function accelerationCardHtml(a: MomentumArticle): string {
+  const title    = a.headline_en || a.title
+  const meta     = [a.journal, a.year].filter(Boolean).join(' · ')
+  const curYear  = new Date().getFullYear()
+  const lastYear = curYear - 1
+  const line = `${a.prev_year_count} citations in ${lastYear}, ${a.cur_year_count} already in ${curYear}`
+  const overlapPill = a.overlapWithA
+    ? '<span style="display:inline-block;font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#836428;border:0.5px solid rgba(160,138,85,.5);border-radius:12px;padding:1px 8px;margin-left:8px;vertical-align:1px">Also newly analysed</span>'
+    : ''
+  const paperLink = a.url
+    ? `<a href="${esc(a.url)}" style="font-size:11px;color:#836428;text-decoration:none;margin-top:6px;display:inline-block">Read paper →</a>`
+    : ''
+  return `<div style="padding:12px 0;border-bottom:0.5px solid #E8E0D0">
+    <div style="font-size:10px;color:#9C9484;margin:0 0 4px">${esc(meta)}${overlapPill}</div>
+    <div style="font-size:13px;font-weight:500;color:#0C0B09;line-height:1.5;margin:0 0 6px">${esc(title)}</div>
+    <div style="font-size:11.5px;color:#836428;font-style:italic;line-height:1.55;margin:0 0 4px">${esc(line)}</div>
+    ${paperLink}
+  </div>`
+}
+
+function accelerationSectionHtml(articles: MomentumArticle[]): string {
+  if (!articles.length) return ''
+  const rows = articles.map(accelerationCardHtml).join('')
+  return `<div style="background:#fff;border:1px solid #E8E0D0;border-radius:10px;padding:6px 18px 12px">
+    <p style="font-size:11px;color:#9C9484;font-style:italic;margin:12px 0 4px;line-height:1.6">
+      Cited more often this year than last.
+    </p>
+    ${rows}
+  </div>`
+}
+
 // ── Section F HTML: rollens konvergerade läsning ─────────────────────────
 // Kort card med title, synthesis-text, "Based on N studies"-metrik och
 // länk till Syntheses-vyn. Ingen divergence (fältet bär ingen information
@@ -573,7 +666,8 @@ type EmailData = {
   institution: {name: string; count: number} | null
   institutionTopic: string | null
   savedRelated: Article[]
-  synthesis: Synthesis | null   // ORDER 123 — Section F
+  synthesis: Synthesis | null       // ORDER 123 — Section F
+  momentum: MomentumArticle[]        // ORDER 177 — Section G (efter huvudlistan)
 }
 
 // ORDER 122-fix item 1: bygg ingressen dynamiskt utifrån vilka sektioner
@@ -610,6 +704,14 @@ function buildEmail(d: EmailData): string {
   // nyligen. En 1994-studie som just fått TRIAD är "nyanalyserad", inte "ny").
   sections.push(sectionHeader(`Newly analysed for ${d.roleLabel}`))
   sections.push(d.articles.map(a => articleCardHtml(a, d.isPro)).join(''))
+
+  // G. Gaining momentum (ORDER 177 — direkt efter huvudlistan). Överlapp
+  // med A tillåts och markeras med "Also newly analysed"-pill så läsaren
+  // ser att artikeln redan finns ovan. Skippas tyst om RPC:n gav 0 rader.
+  if (d.momentum.length) {
+    sections.push(sectionHeader('Gaining momentum'))
+    sections.push(accelerationSectionHtml(d.momentum))
+  }
 
   // B. Research Pulse
   if (d.pulse.length) {
@@ -835,10 +937,15 @@ async function main() {
       try { synthesis = await sectionF(science, savedMeta.topTopic) }
       catch (e) { console.log(`  [section-F] ${r.email}: ${(e as Error).message}`) }
 
+      // Section G (ORDER 177): topp-5 accelerations-kandidater för rollen.
+      // aIds passeras för overlap-marker (visa i båda men märk i momentum).
+      const aIds = new Set(articles.map(a => a.id))
+      const momentum = await sectionG(science, aIds)
+
       const emailData: EmailData = {
         recipient: r, isPro, roleLabel, articles, pulse,
         phronesisFrom, institution, institutionTopic: savedMeta.topTopic,
-        savedRelated, synthesis,
+        savedRelated, synthesis, momentum,
       }
       const html    = buildEmail(emailData)
       // ORDER 122-fix item 2: subject speglar rubriken — "newly analysed"
@@ -851,7 +958,7 @@ async function main() {
           const marked = await markSent(r.id)
           if (marked) {
             counters.sent++
-            console.log(`  [sent] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length} F${synthesis ? 1 : 0}`)
+            console.log(`  [sent] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} G${momentum.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length} F${synthesis ? 1 : 0}`)
           } else {
             counters.failed++
             console.log(`  [warn] ${r.email}: mail sent men last_digest_at kunde inte uppdateras — nästa run skickar igen`)
@@ -865,7 +972,7 @@ async function main() {
         const safeName = r.email.replace(/[^\w.-]/g, '_')
         await Deno.writeTextFile(`${OUT_DIR}/${safeName}.html`, html)
         counters.would_send++
-        console.log(`  [preview] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length} F${synthesis ? 1 : 0}`)
+        console.log(`  [preview] ${r.email} (${r.role}) · ${isPro ? 'Pro' : 'Free'} · A${articles.length} G${momentum.length} B${pulse.length} C${phronesisFrom ? 1 : 0} D${institution ? 1 : 0} E${savedRelated.length} F${synthesis ? 1 : 0}`)
       }
     } catch (e) {
       counters.failed++
