@@ -3748,16 +3748,17 @@ async function loadMomentum(){
   try{
     const el = document.getElementById('momentumList')
     if(!el) return
-    // ORDER 180 (2026-08-28): 'all'-guarden borttagen efter argmax-fix
-    // i RPC:n (migration 20260828120000). filter_role skickas bara vid
-    // konkret roll — null i 'all'-läget ger cross-role top-acceleration
-    // via GREATEST över alla relevance_sci_-kolumner.
+    // ORDER 180 (2026-08-28): filter_role skickas ALLTID i body — explicit
+    // null i 'all'-läget, science-slug annars. Utelämnad-param i body ger
+    // PostgREST 404 eftersom RPC-signaturen har `filter_role text` utan
+    // DEFAULT (required). Explicit null triggar argmax-branch i RPC:n
+    // (cross-role top-acceleration via GREATEST över alla relevance_sci_).
     const body = {
+      filter_role:   (role && role !== 'all') ? toDbRole(role) : null,
       min_prev:      20,
       min_relevance: 6,
       limit_n:       5,
     }
-    if(role && role !== 'all') body.filter_role = toDbRole(role)
     const r = await fetch(`${SB_URL}/rest/v1/rpc/get_top_acceleration_articles`, {
       method: 'POST',
       headers: {...H, 'Content-Type': 'application/json'},
@@ -3793,14 +3794,14 @@ async function loadCitedThisYear(){
   try{
     const el = document.getElementById('citedThisYearList')
     if(!el) return
-    // ORDER 180 (2026-08-28): 'all'-guarden borttagen efter argmax-fix
-    // i RPC:n (migration 20260828130000). Samma pattern som loadMomentum.
+    // ORDER 180 (2026-08-28): filter_role skickas ALLTID i body — explicit
+    // null i 'all'-läget triggar argmax-branch. Samma pattern som loadMomentum.
     const body = {
+      filter_role:   (role && role !== 'all') ? toDbRole(role) : null,
       min_relevance: 6,
       min_cur:       3,
       limit_n:       5,
     }
-    if(role && role !== 'all') body.filter_role = toDbRole(role)
     const r = await fetch(`${SB_URL}/rest/v1/rpc/get_top_cited_this_year`, {
       method: 'POST',
       headers: {...H, 'Content-Type': 'application/json'},
