@@ -3730,8 +3730,8 @@ async function loadTrending(){
           <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px"></div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary)">
-          <span>${k.total_count||0} articles total</span>
-          <span>2025: ${k.this_year||0} · 2024: ${k.last_year||0} · 5yr avg: ${k.five_year_avg||0}</span>
+          <span>${(k.total_count||0).toLocaleString('en-US')} all years</span>
+          <span>2025: ${k.this_year||0} · 2024: ${k.last_year||0}</span>
         </div>
       </div>`
     }).join('')
