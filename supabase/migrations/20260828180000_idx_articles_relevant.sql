@@ -1,0 +1,66 @@
+-- =============================================================================
+-- ORDER 182 (2026-08-28) — idx_articles_relevant (partiellt index)
+-- =============================================================================
+-- APPLICERAD DIREKT I SQL-EDITORN 2026-08-28.
+-- Denna migration är en RECORD i git — indexet finns redan i prod-DB:n,
+-- CREATE INDEX IF NOT EXISTS gör migrationen idempotent (no-op vid replay).
+--
+-- BAKGRUND:
+--
+--   ORDER 182 startade som utredning av 93 %-fällningsraten (432k av 468k).
+--   Mätningar visade att morgonens 57014-timeout i get_screening_funnel
+--   INTE var Scopus-datavolymen (matview-läs: 170 ms median) utan lock-
+--   kontention 55P03 under matview-refresh + saknat index för filtrerings-
+--   query:n:
+--
+--     select id from articles_public where irrelevant is not true
+--       count exact: 5 087 ms   (utan index — filter-utvärdering per rad)
+--
+--   Efter partiellt index på samma predikat:
+--
+--     samma query, samma count:  14 ms   (index-only-scan)
+--
+--   ~360× snabbare. Alla RPC:er/queries som filtrerar på
+--   `irrelevant is not true` (dvs relevance-passerade rader = library-
+--   populationen ~35k av 468k) drar nytta.
+--
+-- PARTIELL INDEX-DESIGN:
+--
+--   Predikatet `irrelevant is not true` matchar Postgres' 3-värdes-logik:
+--   inkluderar rader med irrelevant = false OCH irrelevant = null. Samma
+--   utvärdering som PostgREST-URL-parametern `irrelevant=not.is.true`.
+--
+--   Storleks-heuristik: ~35k av 468k rader (~7,5 %) uppfyller predikatet.
+--   Partial-index storlek proportionell → tiny (~2-3 MB) mot ett fullt
+--   index (~40 MB).
+--
+--   Nyckelkolumn `id` valdes för index-only-scan-stöd vid count(*) och
+--   for-lookup som redan använder id. Ändra till annan sortkolumn om
+--   framtida query behöver ORDER BY på annat fält.
+--
+-- SAMMA MÖNSTER: `idx_relevance_queue` (migration 20260711120000) —
+--   partiellt index med predikat matchat mot dominant query.
+--
+-- CONCURRENTLY: så backfill-motorerna inte låses. Kan inte köras i
+--   transaktion.
+-- =============================================================================
+
+create index concurrently if not exists idx_articles_relevant
+  on public.articles (id)
+  where irrelevant is not true;
+
+
+-- =============================================================================
+-- VERIFIERING EFTER APPLY (identisk med den Anders körde direkt 2026-08-28):
+--
+--   -- 1. Indexet existerar:
+--   select indexname, indexdef, pg_size_pretty(pg_relation_size(indexname::regclass))
+--     from pg_indexes
+--    where indexname = 'idx_articles_relevant';
+--
+--   -- 2. Query planner använder det:
+--   explain (analyze, buffers)
+--   select count(*) from public.articles where irrelevant is not true;
+--   -- expected: "Index Only Scan using idx_articles_relevant" i planen,
+--   --           execution time ~10-20 ms (vs ~5 000 ms utan indexet).
+-- =============================================================================
