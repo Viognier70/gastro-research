@@ -2039,7 +2039,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
       <div id="trendingList"></div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between"><span>Most cited <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0;text-transform:none">· last 5 years</span></span><span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
+      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between"><span>Most cited <span id="mostCitedModifier" style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0;text-transform:none">· last 5 years</span></span><span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
       <div id="citedList"></div>
     </div>
     <!-- ORDER 179 (2026-08-27): momentum-panelen, syskon till Most cited.
@@ -2049,7 +2049,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
          Compact "26→66"-form i sidoläget matchar brevets "26 citations in
          2025, 66 already in 2026" — samma två råtal, kortare typografi. -->
     <div class="sidebar-section">
-      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between">Gaining momentum<span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
+      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between"><span>Gaining momentum <span id="momentumModifier" style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0;text-transform:none">· more cited this year than last</span></span><span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
       <div id="momentumList"></div>
     </div>
     <!-- ORDER 180 B (2026-08-27): "Most cited this year"-panel — trions
@@ -2058,7 +2058,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
          (absolut cur_year_count). Nya artiklar med snabb 2026-uppmärksamhet
          lyfts fram utan att kräva föregående-år-baseline. -->
     <div class="sidebar-section">
-      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between">Most cited this year<span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
+      <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between"><span>Most cited this year <span id="citedThisYearModifier" style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0;text-transform:none"></span></span><span style="font-size:9px;color:var(--text-tertiary);font-weight:400">OpenAlex</span></div>
       <div id="citedThisYearList"></div>
     </div>
     <div class="sidebar-section">
@@ -3737,6 +3737,20 @@ async function loadTrending(){
     }).join('')
   }catch(e){}
 }
+// panelSubtitle (ORDER 180, 2026-08-28) — bygger modifier-text för sidebar-
+// panelernas titelrad. Format speglar Feed-intron från ORDER 137
+// ("Showing N of M · sorted for Sommelier") så igenkänningen mellan
+// Feed-intron och sidopanelerna är omedelbar. Anropas av loadMostCited,
+// loadMomentum och loadCitedThisYear för att skriva över respektive
+// modifier-span vid varje panel-render (så subtitle alltid matchar det
+// data som just fetchats).
+function panelSubtitle(descriptor){
+  const roleTag = (role && role !== 'all')
+    ? `sorted for ${roleLabel(role) || role}`
+    : 'across all professions'
+  return descriptor ? `· ${descriptor} · ${roleTag}` : `· ${roleTag}`
+}
+
 // ORDER 179 (2026-08-27): momentum-panelen — bredvid Most cited. Samma
 // RPC som veckobrevets Section G (ORDER 177). RPC:n kräver konkret roll
 // (CASE utan ELSE returnerar NULL för filter_role=null → episteme is not
@@ -3748,6 +3762,9 @@ async function loadMomentum(){
   try{
     const el = document.getElementById('momentumList')
     if(!el) return
+    // ORDER 180 (2026-08-28): subtitle-modifier speglar det data som fetchats.
+    const modEl = document.getElementById('momentumModifier')
+    if(modEl) modEl.textContent = panelSubtitle('more cited this year than last')
     // ORDER 180 (2026-08-28): filter_role skickas ALLTID i body — explicit
     // null i 'all'-läget, science-slug annars. Utelämnad-param i body ger
     // PostgREST 404 eftersom RPC-signaturen har `filter_role text` utan
@@ -3794,6 +3811,10 @@ async function loadCitedThisYear(){
   try{
     const el = document.getElementById('citedThisYearList')
     if(!el) return
+    // ORDER 180 (2026-08-28): subtitle-modifier (ingen descriptor — titeln
+    // säger allt själv, bara role-taggen behövs).
+    const modEl = document.getElementById('citedThisYearModifier')
+    if(modEl) modEl.textContent = panelSubtitle('')
     // ORDER 180 (2026-08-28): filter_role skickas ALLTID i body — explicit
     // null i 'all'-läget triggar argmax-branch. Samma pattern som loadMomentum.
     const body = {
@@ -3826,6 +3847,9 @@ async function loadCitedThisYear(){
 
 async function loadMostCited(){
   try{
+    // ORDER 180 (2026-08-28): subtitle-modifier speglar det data som fetchats.
+    const modEl = document.getElementById('mostCitedModifier')
+    if(modEl) modEl.textContent = panelSubtitle('last 5 years')
     // ORDER 174 (2026-08-26): årsfilter så panelen inte blir ålders-ranking.
     // Efter ORDER 175-backfill har 28 750 artiklar citation_count > 0; utan
     // cutoff trycker 2005-artiklar med 20 års citeringsförsprång undan aktuell
