@@ -140,6 +140,19 @@ function topicLabel(slug: string | null | undefined): string {
   return TOPIC_LABELS[slug] || slug.replace(/_/g, ' ')
 }
 
+// titleCaseKeyword (ORDER 180, 2026-08-28) — algoritmisk Title Case för
+// keyword-render i Section B (Research Pulse). Speglar helpern i index.html.
+// Efter ORDER 180 A v2 case-filtret är alla keywords från RPC:n gemena.
+const SMALL_WORDS = new Set(['and','of','in','the','or','for','at','to','with','by','from','nor','a','an','on','as'])
+function titleCaseKeyword(str: string | null | undefined): string {
+  if (!str) return ''
+  return String(str).replace(/_/g, ' ').split(/\s+/).map((w, i) => {
+    const lower = w.toLowerCase()
+    if (i > 0 && SMALL_WORDS.has(lower)) return lower
+    return lower.charAt(0).toUpperCase() + lower.slice(1)
+  }).join(' ')
+}
+
 // Rensa science-slug ur AI-genererad text som ska visas för användaren.
 // Rättar de 25 befintliga syntheses-raderna (prompten skickade dbRole
 // rakt in), och skyddar mot framtida drift även om prompten uppdateras.
@@ -568,7 +581,7 @@ function pulseHtml(pulse: PulseKw[]): string {
                 :                       `→ stable`
     return `<tr>
       <td style="padding:6px 10px 6px 0;font-size:12px;color:#9C9484;width:24px">${i + 1}</td>
-      <td style="padding:6px 10px 6px 0;font-size:13px;color:#0C0B09">${esc(k.keyword.replace(/_/g, ' '))}</td>
+      <td style="padding:6px 10px 6px 0;font-size:13px;color:#0C0B09">${esc(titleCaseKeyword(k.keyword))}</td>
       <td style="padding:6px 0 6px 10px;font-size:11px;color:#5C5649;text-align:right">${label}</td>
     </tr>`
   }).join('')
