@@ -3774,6 +3774,7 @@ function panelSubtitle(descriptor){
 // Compact "26→66"-form matchar brevets råtal-copy — samma prev→cur, kortare
 // typografi som ryms i smal sidopanel. Klick öppnar artikel-modal via
 // openArticleFromId (samma pattern som Most cited).
+let _momentumAbortCtrl = null
 async function loadMomentum(){
   try{
     const el = document.getElementById('momentumList')
@@ -3781,13 +3782,21 @@ async function loadMomentum(){
     // ORDER 180 (2026-08-28): subtitle-modifier speglar det data som fetchats.
     const modEl = document.getElementById('momentumModifier')
     if(modEl) modEl.textContent = panelSubtitle('more cited this year than last')
-    // ORDER 180 (2026-08-28): filter_role skickas ALLTID i body — explicit
-    // null i 'all'-läget, science-slug annars. Utelämnad-param i body ger
-    // PostgREST 404 eftersom RPC-signaturen har `filter_role text` utan
-    // DEFAULT (required). Explicit null triggar argmax-branch i RPC:n
-    // (cross-role top-acceleration via GREATEST över alla relevance_sci_).
+    // RPC:ns CASE-satser har ingen ELSE — filter_role=null gör att alla
+    // CASE-uttryck returnerar NULL, roll-gate `episteme is not null` failar,
+    // och Postgres kör en full scan över articles som timeoutar (57014).
+    // 'all'/tomt-läget måste därför hoppa över anropet helt.
+    if(!role || role === 'all'){
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">Momentum is calculated per profession — select one above.</div>'
+      return
+    }
+    // Snabba filter-/rollbyten fyrar loadMomentum ovanpå in-flight anrop.
+    // Utan abort stackar pendings mot en långsam RPC (~3 s) och driver
+    // upp anrop-talet. Cancel:a tidigare innan nytt.
+    if(_momentumAbortCtrl) _momentumAbortCtrl.abort()
+    _momentumAbortCtrl = new AbortController()
     const body = {
-      filter_role:   (role && role !== 'all') ? toDbRole(role) : null,
+      filter_role:   toDbRole(role),
       min_prev:      20,
       min_relevance: 6,
       limit_n:       5,
@@ -3796,10 +3805,18 @@ async function loadMomentum(){
       method: 'POST',
       headers: {...H, 'Content-Type': 'application/json'},
       body: JSON.stringify(body),
+      signal: _momentumAbortCtrl.signal,
     })
+    if(!r.ok){
+      let errBody = null
+      try { errBody = await r.json() } catch(_) {}
+      console.warn('loadMomentum:', r.status, errBody)
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">Momentum unavailable</div>'
+      return
+    }
     const data = await r.json()
     if(!Array.isArray(data) || !data.length){
-      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">Momentum loading...</div>'
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:6px 0">No accelerating research for this profession right now.</div>'
       return
     }
     el.innerHTML = data.map(a => {
@@ -3814,7 +3831,10 @@ async function loadMomentum(){
         </div>
       </div>`
     }).join('')
-  }catch(e){}
+  }catch(e){
+    if(e && e.name === 'AbortError') return
+    console.warn('loadMomentum threw:', e)
+  }
 }
 
 // ORDER 180 B (2026-08-27): Most cited this year — trions tredje mått.
