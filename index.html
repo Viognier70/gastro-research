@@ -3370,8 +3370,7 @@ function cardHTML(a,idx){
       ${a.year?`<span>Published ${a.year}</span>`:''}
       ${a.fetched_at?`<span>Added ${new Date(a.fetched_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
       ${triadSourceRole!==null?`<a href="/foundation#methodology" class="art-ai-tag" title="Generated from bibliographic metadata and available abstract, not from verified full-text analysis.">AI-generated interpretation — not peer-reviewed${triadSourceRole===readerDbRole?'':` · written for ${_escHtml(ROLE_NAMES[toChipRole(triadSourceRole)]||triadSourceRole)}`}</a>`:''}
-      ${triadSourceRole!==null?`<span class="art-ai-tag" title="Generated from bibliographic metadata and available abstract, not from verified full-text analysis.">Source: metadata + abstract</span>`:''}
-      ${hasRoleHeadline?`<span class="art-ai-tag" title="An AI-generated research headline rewritten for readability. The original title is shown above.">AI-generated research headline</span>`:''}
+      ${hasRoleHeadline?`<a href="/foundation#methodology" class="art-ai-tag" title="An AI-generated research headline rewritten for readability. The original title is shown above.">AI-generated research headline</a>`:''}
       ${countryFlags(a.countries||[a.country])?`<span>${countryFlags(a.countries||[a.country])}</span>`:''}
     </div>`
 
