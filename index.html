@@ -1355,6 +1355,15 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   border: 0.5px solid rgba(0,0,0,.1);
   letter-spacing: .02em;
 }
+a.art-ai-tag {
+  cursor: pointer;
+  text-decoration: none;
+}
+a.art-ai-tag:hover {
+  background: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.65);
+  border-color: rgba(0,0,0,.18);
+}
 
 /* ── Progressiv upplysning på kort (2026-07-15) ────────────────────────
    Tre lager: viloläge → TRIAD → IMRaD. Klasserna nedan är den nya
@@ -3296,7 +3305,7 @@ function cardHTML(a,idx){
           <div class="rt-footer">These are separate signals shown for context. The badge score is the Haiku role rubric (0–10), not a weighted formula.</div>
         </div>
       </div>`:''}
-      ${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">📚 ${citCount.toLocaleString()}</span>`:''}
+      ${citCount>0?`<span class="source-badge" title="Citations from OpenAlex">${citCount.toLocaleString()} cited</span>`:''}
     </div>
     <h3 class="card-headline" onclick="openArticleFromId('${a.id||''}')" title="Open article">${roleHeadline}</h3>
     ${a.primary_institution?`<div class="article-origin" onclick="filterByInstitution('${(a.primary_institution||'').replace(/'/g,"\\'")}',event)" title="Filter by institution" style="margin-bottom:14px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>${a.primary_institution}${a.institution_rank&&a.institution_rank<999?` <span style="color:${a.institution_rank<=100?'#FFD700':'#c9a84c'};font-weight:500">#${a.institution_rank}</span>`:''}</div>`:''}
@@ -3360,7 +3369,7 @@ function cardHTML(a,idx){
     <div class="art-timestamps" style="margin-top:12px">
       ${a.year?`<span>Published ${a.year}</span>`:''}
       ${a.fetched_at?`<span>Added ${new Date(a.fetched_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-      ${triadSourceRole!==null?`<span class="art-ai-tag" title="Generated from bibliographic metadata and available abstract, not from verified full-text analysis.">AI-generated interpretation — not peer-reviewed${triadSourceRole===readerDbRole?'':` · written for ${_escHtml(ROLE_NAMES[toChipRole(triadSourceRole)]||triadSourceRole)}`}</span>`:''}
+      ${triadSourceRole!==null?`<a href="/foundation#methodology" class="art-ai-tag" title="Generated from bibliographic metadata and available abstract, not from verified full-text analysis.">AI-generated interpretation — not peer-reviewed${triadSourceRole===readerDbRole?'':` · written for ${_escHtml(ROLE_NAMES[toChipRole(triadSourceRole)]||triadSourceRole)}`}</a>`:''}
       ${triadSourceRole!==null?`<span class="art-ai-tag" title="Generated from bibliographic metadata and available abstract, not from verified full-text analysis.">Source: metadata + abstract</span>`:''}
       ${hasRoleHeadline?`<span class="art-ai-tag" title="An AI-generated research headline rewritten for readability. The original title is shown above.">AI-generated research headline</span>`:''}
       ${countryFlags(a.countries||[a.country])?`<span>${countryFlags(a.countries||[a.country])}</span>`:''}
