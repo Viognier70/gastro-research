@@ -671,6 +671,8 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
   .feed-sidebar{display:none!important}
   .sidebar{display:none!important}
   .main-layout{grid-template-columns:1fr!important;padding:16px!important}
+  .role-bar{padding:16px!important}
+  .toolbar{padding:12px 16px!important}
   /* Artikelkort — full bredd */
   .article-card{width:100%;box-sizing:border-box;padding:16px!important}
   /* TRIAD guide banner */
@@ -794,7 +796,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .triad-sep{color:rgba(255,255,255,0.2);margin:0 6px}
 
 /* ROLE FILTER */
-.role-bar{padding:16px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.role-bar{max-width:1100px;margin:0 auto;padding:16px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .role-label{font-size:12px;color:var(--text-tertiary);margin-right:4px}
 .role-chip{font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border-mid);padding:5px 14px;border-radius:20px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s}
 .role-chip.on{background:var(--black);color:var(--white);border-color:var(--black)}
@@ -914,7 +916,7 @@ body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--text-pr
 .synth-tag.tension{background:#faeee0;color:#8a4a10;border:0.5px solid #e8c8a0}
 
 /* TOOLBAR */
-.toolbar{padding:12px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toolbar{max-width:1100px;margin:0 auto;padding:12px 32px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .filter-select{font-size:12px;color:var(--text-primary);border:0.5px solid var(--border-mid);padding:5px 10px;border-radius:20px;background:var(--white);cursor:pointer;font-family:'Outfit',sans-serif}
 .search-wrap{flex:1;min-width:200px;max-width:400px;position:relative}
 .search-input{width:100%;font-size:12px;border:0.5px solid var(--border-mid);padding:6px 12px 6px 30px;border-radius:20px;background:var(--white);font-family:'Outfit',sans-serif;color:var(--text-primary);outline:none}
