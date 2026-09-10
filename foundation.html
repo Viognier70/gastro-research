@@ -1418,7 +1418,7 @@ footer a:hover { background: rgba(201,168,76,0.08); }
         <dd style="margin:0"><em>Relevance scoring &amp; classification:</em> Claude Haiku (claude-haiku-4-5-20251001). <em>TRIAD generation:</em> Claude Sonnet (claude-sonnet-4-6). The TRIAD prompt is not currently version-tagged in the repository. Model and prompt versions may change as the pipeline evolves.</dd>
 
         <dt style="font-weight:500;color:var(--text-mid)">Relevance score (1–10)</dt>
-        <dd style="margin:0">One score per role, produced by a Haiku model against a role-specific rubric (title up to 200 chars + up to 400 chars of abstract + journal). There is no explicit weighted formula; the model returns an integer 0–10 per role. Any tag such as "40&nbsp;% citations · 30&nbsp;% role signal" that appears elsewhere in the interface is a communication shorthand, not a formula in code, and will be revised.</dd>
+        <dd style="margin:0">One score per role, produced by a Haiku model against a role-specific rubric (title up to 200 chars + up to 400 chars of abstract + journal). There is no explicit weighted formula; the model returns an integer 0–10 per role. Earlier versions of the interface described the score as a weighted formula. That description was inaccurate and has been removed.</dd>
 
         <dt style="font-weight:500;color:var(--text-mid)">Human review</dt>
         <dd style="margin:0">There is no routine human-in-the-loop review of individual TRIAD analyses. Spot checks are performed manually from time to time; the results are not currently published.</dd>
