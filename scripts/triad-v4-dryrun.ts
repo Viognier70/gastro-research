@@ -28,7 +28,7 @@
 //       - totaltid, kostnadsuppskattning, valideringsstatistik
 //       - snabb-check per rule 6/7/8 (opener-mönster + hedges + jargong-signal)
 //
-// STICKPROV-ORDNING (från gustema-triad-stickprov.md SQL union all):
+// STICKPROV-ORDNING (från docs/gustema-triad-stickprov.md SQL union all):
 //   ids[0-4]   → sensory_pro
 //   ids[5-9]   → culinary_pro
 //   ids[10-14] → gastronomy_culture
@@ -66,7 +66,7 @@ const OUT_DIR    = 'outputs/triad-v4-dryrun'
 if (!ANTHROPIC_KEY) { console.error('ANTHROPIC_API_KEY saknas'); Deno.exit(2) }
 if (!SB_KEY)        { console.error('SUPABASE_SERVICE_ROLE_KEY saknas'); Deno.exit(2) }
 
-// Roll per index enligt SQL-ordningen i gustema-triad-stickprov.md
+// Roll per index enligt SQL-ordningen i docs/gustema-triad-stickprov.md
 function roleFor(idx: number): Role {
   const stratumSize = 5
   const rIdx = Math.floor(idx / stratumSize)
