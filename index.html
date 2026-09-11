@@ -2170,6 +2170,10 @@ a.art-ai-tag:hover {
     <span class="si-sep">·</span>
     <span class="si-not">Source: OpenAlex institution data</span>
   </div>
+  <!-- Collaborations-only metadatarad — visas när currentWorldFilter === 'collabs'.
+       Innehåll byggs av renderCollabIntro(). Tredje satsen (coverage-procent)
+       utelämnas tills window.mapCoverage är satt av updateMapCoverageCopy. -->
+  <div class="section-intro si-dark" id="collabIntro" style="display:none"></div>
   <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
     <div style="flex:1;min-width:280px">
       <div id="worldMapContainer" style="width:100%;position:relative"></div>
@@ -7967,6 +7971,12 @@ async function updateMapCoverageCopy(){
       return
     }
     const fmt = n => n.toLocaleString('en-US')
+    // ORDER 215: spara talen så renderCollabIntro() kan bygga
+    // procent-satsen. Uppdatera collab-raden om den är synlig just nu
+    // (användaren klickade Collaborations innan RPC:n svarade).
+    window.mapCoverage = { withCoords, total }
+    const collabIntroEl = document.getElementById('collabIntro')
+    if (collabIntroEl && collabIntroEl.style.display !== 'none') renderCollabIntro()
     // "TRIAD-analysed" bevaras — predikatet i RPC:n har phronesis_<role>-OR
     // (TRIAD-gate, canary-fältet från triad_coverage) + irrelevant + institution.
     // Talet är en delmängd av public.triad_coverage() (28 553 ⊂ 39 141).
@@ -7994,6 +8004,25 @@ window.getNodeColor = function(rank, count) {
   return '#c9a84c'
 }
 
+// ORDER 215: bygger collab-lägets metadatarad. Tre satser separerade av ·.
+// Tredje satsen (procent) utelämnas om window.mapCoverage saknas — inga
+// platshållare, inga hårdkodade siffror. Kallas av setWorldFilter('collabs')
+// och av updateMapCoverageCopy när raden redan är synlig.
+function renderCollabIntro() {
+  const el = document.getElementById('collabIntro')
+  if (!el) return
+  let html = '<span class="si-what">Lines connect institutions with at least 3 co-authored articles</span>'
+    + '<span class="si-sep">·</span>'
+    + '<span class="si-what">Only cross-border pairs — domestic collaborations are not shown</span>'
+  const c = window.mapCoverage
+  if (c && typeof c.withCoords === 'number' && typeof c.total === 'number' && c.total > 0) {
+    const pct = Math.round((1 - c.withCoords / c.total) * 100)
+    html += '<span class="si-sep">·</span>'
+      + `<span class="si-what">Counts are minimums: institution data is missing for about ${pct}% of analysed articles</span>`
+  }
+  el.innerHTML = html
+}
+
 function setWorldFilter(f) {
   currentWorldFilter = f
   document.querySelectorAll('[data-wf]').forEach(b => {
@@ -8002,6 +8031,13 @@ function setWorldFilter(f) {
     b.style.color = active ? '#000' : 'rgba(255,255,255,.7)'
     b.style.border = active ? '0.5px solid rgba(201,168,76,.4)' : '0.5px solid rgba(255,255,255,.28)'
   })
+  // ORDER 215: växla collab-metadataraden. display:flex matchar .section-intro
+  // (rad 1299) så flex-wrap och gap fungerar som på befintlig rad.
+  const collabIntro = document.getElementById('collabIntro')
+  if (collabIntro) {
+    collabIntro.style.display = (f === 'collabs') ? 'flex' : 'none'
+    if (f === 'collabs') renderCollabIntro()
+  }
   renderWorldDots()
 }
 
