@@ -8160,6 +8160,14 @@ window.renderWorldDots = function() {
   
   const zg = window.worldMapG || window.worldMapSvg
   if(!zg) return
+  // ORDER 217: kompensera för aktuell zoom vid re-render. Zoom-handlern
+  // (rad 8324–8326) dividerar r/stroke-width med event.transform.k så
+  // prickar och linjer behåller sin visuella storlek när g skalas upp.
+  // Handlern körs bara på zoom-event — anrop till renderWorldDots utan
+  // pan/zoom (setWorldFilter, filterByCountry, toggleTopicPill osv) satte
+  // annars obehandlade värden medan g fortfarande hade scale(k)-transform,
+  // vilket blåste upp allt med faktor k tills nästa pan.
+  const k = window.worldMapZoomLevel || 1
   zg.selectAll('.collab').remove()
   if(window.worldMapCollabs && window.worldMapCollabs.length) {
     const maxCount = Math.max(...window.worldMapCollabs.map(c => c.count))
@@ -8173,7 +8181,7 @@ window.renderWorldDots = function() {
       .attr('x2', d => window.worldMapProjection([d.lng2, d.lat2])?.[0])
       .attr('y2', d => window.worldMapProjection([d.lng2, d.lat2])?.[1])
       .attr('stroke', d => d.count >= 20 ? '#e05252' : d.count >= 10 ? '#e8963c' : d.count >= 5 ? 'rgba(201,168,76,0.7)' : 'rgba(201,168,76,0.25)')
-      .attr('stroke-width', d => d.count >= 20 ? 2.5 : d.count >= 10 ? 1.8 : d.count >= 5 ? 1.2 : 0.7)
+      .attr('stroke-width', d => (d.count >= 20 ? 2.5 : d.count >= 10 ? 1.8 : d.count >= 5 ? 1.2 : 0.7) / k)
       .attr('stroke-dasharray', d => d.count >= 10 ? 'none' : d.count >= 5 ? '6,3' : '3,5')
       .style('pointer-events', 'none')
   }
@@ -8188,7 +8196,9 @@ window.renderWorldDots = function() {
     // Basradien cachas på datumet så zoom-handlern kan skala om den
     // proportionellt utan att räkna om rScale (5 / event.transform.k
     // skulle förlora sqrt-skillnaden mellan små och stora institutioner).
-    .attr('r', d => { d._r = rScale(d.count); return d._r })
+    // d._r lagrar BAS-värdet oskalat; /k appliceras bara på det returnerade
+    // värdet så zoom-handlern kan dividera d._r/k utan dubbel-division.
+    .attr('r', d => { d._r = rScale(d.count); return d._r / k })
     .attr('fill', d => {
       // Använder shared getTopicColor (rad ~1836). Tidigare inline mappning
       // + fallback #E8A020 konsoliderad 2026-07-16.
